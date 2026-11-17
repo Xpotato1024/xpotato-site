@@ -28,7 +28,7 @@ raw ZIPのpinは保存済みファイルをローカル照合した値です。�
 
 permissionsは`contents/actions/checks: read`だけです。新しいcredential・アクセスを作りません。既存GitHub tokenは同repositoryの固定GETと正規consumerへ、Cloudflare tokensは固定provider GETだけへ渡します。writer tokenも自身のverify GETだけで使用します。GitHub artifactの署名付きURLは許可したHTTPS object hostへのGET一回だけとし、Authorizationを転送せず、URL/生レスポンス/例外本文をログに出しません。
 
-CLI `scripts/release/deployment/readback-only-cli.mjs`の実入口`main()`はenv/transport/process/adapterのoverrideを受け付けません。`runSyntheticReadbackCli()`は別の合成入口で、fake GitHub envやfixtureを使っても必ずsyntheticです。実入口のowner guardを拒否させる子process試験も行いますが、偽装envでlive stageを通しません。
+CLI `ops/deployment/readback-only-cli.mjs`の実入口`main()`はenv/transport/process/adapterのoverrideを受け付けません。`runSyntheticReadbackCli()`は別の合成入口で、fake GitHub envやfixtureを使っても必ずsyntheticです。実入口のowner guardを拒否させる子process試験も行いますが、偽装envでlive stageを通しません。
 
 ## 将来認可された実行の順序
 

@@ -1,3 +1,4 @@
+import {currentContentPath} from './content-layout-paths.js';
 import { validateManualEditorialRevisions } from "../manual-editorial-revisions.js";
 import { manualEditorialRevisionLedgerSchema } from "@xpotato/content-contracts";
 import { readFile } from "node:fs/promises";
@@ -21,8 +22,8 @@ import { loadPhase5TaxonomyReview } from "./phase5-taxonomy-review.js";
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)),"../../../..");
 const phase4ManifestPath = join(repositoryRoot, "docs/migration/content-materialization-v1.json");
 export const phase5ManifestPath = join(repositoryRoot, "docs/migration/taxonomy-materialization-v1.json");
-export const taxonomyDataPath = join(repositoryRoot, "apps/site/src/content-registry/taxonomy/phase5-generated.ts");
-export const taxonomyIndexPath = join(repositoryRoot, "apps/site/src/content-registry/taxonomy/index.ts");
+export const taxonomyDataPath = join(repositoryRoot, "content/registry/taxonomy/phase5-generated.ts");
+export const taxonomyIndexPath = join(repositoryRoot, "content/registry/taxonomy/index.ts");
 const materializationVersion = "legacy-taxonomy-materialization-v1" as const;
 
 interface ParsedContent {
@@ -241,10 +242,10 @@ export const checkPhase5TaxonomyMaterialization = async (): Promise<Phase5Taxono
   const committedManifest = phase5TaxonomyMaterializationManifestSchema.parse(await readJson(phase5ManifestPath));
   if (JSON.stringify(committedManifest) !== JSON.stringify(expected.manifest)) throw new Error("Committed Phase 5 taxonomy materialization manifest drifted from exact regeneration");
   const actual = new Map<string, string>();
-  const ledger = manualEditorialRevisionLedgerSchema.parse(await readJson(join(repositoryRoot, "apps/site/src/content-registry/editorial/manual-revisions-v1.json")));
+  const ledger = manualEditorialRevisionLedgerSchema.parse(await readJson(join(repositoryRoot, "content/registry/editorial/manual-revisions-v1.json")));
   const creations = ledger.createdPages;
   for (const repositoryPath of [...expected.files.keys(), ...creations.map(record => record.targetPath)]) {
-    const source = await readFile(join(repositoryRoot, repositoryPath), "utf8").catch(() => undefined);
+    const source = await readFile(join(repositoryRoot, currentContentPath(repositoryPath)), "utf8").catch(() => undefined);
     if (source !== undefined) actual.set(repositoryPath, source.replaceAll("\r\n", "\n"));
   }
   validateManualEditorialRevisions(expected.files, actual, ledger);

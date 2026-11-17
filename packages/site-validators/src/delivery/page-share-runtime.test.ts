@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';import {join} from 'node:path';
-import {derivePageShare} from "../../../../apps/site/src/lib/page-share.js";
+import {derivePageShare} from "../../../../apps/site/src/shared/lib/page-share.js";
 import {inspectPageShareMarkup,measurePageShareRuntime,validatePageShareSource} from './page-share-runtime.js';
 import {analyzeBuiltHtml,renderSecurityHeaderArtifact,validateBuiltHtmlAgainstSecurityHeaders} from './security-headers.js';
 import {measureRouteRuntime} from "../migration/phase8-runtime.js";

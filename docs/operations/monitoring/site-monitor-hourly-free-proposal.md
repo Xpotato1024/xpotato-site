@@ -51,7 +51,7 @@ baselineは本人が承認した**実際にdeploy済みの状態**を固定す�
 
 公式Free枠はCPU 10ms/invocation、128MB、subrequests 50、同時外部接続6、account共有100,000 requests/day（UTC日次）、Cron 5/account。ネットワーク待機はCPU外だがJSON decode/比較/hashはCPUに含む。[制限](https://developers.cloudflare.com/workers/platform/limits/)
 
-現行sourceの照合基準はSite main `d3399dd132ada88c34c27c0eb7410035bcea958a` の [checker](../../../scripts/release/monitoring/site-integrity-monitor.mjs)。CF GET成功経路は `11 + Z + P1 + P2`（route取得Z=0/1、前後deployment各P=1..8ページ）で、Z=1なら通常14/最大28。契約hard capは32。現在の有限scopeは公開3 GET。8sampleの汎用scopeなら公開10 GETなので初期scopeには採らない。
+現行sourceの照合基準はSite main `d3399dd132ada88c34c27c0eb7410035bcea958a` の [checker](../../../ops/deployment/monitoring/site-integrity-monitor.mjs)。CF GET成功経路は `11 + Z + P1 + P2`（route取得Z=0/1、前後deployment各P=1..8ページ）で、Z=1なら通常14/最大28。契約hard capは32。現在の有限scopeは公開3 GET。8sampleの汎用scopeなら公開10 GETなので初期scopeには採らない。
 
 | 設計上限の試算（通常毎時24起動、再実行なし） | 1起動 | 1日 |
 | --- | ---: | ---: |

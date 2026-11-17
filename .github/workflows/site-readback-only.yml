@@ -53,7 +53,7 @@ jobs:
           CLOUDFLARE_SITE_API_TOKEN: ${{ secrets.CLOUDFLARE_SITE_API_TOKEN }}
           CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
         run: |
-          node ./scripts/release/deployment/readback-only-cli.mjs
+          node ./ops/deployment/readback-only-cli.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Readback-only verification incomplete or failed; no deployment' }
       - name: Preserve the new nonsecret verification result
         if: always()

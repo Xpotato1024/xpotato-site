@@ -103,12 +103,12 @@ const assertFrozenLegacySource = (component: string, content: string): void => {
 };
 
 const assertCurrentSourceBoundary = async (): Promise<void> => {
-  const component = await readFile(join(repositoryRoot, "apps/site/src/components/islands/PrimeFactorizer.tsx"), "utf8");
-  const model = await readFile(join(repositoryRoot, "apps/site/src/components/islands/prime-factorizer-model.ts"), "utf8");
-  const registry = await readFile(join(repositoryRoot, "apps/site/src/content-registry/interactive/index.ts"), "utf8");
-  const imports = await readFile(join(repositoryRoot, "apps/site/src/content-registry/interactive/component-imports.ts"), "utf8");
-  const visibleRenderer = await readFile(join(repositoryRoot, "apps/site/src/components/interactive-renderers/PrimeFactorizerVisible.astro"), "utf8");
-  const toolContent = await readFile(join(repositoryRoot, "apps/site/src/content/tools/prime-factorizer.mdx"), "utf8");
+  const component = await readFile(join(repositoryRoot, "apps/site/src/features/tools/islands/PrimeFactorizer.tsx"), "utf8");
+  const model = await readFile(join(repositoryRoot, "apps/site/src/features/tools/islands/prime-factorizer-model.ts"), "utf8");
+  const registry = await readFile(join(repositoryRoot, "content/registry/interactive/index.ts"), "utf8");
+  const imports = await readFile(join(repositoryRoot, "apps/site/src/features/tools/registry/component-imports.ts"), "utf8");
+  const visibleRenderer = await readFile(join(repositoryRoot, "apps/site/src/features/tools/renderers/PrimeFactorizerVisible.astro"), "utf8");
+  const toolContent = await readFile(join(repositoryRoot, "content/tools/prime-factorizer.mdx"), "utf8");
   const deployWorkflow = await readFile(join(repositoryRoot, ".github/workflows/deploy-site.yml"), "utf8");
 
   requireMatch(component, /const \[draft, setDraft\] = useState\("360"\);/u, "vNext draft state");
@@ -143,7 +143,7 @@ const assertCurrentSourceBoundary = async (): Promise<void> => {
     throw new Error("Tool content contains a direct runtime component or hydration path");
   }
   const { assertManualWorkflow } = await import(
-    pathToFileURL(join(repositoryRoot, "scripts/release/deployment/manual-deployment-workflow-policy.mjs")).href,
+    pathToFileURL(join(repositoryRoot, "ops/deployment/manual-deployment-workflow-policy.mjs")).href,
   ) as { assertManualWorkflow: (source: string) => boolean };
   assertManualWorkflow(deployWorkflow);
 };
@@ -258,7 +258,7 @@ const buildRuntimeEvidence = async (): Promise<Pick<Phase7InteractiveReadinessMa
     });
   }
 
-  const blogSources = gitText(["ls-files", "apps/site/src/content/blog/*.mdx"])
+  const blogSources = gitText(["ls-files", "content/articles/*.mdx"])
     .split(/\r?\n/u)
     .filter(Boolean);
   const materialization = JSON.parse(await readFile(join(repositoryRoot, "docs/migration/content-materialization-v1.json"), "utf8")) as {

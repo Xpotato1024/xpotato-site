@@ -1,3 +1,4 @@
+import {validateEditorShell} from "../delivery/editor-runtime.js";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
@@ -7,16 +8,16 @@ import sax from "sax";
 import { providerRedirectRequirementSchema } from "@xpotato/content-contracts";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { generateLegacyInventory, inventoryEndpointPaths, validateBaselineAgainstInventory, verifyLegacyTagIdentity } from "./legacy-inventory.js";
-import { currentApplicationRedirects, redirectArtifact } from "../../../../apps/site/src/content-registry/redirects.js";
-import {articleUrlHistory} from "../../../../apps/site/src/lib/articles/article-url-history.js";
-import { taxonomyRegistry } from "../../../../apps/site/src/content-registry/taxonomy/index.js";
-import { discoveryProfile } from "../../../../apps/site/src/content-registry/discovery.js";
+import { currentApplicationRedirects, redirectArtifact } from "../../../../content/registry/redirects.js";
+import {articleUrlHistory} from "../../../../apps/site/src/features/articles/model/article-url-history.js";
+import { taxonomyRegistry } from "../../../../content/registry/taxonomy/index.js";
+import { discoveryProfile } from "../../../../content/registry/discovery.js";
 import { readSiteContent } from "../site-content.js";
 import { readRegisteredToolRoutes } from "../browser-tools/tool-runtime-policy.js";
-import { siteConfig } from "../../../../apps/site/src/lib/site-config.js";
-import { selectRelated, relatedScore, generateArchivePages } from "../../../../apps/site/src/lib/discovery/discovery.js";
-import {isFeedEligible} from '../../../../apps/site/src/lib/discovery/feed.js';
-import { renderRssFeed } from "../../../../apps/site/src/lib/discovery/rss.js";
+import { siteConfig } from "../../../../apps/site/src/shared/lib/site-config.js";
+import { selectRelated, relatedScore, generateArchivePages } from "../../../../apps/site/src/features/discovery/model/discovery.js";
+import {isFeedEligible} from '../../../../apps/site/src/features/discovery/model/feed.js';
+import { renderRssFeed } from "../../../../apps/site/src/features/discovery/model/rss.js";
 import { measureRouteRuntime, assertRuntimeIsolation } from "./phase8-runtime.js";
 import { buildPhase8SearchEvidence } from "./phase8-search-evidence.js";
 import { measureLocalServing } from "./phase8-serving.js";
@@ -83,6 +84,21 @@ export const inspectHtml = (html: string) => {
   return { canonicals, noindex, description, title, anchors, historicalLocalReferences };
 };
 
+/** Indexable content keeps its SEO contract; the separately owned application shell must stay noindex. */
+export const validateBuiltPageMetadata = (route:string, html:string) => {
+  const metadata=inspectHtml(html);
+  if(route==="/editor/"){
+    assert.deepEqual(validateEditorShell(html),[],"Editor shell contract");
+    assert.equal(metadata.noindex,true,"Editor must not enter discovery");
+    assert.ok(metadata.title,"Editor title is required");
+    assert.deepEqual(metadata.canonicals,[],"Editor shell does not claim an editorial canonical");
+  }else{
+    assert.deepEqual(metadata.canonicals,[new URL(route,origin).href],`Self canonical: ${route}`);
+    assert.ok(metadata.title&&metadata.description,`SEO metadata: ${route}`);
+  }
+  return metadata;
+};
+
 /** Read the complete article-list region, without filtering against expected IDs. */
 export const validateArchiveArticleRoutes = (html: string, expectedRoutes: readonly string[]) => {
   const routes: string[] = [];
@@ -141,7 +157,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
   const canonicalRoutes = catalog.map((item) => item.routeRecord.route);
   assert.equal(new Set(canonicalRoutes).size, catalog.length);
   assert.equal(new Set(catalog.map((item) => item.routeRecord.contentId)).size, catalog.length);
-  const reserved = ["/", "/blog/", "/articles/", "/notes/", "/projects/", "/tools/", "/pages/", "/search/", "/rss.xml", "/404.html"];
+  const reserved = ["/", "/blog/", "/articles/", "/notes/", "/projects/", "/tools/", "/pages/", "/search/", "/rss.xml", "/404.html", "/editor/", "/editor-api/"];
   for (const route of canonicalRoutes) {
     assert.ok(!reserved.includes(route) && !/^\/(?:articles|notes)\/(?:page|category|tag|subject|archive)\//u.test(route), `Reserved route collision: ${route}`);
   }
@@ -153,9 +169,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
     const file = relative(dist, path).replaceAll("\\", "/");
     const route = `/${file.replace(/index\.html$/u, "")}`;
     const html = await readFile(path, "utf8");
-    const metadata = inspectHtml(html);
-    assert.deepEqual(metadata.canonicals, [new URL(route, origin).href], `Self canonical: ${route}`);
-    assert.ok(metadata.title && metadata.description, `SEO metadata: ${route}`);
+    const metadata = validateBuiltPageMetadata(route,html);
     assert.ok(!route.includes("__phase8_fixture"), "Preview fixture leaked into production output");
     htmlRoutes.set(route, { html, metadata });
   }
@@ -283,7 +297,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
       heldInternalLinks.push({ source: page.route, target: url.pathname });
     }
     const slug = heldEntries.find(e=>e.routeRecord.contentId===page.contentId)!.source.slug;
-    const sourceBase = join(phase8Root, "apps/site/src/content/blog", slug);
+    const sourceBase = join(phase8Root, "content/articles", slug);
     const source = await readFile(`${sourceBase}.mdx`, "utf8").catch(() => readFile(`${sourceBase}.md`, "utf8"));
     for (const uri of page.metadata.historicalLocalReferences) {
       assert.ok(source.includes(`](${uri})`), "Historical reference URI must retain exact source evidence");
@@ -292,7 +306,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
   }
   const safetySource = await readFile(join(phase8Root, ".github/workflows/deploy-site.yml"), "utf8");
   const { assertManualWorkflow } = await import(
-    pathToFileURL(join(phase8Root, "scripts/release/deployment/manual-deployment-workflow-policy.mjs")).href,
+    pathToFileURL(join(phase8Root, "ops/deployment/manual-deployment-workflow-policy.mjs")).href,
   ) as { assertManualWorkflow: (source: string) => boolean };
   assertManualWorkflow(safetySource);
   const media = await json("docs/migration/media-repository-candidate-v1.json");

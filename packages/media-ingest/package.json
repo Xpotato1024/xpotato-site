@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./draft": "./src/draft-media.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -11,6 +12,8 @@
   "dependencies": {
     "@xpotato/content-contracts": "*",
     "fontkit": "2.0.4",
-    "sharp": "0.35.5"
+    "sharp": "0.35.5",
+    "@xpotato/editor-core": "*",
+    "libheif-js": "1.23.5"
   }
 }

@@ -72,7 +72,7 @@ Mermaid はインストール済み Chrome/Chromium を使う（WindowsではEdg
 手動 layout が必要なら draw.io の `.drawio` を非公開編集元として保持できる。Site viewer/runtime として追加しない。SVG export は外部 font/resource、HTML label/foreignObject、link/action、script、doctype、file path を含めない。標準 text/path と presentation attribute による self-contained SVG にする。検査例:
 
 ```sh
-node tools/authoring/technical-visuals/validate-svg.mjs .local/diagram.svg
+node ops/media/visuals/validate-svg.mjs .local/diagram.svg
 ```
 
 検査は既存 `sanitizeSvg` と renderer 固有 allowlist・予算を通す。任意 CSS/style/要素を自動的に無害化したと称さず拒否し、安全な再 export を求める。global sanitizer/CSP は緩和しない。
@@ -84,8 +84,8 @@ node tools/authoring/technical-visuals/validate-svg.mjs .local/diagram.svg
 ```sh
 npm run test:technical-visuals
 XPOTATO_TECHNICAL_VISUAL_BROWSER=1 npm run test:technical-visuals
-node --import tsx tools/review/articles/technical-visual-preview.ts
-node tools/review/articles/technical-visual-capture.mjs
+node --import tsx ops/qa/review/articles/technical-visual-preview.ts
+node ops/qa/review/articles/technical-visual-capture.mjs
 ```
 
 通常CIの `test:release` からも呼ばれ、CIでは実Mermaid browser試験を省略しない。Windows では環境変数を PowerShell の `$env:XPOTATO_TECHNICAL_VISUAL_BROWSER='1'` で設定する。preview は fresh `.local/technical-visual-preview` にのみ作り、既存 `buildPrivateCandidateAstro` と実 ContentLayout/BaseLayout、Figure、BarChart、ArticleEndnote、MathML を使う。canonical article は編集しない。公開 build、feed、sitemap、search、publication manifest の入力へ追加しない。private marker / noindex / `productionEligible:false` を保持する。

@@ -12,28 +12,28 @@
     "commit": "7254627c86a99b0f2a0da66334aebb95b6b7d9b0",
     "files": [
       {
-        "path": "apps/site/src/content/blog/77arj41r5z8amrn46pdx71mknr.mdx",
+        "path": "content/articles/77arj41r5z8amrn46pdx71mknr.mdx",
         "gitContentSha256": "cd8165b303f36b6d415c3b2f39e5473b903cb2f9707146286e06034a74969f76",
         "workingTreeSha256": "2cbe36732488d1c557f9c2d7fbc20538fa1b8059f1f29191016b45c63bee9b03",
         "workingTreeMatchesGitAfterCheckoutEolNormalization": true,
         "gitBlob": "1c289e037264e6e7e2eb2b546ccea1439a5394e5"
       },
       {
-        "path": "apps/site/src/content-registry/media/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "path": "content/registry/media/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
         "gitContentSha256": "0e347e9192addf1c89b40275a877b9d323849f6d65ebc24b4c97937db9b29bee",
         "workingTreeSha256": "f37aca30754f0a419849242f536ee4e9e7608f4e790019850fe7d0e4c0f4a865",
         "workingTreeMatchesGitAfterCheckoutEolNormalization": true,
         "gitBlob": "4f9e95835d098f74d3c9768d2fc6bd364a413a97"
       },
       {
-        "path": "apps/site/src/content-registry/media-rights/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "path": "content/registry/media-rights/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
         "gitContentSha256": "64d0bc50b3fd9f0240e28e0f7f874a43d8f9363519eb8eb459c51ce66844ef87",
         "workingTreeSha256": "d9eff49c1501ff9969a0d71656b5d3187d7ee20e0009d80523b6440b6462e0e3",
         "workingTreeMatchesGitAfterCheckoutEolNormalization": true,
         "gitBlob": "268de8b450ee187eea3f94f312164cb5bca848cc"
       },
       {
-        "path": "apps/site/src/content-registry/provenance/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "path": "content/registry/provenance/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
         "gitContentSha256": "a2a18ae53a30dd3a8c53ff30ce5268595fff140bafd27cb712fff2657c6b5137",
         "workingTreeSha256": "10c3884249cfb8cb279b16993382d280f1210f748a40f27ed741e2e6d2da582f",
         "workingTreeMatchesGitAfterCheckoutEolNormalization": true,

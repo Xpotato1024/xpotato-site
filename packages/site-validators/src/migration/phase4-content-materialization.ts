@@ -1,3 +1,4 @@
+import {currentContentPath} from './content-layout-paths.js';
 import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -441,7 +442,7 @@ export const checkPhase4Materialization = async (options: Readonly<{ activeFiles
   if (JSON.stringify(committedManifest) !== JSON.stringify(expected.manifest)) throw new Error("Committed Phase 4 materialization manifest differs from exact frozen-source regeneration");
   if (options.activeFiles !== false) {
     for (const [repositoryPath, expectedSource] of expected.files) {
-      const actualSource = await readFile(join(repositoryRoot, repositoryPath), "utf8").catch(() => undefined);
+      const actualSource = await readFile(join(repositoryRoot, currentContentPath(repositoryPath)), "utf8").catch(() => undefined);
       if (actualSource === undefined) throw new Error(`Materialized content file missing: ${repositoryPath}`);
       if (actualSource !== expectedSource) throw new Error(`Materialized content drift: ${repositoryPath}`);
     }

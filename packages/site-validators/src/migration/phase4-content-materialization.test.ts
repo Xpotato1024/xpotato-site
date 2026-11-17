@@ -49,7 +49,7 @@ describe("Phase 4 portable content materialization", () => {
     const about = reviewedEditorialBodyFor("pages:about");
     const project = reviewedEditorialBodyFor("projects:xpotato-site");
     expect(about?.reviewId).toBe("phase4-about-current-state-v1");
-    expect(about?.body).toContain("apps/site/src/content/");
+    expect(about?.body).toContain("content/");
     expect(project?.reviewId).toBe("phase4-xpotato-site-current-state-v1");
     expect(project?.body).toContain("Cloudflare Workers Static Assets");
     expect(project?.body).toContain("本番切替");

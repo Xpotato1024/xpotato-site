@@ -10,6 +10,11 @@ canonical_for:
 
 # vNext Design Status
 
+## 2026-11-17 公開Git CMS・独立Draft媒体（実装候補）
+
+本人が合意した制作目標に従い[ADR-0079](../design/adr/0079-public-git-cms-private-media-staging.md)を実装する。公開Git下書き・MDX/ブロック編集・共通デザイン・Draft専用R2の容量/参照検証・固定commitのAstroレビューを追加する。公開済みA/B/C媒体の承認、正式export、手動配信の境界を変更しない。App登録・provider設定・iPhone実機・本番受入れとは別であり、実装と検証の状態は[CMS実装状態](cms-implementation-status.md)を参照する。
+
+
 ## 2026-11-15 一貫制作と技術ビジュアル（実装候補）
 
 [ADR-0078](../design/adr/0078-content-production-and-static-technical-visuals.md)に基づき、記事/ツールの入口を一貫制作手順へ整理し、既存KaTeX・共通部品を保ちながら静的なMermaid/Vega制作経路を追加する候補。stage独立性、固定入力、本人承認、R2保存/保護、canonical export、Production artifactと配信認可を変更しない。実装・ローカル検証とmain採用/本番配信は別。

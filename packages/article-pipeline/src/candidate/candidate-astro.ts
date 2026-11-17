@@ -74,11 +74,11 @@ export function candidateAstroConfiguration(repositoryRoot:string,canonical:stri
   +'import mdx from '+JSON.stringify(absolute("@astrojs/mdx"))+';\n'
   +'import tailwindcss from '+JSON.stringify(absolute("@tailwindcss/vite"))+';\n'
   +'import {unified} from '+JSON.stringify(absolute("@astrojs/markdown-remark"))+';\n'
-  +'import {codeBlockTransformer} from '+JSON.stringify(local("apps/site/src/lib/content/code-block-transformer.mjs"))+';\n'
-  +'import {remarkMathBlocks} from '+JSON.stringify(local("apps/site/src/lib/content/math-blocks.mjs"))+';\n'
-  +'import {rehypeTableAlignment} from '+JSON.stringify(local("apps/site/src/lib/content/table-alignment.mjs"))+';\n'
-  +'import {rehypeFootnoteBacklinks} from '+JSON.stringify(local("apps/site/src/lib/content/footnote-backlinks.mjs"))+';\n'
-  +'import {routeFontIntegration} from '+JSON.stringify(local("apps/site/src/lib/font-subsets.mjs"))+';\n'
+  +'import {codeBlockTransformer} from '+JSON.stringify(local("apps/site/src/shared/blocks/transforms/code-block-transformer.mjs"))+';\n'
+  +'import {remarkMathBlocks} from '+JSON.stringify(local("apps/site/src/shared/blocks/transforms/math-blocks.mjs"))+';\n'
+  +'import {rehypeTableAlignment} from '+JSON.stringify(local("apps/site/src/shared/blocks/transforms/table-alignment.mjs"))+';\n'
+  +'import {rehypeFootnoteBacklinks} from '+JSON.stringify(local("apps/site/src/shared/blocks/transforms/footnote-backlinks.mjs"))+';\n'
+  +'import {routeFontIntegration} from '+JSON.stringify(local("apps/site/src/shared/lib/font-subsets.mjs"))+';\n'
   +'export default defineConfig({site:'+JSON.stringify(new URL(canonical).origin)+',output:"static",outDir:"./output",cacheDir:"./cache",'
   +'markdown:{processor:unified({rehypePlugins:[rehypeFootnoteBacklinks,rehypeTableAlignment]}),shikiConfig:{theme:"github-dark",transformers:[codeBlockTransformer]}},'
   +'integrations:[routeFontIntegration(),mdx({processor:unified({remarkPlugins:[remarkMathBlocks],rehypePlugins:[rehypeFootnoteBacklinks,rehypeTableAlignment]})})],'
@@ -134,11 +134,11 @@ export async function buildPrivateCandidateAstro(input:{repositoryRoot:string;co
  await writeFile(join(root,"src/content.config.ts"),"export const collections = {};\n",{mode:0o600});
  await writeFile(join(root,"package.json"),JSON.stringify({name:"xpotato-private-candidate",version:"0.0.0",private:true,type:"module"}),{mode:0o600});
  const page='---\nimport Content,{getHeadings} from '+JSON.stringify(target.replaceAll("\\","/"))+';\n'
-  +'import ContentLayout from '+JSON.stringify(join(repositoryRoot,"apps/site/src/layouts/ContentLayout.astro").replaceAll("\\","/"))+';\n'
-  +[...modules].sort().map(name=>'import '+name+' from '+JSON.stringify(join(repositoryRoot,'apps/site/src/components/content',name+'.astro').replaceAll('\\','/'))+';\n').join('')
-  +'import HistoricalReferenceLink from '+JSON.stringify(join(repositoryRoot,"apps/site/src/components/content/HistoricalReferenceLink.astro").replaceAll("\\","/"))+';\n'
-  +'import {selectTableOfContents} from '+JSON.stringify(join(repositoryRoot,"apps/site/src/lib/content/table-of-contents.ts").replaceAll("\\","/"))+';\n'
-  +'const fm='+JSON.stringify(parsed.frontmatter)+';const components={'+[...modules].sort().join(',')+([...modules].length?',':'')+'a:HistoricalReferenceLink};\n---\n'
+  +'import ContentLayout from '+JSON.stringify(join(repositoryRoot,"apps/site/src/shared/layouts/ContentLayout.astro").replaceAll("\\","/"))+';\n'
+  +'import {contentComponents as allContentComponents} from '+JSON.stringify(join(repositoryRoot,'apps/site/src/shared/content/index.ts').replaceAll('\\','/'))+';\n'
+  +'import HistoricalReferenceLink from '+JSON.stringify(join(repositoryRoot,"apps/site/src/features/discovery/components/HistoricalReferenceLink.astro").replaceAll("\\","/"))+';\n'
+  +'import {selectTableOfContents} from '+JSON.stringify(join(repositoryRoot,"apps/site/src/shared/blocks/transforms/table-of-contents.ts").replaceAll("\\","/"))+';\n'
+  +'const fm='+JSON.stringify(parsed.frontmatter)+';const components={...allContentComponents,a:HistoricalReferenceLink};\n---\n'
   +'<ContentLayout id={fm.id} collection="blog" title={fm.title} description={fm.description} taxonomy={[fm.category,...fm.tags].join(" ")} seo={fm.seo} headings={selectTableOfContents(getHeadings(),'+JSON.stringify(parsed.body)+')} publication={{pubDate:fm.pubDate,updatedDate:fm.updatedDate,draft:fm.draft}}>'
   +'<div slot="metadata" class="article-meta"><time datetime={fm.pubDate}>{fm.pubDate}</time>{fm.updatedDate&&<span>更新 <time datetime={fm.updatedDate}>{fm.updatedDate}</time></span>}</div>'
   +'<Content components={components}/></ContentLayout>\n';

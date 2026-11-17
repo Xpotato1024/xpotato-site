@@ -7,7 +7,7 @@ import {createToolFixture} from '../../../../tests/fixtures/browser-tools.js';
 import {toolInstallationFixture} from '../../../../tests/fixtures/tool-installation.js';
 import {verifyToolCandidate,toolHash} from './browser-tool-adoption.js';
 import {checkBrowserToolInstallations} from './browser-tool-installation.js';
-import {installBrowserTool} from '../../../../tools/authoring/browser-tool-installation.js';
+import {installBrowserTool} from '../../../../ops/authoring/browser-tool-installation.js';
 vi.mock('node:fs/promises',{spy:true});
 const actual=await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
 const roots:string[]=[],cache=process.env.npm_config_cache;
@@ -47,7 +47,7 @@ it('refuses generated filename aliases and device basenames in both plan and app
  await checkBrowserToolInstallations(host.siteRoot);
 },60000);
 it('two distinct synchronous/Worker tools use the same new/public/update entrypoints and preserve editorial pages and historical artifacts',async()=>{
- const host=await fixture(true),originalPage=await readFile(join(host.siteRoot,'apps/site/src/content/tools/prime-factorizer.mdx'),'utf8');
+ const host=await fixture(true),originalPage=await readFile(join(host.siteRoot,'content/tools/prime-factorizer.mdx'),'utf8');
  const current=JSON.parse(await readFile(join(host.siteRoot,'config/browser-tools/installations.json'),'utf8')).installations.find((entry:{pin:{toolId:string}})=>entry.pin.toolId==='prime-factorizer').pin;
  const manifest=JSON.parse(await readFile(join(host.siteRoot,'vendor/browser-tools',current.toolId,current.releaseId,'browser-tool.json'),'utf8'));
  const notice=join(host.siteRoot,'apps/site/public/tool-licenses',current.toolId+'-v'+manifest.version,'MUSL-COPYRIGHT.txt'),noticeBytes=await readFile(notice);
@@ -57,7 +57,7 @@ it('two distinct synchronous/Worker tools use the same new/public/update entrypo
   const input={siteRoot:host.siteRoot,...f,releaseId:'test-v1',placement};
   expect(await installBrowserTool(input)).toMatchObject({draft:true,contentChanged:true,publication:false});
   await installBrowserTool({...input,apply:true});await checkBrowserToolInstallations(host.siteRoot);
-  const pagePath=join(host.siteRoot,'apps/site/src/content/tools',toolId+'.mdx'),page=await readFile(pagePath,'utf8');
+  const pagePath=join(host.siteRoot,'content/tools',toolId+'.mdx'),page=await readFile(pagePath,'utf8');
   const editorial=page.replace('"draft": true','"draft": false')+'\nEditorial explanation survives release updates.\n';
   await writeFile(pagePath,editorial);
   await expect(checkBrowserToolInstallations(host.siteRoot)).rejects.toThrow(/public admission/);
@@ -73,17 +73,17 @@ it('two distinct synchronous/Worker tools use the same new/public/update entrypo
   expect(await readFile(pagePath,'utf8')).toBe(editorial);
   expect(await readFile(join(host.siteRoot,'vendor/browser-tools',toolId,'test-v1/browser-tool.json'),'utf8')).toContain('1.0.0');
   expect(await readFile(join(host.siteRoot,'vendor/browser-tools',toolId,'test-v2/browser-tool.json'),'utf8')).toContain('1.0.1');
-  expect(await readFile(join(host.siteRoot,'apps/site/src/content-registry/interactive/releases.ts'),'utf8')).toContain(prior.artifactSha256);
+  expect(await readFile(join(host.siteRoot,'content/registry/interactive/releases.ts'),'utf8')).toContain(prior.artifactSha256);
   await expect(installBrowserTool({...update,publicAdmission:pin,replaceArtifact:'0'.repeat(64)})).rejects.toThrow(/replace-artifact/);
   await expect(installBrowserTool({...update,publicAdmission:pin,replaceArtifact:pin.artifactSha256,placement})).rejects.toThrow(/preserves placement/);
  }
- expect(await readFile(join(host.siteRoot,'apps/site/src/content/tools/prime-factorizer.mdx'),'utf8')).toBe(originalPage);
+ expect(await readFile(join(host.siteRoot,'content/tools/prime-factorizer.mdx'),'utf8')).toBe(originalPage);
  expect(await readFile(notice)).toEqual(noticeBytes);
 },120000);
 it.each([false,true])('one transaction rolls back failures and preserves unexpected concurrent edits (%s)',async concurrent=>{
  const f=await fixture();await installBrowserTool({...f,apply:true});
  const next=await candidate(join(f.root,'next'),'synthetic-counter',false,'1.0.1');
- const paths=['config/browser-tools/installations.json','apps/site/package.json','package-lock.json','apps/site/src/content/tools/new-counter.mdx','apps/site/src/content-registry/interactive/generated/records.ts'];
+ const paths=['config/browser-tools/installations.json','apps/site/package.json','package-lock.json','content/tools/new-counter.mdx','content/registry/interactive/generated/records.ts'];
  const before=await Promise.all(paths.map(p=>readFile(join(f.siteRoot,p),'utf8')));
  const prior=JSON.parse(before[0]!).installations[0].pin;let writes=0;
  vi.mocked(writeFile).mockImplementation(async(path,data,options)=>{

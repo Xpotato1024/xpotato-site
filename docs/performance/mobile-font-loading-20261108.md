@@ -17,7 +17,7 @@ Draft PR158の `907e8e8c11bfe33889c1a00f02a8f7cd4ef65bc8` を基点とする独�
 CPython 3.12.15 Windows x64、固定FontTools 4.66.1 / Brotli 1.2.0を独立したローカル環境で使用した。通常のnpm buildとCIにPythonは追加しない。
 
 1. 変更前の`generate-font-core.py`で元の4フォントがバイト一致することを確認。
-2. レビュー済み公開ホームの文字を既存の`core-input-v1.json`へ統合し、`python tools/assets/generate-font-core.py --write`で生成。
+2. レビュー済み公開ホームの文字を既存の`core-input-v1.json`へ統合し、`python ops/build/assets/generate-font-core.py --write`で生成。
 3. `--write`なしで新しい4フォントの再現を確認。
 4. 全1,398 glyphの輪郭、advance、unitsPerEmを以前の統合フォントまたは元の分割ファイルと照合し一致を確認。
 

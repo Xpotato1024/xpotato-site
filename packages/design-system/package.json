@@ -1,0 +1,14 @@
+{
+  "name": "@xpotato/design-system",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./src/tokens.css",
+    "./theme": "./src/theme.mjs",
+    "./fonts.css": "./src/fonts.css",
+    "./fonts-core.css": "./src/fonts-core.css"
+  },
+  "dependencies": {
+    "postcss": "8.5.26"
+  }
+}

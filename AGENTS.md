@@ -124,7 +124,8 @@ Exact contract=`docs/contracts/external-ai-disclosure-contract.md` / ADR-0026。
 
 ## Article Job
 
-- AI never writes canonical `apps/site/src/content/` directly
+- Published canonical content is changed only by the regular publication/export workflow.
+- ADR-0079 permits human/AI editing of portable `draft:true` MDX on the selected public `content/*` work branch. This is draft source management, not publication, audit PASS, merge, or production approval.
 - semantic AI=fixed request + Skill snapshot + response schema
 - deterministic executor owns import/state/artifacts/disclosure admission
 - source/evidence/claim separated
@@ -132,7 +133,7 @@ Exact contract=`docs/contracts/external-ai-disclosure-contract.md` / ADR-0026。
 - example assessment before content audit
 - P0/P1 content finding blocks visual/approval
 - human approval cannot be delegated to AI/Skill
-- approval before persistent media mutation
+- approval before canonical/public/protected (A/B/C) media mutation; owner-authenticated private Draft staging is a distinct lifecycle and has no A/B/C mutation authority (ADR-0079).
 
 Normal persistence/export:
 
@@ -166,6 +167,7 @@ Full job workspace is private/ephemeral. Cleanup only after durable Git ref + du
 - photo/screenshot/raster project/site hero/AI raster/gallery not committed to Git
 - HEIC/HEIF input allowed
 - raw camera original is not site long-term SoT
+- Draft CMS/media conversion uses the shared editor-core policy. Lossy compression must be explicit; technical pixels and animation timing must not be silently changed.
 - ingest -> privacy-normalized lossless canonical master
 - visual audit **before** delivery variants
 - approved canonical master -> private canonical source storage

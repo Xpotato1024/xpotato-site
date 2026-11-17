@@ -63,7 +63,7 @@ export function publicationPackageObjects(p:CiPublicationPackage):PublishObject[
 export function validateCiPublicationPackage(raw:unknown){
  const p=ciPublicationPackageSchema.parse(raw),fm=splitDraft(p.mdx).frontmatter;
  if(p.semanticSha256!==publicationSemanticIdentity(p)||fm.id!==p.contentId||p.registry.contentId!==p.contentId
-  ||privateDraftOutputErrors('apps/site/src/content/blog/approved.mdx',p.mdx).length||validatePortableMdx(splitDraft(p.mdx).body).length)throw Error('CI_PUBLICATION_SUBJECT_INVALID');
+  ||privateDraftOutputErrors('content/articles/approved.mdx',p.mdx).length||validatePortableMdx(splitDraft(p.mdx).body).length)throw Error('CI_PUBLICATION_SUBJECT_INVALID');
  if(p.revision&&(p.revision.previous.route!==articleRoute(p.contentId)||p.revision.previous.pubDate!==fm.pubDate))throw Error('CI_UPDATE_IDENTITY_OR_DATE_CHANGED');
  assertPublicationRights(p.rights);assertPublicPublicationMetadata({registry:p.registry,rights:p.rights,sourceRefs:p.sourceRefs,materialClaims:p.materialClaims,mediaSources:p.mediaSources,aiRuns:p.aiRuns});
  if(/libfile_|codex-thread:|chatgpt\.com\/c\/|file_[a-f0-9]{16}/iu.test(canonicalJson(p)))throw Error('CI_PUBLICATION_PRIVATE_LINEAGE_DENIED');

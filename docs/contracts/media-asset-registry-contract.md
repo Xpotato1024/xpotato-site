@@ -28,7 +28,7 @@ interface ContentMediaRegistry {
 candidate:
 
 ```text
-apps/site/src/content-registry/media/<collection>/<content-id>.json
+content/registry/media/<collection>/<content-id>.json
 ```
 
 ## Canonical source reference

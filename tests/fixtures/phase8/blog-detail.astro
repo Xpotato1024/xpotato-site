@@ -2,7 +2,7 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import {articleUrlId} from "@xpotato/content-contracts";
 import identityMap from "../../../docs/migration/content-id-map-v1.json";
-import BlogDetail from "../../../apps/site/src/components/content/BlogDetail.astro";
+import BlogDetail from "../../../apps/site/src/features/articles/components/BlogDetail.astro";
 
 interface Props {
   entry: CollectionEntry<"blog">;

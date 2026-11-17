@@ -16,12 +16,12 @@ describe("bundled font admission", () => {
   it("rejects absent/changed fonts and treats LF/CRLF text as the same binding", async () => {
     const root = await mkdtemp(join(tmpdir(), "social-font-"));
     try {
-      const fonts = join(root, "apps/site/public/fonts"), styles = join(root, "apps/site/src/styles");
+      const fonts = join(root, "apps/site/public/fonts"), styles = join(root, "packages/design-system/src");
       await mkdir(fonts, { recursive: true }); await mkdir(styles, { recursive: true });
       await writeFile(join(fonts, "zenkakugothicnew-OFL.txt"), await readFile(resolve("apps/site/public/fonts/zenkakugothicnew-OFL.txt")));
       await writeFile(join(styles, "fonts.css"), "");
       expect(() => bundledOutlineFont(root)).toThrow("CARD_FONT_MISSING");
-      const css = await readFile(resolve("apps/site/src/styles/fonts.css"), "utf8");
+      const css = await readFile(resolve("packages/design-system/src/fonts.css"), "utf8");
       const block = css.match(/@font-face\s*\{[^}]+\}/gu)!.find(value => value.includes("font-family: 'Zen Kaku Gothic New'") && value.includes("font-weight: 500;"))!;
       const file = /url\(\/fonts\/(font-[a-f0-9]{16}\.woff2)\)/u.exec(block)![1]!;
       await writeFile(join(styles, "fonts.css"), block);

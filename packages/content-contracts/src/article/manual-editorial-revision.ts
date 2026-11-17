@@ -7,7 +7,7 @@ export const manualEditorialRevisionLedgerSchema = z.object({
   schemaVersion: z.literal(1),
   baseline: z.literal("phase5-taxonomy-materialization-v1"),
   createdPages: z.array(z.object({
-    targetPath: repositoryRelativePathSchema.regex(/^apps\/site\/src\/content\/pages\/[^/]+\.mdx$/u),
+    targetPath: repositoryRelativePathSchema.regex(/^(?:apps\/site\/src\/)?content\/pages\/[^/]+\.mdx$/u),
     provenance: publicationProvenanceRecordSchema.refine(record => record.origin === "manual", "manual origin required"),
   }).strict()),
   revisions: z.array(z.object({

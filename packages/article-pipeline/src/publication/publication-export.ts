@@ -23,7 +23,7 @@ export function assertExportChanges(changes:ExportChange[],expectedPaths:readonl
  const actual=changes.map(change=>change.path).sort();
  if(new Set(actual).size!==actual.length||fingerprint(actual)!==fingerprint([...expectedPaths].sort()))fail("EXPORT_EXACT_PATH_SET_REQUIRED",3);
  for(const change of changes){
-  if(!/^apps\/site\/src\/(?:content\/blog|content-registry)\/[a-zA-Z0-9_./-]+$/u.test(change.path)
+  if(!/^content\/(?:articles|registry)\/[a-zA-Z0-9_./-]+$/u.test(change.path)
    ||change.path.split("/").includes("..")||!(change.path in base)||base[change.path]!==change.before)fail("EXPORT_BASE_CONFLICT",3);
  }
 }
@@ -71,28 +71,28 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
   assertPublicPublicationMetadata({registry:compact.registry,rights:compact.rights,provenance});
   const id=c.materials.frontmatter.id,slug=publicationFileSlug(repo,id);
   assertArticleRoute(c.materials.route,id);
-  const mediaPath="apps/site/src/content-registry/media/blog/"+id+".json",rightsPath="apps/site/src/content-registry/media-rights/blog/"+id+".json";
-  const provenancePath="apps/site/src/content-registry/provenance/blog/"+id+".json",contentPath="apps/site/src/content/blog/"+slug+".mdx";
+  const mediaPath="content/registry/media/blog/"+id+".json",rightsPath="content/registry/media-rights/blog/"+id+".json";
+  const provenancePath="content/registry/provenance/blog/"+id+".json",contentPath="content/articles/"+slug+".mdx";
   const after:Record<string,string|null>={[contentPath]:c.materials.mdx,[mediaPath]:canonicalJson(mockWrap(compact.registry))+"\n",
    [rightsPath]:canonicalJson(mockWrap(compact.rights))+"\n",[provenancePath]:canonicalJson(mockWrap(provenance))+"\n"};
   // The mock package is deliberately rejected by production validators, even if its envelope is removed.
   if(!privateDraftOutputErrors(provenancePath,canonicalJson(provenance)).length)fail("MOCK_LINEAGE_RELEASE_GUARD_REQUIRED",3);
-  if(c.materials.redirects.length)after["apps/site/src/content-registry/article-redirects/"+id+".json"]=canonicalJson(mockWrap(c.materials.redirects))+"\n";
+  if(c.materials.redirects.length)after["content/registry/article-redirects/"+id+".json"]=canonicalJson(mockWrap(c.materials.redirects))+"\n";
   if(c.v.c.store.original&&c.v.c.store.original.route!==c.materials.route&&repo.records.find(r=>r.contentId===id)?.slug!==slug){
    const oldSlug=/^\/blog\/([a-z0-9-]+)\/$/u.exec(c.v.c.store.original.route)?.[1];if(!oldSlug)fail("EXPORT_UPDATE_ROUTE_INVALID",3);
-   after["apps/site/src/content/blog/"+oldSlug+".mdx"]=null;
+   after["content/articles/"+oldSlug+".mdx"]=null;
   }
   const optionalRead=async(path:string)=>{try{return await safeRead(join(root,path));}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;return null;}};
   const registryRead=async(path:string)=>repo.registrySnapshot[path]??await optionalRead(path);
   Object.assign(after,mockRegistryIndexChanges({id,provenanceSha256:fingerprint(provenance),
-   media:(await registryRead("apps/site/src/content-registry/media/index.ts"))!,
-   provenance:(await registryRead("apps/site/src/content-registry/provenance/index.ts"))!,
-   rights:await registryRead("apps/site/src/content-registry/media-rights/index.ts"),
-   redirects:await registryRead("apps/site/src/content-registry/redirects.ts"),routeChanged:c.materials.redirects.length>0}));
+   media:(await registryRead("content/registry/media/index.ts"))!,
+   provenance:(await registryRead("content/registry/provenance/index.ts"))!,
+   rights:await registryRead("content/registry/media-rights/index.ts"),
+   redirects:await registryRead("content/registry/redirects.ts"),routeChanged:c.materials.redirects.length>0}));
   const physicalBase:Record<string,string|null>={},base:Record<string,string|null>={},changes:ExportChange[]=[];
   for(const [path,text] of Object.entries(after)){
    physicalBase[path]=await optionalRead(path);
-   const original=repo.records.find(record=>path==="apps/site/src/content/"+record.collection+"/"+record.slug+".mdx");
+   const original=repo.records.find(record=>path==="content/"+record.collection+"/"+record.slug+".mdx");
    base[path]=repo.registrySnapshot[path]??original?.source??physicalBase[path]!;
    // Synthetic fixtures model committed previous exports without writing them into the normal content tree.
    if(base[path]!==physicalBase[path]&&c.v.plan!.scope!=="synthetic_fixture")fail("EXPORT_BASE_CONFLICT",3);
@@ -138,19 +138,19 @@ export async function verifyExportArtifact(directory:string,expectedSha256:strin
  if(manifest.fileSlug!==undefined){try{assertArticleRoute(manifest.route,manifest.contentId);}catch{fail("EXPORT_MANIFEST_SHAPE_INVALID",3);}}
  if(typeof slug!=="string"||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug)||slug.length>120)fail("EXPORT_MANIFEST_SHAPE_INVALID",3);
  if(!slug||!/^[a-f0-9-]{36}$/u.test(manifest.contentId)||!Array.isArray(manifest.files)||!Array.isArray(manifest.changes))fail("EXPORT_MANIFEST_SHAPE_INVALID",3);
- for(const change of manifest.changes)if(typeof change.path!=='string'||!/^apps\/site\/src\/(?:content\/blog|content-registry)\/[a-zA-Z0-9_./-]+$/u.test(change.path)||change.path.split('/').includes('..'))fail('EXPORT_PATH_INVALID',3);
+ for(const change of manifest.changes)if(typeof change.path!=='string'||!/^content\/(?:articles|registry)\/[a-zA-Z0-9_./-]+$/u.test(change.path)||change.path.split('/').includes('..'))fail('EXPORT_PATH_INVALID',3);
  const id=manifest.contentId;
- const required=["apps/site/src/content/blog/"+slug+".mdx",
-  ...["media","media-rights","provenance"].flatMap(name=>["apps/site/src/content-registry/"+name+"/blog/"+id+".json","apps/site/src/content-registry/"+name+"/index.ts"])];
- const routes=manifest.changes.some((change:ExportChange)=>change.path==="apps/site/src/content-registry/article-redirects/"+id+".json");
- if(routes)required.push("apps/site/src/content-registry/article-redirects/"+id+".json","apps/site/src/content-registry/redirects.ts");
+ const required=["content/articles/"+slug+".mdx",
+  ...["media","media-rights","provenance"].flatMap(name=>["content/registry/"+name+"/blog/"+id+".json","content/registry/"+name+"/index.ts"])];
+ const routes=manifest.changes.some((change:ExportChange)=>change.path==="content/registry/article-redirects/"+id+".json");
+ if(routes)required.push("content/registry/article-redirects/"+id+".json","content/registry/redirects.ts");
  const deletion=manifest.previous&&(manifest.previous.fileSlug!==undefined?manifest.previous.fileSlug!==slug:manifest.previous.route!==manifest.route)?manifest.previous:null;
  const oldSlug=deletion?(deletion.fileSlug??/^\/blog\/([a-z0-9-]+)\/$/u.exec(deletion.route)?.[1]):null;
  if(deletion&&(typeof oldSlug!=='string'||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(oldSlug)||oldSlug.length>120||!routes||!/^[a-f0-9]{64}$/u.test(deletion.mdxSha256)))fail("EXPORT_DELETE_BINDING_INVALID",3);
- const allowed=[...required,...(oldSlug?["apps/site/src/content/blog/"+oldSlug+".mdx"]:[])].sort();
+ const allowed=[...required,...(oldSlug?["content/articles/"+oldSlug+".mdx"]:[])].sort();
  const allPaths=manifest.changes.map((change:ExportChange)=>change.path).sort();
  if(fingerprint(allPaths)!==fingerprint(allowed))fail("EXPORT_EXACT_PATH_SET_REQUIRED",3);
- for(const change of manifest.changes)if(change.after===null&&(!oldSlug||change.path!=="apps/site/src/content/blog/"+oldSlug+".mdx"||typeof change.before!=="string"||sha256(change.before)!==deletion.mdxSha256))fail("EXPORT_DELETE_BINDING_INVALID",3);
+ for(const change of manifest.changes)if(change.after===null&&(!oldSlug||change.path!=="content/articles/"+oldSlug+".mdx"||typeof change.before!=="string"||sha256(change.before)!==deletion.mdxSha256))fail("EXPORT_DELETE_BINDING_INVALID",3);
  const afterPaths=manifest.changes.filter((change:ExportChange)=>change.after!==null).map((change:ExportChange)=>change.path).sort();
  if(fingerprint(afterPaths)!==fingerprint(required.sort()))fail("EXPORT_EXACT_PATH_SET_REQUIRED",3);
  if(sha256(exactExportPatch(manifest.changes))!==manifest.patchSha256)fail("EXPORT_PATCH_PROJECTION_MISMATCH",3);
@@ -159,7 +159,7 @@ export async function verifyExportArtifact(directory:string,expectedSha256:strin
  const tree=await localFileManifest(directory);
  const expected=[".private-draft-preview","manifest.json","changes.patch",...manifest.files.map((file:{path:string})=>"files/"+file.path)].sort();
  if(fingerprint(tree.map(file=>file.path))!==fingerprint(expected))fail("EXPORT_FILE_SET_MISMATCH",3);
- for(const file of manifest.files)if(!/^apps\/site\/src\/(?:content\/blog|content-registry)\/[a-zA-Z0-9_./-]+$/u.test(file.path)||file.path.split("/").includes(".."))fail("EXPORT_PATH_INVALID",3);
+ for(const file of manifest.files)if(!/^content\/(?:articles|registry)\/[a-zA-Z0-9_./-]+$/u.test(file.path)||file.path.split("/").includes(".."))fail("EXPORT_PATH_INVALID",3);
  for(const file of manifest.files)if(sha256(await safeRead(join(directory,"files",file.path)))!==file.sha256||Buffer.byteLength(await safeRead(join(directory,"files",file.path)))!==file.sizeBytes)fail("EXPORT_FILE_HASH_MISMATCH",3);
  if(sha256(await safeRead(join(directory,"changes.patch")))!==manifest.patchSha256)fail("EXPORT_PATCH_HASH_MISMATCH",3);
  return manifest;

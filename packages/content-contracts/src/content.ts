@@ -83,6 +83,16 @@ export const blogFrontmatterSchema = withDateOrder(
     }),
 );
 
+// Draft authoring does not invent a publication date. Published contracts stay strict.
+export const blogDraftFrontmatterSchema = withDateOrder(z.object({
+  ...datedFrontmatterShape, description: z.string(), pubDate: isoDateSchema.optional(),
+  category: stableIdSchema, tags: uniqueStableIdArraySchema,
+  ...publicationShape, draft: z.literal(true), featured: z.boolean().optional(),
+  cardDisplay: z.object({lines:z.array(z.string().min(1)).min(1).max(4).optional()}).strict().optional(),
+}).strict());
+export const blogSourceFrontmatterSchema = z.union([blogFrontmatterSchema, blogDraftFrontmatterSchema]);
+export type BlogSourceFrontmatter = z.infer<typeof blogSourceFrontmatterSchema>;
+
 export const noteFrontmatterSchema = withDateOrder(
   z
     .object({
@@ -543,3 +553,5 @@ export type ToolBindingRecord = z.infer<typeof toolBindingRecordSchema>;
 export type DiscoveryProfile = z.infer<typeof discoveryProfileSchema>;
 export type ContentDiscoveryRecord = z.infer<typeof contentDiscoveryRecordSchema>;
 export type SearchDocument = z.infer<typeof searchDocumentSchema>;
+
+export function semanticContentModuleJsonSchemas(){return Object.fromEntries(Object.entries(semanticContentModulePropsSchemas).map(([name,schema])=>[name,z.toJSONSchema(schema,{unrepresentable:"any"})]));}

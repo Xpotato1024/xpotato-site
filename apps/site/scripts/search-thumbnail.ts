@@ -1,6 +1,6 @@
 import { parseFragment, type DefaultTreeAdapterMap } from 'parse5';
 import { searchThumbnailSchema, type SearchDocument } from '@xpotato/content-contracts';
-import { articleThumbnailPicture } from '../src/lib/media/article-thumbnail.js';
+import { articleThumbnailPicture } from '../src/shared/media/article-thumbnail.js';
 export const SEARCH_THUMBNAIL_SIZES = '(max-width: 600px) calc(100vw - 2 * clamp(1.25rem, 6vw, 5.5rem)), 144px';
 type Element = DefaultTreeAdapterMap['element'];
 const attrs = (node: Element) => Object.fromEntries(node.attrs.map(item => [item.name,item.value]));

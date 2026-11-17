@@ -7,7 +7,10 @@
     "./canonical": "./src/canonical.ts",
     "./social-title-layout": "./src/social-title-layout.mjs",
     "./profiles/external-ai-disclosure-v1": "./src/profiles/external-ai-disclosure-v1.ts",
-    "./article-media-targets": "./src/profiles/article-media-targets-v1.ts"
+    "./article-media-targets": "./src/profiles/article-media-targets-v1.ts",
+    "./content": "./src/content.ts",
+    "./common": "./src/common.ts",
+    "./article-route": "./src/article-route.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",

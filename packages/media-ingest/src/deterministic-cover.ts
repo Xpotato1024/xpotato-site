@@ -20,7 +20,7 @@ export async function deterministicCover(input:{repositoryRoot:string;title:stri
  const {repositoryRoot,title,categoryLabel,pubDate}=input;
  if(!title.trim()||Array.from(title).length>coverProfile.title.maxCodePoints
   ||/[\p{Cc}\p{Cf}\p{Cs}]/u.test(title+categoryLabel)||!/^\d{4}-\d{2}-\d{2}$/u.test(pubDate))throw new Error("COVER_INPUT_INVALID");
- const css=await readFile(join(repositoryRoot,"apps/site/src/styles/fonts.css"),"utf8");
+ const css=await readFile(join(repositoryRoot,"packages/design-system/src/fonts.css"),"utf8");
  const fontsRoot=join(repositoryRoot,"apps/site/public/fonts"),faces:Face[]=[];
  for(const block of css.match(/@font-face\s*\{[^}]+\}/gu)??[]){
   if(!block.includes("font-family: '"+coverProfile.family+"'")||!block.includes("font-weight: 500;"))continue;

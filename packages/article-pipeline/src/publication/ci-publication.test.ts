@@ -33,12 +33,12 @@ function sample(contentId=id){
   materialClaims:[{claimId:'claim',statementSha256:sha256('Unit article body.'),locator:{blockIndex:0},claimType:'source_fact',evidence:[{evidenceId:'evidence',propositionSummary:'Unit claim',propositionSha256:h,interpretation:'explicit',sourceIds:['source'],freshnessChecked:true}]}],
   mediaSources:data.map(a=>a.mediaSource),aiRuns:[],variantManifests:data.map(a=>({assetId:a.asset.assetId,sha256:h})),objects:data.flatMap(a=>a.objects)} as unknown as Omit<CiPublicationPackage,'semanticSha256'>;
  const p=validateCiPublicationPackage({...raw,semanticSha256:publicationSemanticIdentity(raw)});
- const base:Record<string,string|null>={['apps/site/src/content/blog/00000000008008000000000001.mdx']:null};
+ const base:Record<string,string|null>={['content/articles/00000000008008000000000001.mdx']:null};
  // The canonical Base32 route slug is derived by the implementation.
- for(const n of ['media','provenance','media-rights'])base['apps/site/src/content-registry/'+n+'/blog/'+id+'.json']=null;
- base['apps/site/src/content-registry/media/index.ts']='export const mediaRegistries = Object.freeze([]);\n';
- base['apps/site/src/content-registry/provenance/index.ts']='export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([]);\n';
- base['apps/site/src/content-registry/media-rights/index.ts']=null;
+ for(const n of ['media','provenance','media-rights'])base['content/registry/'+n+'/blog/'+id+'.json']=null;
+ base['content/registry/media/index.ts']='export const mediaRegistries = Object.freeze([]);\n';
+ base['content/registry/provenance/index.ts']='export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([]);\n';
+ base['content/registry/media-rights/index.ts']=null;
  const repo={commit,fingerprint:h,records:[],registrySnapshot:{},categories:[],tags:[],occupiedRoutes:[]} as DraftRepository;
  const context={repository:'Xpotato1024/xpotato-site',event:'workflow_dispatch',ref:'refs/heads/main',actor:'Xpotato1024',triggeringActor:'Xpotato1024',environment:'site-production',runId:'123',attempt:1,sourceSha:commit} as CiPublicationContext;
  const map=new Map<string,PublishObject>(),calls:string[]=[];
@@ -49,33 +49,33 @@ function sample(contentId=id){
  return {p,repo,base,context,storage,map,calls,packageSha256,admission};
 }
 it('runs A then B then C, validates all actual bytes, and emits only canonical source/compact lineage/patch without applying it',async()=>{
- const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
+ const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['content/articles/'+articleUrlId(id)+'.mdx']=null;
  const r=await publishCiPackage(x.p,{...x,mode:'publish',now:()=>new Date('2026-11-02T00:00:00Z')});
  expect(x.calls.filter(c=>c.startsWith('PUT'))).toEqual(['PUT source','PUT source','PUT public','PUT public','PUT protected','PUT protected']);
  expect(r).toMatchObject({storageVerified:true,canonicalFilesApplied:false,articleDeployed:false,publicationDay:'2026-11-02'});expect(r.protection.objects).toHaveLength(2);
  expect(r.provenance.materialClaims).toEqual(x.p.materialClaims);expect(r.changes).toHaveLength(7);expect(r.patch).toContain('pubDate: "2026-11-02"');
- expect(r.changes.find(c=>c.path==='apps/site/src/content-registry/media-rights/index.ts')).toMatchObject({before:null});
+ expect(r.changes.find(c=>c.path==='content/registry/media-rights/index.ts')).toMatchObject({before:null});
  expect(r.approval).toMatchObject({semanticSha256:x.p.semanticSha256,runId:'123',actor:'Xpotato1024'});expect(r.provenance.articleJob?.candidateSha256).toBe(x.p.semanticSha256);
 });
 it('preserves existing rights entries when adding a later new article',async()=>{
- const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
- const path='apps/site/src/content-registry/media-rights/index.ts';
+ const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['content/articles/'+articleUrlId(id)+'.mdx']=null;
+ const path='content/registry/media-rights/index.ts';
  x.base[path]='export const articleMediaRights = Object.freeze({"existing-article":[]});\n';
  const r=await publishCiPackage(x.p,{...x,mode:'publish'}),change=r.changes.find(c=>c.path===path)!;
  expect(change.before).toBe(x.base[path]);expect(change.after).toContain('"existing-article":[]');expect(change.after).toContain('"'+id+'":articleRights_');
 });
 it('rejects an incomplete rights-index snapshot before any storage',async()=>{
- const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
- delete x.base['apps/site/src/content-registry/media-rights/index.ts'];
+ const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['content/articles/'+articleUrlId(id)+'.mdx']=null;
+ delete x.base['content/registry/media-rights/index.ts'];
  await expect(publishCiPackage(x.p,{...x,mode:'publish'})).rejects.toThrow('CI_PUBLICATION_BASE_REQUIRED');expect(x.calls).toEqual([]);
 });
 it('a failed or ambiguous B write stops C and produces no export',async()=>{
- const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
+ const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['content/articles/'+articleUrlId(id)+'.mdx']=null;
  x.storage.putIfAbsent=vi.fn(async (o:PublishObject)=>{x.calls.push('PUT '+o.plane);if(o.plane==='public')throw Error('R2_PUT_UNKNOWN_NO_RETRY');x.map.set(o.plane+o.key,o);return 'uploaded' as const;});
  await expect(publishCiPackage(x.p,{...x,mode:'publish'})).rejects.toThrow('NO_RETRY');expect(x.calls.some(c=>c==='PUT protected')).toBe(false);
 });
 it('verify-only reads without any PUT and rejects missing objects',async()=>{
- const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
+ const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['content/articles/'+articleUrlId(id)+'.mdx']=null;
  await expect(publishCiPackage(x.p,{...x,mode:'verify-only'})).rejects.toThrow('R2_OBJECT_ABSENT');expect(x.storage.putIfAbsent).not.toHaveBeenCalled();
 });
 it('date-only changes preserve the semantic subject; body, rights, sources, canonical images and byte tampering do not',()=>{
@@ -119,7 +119,7 @@ it('validates actual AVIF AV1 bytes using the decoder codec rather than a filena
 // These are isolated synthetic public versions, not human audits or real storage receipts.
 async function updateFixture(contentId=id,reviewBasis:'audit'|'owner_reviewed'='audit'){
  const id=contentId;
- const x=reviewBasis==='owner_reviewed'?ownerReviewedSample(id):sample(id),slug=articleUrlId(id);x.base['apps/site/src/content/blog/'+slug+'.mdx']=null;
+ const x=reviewBasis==='owner_reviewed'?ownerReviewedSample(id):sample(id),slug=articleUrlId(id);x.base['content/articles/'+slug+'.mdx']=null;
  const first=await publishCiPackage(x.p,{...x,mode:'publish',now:()=>new Date('2026-11-02T00:00:00Z')});
  const root=await mkdtemp(join(tmpdir(),'ci-update-'));
  const git=(...args:string[])=>execFileSync('git',['-C',root,...args],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
@@ -128,7 +128,7 @@ async function updateFixture(contentId=id,reviewBasis:'audit'|'owner_reviewed'='
  git('init','--quiet');git('config','core.autocrlf','false');git('config','core.eol','lf');git('add','.');git('-c','user.name=Synthetic test','-c','user.email=fixture@example.invalid','commit','--quiet','-m','Synthetic previous publication');
  const commit=git('rev-parse','HEAD'),contentPath=revisionPaths(id,slug).mdx;
  const repo:DraftRepository={...x.repo,commit,records:[{contentId:id,collection:'blog',slug,route:articleRoute(id),source:base[contentPath]!,sourceSha256:sha256(base[contentPath]!),registrySha256:h}],
-  registrySnapshot:Object.fromEntries(Object.entries(base).filter(([p])=>p.startsWith('apps/site/src/content-registry/')).map(([p,t])=>[p,t!]))};
+  registrySnapshot:Object.fromEntries(Object.entries(base).filter(([p])=>p.startsWith('content/registry/')).map(([p,t])=>[p,t!]))};
  const correction=reviewBasis==='owner_reviewed'?'An owner-reviewed correction.':'An audited correction.';
  const p=validateCiPublicationPackage({...x.p,mdx:base[contentPath]+'\n'+correction+'\n',revision:preparePublicationRevision(repo,id,'correction'),
   semanticSha256:publicationSemanticIdentity({...x.p,mdx:base[contentPath]+'\n'+correction+'\n',revision:preparePublicationRevision(repo,id,'correction')})});
@@ -214,7 +214,7 @@ it.each(['mdx','media','rights','provenance'] as const)('rejects a changed %s pr
  const x=await updateFixture();try{const path=revisionPaths(id,articleUrlId(id))[field];x.base[path]+=' ';await expect(publishCiPackage(x.p,{...x,mode:'publish'})).rejects.toThrow();expect(x.calls).toEqual([]);}finally{await rm(x.root,{recursive:true,force:true});}
 });
 it.each(['media','media-rights','provenance'])('rejects missing/malformed %s index before any storage access',async name=>{
- const x=await updateFixture();try{const path='apps/site/src/content-registry/'+name+'/index.ts';x.base[path]='export const wrong = [];';await expect(publishCiPackage(x.p,{...x,mode:'publish'})).rejects.toThrow();expect(x.calls).toEqual([]);}finally{await rm(x.root,{recursive:true,force:true});}
+ const x=await updateFixture();try{const path='content/registry/'+name+'/index.ts';x.base[path]='export const wrong = [];';await expect(publishCiPackage(x.p,{...x,mode:'publish'})).rejects.toThrow();expect(x.calls).toEqual([]);}finally{await rm(x.root,{recursive:true,force:true});}
 });
 it('cannot rehash a different predecessor or use a nonancestor to borrow approval; verify-only sends no PUT',async()=>{
  const x=await updateFixture();try{
@@ -238,7 +238,7 @@ it('refuses missing prior recovery and a detached index before storage, even whe
   await expect(publishCiPackage(x.p,{...x,mode:'publish'})).rejects.toThrow('PUBLISHED_BASE');expect(x.calls).toEqual([]);
  }finally{await rm(x.root,{recursive:true,force:true});}
  const y=await updateFixture();try{
-  const path='apps/site/src/content-registry/media/index.ts',old=y.base[path]!;
+  const path='content/registry/media/index.ts',old=y.base[path]!;
   y.base[path]=old.replace('contentMediaRegistrySchema.parse(articleMedia_'+id.replaceAll('-','_')+'),','');
   (y.repo.registrySnapshot as Record<string,string>)[path]=y.base[path]!;
   await expect(publishCiPackage(y.p,{...y,mode:'publish'})).rejects.toThrow('INDEX');expect(y.calls).toEqual([]);
@@ -354,7 +354,7 @@ async function animatedSample(){
 }
 it('publishes a declared animation and separately audited poster through the same exact A/B/C object set',async()=>{
  const x=await animatedSample();await expect(validateCiPublicationMedia(validateCiPublicationPackage(x.p))).resolves.toBeUndefined();
- x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
+ x.base['content/articles/'+articleUrlId(id)+'.mdx']=null;
  const result=await publishCiPackage(x.p,{...x,mode:'publish'});
  expect(result.storageVerified).toBe(true);
  const expected=[...new Set(x.p.objects.filter(o=>o.plane==='public').map(o=>o.sha256))].sort();
@@ -391,7 +391,7 @@ function ownerReviewedSample(contentId=id){
  const p=validateCiPublicationPackage({...raw,semanticSha256:publicationSemanticIdentity(raw)}),packageSha256=sha256(canonicalJson(p)+'\n');
  const admission=ciPublicationAdmissionSchema.parse({...x.admission,producer:'verified-owner-reviewed-existing-ai-prepare-v1',
   packageSha256,semanticSha256:p.semanticSha256,evidence:p.evidence,aiRuns:[]});
- x.base['apps/site/src/content/blog/'+articleUrlId(contentId)+'.mdx']=null;
+ x.base['content/articles/'+articleUrlId(contentId)+'.mdx']=null;
  return {...x,p,packageSha256,admission};
 }
 it('publishes owner-reviewed existing AI without relabeling it human or inventing audit runs or audit hashes',async()=>{

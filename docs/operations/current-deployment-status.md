@@ -8,7 +8,7 @@ canonical_for:
 
 # 現在の配信workflowと認可境界
 
-基準実装は `00b7c5ae23fdf441a60656aa9dc7089a36cb22e4` の [deploy-site.yml](../../.github/workflows/deploy-site.yml) と [workflow guard](../../scripts/release/deployment/manual-deployment-workflow-policy.mjs) です。
+基準実装は `00b7c5ae23fdf441a60656aa9dc7089a36cb22e4` の [deploy-site.yml](../../.github/workflows/deploy-site.yml) と [workflow guard](../../ops/deployment/manual-deployment-workflow-policy.mjs) です。
 
 - triggerは `workflow_dispatch` のみ。push・pull requestからdeployしません。
 - 対象repository、本人actor/triggering actor、main、初回attempt、本人の復旧準備確認をjob guardで制限します。
@@ -30,7 +30,7 @@ PR140の新しい配信manifest・状態分離・診断方式とPR141の配置�
 
 ## Cloudflare Managed robots.txt の公開bytes照合
 
-公開後の照合は通常、artifactと応答本文のsize/SHA-256、HTTP 200、対象security/cache headersの一致を要求します。`/robots.txt`だけは、2026-11-04に公開GETで確認したCloudflare付加内容2676 bytes（SHA-256 `3073d1e371afb3271c7666148766fedc5145f7d8440f7114062db79b7bd58add`）と、既知の原本70 bytes（SHA-256 `cc7aa07ebda6b8ac79827a8b110a8941101ed035f58b2b26b677974683b7f9bb`）の連結も認めます。fixtureの出典・観測時刻・全本文は[固定capture](../../scripts/release/deployment/fixtures/managed-robots-20261104.json)、検査は[限定policy](../../scripts/release/deployment/managed-robots-policy.mjs)です。[Cloudflare公式説明](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)の例から許可本文を推測しません。
+公開後の照合は通常、artifactと応答本文のsize/SHA-256、HTTP 200、対象security/cache headersの一致を要求します。`/robots.txt`だけは、2026-11-04に公開GETで確認したCloudflare付加内容2676 bytes（SHA-256 `3073d1e371afb3271c7666148766fedc5145f7d8440f7114062db79b7bd58add`）と、既知の原本70 bytes（SHA-256 `cc7aa07ebda6b8ac79827a8b110a8941101ed035f58b2b26b677974683b7f9bb`）の連結も認めます。fixtureの出典・観測時刻・全本文は[固定capture](../../ops/deployment/fixtures/managed-robots-20261104.json)、検査は[限定policy](../../ops/deployment/managed-robots-policy.mjs)です。[Cloudflare公式説明](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)の例から許可本文を推測しません。
 
 原本はwildcard `Allow: /`と自サイトsitemapだけです。固定prefixでも将来の原本の`Disallow`等と衝突し得るため、未知の原本、任意prefix、改行正規化、追加directive、他pathへの例外適用は拒否します。現在のprefixは`search=yes,ai-train=no,use=reference`とnamed botsの拒否を含み、全検索botの許可を意味しません。HTTP status・headers・version再確認・alternate endpoint抑止・既存の読取り予算は維持します。
 
@@ -59,4 +59,4 @@ provider/publicの成功portや配信portは受け取りません。既存のGET
 | docs・workflowの別境界 | 現行layoutの`.github` tree全体を比較。`docs`はこの運用状況ページ1件（通常ファイル必須）以外の全leafを比較し、機械検証用JSON・未知の追加文書も固定する。hold manifestとinfrastructure handoffの個別blob SHA一致、manual workflowのexact source、owner/main/attempt、main保護、Environmentの本人承認も維持 |
 | archive・公開対象 | canonical PowerShell consumerのProduction適格性・digest・source/run/attempt・staging照合と、同じdistのpublication compiler/CSP/権利・保護来歴検査を維持 |
 
-`node --test scripts/release/deployment/manual-deployment.test.mjs`は、旧hash対から作ったfixtureだけでなく、そのcheckoutの実Git treeを読んで実GitHub検査adapterと`runManualDeployment()`へ通します。GitHubの承認情報とhandoff/provider/deploy portsは合成であり、実資格情報やネットワークを使いません。移管先入力の変更、guard欠落・symlink、未知の同名scriptなどによる初回拒否ではCLI内handoff/provider/配信呼出し0を確認します。二回目のsource検査でのdriftは、最初のpreflight読取り後であってもpreimage保存・配信前に停止します。通常CIの実staged package/compiler検査とWindows consumerは別に実行し、合成試験を実provider preflightや本番rolloutの証明にしません。
+`node --test ops/deployment/manual-deployment.test.mjs`は、旧hash対から作ったfixtureだけでなく、そのcheckoutの実Git treeを読んで実GitHub検査adapterと`runManualDeployment()`へ通します。GitHubの承認情報とhandoff/provider/deploy portsは合成であり、実資格情報やネットワークを使いません。移管先入力の変更、guard欠落・symlink、未知の同名scriptなどによる初回拒否ではCLI内handoff/provider/配信呼出し0を確認します。二回目のsource検査でのdriftは、最初のpreflight読取り後であってもpreimage保存・配信前に停止します。通常CIの実staged package/compiler検査とWindows consumerは別に実行し、合成試験を実provider preflightや本番rolloutの証明にしません。

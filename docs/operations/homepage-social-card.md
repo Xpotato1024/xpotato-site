@@ -8,7 +8,7 @@
 - 写真の低彩度化、コントラスト調整、左側を暗くするグラデーション、白い既存XPロゴ、「Xpotato.net」と英字の3行「Think.」「Build.」「Run.」、その下に小さく「ものづくり、プログラミング、日々の試行錯誤」を合成する。日本語の末尾に句点を付けず、ボタンは画像へ入れない。
 - 英文見出しはサイト同梱のNoto Serif 400、ブランド名と日本語キャッチはZen Kaku Gothic New 400を使う。既存のフォント輪郭化処理を使い、OSフォント・SVGのtext要素・外部フォント・ブラウザー描画に依存しない。
 - 英字を3行に分けたprofileは `home-workshop-social-v3`。写真の加工を保持し、ロゴ・ブランドを上部、94pxの英字3行を中央左、26pxの日本語キャッチを下部左へ配置する。文字の実際の輪郭でブランドと英字、英字の各行、日本語の間隔を検査し、重なりを防ぐ。画像のcontent-addressed URLも更新し、旧OGのURLを上書きしない。
-- profileの正本は `apps/site/src/lib/home/home-workshop-social.ts`、生成処理は `tools/build/home-workshop/prepare-home-workshop-social.ts`。
+- profileの正本は `apps/site/src/features/home/model/home-workshop-social.ts`、生成処理は `ops/build/home-workshop/prepare-home-workshop-social.ts`。
 - `readHomeWorkshopBuildPictures()` の `socialImage` をホームだけの `BaseLayout` に渡す。OGとTwitterの画像・寸法・代替テキストを既存の共通metadata処理で出力し、他ページのOG設定を変えない。私的な写真preview経路ではこのmetadataを接続しない。
 
 ## 来歴と配布境界

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { validateManualEditorialRevisions } from "./manual-editorial-revisions.js";
 
-const path = "apps/site/src/content/pages/about.mdx";
+const path = "content/pages/about.mdx";
 const id = "f3f79a24-4d24-449d-907c-f4ced4924b29";
 const metadata = { id, title: "About", description: "Original", draft: false };
 const before = `---\nid: ${id}\ntitle: About\ndescription: Original\ndraft: false\n---\n\nOriginal body.\n`;
@@ -82,7 +82,7 @@ describe("manual fixed-page revisions over immutable migration evidence", () => 
     expect(() => check(after + "media:new-asset")).toThrow("binding");
   });
   it("binds a new manual Page and rejects tampering or pretending an existing entry is new", () => {
-    const newPath = "apps/site/src/content/pages/education.mdx";
+    const newPath = "content/pages/education.mdx";
     const record = ledger().revisions[0]!.provenance;
     const created = { targetPath: newPath, provenance: { ...record, content: { ...record.content, route: "/education/" } } };
     const input = { ...ledger(), revisions: [], createdPages: [created] };

@@ -77,7 +77,7 @@ const deployWorkflowSource = await readFile(join(root, ".github/workflows/deploy
 if (deployWorkflowSource === "") errors.push("Required blocked deploy workflow missing: .github/workflows/deploy-site.yml");
 else {
   const { assertManualWorkflow } = await import(
-    pathToFileURL(join(root, "scripts/release/deployment/manual-deployment-workflow-policy.mjs")).href,
+    pathToFileURL(join(root, "ops/deployment/manual-deployment-workflow-policy.mjs")).href,
   ) as { assertManualWorkflow: (source: string) => boolean };
   try { assertManualWorkflow(deployWorkflowSource); }
   catch { errors.push("deploy-site.yml must preserve the reviewed owner/main/manual/Environment/Production-artifact boundary"); }
@@ -106,7 +106,7 @@ const frontmatterPattern = /^---\r?\n([\s\S]*?)\r?\n---/u;
 const demoPattern = /<Demo\b[^>]*\bmodule=["']([^"']+)["'][^>]*\/?\s*>/gu;
 
 for (const collection of contentCollections) {
-  const directory = join(root, "apps/site/src/content", collection);
+  const directory = join(root, "content", collection === "blog" ? "articles" : collection);
   for (const file of await walk(directory)) {
     if (!/\.mdx?$/iu.test(file)) continue;
     const source = await readFile(file, "utf8");
@@ -166,26 +166,26 @@ const importModule = async <T>(repositoryPath: string): Promise<T> =>
   await import(pathToFileURL(join(root, repositoryPath)).href) as T;
 
 const { taxonomyRegistry } = await importModule<{ taxonomyRegistry: TaxonomyRegistry }>(
-  "apps/site/src/content-registry/taxonomy/index.ts",
+  "content/registry/taxonomy/index.ts",
 );
 const { mediaRegistries } = await importModule<{ mediaRegistries: readonly MediaRegistryInvariantRecord[] }>(
-  "apps/site/src/content-registry/media/index.ts",
+  "content/registry/media/index.ts",
 );
 const { publicationProvenanceRegistry } = await importModule<{
   publicationProvenanceRegistry: readonly Readonly<{ contentId: string }>[];
-}>("apps/site/src/content-registry/provenance/index.ts");
+}>("content/registry/provenance/index.ts");
 const { interactiveModuleRegistry, toolBindings } = await importModule<{
   interactiveModuleRegistry: Readonly<Record<string, InteractiveModuleRecord>>;
   toolBindings: readonly ToolBindingRecord[];
-}>("apps/site/src/content-registry/interactive/index.ts");
+}>("content/registry/interactive/index.ts");
 const { interactiveComponentIds } = await importModule<{ interactiveComponentIds: readonly string[] }>(
-  "apps/site/src/content-registry/interactive/component-ids.ts",
+  "content/registry/interactive/component-ids.ts",
 );
 const { contentModuleRegistry } = await importModule<{ contentModuleRegistry: readonly ContentModuleInvariantRecord[] }>(
-  "apps/site/src/content-registry/content-modules.ts",
+  "content/registry/content-modules.ts",
 );
 const { siteConfig } = await importModule<{ siteConfig: { site: { canonicalOrigin: string } } }>(
-  "apps/site/src/lib/site-config.ts",
+  "apps/site/src/shared/lib/site-config.ts",
 );
 const { astroCanonicalOrigin } = await importModule<{ astroCanonicalOrigin: string }>("apps/site/astro.config.mjs");
 

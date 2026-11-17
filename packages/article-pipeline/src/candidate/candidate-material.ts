@@ -21,7 +21,7 @@ export type CandidateSnapshot={directory:string;repositoryRoot:string;c:Awaited<
  plan:ArticleVisualPlan;masters:ArticleVisualMasters;audit:LocalVisualAudit;media:ArticleVisualMedia};
 const unique=(values:string[])=>[...new Set(values)].sort();
 export async function candidateBuildFingerprint(repositoryRoot:string){
- const paths=["apps/site/public","apps/site/source-inputs","tools/authoring","tools/build","tools/publication"];
+ const paths=["content","apps/site/public","apps/site/source-inputs","ops/authoring","ops/build","ops/media/publication"];
  for(const parent of ["apps","packages"])for(const entry of await readdir(join(repositoryRoot,parent),{withFileTypes:true})){
   if(entry.name.startsWith("."))continue;
   if(entry.isSymbolicLink())fail("CANDIDATE_WORKSPACE_LINK_DENIED",3);
@@ -53,7 +53,7 @@ export async function candidateBuildFingerprint(repositoryRoot:string){
 export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  const fm=splitDraft(s.c.status.input).frontmatter,analysis=await loadReviewOutput(s.c.journal,"analysis");
  const contentAudit=await loadReviewPayload(s.c.journal,"audit"),plan=validateCandidateMediaPlan(s.plan.visualInput.mediaPlan,s.plan.scope);
- const policyPath=(path:string)=>pathToFileURL(join(s.repositoryRoot,"apps/site/src/lib",path)).href;
+ const policyPath=(path:string)=>pathToFileURL(join(s.repositoryRoot,"apps/site/src/shared/lib",path)).href;
  const {siteConfig}=await import(policyPath("site-config.ts")) as {siteConfig:{site:{canonicalOrigin:string;timezone:string}}};
  const dateBlockers=candidatePublicationDateBlockers(fm.pubDate,siteConfig.site.timezone);
  const eligible=!dateBlockers.length&&!reference&&["human_local","existing_ai"].includes(s.plan.scope)
@@ -63,7 +63,7 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  if(!reference&&!eligible)fail("CANDIDATE_CONFIRMED_HUMAN_INPUTS_REQUIRED",3);
  const frontmatter={...fm,draft:false},mdx="---\n"+stringify(frontmatter,{lineWidth:0}).trimEnd()+"\n---\n"+analysis.compiled;
  const route=articleRoute(frontmatter.id);
- const redirectModule=await import(pathToFileURL(join(s.repositoryRoot,"apps/site/src/content-registry/redirects.ts")).href) as {applicationRedirects:{sourcePath:string;targetPath:string}[]};
+ const redirectModule=await import(pathToFileURL(join(s.repositoryRoot,"content/registry/redirects.ts")).href) as {applicationRedirects:{sourcePath:string;targetPath:string}[]};
  const registry=JSON.parse(await safeRead(join(s.directory,"base/registries.json"))) as Record<string,string>;
  const redirectRecords=[...redirectModule.applicationRedirects];
  for(const [path,text] of Object.entries(registry))if(path.includes("/article-redirects/")&&path.endsWith(".json")){
@@ -74,7 +74,7 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  }
  const redirects=candidateRoutePlan({contentId:frontmatter.id,before:s.c.store.original?.route??null,after:route,
   allow:s.c.store.spec.target.allowRouteChange===true,occupied:s.c.repo.occupiedRoutes.filter(path=>path!==s.c.store.original?.route),redirects:redirectRecords});
- const {deriveContentSeo}=await import(policyPath("discovery/seo.ts")) as {deriveContentSeo:(input:{title:string;description:string;route:string;canonicalOrigin:string;seo?:SeoOverride|undefined})=>{title:string;description:string;canonical:string;noindex:boolean}};
+ const {deriveContentSeo}=await import(pathToFileURL(join(s.repositoryRoot,"apps/site/src/features/discovery/model/seo.ts")).href) as {deriveContentSeo:(input:{title:string;description:string;route:string;canonicalOrigin:string;seo?:SeoOverride|undefined})=>{title:string;description:string;canonical:string;noindex:boolean}};
  const seo=deriveContentSeo({title:frontmatter.title,description:frontmatter.description,route,canonicalOrigin:siteConfig.site.canonicalOrigin,seo:frontmatter.seo});
  for(const value of [seo.canonical]){
   const url=new URL(value);if(url.protocol!=="https:"||url.username||url.password||url.hash)fail("CANDIDATE_SEO_URL_UNSAFE");

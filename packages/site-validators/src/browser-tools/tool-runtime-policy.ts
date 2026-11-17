@@ -1,5 +1,5 @@
 import {admitsPublicTool} from "./public-admission.js";
-import { browserToolReleases } from "../../../../apps/site/src/content-registry/interactive/releases.js";
+import { browserToolReleases } from "../../../../content/registry/interactive/releases.js";
 import { validateToolReleaseBindings } from "./browser-tool-bindings.js";
 import { verifyToolPin } from "./browser-tool-adoption.js";
 import { fileURLToPath } from "node:url";
@@ -7,8 +7,8 @@ import assert from "node:assert/strict";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
 import { isPrimeAsyncManifest, isBoundedBrowserManifest, type InteractiveModuleRecord, type ToolBindingRecord } from "@xpotato/content-contracts";
 import type { DerivedCatalogEntry } from "@xpotato/portable-content/catalog";
-import { interactiveModuleRegistry, toolBindings } from "../../../../apps/site/src/content-registry/interactive/index.js";
-import { interactiveComponentIds } from "../../../../apps/site/src/content-registry/interactive/component-ids.js";
+import { interactiveModuleRegistry, toolBindings } from "../../../../content/registry/interactive/index.js";
+import { interactiveComponentIds } from "../../../../content/registry/interactive/component-ids.js";
 import { readSiteContent } from "../site-content.js";
 
 export interface RegisteredToolRoute {

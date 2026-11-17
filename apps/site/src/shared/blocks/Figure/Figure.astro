@@ -1,0 +1,34 @@
+---
+import MediaPicture from "../MediaPicture/MediaPicture.astro";
+import {contentMediaContext} from "../../media/media-context.js";
+import {resolveMediaCredits,renderMediaCredits} from "../../media/media-credits.js";
+import { figureModulePropsSchema } from "@xpotato/content-contracts";
+interface Props {
+  asset: string;
+  alt: string;
+  title?: string;
+  caption?: string;
+  note?: string;
+  credit?: string;
+  sourceUrl?: string;
+  width?: "content" | "wide" | "full" | "compact";
+}
+const { asset, alt, title, caption, note, credit, sourceUrl, width = "content" } = figureModulePropsSchema.parse(Astro.props);
+const contentId=Astro.locals.xpotatoContentId;
+const context=contentId?contentMediaContext(contentId):undefined;
+const editorReview=Astro.locals.xpotatoEditorReview;
+if(!context&&!editorReview)throw Error("MEDIA_PICTURE_CONTEXT_MISSING");
+const creditHtml=editorReview ? "" : renderMediaCredits(resolveMediaCredits({contentId:contentId!,registry:context!.registry,rights:context!.rights,referenceOnly:context!.referenceOnly,assetId:asset,...(credit===undefined?{}:{credit}),...(sourceUrl===undefined?{}:{sourceUrl})}));
+---
+<figure class:list={["article-figure", {"article-compact-figure":width==="compact"}]} data-media-asset={asset} data-width={width}>
+  <MediaPicture asset={asset} alt={alt} />
+  {(title || caption || note || creditHtml || editorReview) && (
+    <figcaption>
+      {title && <strong class="article-figure__title">{title}</strong>}
+      {caption && <p class="article-figure__caption">{caption}</p>}
+      {note && <p class="article-figure__note"><span>補足：</span>{note}</p>}
+      {editorReview && <p class="article-figure__source media-credit">{credit || "出典・利用条件は公開前に確認"}{sourceUrl && <> · <a href={sourceUrl}>出典</a></>}</p>}
+      {creditHtml && <p class="article-figure__source media-credit" set:html={creditHtml} />}
+    </figcaption>
+  )}
+</figure>

@@ -28,5 +28,5 @@ export const privateDraftOutputErrors = (path:string,source=""): readonly string
 
 /** The production Astro project never consumes private candidate inputs. */
 export function assertNoPrivateCandidateEnvironment(environment:Readonly<Record<string,string|undefined>>){
-  if(Object.keys(environment).some(key=>key.startsWith("XPOTATO_ARTICLE_CANDIDATE_")))throw new Error("PRIVATE_CANDIDATE_ENVIRONMENT_IN_NORMAL_BUILD");
+  if(Object.keys(environment).some(key=>key.startsWith("XPOTATO_ARTICLE_CANDIDATE_")||key.startsWith("XPOTATO_EDITOR_REVIEW_")))throw new Error("PRIVATE_CANDIDATE_ENVIRONMENT_IN_NORMAL_BUILD");
 }

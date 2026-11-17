@@ -71,8 +71,8 @@ export function assertRenderBuildBinding(context:z.infer<typeof existingRenderCo
  if(context.renderSourceSha256!==current)throw Error('AUDIT_RENDER_BUILD_CHANGED');
 }
 export const renderProducerPaths=[
- "tools/review/articles/article-concrete-preview.ts","tools/review/articles/article-concrete-render.mjs","tools/review/articles/article-concrete-browser.mjs",
- "tools/review/articles/article-concrete-check.mjs","tools/review/articles/article-concrete-export.mjs","tools/review/articles/article-preview-state.mjs","tools/review/articles/article-existing-reference.ts",
+ "ops/qa/review/articles/article-concrete-preview.ts","ops/qa/review/articles/article-concrete-render.mjs","ops/qa/review/articles/article-concrete-browser.mjs",
+ "ops/qa/review/articles/article-concrete-check.mjs","ops/qa/review/articles/article-concrete-export.mjs","ops/qa/review/articles/article-preview-state.mjs","ops/qa/review/articles/article-existing-reference.ts",
  'docs/acceptance/articles/3d-print-publication-plan.json',
  ...['article.mdx','walls-a.svg','walls-b.svg','walls-c.svg','orientation-a.svg','orientation-b.svg','roof-a.svg','roof-b.svg','roof-c.svg'].map(p=>'tests/fixtures/article-concrete/'+p),
 ] as const;

@@ -10,7 +10,7 @@ last_verified: 2026-11-14
 
 ## 今回の実装範囲
 
-`scope` jobで `scripts/ci-impact.mjs` を実行し、`site-ci-impact-<run>-<attempt>` artifactにJSONを30日保存します。repository/run/attempt/event、base/headのexact Git revision、分類実装のsource SHA、比較方式、変更statusとpath、候補分類、影響領域、未解決の依存を記録します。job outputを生成せず、他jobの `if` 条件には接続しません。テスト成功cache・前回artifactの流用・記事の変更はありません。
+`scope` jobで `ops/ci/ci-impact.mjs` を実行し、`site-ci-impact-<run>-<attempt>` artifactにJSONを30日保存します。repository/run/attempt/event、base/headのexact Git revision、分類実装のsource SHA、比較方式、変更statusとpath、候補分類、影響領域、未解決の依存を記録します。job outputを生成せず、他jobの `if` 条件には接続しません。テスト成功cache・前回artifactの流用・記事の変更はありません。
 
 - Blog/Notesの直下にあるMarkdown/MDXの追加・変更だけなら `article-impact-candidate`。proseが混ざっても候補です。これは安全なskipの証明ではありません。
 - 候補でも、変更記事に加え、ホーム更新一覧、collection一覧/pagination、category/tag一覧、search index/UI、RSS、sitemap、全記事の関連記事card、route/redirect、全content link、publication/media整合性を影響候補へ含めます。記事title/tag/date/公開状態が変わると未編集ページにも波及するためです。
@@ -42,7 +42,7 @@ manifestの `estimatedSavedSeconds` は `null` です。shadow自体による短
 
 ## 回帰検査
 
-`node --test scripts/ci-impact.test.mjs` は追加/変更、prose混在、shared/registry/tool/unknown、全体依存領域、NUL区切り・Unicode/space、rename/delete/type、base欠落、分岐したbase、workflowがskipを消費しないことを検査します。`npm run test:release` とscope jobにも含めます。通常のrelease graph回帰は既存の全gateを引き続き検査します。
+`node --test ops/ci/ci-impact.test.mjs` は追加/変更、prose混在、shared/registry/tool/unknown、全体依存領域、NUL区切り・Unicode/space、rename/delete/type、base欠落、分岐したbase、workflowがskipを消費しないことを検査します。`npm run test:release` とscope jobにも含めます。通常のrelease graph回帰は既存の全gateを引き続き検査します。
 
 ## 履歴による分類の確認
 

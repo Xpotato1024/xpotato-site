@@ -257,7 +257,7 @@ Full ExternalAiDisclosureManifest remains private job artifact. Durable manifest
 ## Location
 
 ```text
-apps/site/src/content-registry/provenance/<collection>/<content-id>.json
+content/registry/provenance/<collection>/<content-id>.json
 ```
 
 One current record per ContentId; revision history comes from Git history。

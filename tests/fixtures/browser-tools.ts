@@ -1,4 +1,4 @@
-import {createBrowserToolSource} from "../../tools/authoring/browser-tool-source.js";
+import {createBrowserToolSource} from "../../ops/authoring/browser-tool-source.js";
 import {execFileSync} from "node:child_process";
 import {cp,mkdir,readFile,writeFile,rm,readdir} from "node:fs/promises";
 import {dirname,join,resolve} from "node:path";

@@ -1,3 +1,4 @@
+import {editorRoute,editorCsp,validateEditorShell,editorHeaderLines} from './editor-runtime.js';
 import {articleMotionPath,inspectArticleMotionMarkup,validateArticleMotionSource} from "./article-motion-runtime.js";
 import {inspectHomeUpdatesMarkup,validateHomeUpdatesSource} from "./home-updates-runtime.js";
 import {inspectHomeHeaderMarkup,homeHeaderPath,validateHomeHeaderSource} from './home-header-runtime.js';
@@ -62,6 +63,7 @@ export interface BuiltSecurityAssetInput {
 }
 
 export interface BuildSecurityAnalysis {
+  readonly editor?: boolean;
   readonly primeOffline?: boolean;
   readonly toolRoutes: readonly string[];
   readonly toolCapabilities?: readonly Readonly<{route:string;worker:boolean;wasm:boolean}>[];
@@ -94,6 +96,7 @@ const privateOriginErrors = (path: string, source: string): string[] => {
 };
 
 export const renderSecurityHeaderArtifact = (input: Readonly<{
+  editor?: boolean;
   primeOffline?: boolean;
   scriptHashes: readonly string[];
   styleHashes: readonly string[];
@@ -125,6 +128,7 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     "  Referrer-Policy: strict-origin-when-cross-origin",
     "  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
     "",
+    ...(input.editor ? editorHeaderLines() : []),
     ...(input.toolRoutes ?? []).flatMap((route) => {
       const policy=policies.find(p=>p.route===route);
       return policy&&(policy.worker||policy.wasm)
@@ -353,7 +357,10 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     try { articleMotionAdmitted = inspectArticleMotionMarkup(input.html,path).script; }
     catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
     const pageScriptSources = externalScriptSources.filter(source => !(articleMotionAdmitted && source === articleMotionPath) && !(primeOffline && source === primePwaPath) && source !== carouselScript && source !== updatesScript && !(homeHeaderAdmitted && source === homeHeaderPath) && source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath) && !(contactAdmitted && source === contactIssuesPath));
-    if (path === "search/index.html") {
+    if(path===editorRoute){
+      errors.push(...validateEditorShell(input.html).map(error=>path+': '+error));
+      if(metrics.inlineExecutableScripts||metrics.inlineStyles||metrics.hasAstroIsland)errors.push('Editor must not inject public-site runtime');
+    } else if (path === "search/index.html") {
       if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
       if (pageScriptSources.length !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
     } else if (tool) {
@@ -375,6 +382,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     routes.set(path, metrics);
   }
   return {
+    editor: inputs.some(input=>input.path.replaceAll('\\','/').replace(/^\/+/, '')===editorRoute),
     primeOffline: inputs.some(input=>input.path.replaceAll("\\","/") === "tools/prime-factorizer/index.html" && input.html.includes("data-prime-offline")),
     toolCapabilities:tools.filter(tool=>routes.has(tool.route.slice(1)+"index.html")).map(tool=>({route:tool.route,...(tool.runtimeCapabilities??{worker:false,wasm:false})})),
     toolRoutes: tools.filter((tool) => routes.has(tool.route.slice(1) + "index.html")).map((tool) => tool.route),
@@ -402,6 +410,12 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
   if(analysis.primeOffline){const asset=assets.find(a=>"/"+a.path.replace(/^\/+/,"")===primePwaPath);
     if(!asset)errors.push("Prime offline shell asset missing");else try{validatePrimePwaSource(asset.source);}catch(error){errors.push(String(error));}}
   errors.push(...analysis.errors);
+  if(analysis.editor){
+    const editorHeaders=parseSecurityHeaderArtifact(headerArtifact).find(row=>row.route==='/editor/*');
+    if(editorHeaders?.headers.get('content-security-policy')!==editorCsp||editorHeaders.headers.get('x-robots-tag')!=='noindex, nofollow')errors.push('Editor route must keep its isolated exact CSP and noindex');
+    const worker=assets.find(item=>item.path.replace(/^\/+/,'')==='editor/sw.js');
+    if(!worker||!worker.source.includes("const ALLOWED=new Set(FILES)")||worker.source.includes('editor-api/'))errors.push('Editor offline shell boundary is missing or widened');
+  }
   if(inputs.some(input=>input.html.includes('data-contact-issues'))){
     const source=assets.find(asset=>'/'+asset.path.replace(/^\/+/, '')===contactIssuesPath);
     if(!source)errors.push('Contact picker runtime asset is missing');

@@ -14,3 +14,7 @@ apps/site/public/search/search-index.json
 # Untracked local scratch / OS metadata; never a publishing or migration input
 tmp/
 .DS_Store
+
+# Local editor credentials and Worker emulation
+**/.dev.vars
+**/.wrangler/

@@ -1,4 +1,4 @@
-import { semanticContentModulePropsSchemas } from "@xpotato/content-contracts";
+import { semanticContentModulePropsSchemas } from "@xpotato/content-contracts/content";
 import remarkMdx from "remark-mdx";
 import remarkParse from "remark-parse";
 import { unified } from "unified";

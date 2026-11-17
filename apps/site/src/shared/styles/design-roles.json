@@ -1,0 +1,1018 @@
+{
+  "version": 2,
+  "tokenSource": "packages/design-system/src/tokens.css",
+  "roles": [
+    {
+      "id": "disclosure-control",
+      "owner": "site-shell",
+      "selector": ".disclosure-summary",
+      "tokens": [
+        "--disclosure-font-size",
+        "--disclosure-font-weight",
+        "--disclosure-line-height",
+        "--disclosure-padding-block",
+        "--control-min-size",
+        "--font-body",
+        "--focus"
+      ],
+      "sources": [
+        "apps/site/src/shared/blocks/Details/Details.astro",
+        "apps/site/src/features/tools/components/PrimeOffline.astro",
+        "apps/site/src/features/tools/components/ToolReleaseNotice.astro",
+        "apps/site/src/features/discovery/components/BlogArchiveNavigation.astro",
+        "apps/site/src/features/pages/components/ContactIssuePicker.astro"
+      ],
+      "comparison": [
+        "fontFamily",
+        "fontSize",
+        "fontWeight",
+        "lineHeight",
+        "paddingTop",
+        "paddingBottom",
+        "minHeight",
+        "outlineColor",
+        "outlineWidth",
+        "outlineOffset"
+      ],
+      "coverage": {
+        "routes": [
+          "/tools/prime-factorizer/",
+          "/articles/",
+          "/contact/",
+          "/notes/infrastructure-foundation/"
+        ],
+        "states": [
+          "closed",
+          "open",
+          "reopened",
+          "keyboard-focus",
+          "no-javascript"
+        ],
+        "fixtures": [
+          "article-prose-details",
+          "inline-demo",
+          "inline-release-notice"
+        ],
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "tool-disclosure-control",
+      "owner": "independent-tool",
+      "selector": "[data-bt] summary",
+      "tokens": [
+        "--disclosure-font-size",
+        "--disclosure-font-weight",
+        "--disclosure-line-height",
+        "--control-min-size",
+        "--font-body"
+      ],
+      "sources": [
+        "apps/site/src/features/tools/components/Demo.astro"
+      ],
+      "comparison": [
+        "fontFamily",
+        "fontSize",
+        "fontWeight",
+        "lineHeight",
+        "minHeight"
+      ],
+      "exceptions": [],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "decorative-divider",
+      "owner": "site-layout",
+      "tokens": [
+        "--border-divider"
+      ],
+      "sources": [
+        "apps/site/src/shared/styles/content.css",
+        "apps/site/src/shared/styles/tag-directory.css",
+        "apps/site/src/shared/styles/search.css",
+        "apps/site/src/features/tools/components/ToolReleaseNotice.astro",
+        "apps/site/src/features/tools/components/ToolContact.astro",
+        "apps/site/src/shared/content/PageShare.astro"
+      ],
+      "coverage": {
+        "selectors": [
+          ".content-heading",
+          ".tool-release",
+          ".tool-contact",
+          ".page-share",
+          ".archive-tags",
+          ".search-controls"
+        ],
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "control-boundary",
+      "owner": "site-shell",
+      "tokens": [
+        "--border-control"
+      ],
+      "sources": [
+        "apps/site/src/shared/styles/global.css",
+        "apps/site/src/shared/styles/search.css",
+        "apps/site/src/features/pages/components/ContactIssuePicker.astro",
+        "apps/site/src/shared/content/PageShare.astro",
+        "apps/site/src/shared/styles/tag-directory.css"
+      ],
+      "coverage": {
+        "selectors": [
+          ".header-search input",
+          "#search-form input",
+          ".tag-search-form input",
+          ".issue-picker select",
+          ".page-share-manual input",
+          ".tag-links a",
+          ".archive-category-options a"
+        ],
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "tool-boundary",
+      "owner": "independent-tool",
+      "tokens": [
+        "--border-tool"
+      ],
+      "sources": [
+        "apps/site/src/features/tools/components/Demo.astro"
+      ],
+      "exceptions": [],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "offline-help-heading",
+      "owner": "site-component",
+      "selector": ".prime-offline h2",
+      "sources": [
+        "apps/site/src/features/tools/components/PrimeOffline.astro"
+      ],
+      "structure": "ページh1の下の補足手順はh2。summaryは操作ラベルであり親見出しの代わりにしない。文字の大きさは補足本文の役割を維持する。",
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "primary-tool-region-heading",
+      "owner": "site-component",
+      "selector": "[data-interactive-module] > h2.visually-hidden",
+      "sources": [
+        "apps/site/src/features/tools/components/Demo.astro"
+      ],
+      "structure": "primary Toolの既存titleを視覚非表示のh2として残す。ページh1を画面上で重複させず、固定版のhelp h3に実際の親階層を提供する。inline Demoの見出しは表示する。",
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "site-typography",
+      "owner": "site-shell",
+      "tokens": [
+        "--font-body",
+        "--font-display",
+        "--font-english-display",
+        "--font-mono",
+        "--font-meta"
+      ],
+      "sources": [
+        "apps/site/src/shared/styles/global.css",
+        "apps/site/src/shared/styles/home.css",
+        "apps/site/src/shared/styles/content.css"
+      ],
+      "exceptions": [
+        "editorial-heading"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "site-layout",
+      "owner": "site-layout",
+      "tokens": [
+        "--content-width",
+        "--gutter"
+      ],
+      "sources": [
+        "apps/site/src/shared/styles/global.css",
+        "apps/site/src/shared/styles/content.css",
+        "apps/site/src/shared/styles/home.css"
+      ],
+      "exceptions": [
+        "responsive-layout"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "site-navigation",
+      "owner": "site-shell",
+      "tokens": [
+        "--control-min-size"
+      ],
+      "sources": [
+        "apps/site/src/shared/layouts/BaseLayout.astro",
+        "apps/site/src/shared/shell/SiteFooter.astro",
+        "apps/site/src/shared/styles/global.css",
+        "apps/site/public/scripts/mobile-menu.js",
+        "apps/site/src/shared/shell/SiteHeader.astro"
+      ],
+      "exceptions": [
+        "navigation-disclosure",
+        "surface-motion"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "focus-treatment",
+      "owner": "site-shell",
+      "tokens": [
+        "--focus",
+        "--focus-ring-width",
+        "--focus-ring-offset"
+      ],
+      "sources": [
+        "apps/site/src/shared/styles/global.css",
+        "apps/site/src/shared/content/PageShare.astro"
+      ],
+      "exceptions": [
+        "action-shapes",
+        "surface-motion"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "text-field",
+      "owner": "site-shell",
+      "tokens": [
+        "--surface-control",
+        "--border-control",
+        "--control-min-size"
+      ],
+      "sources": [
+        "apps/site/src/shared/styles/global.css",
+        "apps/site/src/shared/layouts/BaseLayout.astro",
+        "apps/site/src/pages/search/index.astro",
+        "apps/site/src/features/discovery/components/TagSearch.astro",
+        "apps/site/src/features/pages/components/ContactIssuePicker.astro",
+        "apps/site/src/shared/content/PageShare.astro"
+      ],
+      "exceptions": [
+        "control-density"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "primary-action",
+      "owner": "site-shell",
+      "tokens": [
+        "--accent",
+        "--on-accent",
+        "--control-min-size"
+      ],
+      "sources": [
+        "apps/site/src/shared/styles/global.css",
+        "apps/site/src/pages/search/index.astro",
+        "apps/site/src/features/tools/components/PrimeOffline.astro"
+      ],
+      "exceptions": [
+        "control-density"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "assistive-status",
+      "owner": "site-shell",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/shared/styles/global.css",
+        "apps/site/src/features/home/components/ProjectCarousel.astro",
+        "apps/site/src/shared/blocks/transforms/code-block-transformer.mjs"
+      ],
+      "exceptions": [],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "editorial-content",
+      "owner": "content-layout",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/shared/styles/content.css",
+        "apps/site/src/shared/styles/article-structure.css",
+        "apps/site/src/shared/layouts/ContentLayout.astro",
+        "apps/site/src/features/articles/components/BlogDetail.astro",
+        "apps/site/src/features/articles/components/ArticlePublication.astro",
+        "apps/site/src/features/discovery/components/HistoricalReferenceLink.astro",
+        "apps/site/src/features/notes/components/NoteDetail.astro",
+        "apps/site/src/features/discovery/components/RelatedContent.astro",
+        "apps/site/src/features/articles/components/TableOfContents.astro",
+        "apps/site/src/shared/blocks/transforms/footnote-backlinks.mjs",
+        "apps/site/src/features/discovery/model/rss.ts",
+        "apps/site/src/shared/lib/font-subsets.mjs"
+      ],
+      "exceptions": [
+        "editorial-heading",
+        "legacy-prime-fixture"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "content-modules",
+      "owner": "content-layout",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/shared/styles/article-modules.css",
+        "apps/site/src/shared/styles/article-bar-chart.css",
+        "apps/site/src/shared/styles/article-motion.css",
+        "apps/site/public/scripts/article-motion.js",
+        "packages/portable-content/src/media-picture.ts",
+        "apps/site/src/features/discovery/components/ArticleIcon.astro",
+        "apps/site/src/shared/blocks/ArticleEndnote/ArticleEndnote.astro",
+        "apps/site/src/shared/blocks/BarChart/BarChart.astro",
+        "apps/site/src/shared/blocks/Callout/Callout.astro",
+        "apps/site/src/shared/blocks/Comparison/Comparison.astro",
+        "apps/site/src/shared/blocks/DiagnosticItem/DiagnosticItem.astro",
+        "apps/site/src/shared/blocks/DiagnosticList/DiagnosticList.astro",
+        "apps/site/src/shared/blocks/LinkCard/LinkCard.astro",
+        "apps/site/src/shared/blocks/Step/Step.astro",
+        "apps/site/src/shared/blocks/Steps/Steps.astro"
+      ],
+      "exceptions": [
+        "editorial-heading"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ],
+        "kind": "source-contract-plus-representative-route",
+        "limitation": "すべての未使用module/variantの実表示を網羅するものではない。変更するvariantは専用fixtureまたは利用routeで検証する。"
+      }
+    },
+    {
+      "id": "article-card",
+      "owner": "content-layout",
+      "tokens": [
+        "--surface-muted"
+      ],
+      "sources": [
+        "apps/site/src/features/discovery/components/ArticleCard.astro"
+      ],
+      "exceptions": [
+        "editorial-heading",
+        "responsive-layout"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "search-discovery",
+      "owner": "site-components",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/shared/styles/search.css",
+        "apps/site/src/shared/styles/tag-directory.css",
+        "apps/site/src/features/discovery/components/ArchivePage.astro",
+        "apps/site/src/features/articles/components/BlogTaxonomy.astro",
+        "apps/site/src/features/discovery/components/TagLinks.astro",
+        "apps/site/src/features/discovery/search/result.ts",
+        "apps/site/src/features/discovery/search/tag-search-client.ts"
+      ],
+      "exceptions": [
+        "responsive-layout"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "home-photo",
+      "owner": "home-layout",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/shared/styles/home.css",
+        "apps/site/src/features/home/components/WorkshopPhoto.astro",
+        "apps/site/src/features/home/components/WorkshopPreview.astro",
+        "apps/site/public/scripts/home-header.js"
+      ],
+      "exceptions": [
+        "surface-motion"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "project-carousel",
+      "owner": "home-layout",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/features/home/components/ProjectCarousel.astro",
+        "apps/site/src/features/home/model/project-carousel.ts",
+        "apps/site/src/shared/styles/home.css"
+      ],
+      "exceptions": [
+        "action-shapes",
+        "surface-motion"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "code-surface",
+      "owner": "content-layout",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/shared/styles/code.css",
+        "apps/site/src/shared/blocks/transforms/code-block-transformer.mjs",
+        "apps/site/public/scripts/code-copy.js"
+      ],
+      "exceptions": [
+        "action-shapes",
+        "surface-motion"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "technical-visual-authoring",
+      "owner": "private-authoring",
+      "tokens": [],
+      "sources": [
+        "ops/media/visuals/theme.mjs",
+        "ops/media/visuals/chart.mjs",
+        "ops/media/visuals/worker.mjs"
+      ],
+      "exceptions": [],
+      "coverage": {
+        "checks": [
+          "ops/media/visuals/technical-visuals.test.mjs",
+          "ops/qa/review/articles/technical-visual-preview.ts",
+          "ops/qa/review/articles/technical-visual-capture.mjs"
+        ],
+        "kind": "local-static-renderer-plus-private-fixture",
+        "limitation": "値はglobal.cssの既存tokenをadapterが解決する。公開UI/runtimeを追加しない。実browserの成否はprivate evidenceで区別する。"
+      }
+    },
+    {
+      "id": "math-content",
+      "owner": "content-layout",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/shared/blocks/transforms/math-blocks.mjs",
+        "apps/site/src/shared/styles/content.css"
+      ],
+      "exceptions": [
+        "print-layout"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ],
+        "kind": "source-contract-plus-representative-route",
+        "limitation": "すべての未使用module/variantの実表示を網羅するものではない。変更するvariantは専用fixtureまたは利用routeで検証する。"
+      }
+    },
+    {
+      "id": "media-presentation",
+      "owner": "content-layout",
+      "tokens": [
+        "--text-muted",
+        "--accent"
+      ],
+      "sources": [
+        "apps/site/src/shared/blocks/Figure/Figure.astro",
+        "apps/site/src/shared/blocks/Gallery/Gallery.astro",
+        "apps/site/src/shared/blocks/MediaPicture/MediaPicture.astro",
+        "apps/site/src/features/articles/components/MediaHero.astro",
+        "apps/site/src/shared/blocks/transforms/markdown-media.ts",
+        "apps/site/src/shared/media/media-credits.ts",
+        "apps/site/src/shared/styles/media-credit.css",
+        "packages/portable-content/src/media-picture.ts",
+        "apps/site/src/shared/media/editor-review.ts"
+      ],
+      "exceptions": [
+        "responsive-layout"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs",
+          "apps/site/src/shared/blocks/Figure/Figure.test.ts",
+          "apps/site/src/shared/media/media-credits.test.ts",
+          "apps/site/src/shared/media/media-credit-context.test.ts",
+          "ops/qa/media-credit-layout.mjs"
+        ],
+        "kind": "source-contract-plus-representative-route-and-private-fixture",
+        "limitation": "既存routeに加え、media-credit-layoutの非公開fixtureでhero/Figureのcredit・licenseリンク、狭幅、focus、overflowを検査する。Markdown/Galleryはsource契約と共通renderer検査を併用し、未使用variant全体の実表示PASSとはしない。"
+      }
+    },
+    {
+      "id": "contact-content",
+      "owner": "site-components",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/features/pages/components/ContactDetails.astro",
+        "apps/site/src/features/pages/components/ContactIssuePicker.astro",
+        "apps/site/public/scripts/contact-issues.js"
+      ],
+      "exceptions": [
+        "contact-hierarchy"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "sharing-actions",
+      "owner": "site-components",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/shared/content/PageShare.astro",
+        "apps/site/public/scripts/page-share.js",
+        "apps/site/src/shared/shell/SocialIcon.astro",
+        "apps/site/src/shared/shell/SocialLinks.astro"
+      ],
+      "exceptions": [
+        "action-shapes"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "font-delivery",
+      "owner": "build-fonts",
+      "tokens": [],
+      "sources": [
+        "packages/design-system/src/fonts.css",
+        "packages/design-system/src/fonts-core.css"
+      ],
+      "exceptions": [
+        "font-subsets"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ],
+        "kind": "source-contract-plus-representative-route",
+        "limitation": "すべての未使用module/variantの実表示を網羅するものではない。変更するvariantは専用fixtureまたは利用routeで検証する。"
+      }
+    },
+    {
+      "id": "tool-host",
+      "owner": "site-component",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/features/tools/components/Demo.astro",
+        "apps/site/src/features/tools/components/ToolBreadcrumbs.astro",
+        "apps/site/src/features/tools/components/ToolCapabilities.astro",
+        "apps/site/src/features/tools/components/ToolContact.astro",
+        "apps/site/src/features/tools/components/ToolReleaseNotice.astro",
+        "apps/site/src/features/tools/components/PrimeOffline.astro",
+        "apps/site/src/features/tools/renderers/PrimeFactorizerIdle.astro",
+        "apps/site/src/features/tools/renderers/PrimeFactorizerLoad.astro",
+        "apps/site/src/features/tools/renderers/PrimeFactorizerMedia.astro",
+        "apps/site/src/features/tools/renderers/PrimeFactorizerStyles.astro",
+        "apps/site/src/features/tools/renderers/PrimeFactorizerVisible.astro",
+        "apps/site/src/features/tools/islands/PrimeFactorizer.tsx"
+      ],
+      "exceptions": [],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "page-composition",
+      "owner": "site-layout",
+      "tokens": [],
+      "sources": [
+        "apps/site/src/pages/[...page].astro",
+        "apps/site/src/pages/404.astro",
+        "apps/site/src/pages/articles/[...slug].astro",
+        "apps/site/src/pages/articles/index.astro",
+        "apps/site/src/pages/articles/tags/[...page].astro",
+        "apps/site/src/pages/index.astro",
+        "apps/site/src/pages/notes/[...slug].astro",
+        "apps/site/src/pages/notes/index.astro",
+        "apps/site/src/pages/pages/index.astro",
+        "apps/site/src/pages/projects/[...slug].astro",
+        "apps/site/src/pages/projects/index.astro",
+        "apps/site/src/pages/tools/[...slug].astro",
+        "apps/site/src/pages/tools/index.astro"
+      ],
+      "exceptions": [
+        "editorial-heading"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/design-role-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "home-update-activity",
+      "owner": "home-layout",
+      "tokens": [
+        "--accent",
+        "--text-muted",
+        "--font-meta",
+        "--font-body",
+        "--font-display"
+      ],
+      "sources": [
+        "apps/site/src/features/home/components/UpdateActivity.astro",
+        "apps/site/src/features/home/model/update-activity-client.ts",
+        "apps/site/src/shared/styles/home.css",
+        "apps/site/src/features/home/components/HomeNewLabel.astro"
+      ],
+      "exceptions": [],
+      "coverage": {
+        "checks": [
+          "apps/site/src/features/home/model/update-activity.test.ts",
+          "ops/qa/update-activity-interaction.mjs"
+        ]
+      }
+    },
+    {
+      "id": "home-content-title",
+      "owner": "site-typography",
+      "selector": ".content-item-title",
+      "tokens": [
+        "--font-content",
+        "--text-content-item",
+        "--text-content-item--font-weight",
+        "--text-content-item--line-height"
+      ],
+      "utilities": {
+        "font-content": [
+          "--font-content"
+        ],
+        "text-content-item": [
+          "--text-content-item",
+          "--text-content-item--font-weight",
+          "--text-content-item--line-height"
+        ]
+      },
+      "sources": [
+        "apps/site/src/shared/styles/global.css",
+        "apps/site/src/features/discovery/components/ArticleCard.astro",
+        "apps/site/src/features/home/components/ProjectCarousel.astro",
+        "apps/site/src/features/home/components/UpdateActivity.astro",
+        "apps/site/src/features/home/model/update-activity-client.ts",
+        "apps/site/src/pages/index.astro"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "ops/qa/update-activity-interaction.mjs",
+          "ops/qa/home-design-webkit.mjs"
+        ]
+      }
+    },
+    {
+      "id": "home-semantic-color",
+      "owner": "site-theme",
+      "tokens": [
+        "--brand-rgb",
+        "--color-accent",
+        "--color-label-static",
+        "--color-focus",
+        "--color-activity-0",
+        "--color-activity-1",
+        "--color-activity-2",
+        "--color-activity-3",
+        "--color-activity-marker",
+        "--color-activity-prelaunch"
+      ],
+      "utilities": {
+        "text-label-static": [
+          "--color-label-static"
+        ]
+      },
+      "sources": [
+        "apps/site/src/shared/styles/global.css",
+        "apps/site/src/shared/styles/home.css",
+        "packages/design-system/src/tokens.css"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "ops/qa/home-style-contract.test.ts",
+          "ops/qa/home-design-webkit.mjs"
+        ]
+      }
+    }
+  ],
+  "exceptions": [
+    {
+      "id": "navigation-disclosure",
+      "owner": "site-shell",
+      "scope": ".mobile-menu-fallback > summary",
+      "reason": "文字の補足を開く操作ではなく、2線glyphによるナビゲーション開閉。専用のhit area・状態・motionをshared-header検査で守る。",
+      "properties": [
+        "fontFamily",
+        "padding",
+        "minHeight"
+      ],
+      "checks": [
+        "ops/qa/mobile-menu-interaction.mjs"
+      ]
+    },
+    {
+      "id": "editorial-heading",
+      "owner": "content-layout",
+      "scope": "h1, h2, ArticleCard",
+      "reason": "本文のserif見出しとUI/bodyのsans、archiveカードh2とhomeカードh3の主従は平準化しない。",
+      "properties": [
+        "fontFamily",
+        "fontSize",
+        "fontWeight"
+      ],
+      "checks": [
+        "ops/qa/design-role-interaction.mjs"
+      ]
+    },
+    {
+      "id": "action-shapes",
+      "owner": "site-components",
+      "scope": "PageShare, PrimeOffline, ProjectCarousel, code toolbar",
+      "reason": "共有のブランドアイコン、保存の文言付きボタン、円形カルーセル、暗色codeコピーは役割と面が異なる。全ボタンの寸法・角丸を一括統一しない。",
+      "properties": [
+        "width",
+        "height",
+        "borderRadius",
+        "outlineOffset",
+        "outlineWidth"
+      ],
+      "checks": [
+        "ops/qa/project-carousel-interaction.mjs",
+        "ops/qa/release-interaction-suite.mjs"
+      ]
+    },
+    {
+      "id": "surface-motion",
+      "owner": "site-layout",
+      "scope": "home header, carousel, dark code, print",
+      "reason": "写真上の白い前景、通常headerのglass、carouselの移動、dark-code、印刷は媒体・状態の違いを保つ。reduced-motionを共通の停止境界とする。",
+      "properties": [
+        "color",
+        "backgroundColor",
+        "transition",
+        "outlineColor"
+      ],
+      "checks": [
+        "ops/qa/navigation-interaction.mjs",
+        "ops/qa/project-carousel-interaction.mjs",
+        "ops/qa/release-interaction-suite.mjs"
+      ]
+    },
+    {
+      "id": "responsive-layout",
+      "owner": "site-layout",
+      "scope": "各route・一覧・写真・表の幅とbreakpoint",
+      "reason": "本文、一覧、写真、横スクロール領域は収まり方が違う。breakpointと幅を単一値へ潰さない。",
+      "properties": [
+        "width",
+        "maxWidth",
+        "gridTemplateColumns"
+      ],
+      "checks": [
+        "ops/qa/design-role-interaction.mjs",
+        "ops/qa/search-layout-interaction.mjs"
+      ]
+    },
+    {
+      "id": "control-density",
+      "owner": "site-components",
+      "scope": ".control-field, .action-primary",
+      "reason": "入力の境界・色・最小領域を共有する。select、共有URL、検索、保存は文脈が違うためpadding・角丸・文字サイズをlocalに保持する。",
+      "properties": [
+        "padding",
+        "borderRadius",
+        "fontSize",
+        "fontWeight"
+      ],
+      "checks": [
+        "ops/qa/design-role-interaction.mjs"
+      ]
+    },
+    {
+      "id": "legacy-prime-fixture",
+      "owner": "migration-validation",
+      "scope": "packages/site-validators/fixtures/LegacyPrimeFactorizer.tsx",
+      "reason": "旧Primeのsection/title/resultと汎用form/output CSSは歴史復元fixtureが使用する。現在の固定vendor用ではなく、fixture依存を残す。",
+      "properties": [
+        "padding",
+        "margin",
+        "border"
+      ],
+      "checks": [
+        "packages/site-validators/fixtures/LegacyPrimeFactorizer.tsx",
+        "apps/site/src/shared/styles/legacy-css-cleanup.test.ts"
+      ]
+    },
+    {
+      "id": "print-layout",
+      "owner": "content-layout",
+      "scope": "@media print",
+      "reason": "印刷時の単色、制御非表示、改ページ、数式原文を画面用規則へ統合しない。",
+      "properties": [
+        "color",
+        "display",
+        "breakInside",
+        "overflow"
+      ],
+      "checks": [
+        "ops/qa/release-interaction-suite.mjs"
+      ]
+    },
+    {
+      "id": "contact-hierarchy",
+      "owner": "site-components",
+      "scope": "ContactDetails.astro",
+      "reason": "主メールと補助リンクの主従、連絡先と自動送信しないIssue導線を保持する。",
+      "properties": [
+        "fontSize",
+        "fontFamily",
+        "margin"
+      ],
+      "checks": [
+        "ops/qa/contact-interaction.mjs"
+      ]
+    },
+    {
+      "id": "font-subsets",
+      "owner": "build-fonts",
+      "scope": "fonts.css, fonts-core.css",
+      "reason": "フォントfaceのunicode-rangeとsrcは配信契約。意匠の例外値へ平準化しない。",
+      "properties": [
+        "fontFamily",
+        "fontWeight",
+        "fontDisplay"
+      ],
+      "checks": [
+        "apps/site/src/shared/lib/font-subsets.test.ts"
+      ]
+    }
+  ],
+  "inventorySource": "apps/site/src/shared/styles/design-inventory.json",
+  "browserCoverage": {
+    "routes": [
+      "/",
+      "/articles/",
+      "/articles/77arj41r5z8amrn46pdx71mknr/",
+      "/notes/",
+      "/projects/",
+      "/tools/",
+      "/pages/",
+      "/about/",
+      "/education/",
+      "/privacy/",
+      "/contact/",
+      "/search/",
+      "/tools/prime-factorizer/",
+      "/404.html"
+    ],
+    "viewports": [
+      [
+        390,
+        100
+      ],
+      [
+        1440,
+        100
+      ],
+      [
+        320,
+        200
+      ]
+    ],
+    "scope": "実routeの入力・主操作・見出し・読み上げ専用表示・reflow・axe。全source inventoryは構造検査であり、未使用content moduleの実表示PASSではない。"
+  }
+}

@@ -1,12 +1,12 @@
 ---
-import tagCssHref from "../../../styles/tag-directory.css?url&no-inline";
-import BaseLayout from '../../../layouts/BaseLayout.astro';
-import TagLinks from '../../../components/content/TagLinks.astro';
-import { taxonomyRegistry } from '../../../content-registry/taxonomy/index.js';
-import { selectWebIndexableCatalog } from '../../../lib/discovery/catalog.js';
-import { generateArchivePages, paginate } from '../../../lib/discovery/discovery.js';
-import { getLiveContentCatalog } from '../../../lib/discovery/live-catalog.js';
-import { buildTagDirectory, tagDirectoryRoute, TAG_PAGE_SIZE, type DirectoryTag } from '../../../lib/discovery/tag-directory.js';
+import tagCssHref from "../../../shared/styles/tag-directory.css?url&no-inline";
+import BaseLayout from '../../../shared/layouts/BaseLayout.astro';
+import TagLinks from '../../../features/discovery/components/TagLinks.astro';
+import { taxonomyRegistry } from '../../../../../../content/registry/taxonomy/index.js';
+import { selectWebIndexableCatalog } from '../../../features/discovery/model/catalog.js';
+import { generateArchivePages, paginate } from '../../../features/discovery/model/discovery.js';
+import { getLiveContentCatalog } from '../../../features/discovery/model/live-catalog.js';
+import { buildTagDirectory, tagDirectoryRoute, TAG_PAGE_SIZE, type DirectoryTag } from '../../../features/discovery/model/tag-directory.js';
 
 export async function getStaticPaths() {
   const catalog = selectWebIndexableCatalog(await getLiveContentCatalog());

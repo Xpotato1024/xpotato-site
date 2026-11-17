@@ -71,7 +71,7 @@ jobs:
           MEDIA_PUBLICATION_ENABLED: ${{ vars.MEDIA_PUBLICATION_ENABLED }}
           GH_TOKEN: ${{ github.token }}
         run: >-
-          node --import tsx tools/publication/media-publication.ts acquire
+          node --import tsx ops/media/publication/media-publication.ts acquire
           --release-id "$SELECT_RELEASE" --asset-id "$SELECT_ASSET" --sha256 "$SELECT_HASH"
           --mode "$SELECT_MODE" --output "$RUNNER_TEMP/article-publication-package.json"
       - name: Save and verify A B C; export only in article publication modes
@@ -86,7 +86,7 @@ jobs:
             publish|verify-only) command=publish ;;
             *) exit 1 ;;
           esac
-          node --import tsx tools/publication/media-publication.ts "$command" \
+          node --import tsx ops/media/publication/media-publication.ts "$command" \
             --file "$RUNNER_TEMP/article-publication-package.json" --sha256 "$SELECT_HASH" \
             --mode "$SELECT_MODE" --output "$RUNNER_TEMP/article-publication-result"
       - name: Preserve nonsecret results; media registration is not article approval

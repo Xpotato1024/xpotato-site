@@ -4,7 +4,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
 import { deriveContentCatalog, type CatalogSourceRecord } from "@xpotato/portable-content/catalog";
-import { taxonomyRegistry } from "../../../apps/site/src/content-registry/taxonomy/index.js";
+import { taxonomyRegistry } from "../../../content/registry/taxonomy/index.js";
 import { collectDemoModuleIds } from "./portable-mdx.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)),"../../..");
@@ -22,7 +22,7 @@ export const readSiteContent = async (repositoryRoot=root) => {
     return files.sort();
   };
   for (const collection of ["blog", "notes", "projects", "tools", "pages"] as const) {
-    const directory = join(repositoryRoot, "apps/site/src/content", collection);
+    const directory = join(repositoryRoot, "content", collection === "blog" ? "articles" : collection);
     for (const path of await walk(directory)) {
       const text = await readFile(path, "utf8");
       const match = /^---\r?\n([\s\S]+?)\r?\n---/u.exec(text);

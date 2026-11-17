@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { interactiveModuleRecordSchema } from "@xpotato/content-contracts";
-import { deriveContentCatalog, type CatalogSourceRecord } from "../../../../apps/site/src/lib/discovery/catalog.js";
-import { taxonomyRegistry } from "../../../../apps/site/src/content-registry/taxonomy/index.js";
+import { deriveContentCatalog, type CatalogSourceRecord } from "../../../../apps/site/src/features/discovery/model/catalog.js";
+import { taxonomyRegistry } from "../../../../content/registry/taxonomy/index.js";
 import { deriveRegisteredToolRoutes } from "./tool-runtime-policy.js";
 import { collectDemoModuleIds } from "../portable-mdx.js";
 

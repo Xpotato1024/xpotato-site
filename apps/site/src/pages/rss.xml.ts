@@ -1,9 +1,9 @@
 import type { APIRoute } from "astro";
-import { taxonomyRegistry } from "../content-registry/taxonomy/index.js";
-import { siteConfig } from "../lib/site-config.js";
-import { selectFeedEligibleCatalog } from "../lib/discovery/catalog.js";
-import { getLiveContentCatalog } from "../lib/discovery/live-catalog.js";
-import { renderRssFeed } from "../lib/discovery/rss.js";
+import { taxonomyRegistry } from "../../../../content/registry/taxonomy/index.js";
+import { siteConfig } from "../shared/lib/site-config.js";
+import { selectFeedEligibleCatalog } from "../features/discovery/model/catalog.js";
+import { getLiveContentCatalog } from "../features/discovery/model/live-catalog.js";
+import { renderRssFeed } from "../features/discovery/model/rss.js";
 
 export const GET: APIRoute = async () => {
   const catalog = selectFeedEligibleCatalog(await getLiveContentCatalog());

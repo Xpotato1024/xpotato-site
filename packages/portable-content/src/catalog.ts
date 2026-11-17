@@ -1,13 +1,13 @@
 import {
   articleRoute,articleUrlId,
-  blogFrontmatterSchema,
+  blogSourceFrontmatterSchema,
   contentDiscoveryRecordSchema,
   contentRouteRecordSchema,
   noteFrontmatterSchema,
   pageFrontmatterSchema,
   projectFrontmatterSchema,
   toolFrontmatterSchema,
-  type BlogFrontmatter,
+  type BlogSourceFrontmatter,
   type ContentCollection,
   type ContentDiscoveryRecord,
   type NoteFrontmatter,
@@ -19,7 +19,7 @@ import {
 import {isFeedEligible} from './feed.js';
 
 export type CatalogSourceRecord =
-  | { collection: "blog"; slug: string; data: BlogFrontmatter }
+  | { collection: "blog"; slug: string; data: BlogSourceFrontmatter }
   | { collection: "notes"; slug: string; data: NoteFrontmatter }
   | { collection: "projects"; slug: string; data: ProjectFrontmatter }
   | { collection: "tools"; slug: string; data: ToolFrontmatter }
@@ -46,7 +46,7 @@ const collectionPrefixes: Record<ContentCollection, string> = {
 const parseFrontmatter = (record: CatalogSourceRecord) => {
   switch (record.collection) {
     case "blog":
-      return blogFrontmatterSchema.parse(record.data);
+      return blogSourceFrontmatterSchema.parse(record.data);
     case "notes":
       return noteFrontmatterSchema.parse(record.data);
     case "projects":
@@ -126,7 +126,9 @@ export const deriveContentCatalog = (
       collection: source.collection,
       route,
       title: data.title,
-      description: data.description,
+      // Held drafts never enter discovery. Keep authored metadata unchanged;
+      // use the title only as the nonempty internal catalog label while editing.
+      description: data.draft && !data.description ? data.title : data.description,
       ...( "pubDate" in data ? { pubDate: data.pubDate } : {}),
       ...(data.updatedDate ? { updatedDate: data.updatedDate } : {}),
       ...('publishedAt' in data && data.publishedAt ? { publishedAt: data.publishedAt } : {}),

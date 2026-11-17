@@ -7,10 +7,10 @@ import {fingerprint,sha256} from '../canonical.js';
 import {assertPublicPublicationMetadata,assertPublicationRights} from './publication-public-metadata.js';
 
 export function revisionPaths(id:string,fileSlug:string){return {
- mdx:'apps/site/src/content/blog/'+fileSlug+'.mdx',
- media:'apps/site/src/content-registry/media/blog/'+id+'.json',
- rights:'apps/site/src/content-registry/media-rights/blog/'+id+'.json',
- provenance:'apps/site/src/content-registry/provenance/blog/'+id+'.json',
+ mdx:'content/articles/'+fileSlug+'.mdx',
+ media:'content/registry/media/blog/'+id+'.json',
+ rights:'content/registry/media-rights/blog/'+id+'.json',
+ provenance:'content/registry/provenance/blog/'+id+'.json',
 };}
 export function readPreviousPublication(id:string,fileSlug:string,base:Readonly<Record<string,string|null>>){
  const paths=revisionPaths(id,fileSlug),text=(path:string)=>{const t=base[path];if(typeof t!=='string')throw Error('CI_UPDATE_BASE_REQUIRED');return t;};

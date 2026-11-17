@@ -58,4 +58,4 @@
 
 **3Dプリンタ記事とMuJoCo記事の両publication packageをprepareしてから、どちらかのcanonical記事をmainへ反映します。** 先に一方の記事を更新すると全content/registryのfingerprintが変わり、未prepare側のJobが失効します。コードやadmissionだけの変更では監査を作り直さず、現行rendererのQAを別途行います。content/registryが変わった場合は正規CLIのstale判定を尊重し、baseやhashを手書きで付け替えません。
 
-配置先は `docs/content/publication-staging/` です。Astroのcontent loaderは `apps/site/src/content/` 各collectionだけを読みます。原稿の `draft:false` は承認済み入力bytesの保持であり、公開設定を適用したものではありません。現行のcanonical MDX/Registry、public、runtime、schema、workflowは変更していません。
+配置先は `docs/content/publication-staging/` です。Astroのcontent loaderは `content/` 各collectionだけを読みます。原稿の `draft:false` は承認済み入力bytesの保持であり、公開設定を適用したものではありません。現行のcanonical MDX/Registry、public、runtime、schema、workflowは変更していません。

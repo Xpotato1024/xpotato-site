@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { siteConfig } from "../lib/site-config.js";
+import { siteConfig } from "../shared/lib/site-config.js";
 
 export const GET: APIRoute = () =>
   new Response(`User-agent: *\nAllow: /\nSitemap: ${siteConfig.site.canonicalOrigin}sitemap-index.xml\n`, {

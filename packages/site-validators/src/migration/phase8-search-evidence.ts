@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
-import { discoveryProfile } from "../../../../apps/site/src/content-registry/discovery.js";
-import { buildSearchDocumentsFromHtmlPages, type SearchHtmlPage } from "../../../../apps/site/src/search/html.js";
-import { searchIndexPath } from "../../../../apps/site/src/search/index-path.mjs";
-import { createSearchIndexFromDocuments, loadSearchIndex, searchSearchIndex, serializeSearchIndex } from "../../../../apps/site/src/search/runtime.js";
+import { discoveryProfile } from "../../../../content/registry/discovery.js";
+import { buildSearchDocumentsFromHtmlPages, type SearchHtmlPage } from "../../../../apps/site/src/features/discovery/search/html.js";
+import { searchIndexPath } from "../../../../apps/site/src/features/discovery/search/index-path.mjs";
+import { createSearchIndexFromDocuments, loadSearchIndex, searchSearchIndex, serializeSearchIndex } from "../../../../apps/site/src/features/discovery/search/runtime.js";
 
 const syntheticTargetId = "f8a847d4-8f5d-4bb0-a387-750f096479f2";
 const syntheticGenericId = "90af3222-b287-412f-99eb-fcd9ee92a579";

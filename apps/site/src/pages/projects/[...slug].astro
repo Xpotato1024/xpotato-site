@@ -1,14 +1,14 @@
 ---
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
-import { contentComponents } from "../../components/content/index.js";
-import RelatedContent from "../../components/content/RelatedContent.astro";
-import { selectTableOfContents } from "../../lib/content/table-of-contents.js";
-import ContentLayout from "../../layouts/ContentLayout.astro";
-import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
-import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../lib/discovery/catalog.js";
-import { selectRelated } from "../../lib/discovery/discovery.js";
-import { getLiveContentCatalog } from "../../lib/discovery/live-catalog.js";
+import { contentComponents } from "../../shared/content/index.js";
+import RelatedContent from "../../features/discovery/components/RelatedContent.astro";
+import { selectTableOfContents } from "../../shared/blocks/transforms/table-of-contents.js";
+import ContentLayout from "../../shared/layouts/ContentLayout.astro";
+import { taxonomyRegistry } from "../../../../../content/registry/taxonomy/index.js";
+import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../features/discovery/model/catalog.js";
+import { selectRelated } from "../../features/discovery/model/discovery.js";
+import { getLiveContentCatalog } from "../../features/discovery/model/live-catalog.js";
 
 export async function getStaticPaths() {
   const catalog = await getLiveContentCatalog();

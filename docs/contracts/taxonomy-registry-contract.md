@@ -246,7 +246,7 @@ indexable archiveは:
 vNext candidate:
 
 ```text
-apps/site/src/content-registry/taxonomy/
+content/registry/taxonomy/
   blog-categories.ts
   note-subjects.ts
   tool-categories.ts

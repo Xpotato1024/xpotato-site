@@ -6,7 +6,7 @@ last_verified: 2026-11-09
 
 # 現在の配置と旧構成の処分条件
 
-この表はPR141で整理した配置です。[PR141](https://github.com/Xpotato1024/xpotato-site/pull/141)は2026-11-04に`2850960722b46217329db78957c67b3086bee188`でmainへ統合済みです。2026-11-09の`e862538b8cae2249fba7c8fe98a043d7f96b67f5`に対し、配置・vendor保持範囲を確認しました。main統合を本番適用・cutover受入れの証明にはしません。日常の操作は[4経路](content-workflows.md)、作業コードは[tools](../../tools/README.md)。
+この表はPR141で整理した配置です。[PR141](https://github.com/Xpotato1024/xpotato-site/pull/141)は2026-11-04に`2850960722b46217329db78957c67b3086bee188`でmainへ統合済みです。2026-11-09の`e862538b8cae2249fba7c8fe98a043d7f96b67f5`に対し、配置・vendor保持範囲を確認しました。main統合を本番適用・cutover受入れの証明にはしません。日常の操作は[4経路](content-workflows.md)、作業コードは[tools](../../ops/README.md)。
 
 | 場所 | 所有する正本・入力 | 直接編集しないもの・旧資産 |
 |---|---|---|
@@ -17,9 +17,9 @@ last_verified: 2026-11-09
 | `apps/site/source-inputs` | 既存Git原画像9件の非配信入力とexact catalog | ホーム・媒体取込みが現物を読む。新規画像/秘密の保存先ではなく、public/protected receiptの代用でもない |
 | `apps/site`のAstro/Wrangler設定 | 現行build・唯一の配信設定 | rootの旧設定は使わない |
 | `config` | tool採用/配置とtrusted-main admission | 秘密値・private原稿・資料本文を置かない |
-| `packages` | 共有schema、記事/media処理、sandbox、read-only検証 | 明示的な移行writer/CLIはtools/migration |
+| `packages` | 共有schema、記事/media処理、sandbox、read-only検証 | 明示的な移行writer/CLIはops/migration |
 | `tools` | 作成、build補助、QA、過去比較、素材生成、移行、保存入口 | 公開runtimeや新workspaceではない |
-| `scripts` | 配信境界・CI分類・7本の固定描画来歴 | 残した具体的理由は[scripts所有表](../../scripts/README.md) |
+| `scripts` | 配信境界・CI分類・7本の固定描画来歴 | 残した具体的理由は[scripts所有表](../../ops/ci/README.md) |
 | `templates` | 記事/page/toolの開始source | 正式記事、test fixture、vendorとは別 |
 | `tests/fixtures` | 凍結・合成入力、receipt worker | test本体は実装横にも置く。公開データではない |
 | `schemas/generated` | content-contractsから生成した82 JSON Schema | 生成元を直しschema:generate/checkを使う |
@@ -35,10 +35,10 @@ PR141の追加変更は[ADR-0067](../design/adr/0067-common-content-lifecycle.md
 
 | 正本 | 所有と更新 |
 |---|---|
-| `apps/site/src/content/{blog,tools,pages}` | 配信用本文・編集metadata。`blog`は内部schema識別子、実記事URLは`/articles/` |
+| `content/{blog,tools,pages}` | 配信用本文・編集metadata。`blog`は内部schema識別子、実記事URLは`/articles/` |
 | `config/browser-tools/installations.json` | 全toolのpin、ID/slug/hydration、hostの表示・法的提供policy。本文/紹介文を重複保存しない |
 | `config/browser-tools/public-admissions.json` | 全tool共通のexact公開pin。bounded runtime reviewを含む元reviewを照合 |
-| `tools/authoring/browser-tool-installation.ts` | 全tool共通のtransaction、履歴、isolated npm lock、失敗復元。validatorは読取り・生成projection比較 |
+| `ops/authoring/browser-tool-installation.ts` | 全tool共通のtransaction、履歴、isolated npm lock、失敗復元。validatorは読取り・生成projection比較 |
 | `packages/article-pipeline/src/publication/publication-revision.ts` | 公開更新の前版4file、Git祖先、ID/URL/recovery照合。新しい保存先ではない |
 | `tests/fixtures/search/article.mdx` | 検索の日本語/英数字試験だけの合成記事。通常content/mediaへ登録しない |
 
@@ -80,6 +80,6 @@ rootの隠しsupportも確認しました。旧src/public・旧3設定・PR141�
 
 ## 移行と再現コード
 
-`tools/migration`は凍結baselineの再生成・再現・明示writer、`packages/site-validators`は同じbuilderと読取り比較を所有する。CLIとwriterは検証から検証結果をコピーせず共有builderを使う。移行writerは日常編集の入口ではなく、特にPhase5のmanual revision上書き拒否は維持する。Phase6のlocal encodingは一時sourceと生成物を書き込むため、checkerを含むIO orchestration全体をtools側に置く。
+`ops/migration`は凍結baselineの再生成・再現・明示writer、`packages/site-validators`は同じbuilderと読取り比較を所有する。CLIとwriterは検証から検証結果をコピーせず共有builderを使う。移行writerは日常編集の入口ではなく、特にPhase5のmanual revision上書き拒否は維持する。Phase6のlocal encodingは一時sourceと生成物を書き込むため、checkerを含むIO orchestration全体をtools側に置く。
 
-`tools/review`は過去の比較画面・入力ケースの再現、`tools/qa`は定常CI受入れ。`tools/assets`はfavicon/font/一時写真の明示生成で、通常buildへ自動追加しない。旧WordPress importer、statusだけを見る旧curl確認、CSP単独writerは廃止。CSPとmanifestの生成・検査は既存publication compilerに統一し、`security:check`のnpm名は維持する。
+`ops/qa/review`は過去の比較画面・入力ケースの再現、`ops/qa`は定常CI受入れ。`ops/build/assets`はfavicon/font/一時写真の明示生成で、通常buildへ自動追加しない。旧WordPress importer、statusだけを見る旧curl確認、CSP単独writerは廃止。CSPとmanifestの生成・検査は既存publication compilerに統一し、`security:check`のnpm名は維持する。
