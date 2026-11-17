@@ -35,7 +35,17 @@ export async function verifyHomeMenuTransition({ evaluate, until, navigate }) {
       );
       await evaluate(open);
       await evaluate(
-        `(async()=>{await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);window.__menuEntry=document.querySelector('.header-band').getAnimations({subtree:true});for(const a of window.__menuEntry){a.pause();a.currentTime=0;}})()`,
+        `
+(async () => {
+  await new Promise(requestAnimationFrame);
+  await new Promise(requestAnimationFrame);
+  window.__menuEntry = document.querySelector(".header-band").getAnimations({ subtree: true });
+  for (const a of window.__menuEntry) {
+    a.pause();
+    a.currentTime = 0;
+  }
+})();
+`,
       );
       const opening = [];
       if (!interrupted) {
@@ -114,7 +124,18 @@ export async function verifyHomeMenuTransition({ evaluate, until, navigate }) {
         "Closed menu releases motion timing",
       );
       const end = await evaluate(
-        `(()=>{const h=document.querySelector('.header-band'),s=getComputedStyle(h,'::before');return{alpha:Number(s.backgroundColor.match(/[\\d.]+/g)[3]),plane:parseFloat(s.height),header:h.getBoundingClientRect().height,duration:s.transitionDuration}})()`,
+        `
+(() => {
+  const h = document.querySelector(".header-band"),
+    s = getComputedStyle(h, "::before");
+  return {
+    alpha: Number(s.backgroundColor.match(/[\\d.]+/g)[3]),
+    plane: parseFloat(s.height),
+    header: h.getBoundingClientRect().height,
+    duration: s.transitionDuration,
+  };
+})();
+`,
       );
       assert.equal(end.alpha, 0);
       assert.ok(Math.abs(end.plane - end.header) < 1);

@@ -22,15 +22,61 @@ export async function verifyHomeToolRows({ send, evaluate, until, origin, audit,
       "Home header settles",
     );
   const snapshot = () =>
-    evaluate(`(()=>{
-    const rect=n=>{const r=n.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
-    const heading=document.querySelector('#tools-heading'),section=heading.closest('section'),headingRange=document.createRange();headingRange.selectNodeContents(heading);
-    return{width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,heading:{...rect(heading),text:heading.textContent,fontSize:parseFloat(getComputedStyle(heading).fontSize),lines:headingRange.getClientRects().length},listing:rect(section.querySelector('.section-heading a')),footerTop:rect(document.querySelector('.site-footer')).y,rows:[...document.querySelectorAll('.home-tool-row')].map(a=>{
-      const s=getComputedStyle(a),p=a.querySelector('p'),h=a.querySelector('h3'),arrow=a.querySelector('.home-tool-arrow');
-      const range=document.createRange();range.selectNode(h.firstChild);const lineRects=[...range.getClientRects()];
-      return{...rect(a),path:a.pathname,links:a.closest('article').querySelectorAll('a').length,title:h.textContent,description:p.textContent,descriptionRect:rect(p),copy:rect(a.querySelector('.home-tool-copy')),titleSize:parseFloat(getComputedStyle(h).fontSize),titleWeight:getComputedStyle(h).fontWeight,titleLineHeight:parseFloat(getComputedStyle(h).lineHeight),lastTitleLine:rect({getBoundingClientRect:()=>lineRects.at(-1)}),arrow:rect(arrow),arrowInline:arrow.parentElement===h,hiddenArrow:arrow.getAttribute('aria-hidden'),border:[s.borderTopWidth,s.borderRightWidth,s.borderBottomWidth,s.borderLeftWidth],radius:s.borderRadius,background:s.backgroundColor,shadow:s.boxShadow,clipped:p.scrollWidth>p.clientWidth+1||h.scrollWidth>h.clientWidth+1,separator:getComputedStyle(a.closest('li')).borderTopWidth};
-    })};
-  })()`);
+    evaluate(`
+(() => {
+  const rect = (n) => {
+    const r = n.getBoundingClientRect();
+    return { x: r.x, y: r.y, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+  };
+  const heading = document.querySelector("#tools-heading"),
+    section = heading.closest("section"),
+    headingRange = document.createRange();
+  headingRange.selectNodeContents(heading);
+  return {
+    width: innerWidth,
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    heading: {
+      ...rect(heading),
+      text: heading.textContent,
+      fontSize: parseFloat(getComputedStyle(heading).fontSize),
+      lines: headingRange.getClientRects().length,
+    },
+    listing: rect(section.querySelector(".section-heading a")),
+    footerTop: rect(document.querySelector(".site-footer")).y,
+    rows: [...document.querySelectorAll(".home-tool-row")].map((a) => {
+      const s = getComputedStyle(a),
+        p = a.querySelector("p"),
+        h = a.querySelector("h3"),
+        arrow = a.querySelector(".home-tool-arrow");
+      const range = document.createRange();
+      range.selectNode(h.firstChild);
+      const lineRects = [...range.getClientRects()];
+      return {
+        ...rect(a),
+        path: a.pathname,
+        links: a.closest("article").querySelectorAll("a").length,
+        title: h.textContent,
+        description: p.textContent,
+        descriptionRect: rect(p),
+        copy: rect(a.querySelector(".home-tool-copy")),
+        titleSize: parseFloat(getComputedStyle(h).fontSize),
+        titleWeight: getComputedStyle(h).fontWeight,
+        titleLineHeight: parseFloat(getComputedStyle(h).lineHeight),
+        lastTitleLine: rect({ getBoundingClientRect: () => lineRects.at(-1) }),
+        arrow: rect(arrow),
+        arrowInline: arrow.parentElement === h,
+        hiddenArrow: arrow.getAttribute("aria-hidden"),
+        border: [s.borderTopWidth, s.borderRightWidth, s.borderBottomWidth, s.borderLeftWidth],
+        radius: s.borderRadius,
+        background: s.backgroundColor,
+        shadow: s.boxShadow,
+        clipped: p.scrollWidth > p.clientWidth + 1 || h.scrollWidth > h.clientWidth + 1,
+        separator: getComputedStyle(a.closest("li")).borderTopWidth,
+      };
+    }),
+  };
+})();
+`);
   const validate = (data) => {
     assert.equal(data.overflow, false);
     assert.ok(data.rows.length > 0);
@@ -128,7 +174,13 @@ export async function verifyHomeToolRows({ send, evaluate, until, origin, audit,
         await screenshot("home-tool-rows-" + width + "-" + scale + ".png");
       if (scale === 200 && width < 761) {
         await evaluate(
-          `(()=>{const h=document.querySelector('#tools-heading').getBoundingClientRect(),header=document.querySelector('.header-band').getBoundingClientRect();scrollBy(0,h.y-header.bottom-16)})()`,
+          `
+(() => {
+  const h = document.querySelector("#tools-heading").getBoundingClientRect(),
+    header = document.querySelector(".header-band").getBoundingClientRect();
+  scrollBy(0, h.y - header.bottom - 16);
+})();
+`,
         );
         await settle();
         await screenshot("home-tool-heading-" + width + "-text200.png");
@@ -136,7 +188,21 @@ export async function verifyHomeToolRows({ send, evaluate, until, origin, audit,
       records.push({ status: "home-tool-rows-pass", scale, ...data });
       // Browser-only layout fixture: never written into the public catalog or build.
       await evaluate(
-        `(()=>{const list=document.querySelector('.home-tool-list'),template=list.firstElementChild;for(let i=0;i<2;i++){const row=template.cloneNode(true);row.dataset.syntheticToolRow='';row.querySelector('h3').firstChild.textContent='検証用の長いツール名 ABCDEFGHIJKLMNOPQRSTUVWXYZ'.repeat(3);row.querySelector('p').textContent='検証用の説明です。'.repeat(30);row.querySelectorAll('[data-home-new]').forEach(n=>n.remove());list.append(row)}})()`,
+        `
+(() => {
+  const list = document.querySelector(".home-tool-list"),
+    template = list.firstElementChild;
+  for (let i = 0; i < 2; i++) {
+    const row = template.cloneNode(true);
+    row.dataset.syntheticToolRow = "";
+    row.querySelector("h3").firstChild.textContent =
+      "検証用の長いツール名 ABCDEFGHIJKLMNOPQRSTUVWXYZ".repeat(3);
+    row.querySelector("p").textContent = "検証用の説明です。".repeat(30);
+    row.querySelectorAll("[data-home-new]").forEach((n) => n.remove());
+    list.append(row);
+  }
+})();
+`,
       );
       const multiple = await snapshot();
       validate(multiple);
@@ -164,7 +230,11 @@ export async function verifyHomeToolRows({ send, evaluate, until, origin, audit,
       await key("Tab", "Tab", 9);
       assert.equal(
         await evaluate(
-          `document.activeElement.matches('.home-tool-row')&&document.activeElement.matches(':focus-visible')&&parseFloat(getComputedStyle(document.activeElement).outlineWidth)>=2`,
+          `
+document.activeElement.matches(".home-tool-row") &&
+  document.activeElement.matches(":focus-visible") &&
+  parseFloat(getComputedStyle(document.activeElement).outlineWidth) >= 2;
+`,
         ),
         true,
         "Tab reaches one visible focus ring per row",
@@ -188,7 +258,18 @@ export async function verifyHomeToolRows({ send, evaluate, until, origin, audit,
       await evaluate(`document.querySelector('.home-tool-row').scrollIntoView({block:'center'})`);
       await settle();
       const point = await evaluate(
-        `(()=>{const r=document.querySelector('.home-tool-row').getBoundingClientRect();return{x:r.x+12,y:Math.max(r.y+12,document.querySelector('.header-band').getBoundingClientRect().bottom+12)}})()`,
+        `
+(() => {
+  const r = document.querySelector(".home-tool-row").getBoundingClientRect();
+  return {
+    x: r.x + 12,
+    y: Math.max(
+      r.y + 12,
+      document.querySelector(".header-band").getBoundingClientRect().bottom + 12,
+    ),
+  };
+})();
+`,
       );
       assert.ok(point.y > 0 && point.y < 844, "Touch point is visible");
       await send("Input.dispatchTouchEvent", {

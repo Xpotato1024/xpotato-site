@@ -158,7 +158,27 @@ export async function verifyPrimeSiteSmoke({
     const cspStart = httpTrace.length;
     assert.equal(
       await evaluate(
-        `new Promise((resolve,reject)=>{const url=URL.createObjectURL(new Blob(["fetch('"+location.origin+"/xpotato-logo.svg?site-worker-csp').then(()=>postMessage('unexpected'),()=>postMessage('blocked'));"],{type:'text/javascript'}));const worker=new Worker(url);worker.onmessage=e=>{worker.terminate();URL.revokeObjectURL(url);resolve(e.data);};worker.onerror=reject;})`,
+        `
+new Promise((resolve, reject) => {
+  const url = URL.createObjectURL(
+    new Blob(
+      [
+        "fetch('" +
+          location.origin +
+          "/xpotato-logo.svg?site-worker-csp').then(()=>postMessage('unexpected'),()=>postMessage('blocked'));",
+      ],
+      { type: "text/javascript" },
+    ),
+  );
+  const worker = new Worker(url);
+  worker.onmessage = (e) => {
+    worker.terminate();
+    URL.revokeObjectURL(url);
+    resolve(e.data);
+  };
+  worker.onerror = reject;
+});
+`,
       ),
       "blocked",
       "host Worker inherits connect-src",

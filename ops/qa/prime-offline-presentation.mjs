@@ -13,7 +13,59 @@ export async function verifyPrimeOfflinePresentation({
     lastClick;
   const guideState = () =>
     evaluate(
-      `(()=>{const root=document.querySelector('[data-prime-offline]'),button=root.querySelector('button'),guide=root.querySelector('details'),tool=document.querySelector('[data-interactive-module]'),link=document.querySelector('[data-prime-offline-guide-link]'),r=n=>{const a=n.getBoundingClientRect();return {top:a.top,bottom:a.bottom,left:a.left,right:a.right,width:a.width,height:a.height};};return {root:r(root),button:r(button),summary:r(guide.querySelector('summary')),tool:r(tool),link:r(link),open:guide.open,hash:location.hash,overflow:document.documentElement.scrollWidth>innerWidth,text:root.textContent,status:root.querySelector('[role=status]').getAttribute('aria-live'),description:document.querySelector('.content-description').textContent,warning:document.querySelector('.tool-contact').textContent,headerBottom:Math.max(0,document.querySelector('.header-band').getBoundingClientRect().bottom),height:innerHeight,scrollY,scrollPadding:parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop),scrollMargin:parseFloat(getComputedStyle(root).scrollMarginTop),phase:document.querySelector('.bt-prime-factorizer')?.dataset.phase??null,hydrating:Boolean(document.querySelector('astro-island[ssr]')),viewport:visualViewport?{top:visualViewport.offsetTop,left:visualViewport.offsetLeft,width:visualViewport.width,height:visualViewport.height,scale:visualViewport.scale}:null};})()`,
+      `
+(() => {
+  const root = document.querySelector("[data-prime-offline]"),
+    button = root.querySelector("button"),
+    guide = root.querySelector("details"),
+    tool = document.querySelector("[data-interactive-module]"),
+    link = document.querySelector("[data-prime-offline-guide-link]"),
+    r = (n) => {
+      const a = n.getBoundingClientRect();
+      return {
+        top: a.top,
+        bottom: a.bottom,
+        left: a.left,
+        right: a.right,
+        width: a.width,
+        height: a.height,
+      };
+    };
+  return {
+    root: r(root),
+    button: r(button),
+    summary: r(guide.querySelector("summary")),
+    tool: r(tool),
+    link: r(link),
+    open: guide.open,
+    hash: location.hash,
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    text: root.textContent,
+    status: root.querySelector("[role=status]").getAttribute("aria-live"),
+    description: document.querySelector(".content-description").textContent,
+    warning: document.querySelector(".tool-contact").textContent,
+    headerBottom: Math.max(
+      0,
+      document.querySelector(".header-band").getBoundingClientRect().bottom,
+    ),
+    height: innerHeight,
+    scrollY,
+    scrollPadding: parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop),
+    scrollMargin: parseFloat(getComputedStyle(root).scrollMarginTop),
+    phase: document.querySelector(".bt-prime-factorizer")?.dataset.phase ?? null,
+    hydrating: Boolean(document.querySelector("astro-island[ssr]")),
+    viewport: visualViewport
+      ? {
+          top: visualViewport.offsetTop,
+          left: visualViewport.offsetLeft,
+          width: visualViewport.width,
+          height: visualViewport.height,
+          scale: visualViewport.scale,
+        }
+      : null,
+  };
+})();
+`,
     );
   const ready = async () => {
     await until(

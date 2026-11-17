@@ -311,7 +311,22 @@ try {
     await until(
       () =>
         evaluate(
-          `(()=>{const header=document.querySelector('.header-band');return !header||header.getAnimations({subtree:true}).filter(animation=>'transitionProperty' in animation).every(animation=>Number.isFinite(animation.effect.getComputedTiming().endTime)&&['finished','idle'].includes(animation.playState))})()`,
+          `
+(() => {
+  const header = document.querySelector(".header-band");
+  return (
+    !header ||
+    header
+      .getAnimations({ subtree: true })
+      .filter((animation) => "transitionProperty" in animation)
+      .every(
+        (animation) =>
+          Number.isFinite(animation.effect.getComputedTiming().endTime) &&
+          ["finished", "idle"].includes(animation.playState),
+      )
+  );
+})();
+`,
         ),
       "Header transitions settle before axe: " + label,
     );
@@ -487,7 +502,13 @@ try {
         "Tool supplemental CSP blocks fetch while ordinary navigation remains available",
       );
       await evaluate(
-        `(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '97'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
+        `
+(() => {
+  const input = document.querySelector("#prime-factorizer-input");
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "97");
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+})();
+`,
       );
       await evaluate(`document.querySelector('#prime-factorizer-input').form.requestSubmit()`);
       await until(
@@ -632,7 +653,17 @@ try {
     // A deliberate test-only inaccessible button proves the axe harness detects a defect.
     assert.ok(
       await evaluate(
-        `(() => { const b=document.createElement('button'); b.id='axe-harness-probe'; document.querySelector('main').append(b); return axe.run('#axe-harness-probe',{runOnly:['button-name']}).then(r=>{b.remove();return r.violations.some(v=>v.id==='button-name')}); })()`,
+        `
+(() => {
+  const b = document.createElement("button");
+  b.id = "axe-harness-probe";
+  document.querySelector("main").append(b);
+  return axe.run("#axe-harness-probe", { runOnly: ["button-name"] }).then((r) => {
+    b.remove();
+    return r.violations.some((v) => v.id === "button-name");
+  });
+})();
+`,
       ),
       "axe harness self-check",
     );
@@ -742,7 +773,22 @@ try {
     );
     // Safe synthetic DOM exercises the shipped copy script; no fixture enters dist or publishing.
     await evaluate(
-      `(() => { const block=document.createElement('div'); block.dataset.codeBlock=''; block.innerHTML='<pre tabindex="0"><code>safe synthetic copy\\n</code></pre><button class="code-copy-button" type="button" aria-label="コードをコピー"><span class="code-copy-tooltip">コードをコピー</span></button><span class="code-copy-status" role="status"></span><span class="code-copy-feedback" hidden></span>'; document.querySelector('.prose').append(block); return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='/scripts/code-copy.js';s.onload=()=>resolve(true);s.onerror=reject;document.body.append(s)}); })()`,
+      `
+(() => {
+  const block = document.createElement("div");
+  block.dataset.codeBlock = "";
+  block.innerHTML =
+    '<pre tabindex="0"><code>safe synthetic copy\\n</code></pre><button class="code-copy-button" type="button" aria-label="コードをコピー"><span class="code-copy-tooltip">コードをコピー</span></button><span class="code-copy-status" role="status"></span><span class="code-copy-feedback" hidden></span>';
+  document.querySelector(".prose").append(block);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "/scripts/code-copy.js";
+    s.onload = () => resolve(true);
+    s.onerror = reject;
+    document.body.append(s);
+  });
+})();
+`,
     );
     await send("Browser.grantPermissions", {
       origin,
@@ -780,7 +826,18 @@ try {
       "Copy success reset",
     );
     await evaluate(
-      `Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`,
+      `
+Object.defineProperty(navigator, "clipboard", {
+  configurable: true,
+  value: {
+    writeText: async () => {
+      throw Error("Test-only denial");
+    },
+  },
+});
+document.execCommand = () => false;
+document.querySelector(".code-copy-button").click();
+`,
     );
     await until(
       () =>
@@ -1036,7 +1093,14 @@ try {
       );
       const beforeComposition = await evaluate("location.href");
       await evaluate(
-        `(() => { const input = document.querySelector('#search-query'); input.dispatchEvent(new CompositionEvent('compositionstart')); input.value = '素因数'; input.form.requestSubmit(); })()`,
+        `
+(() => {
+  const input = document.querySelector("#search-query");
+  input.dispatchEvent(new CompositionEvent("compositionstart"));
+  input.value = "素因数";
+  input.form.requestSubmit();
+})();
+`,
       );
       assert.equal(
         await evaluate("location.href"),

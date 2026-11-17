@@ -16,7 +16,23 @@ export async function verifyColdPrimeGuideNavigation({
     currentCase = "setup";
   const state = () =>
     evaluate(
-      `(()=>{const rect=s=>document.querySelector(s)?.getBoundingClientRect().toJSON(),r=rect('[data-prime-offline-save]');return {hash:location.hash,open:document.querySelector('.prime-offline details')?.open,button:r,headerBottom:Math.max(0,rect('.header-band')?.bottom??0),height:innerHeight,scrollY,hydrating:Boolean(document.querySelector('astro-island[ssr]')),phase:document.querySelector('.bt-prime-factorizer')?.dataset.phase??null,corrections:window.__primeGuideCorrections??0};})()`,
+      `
+(() => {
+  const rect = (s) => document.querySelector(s)?.getBoundingClientRect().toJSON(),
+    r = rect("[data-prime-offline-save]");
+  return {
+    hash: location.hash,
+    open: document.querySelector(".prime-offline details")?.open,
+    button: r,
+    headerBottom: Math.max(0, rect(".header-band")?.bottom ?? 0),
+    height: innerHeight,
+    scrollY,
+    hydrating: Boolean(document.querySelector("astro-island[ssr]")),
+    phase: document.querySelector(".bt-prime-factorizer")?.dataset.phase ?? null,
+    corrections: window.__primeGuideCorrections ?? 0,
+  };
+})();
+`,
     );
   const listener = (event) => {
     const message = JSON.parse(String(event.data));

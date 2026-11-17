@@ -138,7 +138,24 @@ export async function verifyMobileMenuInteraction({
   reports.push("both directions interpolate during a short transition");
   for (const open of [true, false]) {
     const panelTween = await evaluate(
-      `(async()=>{const panel=document.querySelector('#site-menu');getComputedStyle(panel).opacity;document.querySelector('.mobile-menu-toggle').click();getComputedStyle(panel).opacity;await new Promise(r=>requestAnimationFrame(r));const animation=panel.getAnimations().find(a=>a.transitionProperty==='opacity');if(!animation)return null;const duration=Number(animation.effect.getTiming().duration);animation.pause();animation.currentTime=duration/2;const opacity=Number(getComputedStyle(panel).opacity);const inert=panel.inert;animation.play();return{duration,opacity,inert};})()`,
+      `
+(async () => {
+  const panel = document.querySelector("#site-menu");
+  getComputedStyle(panel).opacity;
+  document.querySelector(".mobile-menu-toggle").click();
+  getComputedStyle(panel).opacity;
+  await new Promise((r) => requestAnimationFrame(r));
+  const animation = panel.getAnimations().find((a) => a.transitionProperty === "opacity");
+  if (!animation) return null;
+  const duration = Number(animation.effect.getTiming().duration);
+  animation.pause();
+  animation.currentTime = duration / 2;
+  const opacity = Number(getComputedStyle(panel).opacity);
+  const inert = panel.inert;
+  animation.play();
+  return { duration, opacity, inert };
+})();
+`,
     );
     assert.ok(
       panelTween && panelTween.duration > 0 && panelTween.duration <= 250,

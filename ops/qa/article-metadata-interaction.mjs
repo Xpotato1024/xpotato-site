@@ -35,11 +35,27 @@ export async function verifyArticleMetadata({ origin, send, evaluate, until, scr
         await evaluate(
           `document.querySelector('.article-purposes li:last-child a').textContent='トラブルシューティングと非常に長い目的タグの折り返し確認'`,
         );
-      const state = await evaluate(`(()=>{
-        const rect=e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}};
-        const purposes=document.querySelector('.article-purposes'),dates=document.querySelector('.article-dates');
-        return {purposes:rect(purposes),dates:rect(dates),items:[...dates.children].map(e=>({box:rect(e),whiteSpace:getComputedStyle(e).whiteSpace,time:e.querySelector('time')?.getAttribute('datetime')})),overflow:document.documentElement.scrollWidth>innerWidth+1,purposeOverflow:purposes.scrollWidth>purposes.clientWidth+1};
-      })()`);
+      const state = await evaluate(`
+(() => {
+  const rect = (e) => {
+    const r = e.getBoundingClientRect();
+    return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+  };
+  const purposes = document.querySelector(".article-purposes"),
+    dates = document.querySelector(".article-dates");
+  return {
+    purposes: rect(purposes),
+    dates: rect(dates),
+    items: [...dates.children].map((e) => ({
+      box: rect(e),
+      whiteSpace: getComputedStyle(e).whiteSpace,
+      time: e.querySelector("time")?.getAttribute("datetime"),
+    })),
+    overflow: document.documentElement.scrollWidth > innerWidth + 1,
+    purposeOverflow: purposes.scrollWidth > purposes.clientWidth + 1,
+  };
+})();
+`);
       assert.equal(state.overflow, false, "No page overflow");
       assert.equal(state.purposeOverflow, false, "Long purpose remains within its row");
       assert.ok(state.dates.top >= state.purposes.bottom, "Dates always follow the purpose row");

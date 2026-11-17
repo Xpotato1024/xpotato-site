@@ -29,7 +29,30 @@ export async function verifySearchThumbnailInteraction({
       await evaluate("document.fonts.ready");
       await evaluate('document.querySelector("#search-results").scrollIntoView()');
       const state = await evaluate(
-        `(()=>{const item=document.querySelector('#search-results li'),link=item.querySelector('a'),img=item.querySelector('img'),box=item.querySelector('.search-result-thumbnail'),heading=item.querySelector('.search-result-title'),r=box.getBoundingClientRect();return {links:item.querySelectorAll('a').length,alt:img?.alt,width:img?.width,height:img?.height,hidden:box.getAttribute('aria-hidden'),name:link.textContent,title:heading.textContent,align:getComputedStyle(heading).textAlign,overflow:document.documentElement.scrollWidth>innerWidth,target:link.getBoundingClientRect().height,frame:{width:r.width,height:r.height},picture:item.querySelectorAll('picture source').length};})()`,
+        `
+(() => {
+  const item = document.querySelector("#search-results li"),
+    link = item.querySelector("a"),
+    img = item.querySelector("img"),
+    box = item.querySelector(".search-result-thumbnail"),
+    heading = item.querySelector(".search-result-title"),
+    r = box.getBoundingClientRect();
+  return {
+    links: item.querySelectorAll("a").length,
+    alt: img?.alt,
+    width: img?.width,
+    height: img?.height,
+    hidden: box.getAttribute("aria-hidden"),
+    name: link.textContent,
+    title: heading.textContent,
+    align: getComputedStyle(heading).textAlign,
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    target: link.getBoundingClientRect().height,
+    frame: { width: r.width, height: r.height },
+    picture: item.querySelectorAll("picture source").length,
+  };
+})();
+`,
       );
       assert.equal(state.links, 1);
       assert.equal(state.alt, "");

@@ -125,7 +125,16 @@ export async function verifyDesignRoleInteraction({
   const headings = async (label) => {
     await evaluate(axeSource);
     const result = await evaluate(
-      `axe.run(document,{runOnly:{type:'rule',values:['heading-order']}}).then(r=>({violations:r.violations,headings:[...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].filter(n=>n.checkVisibility()).map(n=>({tag:n.tagName,text:n.textContent.trim()}))}))`,
+      `
+axe
+  .run(document, { runOnly: { type: "rule", values: ["heading-order"] } })
+  .then((r) => ({
+    violations: r.violations,
+    headings: [...document.querySelectorAll("h1,h2,h3,h4,h5,h6")]
+      .filter((n) => n.checkVisibility())
+      .map((n) => ({ tag: n.tagName, text: n.textContent.trim() })),
+  }));
+`,
     );
     assert.deepEqual(result.violations, [], "Visible heading order: " + label);
     return result.headings;
@@ -207,24 +216,84 @@ export async function verifyDesignRoleInteraction({
     await until(
       () =>
         evaluate(
-          `(()=>{const h=document.querySelector('.header-band');return !h||h.getAnimations({subtree:true}).filter(a=>'transitionProperty' in a).every(a=>['finished','idle'].includes(a.playState))})()`,
+          `
+(() => {
+  const h = document.querySelector(".header-band");
+  return (
+    !h ||
+    h
+      .getAnimations({ subtree: true })
+      .filter((a) => "transitionProperty" in a)
+      .every((a) => ["finished", "idle"].includes(a.playState))
+  );
+})();
+`,
         ),
       "Settled design surfaces: " + route,
     );
-    const values = await evaluate(`(()=>{
-      const token=(property,value)=>{const p=document.createElement('span');p.style[property]=value;document.body.append(p);const v=getComputedStyle(p)[property];p.remove();return v;};
-      const read=n=>{const s=getComputedStyle(n),r=n.getBoundingClientRect();return {tag:n.tagName,classes:n.className,height:r.height,fontFamily:s.fontFamily,fontSize:s.fontSize,minHeight:s.minHeight,color:s.color,background:s.backgroundColor,border:s.borderTopColor,borderWidth:s.borderTopWidth,outlineColor:s.outlineColor,outlineWidth:s.outlineWidth,clipPath:s.clipPath,width:r.width};};
-      return {
-        expected:{body:token('fontFamily','var(--font-body)'),display:token('fontFamily','var(--font-display)'),minHeight:token('minHeight','var(--control-min-size)'),surface:token('backgroundColor','var(--surface)'),field:token('backgroundColor','var(--surface-control)'),boundary:token('color','var(--border-control)'),accent:token('color','var(--accent)'),onAccent:token('color','var(--on-accent)')},
-        fields:[...document.querySelectorAll('.control-field')].map(n=>({...read(n),surface:n.classList.contains('control-field--surface')})),
-        actions:[...document.querySelectorAll('.action-primary')].map(n=>({...read(n),disabled:n.disabled})),
-        cards:[...document.querySelectorAll('.article-card h2,.article-card h3')].map(read),
-        hidden:[...document.querySelectorAll('.carousel-status,.code-copy-status')].map(read),
-        headings:[...document.querySelectorAll('.prose > h2,.content-heading h1')].map(read),
-        modules:[...document.querySelectorAll('.article-diagrams,.article-callout,.article-steps,.article-diagnostics')].map(read),
-        rawFields:[...document.querySelectorAll('input:not([type=hidden]),select,textarea')].filter(n=>!n.closest('[data-bt]')&&!n.matches('.control-field,.code-copy-buffer')).map(n=>n.outerHTML)
-      };
-    })()`);
+    const values = await evaluate(`
+(() => {
+  const token = (property, value) => {
+    const p = document.createElement("span");
+    p.style[property] = value;
+    document.body.append(p);
+    const v = getComputedStyle(p)[property];
+    p.remove();
+    return v;
+  };
+  const read = (n) => {
+    const s = getComputedStyle(n),
+      r = n.getBoundingClientRect();
+    return {
+      tag: n.tagName,
+      classes: n.className,
+      height: r.height,
+      fontFamily: s.fontFamily,
+      fontSize: s.fontSize,
+      minHeight: s.minHeight,
+      color: s.color,
+      background: s.backgroundColor,
+      border: s.borderTopColor,
+      borderWidth: s.borderTopWidth,
+      outlineColor: s.outlineColor,
+      outlineWidth: s.outlineWidth,
+      clipPath: s.clipPath,
+      width: r.width,
+    };
+  };
+  return {
+    expected: {
+      body: token("fontFamily", "var(--font-body)"),
+      display: token("fontFamily", "var(--font-display)"),
+      minHeight: token("minHeight", "var(--control-min-size)"),
+      surface: token("backgroundColor", "var(--surface)"),
+      field: token("backgroundColor", "var(--surface-control)"),
+      boundary: token("color", "var(--border-control)"),
+      accent: token("color", "var(--accent)"),
+      onAccent: token("color", "var(--on-accent)"),
+    },
+    fields: [...document.querySelectorAll(".control-field")].map((n) => ({
+      ...read(n),
+      surface: n.classList.contains("control-field--surface"),
+    })),
+    actions: [...document.querySelectorAll(".action-primary")].map((n) => ({
+      ...read(n),
+      disabled: n.disabled,
+    })),
+    cards: [...document.querySelectorAll(".article-card h2,.article-card h3")].map(read),
+    hidden: [...document.querySelectorAll(".carousel-status,.code-copy-status")].map(read),
+    headings: [...document.querySelectorAll(".prose > h2,.content-heading h1")].map(read),
+    modules: [
+      ...document.querySelectorAll(
+        ".article-diagrams,.article-callout,.article-steps,.article-diagnostics",
+      ),
+    ].map(read),
+    rawFields: [...document.querySelectorAll("input:not([type=hidden]),select,textarea")]
+      .filter((n) => !n.closest("[data-bt]") && !n.matches(".control-field,.code-copy-buffer"))
+      .map((n) => n.outerHTML),
+  };
+})();
+`);
     assert.deepEqual(
       values.rawFields,
       [],
@@ -270,7 +339,16 @@ export async function verifyDesignRoleInteraction({
     // excused merely because a visual exception is registered.
     await evaluate(axeSource);
     const axe = await evaluate(
-      `axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}}).then(r=>({violations:r.violations.filter(v=>['serious','critical'].includes(v.impact)),incomplete:r.incomplete.map(v=>v.id)}))`,
+      `
+axe
+  .run(document, {
+    runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"] },
+  })
+  .then((r) => ({
+    violations: r.violations.filter((v) => ["serious", "critical"].includes(v.impact)),
+    incomplete: r.incomplete.map((v) => v.id),
+  }));
+`,
     );
     assert.deepEqual(
       axe.violations,
@@ -318,7 +396,14 @@ export async function verifyDesignRoleInteraction({
         "Divider/control/tool/focus roles remain distinct",
       );
       const selectors = await evaluate(
-        `[...document.querySelectorAll('.bt-prime-factorizer summary')].filter(n=>n.checkVisibility()).map((n,i)=>{n.dataset.designRoleProbe='vendor-'+i;return '[data-design-role-probe="vendor-'+i+'"]'})`,
+        `
+[...document.querySelectorAll(".bt-prime-factorizer summary")]
+  .filter((n) => n.checkVisibility())
+  .map((n, i) => {
+    n.dataset.designRoleProbe = "vendor-" + i;
+    return '[data-design-role-probe="vendor-' + i + '"]';
+  });
+`,
       );
       assert.ok(selectors.length > 0, "Actual vendor disclosures present");
       const summaries = [];
@@ -356,7 +441,16 @@ export async function verifyDesignRoleInteraction({
       // Exercise public overrides on the actual adopted Prime, not the template fixture.
       const styleRoles = () =>
         evaluate(
-          `(()=>{const r=document.querySelector('.bt-prime-factorizer');return {control:getComputedStyle(r.querySelector('.bt-input-area')).borderTopColor,divider:getComputedStyle(r.querySelector('.bt-help-area')).borderTopColor,padding:getComputedStyle(r.querySelector('summary')).paddingTop}})()`,
+          `
+(() => {
+  const r = document.querySelector(".bt-prime-factorizer");
+  return {
+    control: getComputedStyle(r.querySelector(".bt-input-area")).borderTopColor,
+    divider: getComputedStyle(r.querySelector(".bt-help-area")).borderTopColor,
+    padding: getComputedStyle(r.querySelector("summary")).paddingTop,
+  };
+})();
+`,
         );
       const roleBefore = await styleRoles();
       assert.notEqual(roleBefore.control, roleBefore.divider);
@@ -377,7 +471,13 @@ export async function verifyDesignRoleInteraction({
       );
       assert.equal((await styleRoles()).padding, "13px");
       await evaluate(
-        `(()=>{const s=document.querySelector('.bt-prime-factorizer').style;for(const p of ['--bt-border-divider','--bt-border-control','--bt-summary-padding-block'])s.removeProperty(p)})()`,
+        `
+(() => {
+  const s = document.querySelector(".bt-prime-factorizer").style;
+  for (const p of ["--bt-border-divider", "--bt-border-control", "--bt-summary-padding-block"])
+    s.removeProperty(p);
+})();
+`,
       );
       assert.deepEqual(
         await styleRoles(),
@@ -387,17 +487,33 @@ export async function verifyDesignRoleInteraction({
       // Keep the real Demo and release-notice scoped Astro attributes. The separate
       // article shell has no tools ancestor: route-specific fixes must not mask drift.
       // These are synthetic cascade fixtures, not published content evidence.
-      await evaluate(`(()=>{
-        const shell=document.createElement('main');shell.id='design-role-synthetic';shell.className='content-page';shell.dataset.searchCollection='blog';
-        const article=document.createElement('article');article.className='prose';shell.append(article);
-        const details=document.createElement('details');details.innerHTML='<summary class="disclosure-summary" data-design-role-probe="general">一般の折りたたみ</summary><p>合成試験</p>';article.append(details);
-        const demo=document.querySelector('[data-interactive-module]').cloneNode(false),tool=document.querySelector('.bt-prime-factorizer').cloneNode(false);
-        tool.removeAttribute('id');tool.innerHTML='<details><summary data-design-role-probe="inline">埋め込みツールの折りたたみ</summary><p>合成試験</p></details>';demo.append(tool);article.append(demo);
-        const release=document.querySelector('.tool-release').cloneNode(true);
-        release.querySelector('summary').dataset.designRoleProbe='inline-release';
-        for(const n of [release,...release.querySelectorAll('[id]')])n.removeAttribute('id');
-        demo.append(release);document.body.append(shell);
-      })()`);
+      await evaluate(`
+(() => {
+  const shell = document.createElement("main");
+  shell.id = "design-role-synthetic";
+  shell.className = "content-page";
+  shell.dataset.searchCollection = "blog";
+  const article = document.createElement("article");
+  article.className = "prose";
+  shell.append(article);
+  const details = document.createElement("details");
+  details.innerHTML =
+    '<summary class="disclosure-summary" data-design-role-probe="general">一般の折りたたみ</summary><p>合成試験</p>';
+  article.append(details);
+  const demo = document.querySelector("[data-interactive-module]").cloneNode(false),
+    tool = document.querySelector(".bt-prime-factorizer").cloneNode(false);
+  tool.removeAttribute("id");
+  tool.innerHTML =
+    '<details><summary data-design-role-probe="inline">埋め込みツールの折りたたみ</summary><p>合成試験</p></details>';
+  demo.append(tool);
+  article.append(demo);
+  const release = document.querySelector(".tool-release").cloneNode(true);
+  release.querySelector("summary").dataset.designRoleProbe = "inline-release";
+  for (const n of [release, ...release.querySelectorAll("[id]")]) n.removeAttribute("id");
+  demo.append(release);
+  document.body.append(shell);
+})();
+`);
       assert.equal(
         await evaluate(
           `Boolean(document.querySelector('#design-role-synthetic').closest('[data-search-collection=tools]'))`,

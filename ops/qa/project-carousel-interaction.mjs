@@ -62,7 +62,16 @@ export async function verifyProjectCarouselInteraction({
     evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
   const current = async () => {
     const state = await evaluate(
-      `(()=>{const cards=[...document.querySelectorAll('.project-slide:not([data-loop-copy])')],index=cards.findIndex(n=>n.getAttribute('aria-hidden')==='false'),selected=[...document.querySelectorAll('[data-project-dot]')].flatMap((b,i)=>b.getAttribute('aria-current')==='true'?[i]:[]);return{index,selected};})()`,
+      `
+(() => {
+  const cards = [...document.querySelectorAll(".project-slide:not([data-loop-copy])")],
+    index = cards.findIndex((n) => n.getAttribute("aria-hidden") === "false"),
+    selected = [...document.querySelectorAll("[data-project-dot]")].flatMap((b, i) =>
+      b.getAttribute("aria-current") === "true" ? [i] : [],
+    );
+  return { index, selected };
+})();
+`,
     );
     if (state.index >= 0)
       assert.deepEqual(state.selected, [state.index], "Dot state follows every navigation method");
@@ -80,7 +89,75 @@ export async function verifyProjectCarouselInteraction({
   const settle = () => wait(500);
   const layout = () =>
     evaluate(
-      `(()=>{const root=document.querySelector('[data-project-carousel]'),viewport=root.querySelector('.project-viewport'),v=viewport.getBoundingClientRect(),cards=[...root.querySelectorAll('.project-slide')],active=cards.find(n=>n.getAttribute('aria-hidden')==='false'),r=active.getBoundingClientRect(),siblings=[active.previousElementSibling,active.nextElementSibling].map(n=>{const b=n.getBoundingClientRect();return Math.max(0,Math.min(v.right,b.right)-Math.max(v.left,b.left))/b.width;}),fade=getComputedStyle(root,'::before');return{overflow:document.documentElement.scrollWidth>innerWidth,centerError:Math.abs((r.left+r.right-v.left-v.right)/2),cardWidth:r.width,viewportWidth:v.width,siblings,clipped:[...root.querySelectorAll('.project-slide h3,.project-slide p,.project-slide small')].some(n=>n.scrollWidth>n.clientWidth+1),lastBorders:[...document.querySelectorAll('.home-article-list')].map(n=>getComputedStyle(n.lastElementChild).borderBottomWidth),dotCount:root.querySelectorAll('[data-project-dot]').length,selectedDots:[...root.querySelectorAll('[data-project-dot]')].flatMap((b,i)=>b.getAttribute('aria-current')==='true'?[i]:[]),dotCenterError:Math.abs((root.querySelector('.project-pagination').getBoundingClientRect().left+root.querySelector('.project-pagination').getBoundingClientRect().right-v.left-v.right)/2),originals:cards.filter(n=>!n.hasAttribute('data-loop-copy')).length,focusableOriginals:cards.filter(n=>!n.hasAttribute('data-loop-copy')&&!n.inert).length,fade:fade.display!=='none'&&fade.backgroundImage.includes('linear-gradient'),fadeClearOfCenter:parseFloat(fade.width)<=r.left-v.left+1,buttons:[...root.querySelectorAll('.project-controls button')].filter(b=>b.getClientRects().length&&getComputedStyle(b).visibility!=='hidden').map(b=>{const x=b.getBoundingClientRect();return{dot:b.hasAttribute('data-project-dot'),name:b.getAttribute('aria-label'),title:b.title,text:b.textContent.trim(),width:x.width,height:x.height,left:x.left,right:x.right,top:x.top,bottom:x.bottom,opacity:getComputedStyle(b).opacity,visibleIcons:[...b.querySelectorAll('svg')].filter(s=>getComputedStyle(s).display!=='none').length,onSide:b.hasAttribute('data-rotation')||((x.right<r.left||x.left>r.right)&&Math.abs((x.top+x.bottom-v.top-v.bottom)/2)<2),below:x.top>=v.bottom-1};})};})()`,
+      `
+(() => {
+  const root = document.querySelector("[data-project-carousel]"),
+    viewport = root.querySelector(".project-viewport"),
+    v = viewport.getBoundingClientRect(),
+    cards = [...root.querySelectorAll(".project-slide")],
+    active = cards.find((n) => n.getAttribute("aria-hidden") === "false"),
+    r = active.getBoundingClientRect(),
+    siblings = [active.previousElementSibling, active.nextElementSibling].map((n) => {
+      const b = n.getBoundingClientRect();
+      return Math.max(0, Math.min(v.right, b.right) - Math.max(v.left, b.left)) / b.width;
+    }),
+    fade = getComputedStyle(root, "::before");
+  return {
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    centerError: Math.abs((r.left + r.right - v.left - v.right) / 2),
+    cardWidth: r.width,
+    viewportWidth: v.width,
+    siblings,
+    clipped: [
+      ...root.querySelectorAll(".project-slide h3,.project-slide p,.project-slide small"),
+    ].some((n) => n.scrollWidth > n.clientWidth + 1),
+    lastBorders: [...document.querySelectorAll(".home-article-list")].map(
+      (n) => getComputedStyle(n.lastElementChild).borderBottomWidth,
+    ),
+    dotCount: root.querySelectorAll("[data-project-dot]").length,
+    selectedDots: [...root.querySelectorAll("[data-project-dot]")].flatMap((b, i) =>
+      b.getAttribute("aria-current") === "true" ? [i] : [],
+    ),
+    dotCenterError: Math.abs(
+      (root.querySelector(".project-pagination").getBoundingClientRect().left +
+        root.querySelector(".project-pagination").getBoundingClientRect().right -
+        v.left -
+        v.right) /
+        2,
+    ),
+    originals: cards.filter((n) => !n.hasAttribute("data-loop-copy")).length,
+    focusableOriginals: cards.filter((n) => !n.hasAttribute("data-loop-copy") && !n.inert).length,
+    fade: fade.display !== "none" && fade.backgroundImage.includes("linear-gradient"),
+    fadeClearOfCenter: parseFloat(fade.width) <= r.left - v.left + 1,
+    buttons: [...root.querySelectorAll(".project-controls button")]
+      .filter((b) => b.getClientRects().length && getComputedStyle(b).visibility !== "hidden")
+      .map((b) => {
+        const x = b.getBoundingClientRect();
+        return {
+          dot: b.hasAttribute("data-project-dot"),
+          name: b.getAttribute("aria-label"),
+          title: b.title,
+          text: b.textContent.trim(),
+          width: x.width,
+          height: x.height,
+          left: x.left,
+          right: x.right,
+          top: x.top,
+          bottom: x.bottom,
+          opacity: getComputedStyle(b).opacity,
+          visibleIcons: [...b.querySelectorAll("svg")].filter(
+            (s) => getComputedStyle(s).display !== "none",
+          ).length,
+          onSide:
+            b.hasAttribute("data-rotation") ||
+            ((x.right < r.left || x.left > r.right) &&
+              Math.abs((x.top + x.bottom - v.top - v.bottom) / 2) < 2),
+          below: x.top >= v.bottom - 1,
+        };
+      }),
+  };
+})();
+`,
     );
   const assertLayout = (g, width) => {
     assert.equal(g.overflow, false);
@@ -133,7 +210,28 @@ export async function verifyProjectCarouselInteraction({
   const records = [];
   const rotationPresentation = () =>
     evaluate(
-      `(()=>{const root=document.querySelector('[data-project-carousel]'),button=root.querySelector('[data-rotation]'),r=root.getBoundingClientRect();return{visibility:getComputedStyle(button).visibility,state:button.dataset.state,rootHeight:r.height,viewportHeight:root.querySelector('.project-viewport').getBoundingClientRect().height,fineHover:matchMedia('(hover: hover) and (pointer: fine)').matches,hover:matchMedia('(hover: hover)').matches,pointer:matchMedia('(pointer: fine)').matches?'fine':matchMedia('(pointer: coarse)').matches?'coarse':'none',maxTouchPoints:navigator.maxTouchPoints,focused:document.activeElement===button};})()`,
+      `
+(() => {
+  const root = document.querySelector("[data-project-carousel]"),
+    button = root.querySelector("[data-rotation]"),
+    r = root.getBoundingClientRect();
+  return {
+    visibility: getComputedStyle(button).visibility,
+    state: button.dataset.state,
+    rootHeight: r.height,
+    viewportHeight: root.querySelector(".project-viewport").getBoundingClientRect().height,
+    fineHover: matchMedia("(hover: hover) and (pointer: fine)").matches,
+    hover: matchMedia("(hover: hover)").matches,
+    pointer: matchMedia("(pointer: fine)").matches
+      ? "fine"
+      : matchMedia("(pointer: coarse)").matches
+        ? "coarse"
+        : "none",
+    maxTouchPoints: navigator.maxTouchPoints,
+    focused: document.activeElement === button,
+  };
+})();
+`,
     );
   const rotationKey = async () => {
     await send("Input.dispatchKeyEvent", {
@@ -154,7 +252,30 @@ export async function verifyProjectCarouselInteraction({
   const boundary = async (delta, width) => {
     await click(delta < 0 ? "[data-previous]" : "[data-next]");
     const frames = await evaluate(
-      `(()=>{const root=document.querySelector('[data-project-carousel]'),track=root.querySelector('.project-track'),v=root.querySelector('.project-viewport').getBoundingClientRect(),animation=track.getAnimations().find(a=>a.transitionProperty==='transform');if(!animation)return null;animation.pause();const duration=Number(animation.effect.getTiming().duration),frames=[];for(const fraction of [.25,.5,.75,.98]){animation.currentTime=duration*fraction;const first=track.firstElementChild.getBoundingClientRect(),last=track.lastElementChild.getBoundingClientRect();frames.push({fraction,leftBlank:Math.max(0,first.left-v.left),rightBlank:Math.max(0,v.right-last.right)});}animation.play();return frames;})()`,
+      `
+(() => {
+  const root = document.querySelector("[data-project-carousel]"),
+    track = root.querySelector(".project-track"),
+    v = root.querySelector(".project-viewport").getBoundingClientRect(),
+    animation = track.getAnimations().find((a) => a.transitionProperty === "transform");
+  if (!animation) return null;
+  animation.pause();
+  const duration = Number(animation.effect.getTiming().duration),
+    frames = [];
+  for (const fraction of [0.25, 0.5, 0.75, 0.98]) {
+    animation.currentTime = duration * fraction;
+    const first = track.firstElementChild.getBoundingClientRect(),
+      last = track.lastElementChild.getBoundingClientRect();
+    frames.push({
+      fraction,
+      leftBlank: Math.max(0, first.left - v.left),
+      rightBlank: Math.max(0, v.right - last.right),
+    });
+  }
+  animation.play();
+  return frames;
+})();
+`,
     );
     assert.ok(frames, "Animated boundary is inspected before it settles");
     assert.ok(
@@ -319,7 +440,31 @@ export async function verifyProjectCarouselInteraction({
     await evaluate("window.scrollTo(0,0)");
     await settle();
     const discovery = await evaluate(
-      `(()=>{const headings=[...document.querySelectorAll('main > section h2')].map(n=>n.textContent.trim());return{headings,overflow:document.documentElement.scrollWidth>innerWidth,dates:[...document.querySelectorAll('.home-updates time')].map(n=>({value:n.dateTime,label:n.textContent})),archived:!!document.querySelector('.project-slide a[href="/projects/csv2g/"]'),toolRows:[...document.querySelectorAll('.home-tool-row')].every(a=>a.querySelector('.home-tool-arrow[aria-hidden="true"]')&&a.closest('article').querySelectorAll('a').length===1),links:[...document.querySelectorAll('.section-heading a')].map(a=>({nowrap:getComputedStyle(a).whiteSpace==='nowrap',inside:a.getBoundingClientRect().right<=innerWidth}))};})()`,
+      `
+(() => {
+  const headings = [...document.querySelectorAll("main > section h2")].map((n) =>
+    n.textContent.trim(),
+  );
+  return {
+    headings,
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    dates: [...document.querySelectorAll(".home-updates time")].map((n) => ({
+      value: n.dateTime,
+      label: n.textContent,
+    })),
+    archived: !!document.querySelector('.project-slide a[href="/projects/csv2g/"]'),
+    toolRows: [...document.querySelectorAll(".home-tool-row")].every(
+      (a) =>
+        a.querySelector('.home-tool-arrow[aria-hidden="true"]') &&
+        a.closest("article").querySelectorAll("a").length === 1,
+    ),
+    links: [...document.querySelectorAll(".section-heading a")].map((a) => ({
+      nowrap: getComputedStyle(a).whiteSpace === "nowrap",
+      inside: a.getBoundingClientRect().right <= innerWidth,
+    })),
+  };
+})();
+`,
     );
     assert.deepEqual(discovery.headings, [
       "更新状況",

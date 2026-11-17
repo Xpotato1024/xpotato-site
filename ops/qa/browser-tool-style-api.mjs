@@ -86,7 +86,21 @@ export async function verifyBrowserToolStyleApi({ root, send, evaluate, screensh
     );
     const snapshot = () =>
       evaluate(
-        `(()=>{const input=getComputedStyle(document.querySelector('textarea')),line=getComputedStyle(document.querySelector('details')),summary=getComputedStyle(document.querySelector('summary'));return {control:input.borderTopColor,divider:line.borderTopColor,background:input.backgroundColor,padding:summary.paddingTop,height:document.querySelector('summary').getBoundingClientRect().height,overflow:document.documentElement.scrollWidth>innerWidth}})()`,
+        `
+(() => {
+  const input = getComputedStyle(document.querySelector("textarea")),
+    line = getComputedStyle(document.querySelector("details")),
+    summary = getComputedStyle(document.querySelector("summary"));
+  return {
+    control: input.borderTopColor,
+    divider: line.borderTopColor,
+    background: input.backgroundColor,
+    padding: summary.paddingTop,
+    height: document.querySelector("summary").getBoundingClientRect().height,
+    overflow: document.documentElement.scrollWidth > innerWidth,
+  };
+})();
+`,
       );
     const initial = await snapshot();
     assert.notEqual(initial.control, initial.divider);

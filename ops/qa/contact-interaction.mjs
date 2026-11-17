@@ -46,23 +46,62 @@ export async function verifyContactInteraction({
     await evaluate(
       `document.querySelector('#issue-target').value='site';document.querySelector('#issue-target').dispatchEvent(new Event('change'))`,
     );
-    const state =
-      await evaluate(`(()=>{const main=document.querySelector('main'),details=main.querySelector('[data-contact-details]');return{
-   hrefs:[...details.querySelectorAll('a')].filter(a=>!a.closest('[hidden]')).map(a=>a.href),
-   forms:main.querySelectorAll('form,input,textarea,button,iframe,astro-island').length,
-   pending:details.querySelector('.social-pending')?.textContent.trim(),
-   pendingLinks:details.querySelector('.social-pending')?.querySelectorAll('a,button,[tabindex]').length,
-   overflow:document.documentElement.scrollWidth>innerWidth,
-   emptyLinks:main.querySelectorAll('a[href=""]').length,
-   canonical:document.querySelector('link[rel="canonical"]').href,
-   notice:details.textContent.includes('GitHub Issueの内容は公開されます。'),
-   card:{background:getComputedStyle(details.querySelector('.contact-primary')).backgroundColor,padding:getComputedStyle(details.querySelector('.contact-primary')).padding},
-   selectColor:getComputedStyle(details.querySelector('select')).color,
-   icons:[...details.querySelectorAll('.social-links svg')].map(svg=>({id:svg.dataset.socialIcon,viewBox:svg.getAttribute('viewBox'),hidden:svg.getAttribute('aria-hidden'),focusable:svg.getAttribute('focusable'),paths:svg.querySelectorAll('path').length,width:svg.getBoundingClientRect().width,height:svg.getBoundingClientRect().height})),
-   hierarchy:{primaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-primary h2')).fontSize),secondaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-secondary h2')).fontSize),email:parseFloat(getComputedStyle(details.querySelector('.contact-email')).fontSize),reportLink:parseFloat(getComputedStyle(details.querySelector('[data-issue-go]')).fontSize)},
-   headings:[...details.querySelectorAll('h2')].map(h=>({optIn:h.classList.contains('content-h2'),border:getComputedStyle(h).borderTopWidth,marker:getComputedStyle(h,'::before').content,markerWidth:parseFloat(getComputedStyle(h,'::before').width),markerColor:getComputedStyle(h,'::before').backgroundColor})),
-   targets:[...details.querySelectorAll('a,select')].filter(a=>!a.closest('[hidden]')).map(a=>{const r=a.getBoundingClientRect();return {left:r.left,right:r.right}}),
-  }})()`);
+    const state = await evaluate(`
+(() => {
+  const main = document.querySelector("main"),
+    details = main.querySelector("[data-contact-details]");
+  return {
+    hrefs: [...details.querySelectorAll("a")]
+      .filter((a) => !a.closest("[hidden]"))
+      .map((a) => a.href),
+    forms: main.querySelectorAll("form,input,textarea,button,iframe,astro-island").length,
+    pending: details.querySelector(".social-pending")?.textContent.trim(),
+    pendingLinks: details.querySelector(".social-pending")?.querySelectorAll("a,button,[tabindex]")
+      .length,
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    emptyLinks: main.querySelectorAll('a[href=""]').length,
+    canonical: document.querySelector('link[rel="canonical"]').href,
+    notice: details.textContent.includes("GitHub Issueの内容は公開されます。"),
+    card: {
+      background: getComputedStyle(details.querySelector(".contact-primary")).backgroundColor,
+      padding: getComputedStyle(details.querySelector(".contact-primary")).padding,
+    },
+    selectColor: getComputedStyle(details.querySelector("select")).color,
+    icons: [...details.querySelectorAll(".social-links svg")].map((svg) => ({
+      id: svg.dataset.socialIcon,
+      viewBox: svg.getAttribute("viewBox"),
+      hidden: svg.getAttribute("aria-hidden"),
+      focusable: svg.getAttribute("focusable"),
+      paths: svg.querySelectorAll("path").length,
+      width: svg.getBoundingClientRect().width,
+      height: svg.getBoundingClientRect().height,
+    })),
+    hierarchy: {
+      primaryHeading: parseFloat(
+        getComputedStyle(details.querySelector(".contact-primary h2")).fontSize,
+      ),
+      secondaryHeading: parseFloat(
+        getComputedStyle(details.querySelector(".contact-secondary h2")).fontSize,
+      ),
+      email: parseFloat(getComputedStyle(details.querySelector(".contact-email")).fontSize),
+      reportLink: parseFloat(getComputedStyle(details.querySelector("[data-issue-go]")).fontSize),
+    },
+    headings: [...details.querySelectorAll("h2")].map((h) => ({
+      optIn: h.classList.contains("content-h2"),
+      border: getComputedStyle(h).borderTopWidth,
+      marker: getComputedStyle(h, "::before").content,
+      markerWidth: parseFloat(getComputedStyle(h, "::before").width),
+      markerColor: getComputedStyle(h, "::before").backgroundColor,
+    })),
+    targets: [...details.querySelectorAll("a,select")]
+      .filter((a) => !a.closest("[hidden]"))
+      .map((a) => {
+        const r = a.getBoundingClientRect();
+        return { left: r.left, right: r.right };
+      }),
+  };
+})();
+`);
     assert.deepEqual(state.hrefs, expected);
     assert.equal(state.forms, 0);
     assert.equal(state.emptyLinks, 0);
@@ -115,7 +154,20 @@ export async function verifyContactInteraction({
       "Shared section heading border and accent marker",
     );
     const scope = await evaluate(
-      `(()=>{const host=document.createElement('div');host.className='prose';host.innerHTML='<section><h2>Nested heading probe</h2></section><section data-bt><h2 class="content-h2">Tool heading probe</h2></section>';document.body.append(host);const result=[...host.querySelectorAll('h2')].map(h=>getComputedStyle(h,'::before').content);host.remove();return result;})()`,
+      `
+(() => {
+  const host = document.createElement("div");
+  host.className = "prose";
+  host.innerHTML =
+    '<section><h2>Nested heading probe</h2></section><section data-bt><h2 class="content-h2">Tool heading probe</h2></section>';
+  document.body.append(host);
+  const result = [...host.querySelectorAll("h2")].map(
+    (h) => getComputedStyle(h, "::before").content,
+  );
+  host.remove();
+  return result;
+})();
+`,
     );
     assert.deepEqual(
       scope,
@@ -159,7 +211,17 @@ export async function verifyContactInteraction({
     `document.querySelector('#issue-target').value='site';document.querySelector('#issue-target').dispatchEvent(new Event('change'))`,
   );
   await evaluate(
-    `window.contactActivations=[];document.querySelector('[data-contact-details]').addEventListener('click',event=>{const a=event.target.closest('a');if(a){event.preventDefault();window.contactActivations.push(a.href);}});document.querySelector('.contact-email').focus()`,
+    `
+window.contactActivations = [];
+document.querySelector("[data-contact-details]").addEventListener("click", (event) => {
+  const a = event.target.closest("a");
+  if (a) {
+    event.preventDefault();
+    window.contactActivations.push(a.href);
+  }
+});
+document.querySelector(".contact-email").focus();
+`,
   );
   // Enter the first link through the keyboard so focus-visible does not depend on a previous pointer test.
   for (const type of ["keyDown", "keyUp"])
@@ -246,10 +308,51 @@ export async function verifyContactInteraction({
   assert.deepEqual(await evaluate("window.contactActivations"), expected);
   // Re-selection, placeholder, an unconfigured future target and pageshow restoration.
   const picker = await evaluate(
-    `(()=>{const s=document.querySelector('#issue-target'),a=document.querySelector('[data-issue-go]'),set=v=>{s.value=v;s.dispatchEvent(new Event('change'))};const actual=[...s.options].map(o=>({id:o.value,label:o.textContent,href:o.dataset.href,issue:o.dataset.issue}));set('');const empty=a.hidden&&!a.hasAttribute('href');const option=new Option('未設定のツール','future');option.dataset.href='mailto:321miyuto@xpotato.net';option.dataset.issue='false';s.add(option);set('future');const fallback={href:a.href,label:a.textContent,status:document.querySelector('#issue-status').textContent};option.remove();set('site');window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));return{actual,empty,fallback,restored:a.href}})()`,
+    `
+(() => {
+  const s = document.querySelector("#issue-target"),
+    a = document.querySelector("[data-issue-go]"),
+    set = (v) => {
+      s.value = v;
+      s.dispatchEvent(new Event("change"));
+    };
+  const actual = [...s.options].map((o) => ({
+    id: o.value,
+    label: o.textContent,
+    href: o.dataset.href,
+    issue: o.dataset.issue,
+  }));
+  set("");
+  const empty = a.hidden && !a.hasAttribute("href");
+  const option = new Option("未設定のツール", "future");
+  option.dataset.href = "mailto:321miyuto@xpotato.net";
+  option.dataset.issue = "false";
+  s.add(option);
+  set("future");
+  const fallback = {
+    href: a.href,
+    label: a.textContent,
+    status: document.querySelector("#issue-status").textContent,
+  };
+  option.remove();
+  set("site");
+  window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+  return { actual, empty, fallback, restored: a.href };
+})();
+`,
   );
   const archiveTitles = await evaluate(
-    `fetch('/tools/').then(r=>r.text()).then(html=>{const doc=new DOMParser().parseFromString(html,'text/html');return [...doc.querySelectorAll('.fixed-content-list h2 a')].map(a=>{a.querySelectorAll('[aria-hidden]').forEach(n=>n.remove());return a.textContent.trim()})})`,
+    `
+fetch("/tools/")
+  .then((r) => r.text())
+  .then((html) => {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return [...doc.querySelectorAll(".fixed-content-list h2 a")].map((a) => {
+      a.querySelectorAll("[aria-hidden]").forEach((n) => n.remove());
+      return a.textContent.trim();
+    });
+  });
+`,
   );
   assert.equal(
     picker.actual.length,
@@ -292,7 +395,14 @@ export async function verifyContactInteraction({
   );
   assert.equal(
     await evaluate(
-      `(()=>{const s=document.querySelector('#issue-target'),a=document.querySelector('[data-issue-go]'),o=s.selectedOptions[0];return o.value?a.getAttribute('href')===o.dataset.href:a.hidden&&!a.hasAttribute('href')})()`,
+      `
+(() => {
+  const s = document.querySelector("#issue-target"),
+    a = document.querySelector("[data-issue-go]"),
+    o = s.selectedOptions[0];
+  return o.value ? a.getAttribute("href") === o.dataset.href : a.hidden && !a.hasAttribute("href");
+})();
+`,
     ),
     true,
     "Back navigation keeps selection and destination consistent",
@@ -373,7 +483,16 @@ export async function verifyContactInteraction({
     await evaluate("document.fonts.ready");
     await evaluate("document.documentElement.style.fontSize=" + JSON.stringify(scale + "%"));
     const state = await evaluate(
-      `(()=>({title:document.querySelector('h1').textContent,canonical:document.querySelector('link[rel="canonical"]').href,overflow:document.documentElement.scrollWidth>innerWidth,inputs:document.querySelectorAll('main form,main input,main textarea,main iframe,astro-island').length,contactLinks:document.querySelectorAll('main a[href="/contact/"]').length}))()`,
+      `
+(() => ({
+  title: document.querySelector("h1").textContent,
+  canonical: document.querySelector('link[rel="canonical"]').href,
+  overflow: document.documentElement.scrollWidth > innerWidth,
+  inputs: document.querySelectorAll("main form,main input,main textarea,main iframe,astro-island")
+    .length,
+  contactLinks: document.querySelectorAll('main a[href="/contact/"]').length,
+}))();
+`,
     );
     assert.equal(state.title, "プライバシーについて");
     assert.equal(state.canonical, "https://xpotato.net/privacy/");

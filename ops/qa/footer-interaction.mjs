@@ -65,31 +65,57 @@ export async function verifyFooterInteraction({
     await evaluate(
       'document.fonts.ready.then(() => { document.querySelector(".site-footer").scrollIntoView(); })',
     );
-    const state = await evaluate(`(() => {
-      const footer = document.querySelector('.site-footer');
-      const links = [...footer.querySelectorAll('.footer-nav a')];
-      const box = footer.getBoundingClientRect();
-      const rows = nodes => {
-        const groups = [];
-        for (const node of nodes) {
-          const rect = node.getBoundingClientRect(), y = rect.y + rect.height / 2;
-          let row = groups.find(group => Math.abs(group.y - y) < 8);
-          if (!row) { row = { y, left: rect.left, right: rect.right }; groups.push(row); }
-          row.left = Math.min(row.left, rect.left); row.right = Math.max(row.right, rect.right);
-        }
-        return groups.map(row => ({ width: row.right - row.left, centerOffset: (row.left + row.right) / 2 - (box.left + box.width / 2) }));
+    const state = await evaluate(`
+(() => {
+  const footer = document.querySelector(".site-footer");
+  const links = [...footer.querySelectorAll(".footer-nav a")];
+  const box = footer.getBoundingClientRect();
+  const rows = (nodes) => {
+    const groups = [];
+    for (const node of nodes) {
+      const rect = node.getBoundingClientRect(),
+        y = rect.y + rect.height / 2;
+      let row = groups.find((group) => Math.abs(group.y - y) < 8);
+      if (!row) {
+        row = { y, left: rect.left, right: rect.right };
+        groups.push(row);
+      }
+      row.left = Math.min(row.left, rect.left);
+      row.right = Math.max(row.right, rect.right);
+    }
+    return groups.map((row) => ({
+      width: row.right - row.left,
+      centerOffset: (row.left + row.right) / 2 - (box.left + box.width / 2),
+    }));
+  };
+  return {
+    copyright: footer.querySelector(".footer-copyright").textContent.trim(),
+    labels: links.map((a) => a.textContent.trim()),
+    paths: links.map((a) => a.pathname),
+    heights: links.map((a) => a.getBoundingClientRect().height),
+    overflow: document.documentElement.scrollWidth > innerWidth || box.right > innerWidth + 1,
+    timestamp: footer.querySelector("time")?.dateTime ?? null,
+    revisionHref: footer.querySelector(".footer-revision a")?.href ?? null,
+    revisionText: footer.querySelector(".footer-revision").textContent.trim(),
+    privacy: (() => {
+      const link = footer.querySelector(".footer-privacy"),
+        r = link.getBoundingClientRect();
+      return {
+        path: link.pathname,
+        label: link.textContent,
+        height: r.height,
+        left: r.left,
+        right: r.right,
       };
-      return { copyright: footer.querySelector('.footer-copyright').textContent.trim(),
-        labels: links.map(a => a.textContent.trim()), paths: links.map(a => a.pathname),
-        heights: links.map(a => a.getBoundingClientRect().height),
-        overflow: document.documentElement.scrollWidth > innerWidth || box.right > innerWidth + 1,
-        timestamp: footer.querySelector('time')?.dateTime ?? null,
-        revisionHref: footer.querySelector('.footer-revision a')?.href ?? null,
-        revisionText: footer.querySelector('.footer-revision').textContent.trim(),
-        privacy: (() => { const link=footer.querySelector('.footer-privacy'),r=link.getBoundingClientRect();return {path:link.pathname,label:link.textContent,height:r.height,left:r.left,right:r.right}; })(),
-        foreground: getComputedStyle(footer).color, background: getComputedStyle(document.documentElement).backgroundColor,
-        footerHeight: box.height, navRows: rows(links), metaRows: rows([...footer.querySelector('.footer-meta').children]) };
-    })()`);
+    })(),
+    foreground: getComputedStyle(footer).color,
+    background: getComputedStyle(document.documentElement).backgroundColor,
+    footerHeight: box.height,
+    navRows: rows(links),
+    metaRows: rows([...footer.querySelector(".footer-meta").children]),
+  };
+})();
+`);
     assert.equal(state.copyright, `© ${new Date().getUTCFullYear()} Xpotato`);
     assert.deepEqual(state.labels, [
       "記事",

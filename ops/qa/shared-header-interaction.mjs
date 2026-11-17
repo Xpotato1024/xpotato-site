@@ -11,7 +11,22 @@ export async function verifySharedHeaderInteraction({ send, evaluate, until, ori
   ];
   const snapshot = () =>
     evaluate(
-      `(()=>{const h=document.querySelector('.header-band'),s=getComputedStyle(h,'::before');return{surface:h.dataset.menuSurface,position:getComputedStyle(h).position,background:s.backgroundColor,blur:s.backdropFilter,plane:parseFloat(s.height),height:h.getBoundingClientRect().height,home:document.body.classList.contains('home-header-layout'),homeScript:!!document.querySelector('script[src="/scripts/home-header.js"]')}})()`,
+      `
+(() => {
+  const h = document.querySelector(".header-band"),
+    s = getComputedStyle(h, "::before");
+  return {
+    surface: h.dataset.menuSurface,
+    position: getComputedStyle(h).position,
+    background: s.backgroundColor,
+    blur: s.backdropFilter,
+    plane: parseFloat(s.height),
+    height: h.getBoundingClientRect().height,
+    home: document.body.classList.contains("home-header-layout"),
+    homeScript: !!document.querySelector('script[src="/scripts/home-header.js"]'),
+  };
+})();
+`,
     );
   for (const route of routes) {
     await send("Emulation.setDeviceMetricsOverride", {

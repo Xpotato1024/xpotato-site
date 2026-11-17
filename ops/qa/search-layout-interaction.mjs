@@ -55,7 +55,38 @@ export async function verifySearchLayoutInteraction({
       await go("/search/");
       await evaluate("document.documentElement.style.fontSize=" + JSON.stringify(scale + "%"));
       const initial = await evaluate(
-        `(()=>{const form=document.querySelector('#search-form'),input=form.querySelector('input'),submit=form.querySelector('[type=submit]'),clear=form.querySelector('[type=reset]'),r=n=>{const a=n.getBoundingClientRect();return {top:a.top,bottom:a.bottom,left:a.left,right:a.right,width:a.width,height:a.height};};return {font:getComputedStyle(document.documentElement).fontSize,overflow:document.documentElement.scrollWidth>innerWidth,input:r(input),submit:r(submit),clear:r(clear),form:r(form),results:r(document.querySelector('.search-results-section')),tags:r(document.querySelector('#tags')),disabled:clear.disabled,headings:[...document.querySelectorAll('main h2')].map(n=>n.textContent),entry:document.querySelector('.search-page-heading a').getAttribute('href')};})()`,
+        `
+(() => {
+  const form = document.querySelector("#search-form"),
+    input = form.querySelector("input"),
+    submit = form.querySelector("[type=submit]"),
+    clear = form.querySelector("[type=reset]"),
+    r = (n) => {
+      const a = n.getBoundingClientRect();
+      return {
+        top: a.top,
+        bottom: a.bottom,
+        left: a.left,
+        right: a.right,
+        width: a.width,
+        height: a.height,
+      };
+    };
+  return {
+    font: getComputedStyle(document.documentElement).fontSize,
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    input: r(input),
+    submit: r(submit),
+    clear: r(clear),
+    form: r(form),
+    results: r(document.querySelector(".search-results-section")),
+    tags: r(document.querySelector("#tags")),
+    disabled: clear.disabled,
+    headings: [...document.querySelectorAll("main h2")].map((n) => n.textContent),
+    entry: document.querySelector(".search-page-heading a").getAttribute("href"),
+  };
+})();
+`,
       );
       assert.equal(initial.font, scale === 200 ? "32px" : "16px");
       assert.equal(initial.overflow, false);
@@ -142,7 +173,19 @@ export async function verifySearchLayoutInteraction({
       );
       await evaluate('document.querySelector(".search-page-heading a").click()');
       const tags = await evaluate(
-        `(()=>{const heading=document.querySelector('#tag-heading').getBoundingClientRect();return {top:heading.top,header:document.querySelector('.header-band').getBoundingClientRect().bottom,overflow:document.documentElement.scrollWidth>innerWidth,targets:[...document.querySelectorAll('#tags input,#tags button:not([hidden]),#tags a')].filter(n=>n.getBoundingClientRect().width).map(n=>n.getBoundingClientRect().height)};})()`,
+        `
+(() => {
+  const heading = document.querySelector("#tag-heading").getBoundingClientRect();
+  return {
+    top: heading.top,
+    header: document.querySelector(".header-band").getBoundingClientRect().bottom,
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    targets: [...document.querySelectorAll("#tags input,#tags button:not([hidden]),#tags a")]
+      .filter((n) => n.getBoundingClientRect().width)
+      .map((n) => n.getBoundingClientRect().height),
+  };
+})();
+`,
       );
       assert.ok(
         tags.top >= tags.header - 1,

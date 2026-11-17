@@ -143,7 +143,15 @@ export async function verifyTagDiscoveryInteraction({
       await evaluate(`document.documentElement.style.fontSize=''`);
     }
     await evaluate(
-      `document.querySelector('#tag-query').dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));document.querySelector('#tag-query').value='検証タグ';document.querySelector('#tag-query').dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:true}));`,
+      `
+document
+  .querySelector("#tag-query")
+  .dispatchEvent(new CompositionEvent("compositionstart", { bubbles: true }));
+document.querySelector("#tag-query").value = "検証タグ";
+document
+  .querySelector("#tag-query")
+  .dispatchEvent(new InputEvent("input", { bubbles: true, isComposing: true }));
+`,
     );
     assert.equal(await count(), 1, "IME intermediate value keeps the current result");
     await evaluate(
@@ -229,7 +237,20 @@ export async function verifyTagDiscoveryInteraction({
   );
   await key("Enter", "Enter", 13, "\r");
   const selected = await evaluate(
-    `(() => {const links=Array.from(document.querySelectorAll('.archive-tags .tag-links a')),a=links.find(a=>a.hasAttribute('aria-current')),style=getComputedStyle(a),other=getComputedStyle(links.find(link=>link!==a));return {href:a.getAttribute('href'),current:a.getAttribute('aria-current'),weight:style.fontWeight,emphasized:style.color!==other.color&&style.borderBottomColor!==other.borderBottomColor};})()`,
+    `
+(() => {
+  const links = Array.from(document.querySelectorAll(".archive-tags .tag-links a")),
+    a = links.find((a) => a.hasAttribute("aria-current")),
+    style = getComputedStyle(a),
+    other = getComputedStyle(links.find((link) => link !== a));
+  return {
+    href: a.getAttribute("href"),
+    current: a.getAttribute("aria-current"),
+    weight: style.fontWeight,
+    emphasized: style.color !== other.color && style.borderBottomColor !== other.borderBottomColor,
+  };
+})();
+`,
   );
   assert.equal(selected.href, actualRoute);
   assert.equal(selected.current, "page");
@@ -239,7 +260,11 @@ export async function verifyTagDiscoveryInteraction({
   await until(
     () =>
       evaluate(
-        `document.querySelector('#tag-query')?.value==='検証' && document.querySelector('[data-tag-page]').textContent==='5 / 5' && document.querySelectorAll('#tag-results li').length===24`,
+        `
+document.querySelector("#tag-query")?.value === "検証" &&
+  document.querySelector("[data-tag-page]").textContent === "5 / 5" &&
+  document.querySelectorAll("#tag-results li").length === 24;
+`,
       ),
     "return restores filtered final page",
   );
@@ -338,7 +363,13 @@ export async function verifyTagDiscoveryInteraction({
     );
     assert.equal(
       await evaluate(
-        `Array.from(document.querySelectorAll('.archive-tags')).every(group=>Number(group.querySelector('small').textContent.replace('タグ',''))===group.querySelectorAll('.tag-links a').length)`,
+        `
+Array.from(document.querySelectorAll(".archive-tags")).every(
+  (group) =>
+    Number(group.querySelector("small").textContent.replace("タグ", "")) ===
+    group.querySelectorAll(".tag-links a").length,
+);
+`,
       ),
       true,
     );
@@ -377,13 +408,21 @@ export async function verifyTagDiscoveryInteraction({
     );
     assert.equal(
       await evaluate(
-        `Array.from(document.querySelectorAll('.archive-tags nav')).find(nav=>nav.getAttribute('aria-label')==='記事の目的から探す').querySelectorAll('a[href="/articles/tag/explanation/"]').length`,
+        `
+Array.from(document.querySelectorAll(".archive-tags nav"))
+  .find((nav) => nav.getAttribute("aria-label") === "記事の目的から探す")
+  .querySelectorAll('a[href="/articles/tag/explanation/"]').length;
+`,
       ),
       1,
     );
     assert.equal(
       await evaluate(
-        `Array.from(document.querySelectorAll('.archive-tags nav')).find(nav=>nav.getAttribute('aria-label')==='技術・関連タグから探す').querySelectorAll('a[href="/articles/tag/explanation/"]').length`,
+        `
+Array.from(document.querySelectorAll(".archive-tags nav"))
+  .find((nav) => nav.getAttribute("aria-label") === "技術・関連タグから探す")
+  .querySelectorAll('a[href="/articles/tag/explanation/"]').length;
+`,
       ),
       0,
     );
@@ -443,7 +482,17 @@ export async function verifyTagDiscoveryInteraction({
     "すべて",
   );
   await evaluate(
-    `(() => { const nav=document.querySelector('.archive-category-options'); for(let i=0;i<60;i++){const a=document.createElement('a');a.href='/articles/';a.textContent='検証用の主分類'+i;nav.append(a);} })()`,
+    `
+(() => {
+  const nav = document.querySelector(".archive-category-options");
+  for (let i = 0; i < 60; i++) {
+    const a = document.createElement("a");
+    a.href = "/articles/";
+    a.textContent = "検証用の主分類" + i;
+    nav.append(a);
+  }
+})();
+`,
   );
   for (const width of [1440, 390, 320]) {
     await send("Emulation.setDeviceMetricsOverride", {
@@ -453,7 +502,16 @@ export async function verifyTagDiscoveryInteraction({
       mobile: false,
     });
     const shape = await evaluate(
-      `(() => {const n=document.querySelector('.archive-category-options');return {bounded:n.clientHeight<=192,scrolls:n.scrollHeight>n.clientHeight,overflow:document.documentElement.scrollWidth>innerWidth};})()`,
+      `
+(() => {
+  const n = document.querySelector(".archive-category-options");
+  return {
+    bounded: n.clientHeight <= 192,
+    scrolls: n.scrollHeight > n.clientHeight,
+    overflow: document.documentElement.scrollWidth > innerWidth,
+  };
+})();
+`,
     );
     assert.deepEqual(
       shape,

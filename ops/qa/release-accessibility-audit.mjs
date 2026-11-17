@@ -4,7 +4,15 @@ export const releaseAxeAuditExpression = `axe.run(document, { runOnly: { type: '
 
 export async function verifyReleaseRoleAuditRegression(evaluate) {
   await evaluate(
-    `(() => {const fixture=document.createElement('div');fixture.id='qa-invalid-carousel-role';fixture.innerHTML='<ul role="presentation"><li id="qa-invalid-carousel-role-slide" role="group" aria-label="Test slide">Test slide</li></ul>';document.body.append(fixture);})()`,
+    `
+(() => {
+  const fixture = document.createElement("div");
+  fixture.id = "qa-invalid-carousel-role";
+  fixture.innerHTML =
+    '<ul role="presentation"><li id="qa-invalid-carousel-role-slide" role="group" aria-label="Test slide">Test slide</li></ul>';
+  document.body.append(fixture);
+})();
+`,
   );
   try {
     const result = await evaluate(releaseAxeAuditExpression);

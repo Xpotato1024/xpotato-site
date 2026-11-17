@@ -33,23 +33,112 @@ export async function verifyHomeWorkshopInteraction({
     );
   };
   const snapshot = () =>
-    evaluate(`(() => {
-    const img=document.querySelector('.workshop-photo img'),hero=document.querySelector('.home-intro'),updates=document.querySelector('.home-updates'),projects=document.querySelector('.home-projects');
-    const rect=node=>{const r=node.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom}};
-    const catchNode=document.querySelector('.home-catch'),catchStyle=getComputedStyle(catchNode),catchRange=document.createRange();catchRange.selectNodeContents(catchNode);
-    const links=selector=>[...document.querySelectorAll(selector)].map(a=>({path:a.pathname,text:a.textContent.replace('→','').trim(),...rect(a)}));
-    return {complete:img.complete,naturalWidth:img.naturalWidth,currentSrc:img.currentSrc,width:img.getAttribute('width'),height:img.getAttribute('height'),loading:img.loading,priority:img.fetchPriority,alt:img.alt,
-      viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},sourceWidth:Number([...img.closest('picture').querySelectorAll('[srcset]')].flatMap(node=>node.srcset.split(',')).map(value=>value.trim().split(' ')).find(([url])=>new URL(url,location.href).href===img.currentSrc)?.[1]?.replace('w','')),
-      overflow:document.documentElement.scrollWidth>innerWidth,hero:rect(hero),projects:rect(projects),background:getComputedStyle(hero).backgroundColor,
-      title:document.querySelector('#home-title').innerText.replace(/\\s+/g,' ').trim(),brand:document.querySelector('.home-brand')?.textContent??null,titleWords:[...document.querySelectorAll('.home-title-static > span')].map(rect),updatesStart:rect(document.querySelector('[data-update-latest]')),firstUpdate:rect(document.querySelector('.home-updates a')),catch:{...rect(catchNode),text:catchNode.textContent.trim(),fontSize:parseFloat(catchStyle.fontSize),lineHeight:parseFloat(catchStyle.lineHeight),color:catchStyle.color,opacity:Number(catchStyle.opacity),whiteSpace:catchStyle.whiteSpace,marginTop:parseFloat(catchStyle.marginTop),lines:catchRange.getClientRects().length,clipped:catchNode.scrollWidth>catchNode.clientWidth+1,afterTitle:document.querySelector('#home-title').nextElementSibling===catchNode},titleBottom:rect(document.querySelector('#home-title')).bottom,heroControls:hero.querySelectorAll('a,button').length,description:document.querySelector('meta[name="description"]').content,sectionOrder:[...document.querySelectorAll('.home > section')].map(n=>n.querySelector('h2')?.textContent.trim()).filter(Boolean),
-      standaloneBands:document.querySelectorAll('.home-introduction,.home-contact').length,links:links('.home-intro a'),about:links('.site-footer a[href="/about/"]'),topics:links('.home-topics a'),contact:links('.site-footer a[href="/contact/"]'),navigationPaths:['.desktop-navigation','#site-menu','.mobile-menu-fallback nav'].map(selector=>links(selector+' a').map(link=>link.path)),
-      updatesAfterHero:hero.nextElementSibling===updates,duplicateCatch:document.querySelector('main').textContent.includes('考えたことを、つくって確かめる。'),
-      incorrectArrows:[...document.querySelectorAll('main a')].filter(a=>a.origin===location.origin&&a.textContent.includes('↗')).map(a=>a.href)};
-  })()`);
+    evaluate(`
+(() => {
+  const img = document.querySelector(".workshop-photo img"),
+    hero = document.querySelector(".home-intro"),
+    updates = document.querySelector(".home-updates"),
+    projects = document.querySelector(".home-projects");
+  const rect = (node) => {
+    const r = node.getBoundingClientRect();
+    return { x: r.x, y: r.y, width: r.width, height: r.height, right: r.right, bottom: r.bottom };
+  };
+  const catchNode = document.querySelector(".home-catch"),
+    catchStyle = getComputedStyle(catchNode),
+    catchRange = document.createRange();
+  catchRange.selectNodeContents(catchNode);
+  const links = (selector) =>
+    [...document.querySelectorAll(selector)].map((a) => ({
+      path: a.pathname,
+      text: a.textContent.replace("→", "").trim(),
+      ...rect(a),
+    }));
+  return {
+    complete: img.complete,
+    naturalWidth: img.naturalWidth,
+    currentSrc: img.currentSrc,
+    width: img.getAttribute("width"),
+    height: img.getAttribute("height"),
+    loading: img.loading,
+    priority: img.fetchPriority,
+    alt: img.alt,
+    viewport: { width: innerWidth, height: innerHeight, dpr: devicePixelRatio },
+    sourceWidth: Number(
+      [...img.closest("picture").querySelectorAll("[srcset]")]
+        .flatMap((node) => node.srcset.split(","))
+        .map((value) => value.trim().split(" "))
+        .find(([url]) => new URL(url, location.href).href === img.currentSrc)?.[1]
+        ?.replace("w", ""),
+    ),
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    hero: rect(hero),
+    projects: rect(projects),
+    background: getComputedStyle(hero).backgroundColor,
+    title: document.querySelector("#home-title").innerText.replace(/\\s+/g, " ").trim(),
+    brand: document.querySelector(".home-brand")?.textContent ?? null,
+    titleWords: [...document.querySelectorAll(".home-title-static > span")].map(rect),
+    updatesStart: rect(document.querySelector("[data-update-latest]")),
+    firstUpdate: rect(document.querySelector(".home-updates a")),
+    catch: {
+      ...rect(catchNode),
+      text: catchNode.textContent.trim(),
+      fontSize: parseFloat(catchStyle.fontSize),
+      lineHeight: parseFloat(catchStyle.lineHeight),
+      color: catchStyle.color,
+      opacity: Number(catchStyle.opacity),
+      whiteSpace: catchStyle.whiteSpace,
+      marginTop: parseFloat(catchStyle.marginTop),
+      lines: catchRange.getClientRects().length,
+      clipped: catchNode.scrollWidth > catchNode.clientWidth + 1,
+      afterTitle: document.querySelector("#home-title").nextElementSibling === catchNode,
+    },
+    titleBottom: rect(document.querySelector("#home-title")).bottom,
+    heroControls: hero.querySelectorAll("a,button").length,
+    description: document.querySelector('meta[name="description"]').content,
+    sectionOrder: [...document.querySelectorAll(".home > section")]
+      .map((n) => n.querySelector("h2")?.textContent.trim())
+      .filter(Boolean),
+    standaloneBands: document.querySelectorAll(".home-introduction,.home-contact").length,
+    links: links(".home-intro a"),
+    about: links('.site-footer a[href="/about/"]'),
+    topics: links(".home-topics a"),
+    contact: links('.site-footer a[href="/contact/"]'),
+    navigationPaths: [".desktop-navigation", "#site-menu", ".mobile-menu-fallback nav"].map(
+      (selector) => links(selector + " a").map((link) => link.path),
+    ),
+    updatesAfterHero: hero.nextElementSibling === updates,
+    duplicateCatch: document
+      .querySelector("main")
+      .textContent.includes("考えたことを、つくって確かめる。"),
+    incorrectArrows: [...document.querySelectorAll("main a")]
+      .filter((a) => a.origin === location.origin && a.textContent.includes("↗"))
+      .map((a) => a.href),
+  };
+})();
+`);
   // Composite the declared translucent foreground over actual photo pixels, not opaque white.
   const sampleCatchContrast = async () => {
     const bounds = await evaluate(
-      `(()=>{const p=document.querySelector('.home-catch'),s=getComputedStyle(p),range=document.createRange();range.selectNodeContents(p);return{rects:[...range.getClientRects()].map(r=>({x:r.x,y:r.y,width:r.width,height:r.height})),color:s.color,opacity:Number(s.opacity),viewportWidth:innerWidth,oldVisibility:p.style.visibility}})()`,
+      `
+(() => {
+  const p = document.querySelector(".home-catch"),
+    s = getComputedStyle(p),
+    range = document.createRange();
+  range.selectNodeContents(p);
+  return {
+    rects: [...range.getClientRects()].map((r) => ({
+      x: r.x,
+      y: r.y,
+      width: r.width,
+      height: r.height,
+    })),
+    color: s.color,
+    opacity: Number(s.opacity),
+    viewportWidth: innerWidth,
+    oldVisibility: p.style.visibility,
+  };
+})();
+`,
     );
     const channels = bounds.color.match(/[\d.]+/g).map(Number),
       alpha = (channels[3] ?? 1) * bounds.opacity;
@@ -60,7 +149,14 @@ export async function verifyHomeWorkshopInteraction({
         .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
     try {
       await evaluate(
-        `(()=>{document.querySelector('.home-catch').style.visibility='hidden';return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`,
+        `
+(() => {
+  document.querySelector(".home-catch").style.visibility = "hidden";
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))),
+  );
+})();
+`,
       );
       const capture = await send("Page.captureScreenshot", { format: "png" });
       const { data, info } = await sharp(Buffer.from(capture.data, "base64"))
@@ -259,7 +355,20 @@ export async function verifyHomeWorkshopInteraction({
   }
   // Meta points to the exact same social image on both platforms, without fetching production.
   const meta = await evaluate(
-    `(()=>{const property=name=>document.querySelector('meta[property="'+name+'"]')?.content,name=value=>document.querySelector('meta[name="'+value+'"]')?.content;return{og:property('og:image'),twitter:name('twitter:image'),card:name('twitter:card'),width:property('og:image:width'),height:property('og:image:height'),alt:property('og:image:alt')}})()`,
+    `
+(() => {
+  const property = (name) => document.querySelector('meta[property="' + name + '"]')?.content,
+    name = (value) => document.querySelector('meta[name="' + value + '"]')?.content;
+  return {
+    og: property("og:image"),
+    twitter: name("twitter:image"),
+    card: name("twitter:card"),
+    width: property("og:image:width"),
+    height: property("og:image:height"),
+    alt: property("og:image:alt"),
+  };
+})();
+`,
   );
   assert.equal(meta.card, "summary_large_image");
   assert.equal(meta.og, meta.twitter);
@@ -283,25 +392,63 @@ export async function verifyHomeWorkshopInteraction({
       (match) => [0, 2, 4].map((index) => parseInt(match[1].slice(index, index + 2), 16)),
     );
     assert.ok(logoColors.length, "Logo has measurable solid fill colors");
-    const samples = await evaluate(`(()=>{
-      const targets=[];
-      const add=(selector,kind)=>document.querySelectorAll(selector).forEach(node=>{
-        const style=getComputedStyle(node),box=node.getBoundingClientRect();if(!box.width||!box.height)return;
-        let r=box;
-        if(kind==='text'&&node.firstChild?.nodeType===Node.TEXT_NODE){const range=document.createRange();range.selectNode(node.firstChild);r=range.getBoundingClientRect();}
-        if(kind==='input')r={x:box.x+parseFloat(style.paddingLeft),y:box.y+parseFloat(style.paddingTop),width:Math.max(1,box.width-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)),height:parseFloat(style.lineHeight)};
-        const color=kind==='input'?getComputedStyle(node,'::placeholder').color:style.color;
-        targets.push({selector,kind,color,filter:style.filter,x:r.x,y:r.y,width:r.width,height:r.height});
-      });
-      add('.brand > span','text');add('.brand-domain','text');add('.desktop-navigation a','text');add('.header-search input','input');
-      add('.brand img','logo');add('.mobile-search svg,.header-search button svg,.menu-icon','icon');
-      window.__homeHeaderContrastRestore=[];
-      for(const node of document.querySelectorAll('.brand > span,.brand-domain,.desktop-navigation a,.header-search input,.brand img,.mobile-search svg,.header-search button svg,.menu-icon')){
-        window.__homeHeaderContrastRestore.push([node,node.getAttribute('style')]);
-        if(node.matches('img,svg,.menu-icon'))node.style.visibility='hidden';else node.style.setProperty('-webkit-text-fill-color','transparent','important');
+    const samples = await evaluate(`
+(() => {
+  const targets = [];
+  const add = (selector, kind) =>
+    document.querySelectorAll(selector).forEach((node) => {
+      const style = getComputedStyle(node),
+        box = node.getBoundingClientRect();
+      if (!box.width || !box.height) return;
+      let r = box;
+      if (kind === "text" && node.firstChild?.nodeType === Node.TEXT_NODE) {
+        const range = document.createRange();
+        range.selectNode(node.firstChild);
+        r = range.getBoundingClientRect();
       }
-      return{targets,viewportWidth:innerWidth,state:document.querySelector('.header-band').dataset.homeHeaderState};
-    })()`);
+      if (kind === "input")
+        r = {
+          x: box.x + parseFloat(style.paddingLeft),
+          y: box.y + parseFloat(style.paddingTop),
+          width: Math.max(
+            1,
+            box.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+          ),
+          height: parseFloat(style.lineHeight),
+        };
+      const color = kind === "input" ? getComputedStyle(node, "::placeholder").color : style.color;
+      targets.push({
+        selector,
+        kind,
+        color,
+        filter: style.filter,
+        x: r.x,
+        y: r.y,
+        width: r.width,
+        height: r.height,
+      });
+    });
+  add(".brand > span", "text");
+  add(".brand-domain", "text");
+  add(".desktop-navigation a", "text");
+  add(".header-search input", "input");
+  add(".brand img", "logo");
+  add(".mobile-search svg,.header-search button svg,.menu-icon", "icon");
+  window.__homeHeaderContrastRestore = [];
+  for (const node of document.querySelectorAll(
+    ".brand > span,.brand-domain,.desktop-navigation a,.header-search input,.brand img,.mobile-search svg,.header-search button svg,.menu-icon",
+  )) {
+    window.__homeHeaderContrastRestore.push([node, node.getAttribute("style")]);
+    if (node.matches("img,svg,.menu-icon")) node.style.visibility = "hidden";
+    else node.style.setProperty("-webkit-text-fill-color", "transparent", "important");
+  }
+  return {
+    targets,
+    viewportWidth: innerWidth,
+    state: document.querySelector(".header-band").dataset.homeHeaderState,
+  };
+})();
+`);
     try {
       await evaluate(
         `new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))`,
@@ -388,19 +535,61 @@ export async function verifyHomeWorkshopInteraction({
       };
     } finally {
       await evaluate(
-        `(()=>{for(const [node,style] of window.__homeHeaderContrastRestore)style===null?node.removeAttribute('style'):node.setAttribute('style',style);delete window.__homeHeaderContrastRestore;return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`,
+        `
+(() => {
+  for (const [node, style] of window.__homeHeaderContrastRestore)
+    style === null ? node.removeAttribute("style") : node.setAttribute("style", style);
+  delete window.__homeHeaderContrastRestore;
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))),
+  );
+})();
+`,
       );
     }
   };
   const headerSnapshot = () =>
-    evaluate(`(()=>{
-    const h=document.querySelector('.header-band'),headerStyle=getComputedStyle(h),enhanced=h.hasAttribute('data-home-header-state'),s=getComputedStyle(h,'::before'),r=h.getBoundingClientRect();
-    const boxes=[...document.querySelectorAll('.home-intro,#home-title,.home-catch,.home-projects')].map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y+scrollY,width:b.width,height:b.height}});
-    return{state:h.dataset.homeHeaderState,position:headerStyle.position,surface:'::before',planeHeight:parseFloat(s.height),planeTop:parseFloat(s.top),headerBackground:headerStyle.backgroundColor,headerBackdrop:headerStyle.backdropFilter,background:s.backgroundColor,backdrop:s.backdropFilter,shadow:s.boxShadow,transition:s.transitionProperty,durations:s.transitionDuration,height:r.height,top:r.top,boxes,reserved:parseFloat(getComputedStyle(document.body).getPropertyValue('--site-header-height')),
-      animations:document.querySelector('.home-intro').getAnimations({subtree:true}).length,
-      obsolete:document.querySelectorAll('.home-title-japanese,.home-title-accessible,.home-display-settings').length,
-      words:[...document.querySelectorAll('.home-title-static > span')].map(n=>n.textContent.trim()),hidden:document.querySelector('#home-title [aria-hidden="true"]')!==null};
-  })()`);
+    evaluate(`
+(() => {
+  const h = document.querySelector(".header-band"),
+    headerStyle = getComputedStyle(h),
+    enhanced = h.hasAttribute("data-home-header-state"),
+    s = getComputedStyle(h, "::before"),
+    r = h.getBoundingClientRect();
+  const boxes = [
+    ...document.querySelectorAll(".home-intro,#home-title,.home-catch,.home-projects"),
+  ].map((n) => {
+    const b = n.getBoundingClientRect();
+    return { x: b.x, y: b.y + scrollY, width: b.width, height: b.height };
+  });
+  return {
+    state: h.dataset.homeHeaderState,
+    position: headerStyle.position,
+    surface: "::before",
+    planeHeight: parseFloat(s.height),
+    planeTop: parseFloat(s.top),
+    headerBackground: headerStyle.backgroundColor,
+    headerBackdrop: headerStyle.backdropFilter,
+    background: s.backgroundColor,
+    backdrop: s.backdropFilter,
+    shadow: s.boxShadow,
+    transition: s.transitionProperty,
+    durations: s.transitionDuration,
+    height: r.height,
+    top: r.top,
+    boxes,
+    reserved: parseFloat(getComputedStyle(document.body).getPropertyValue("--site-header-height")),
+    animations: document.querySelector(".home-intro").getAnimations({ subtree: true }).length,
+    obsolete: document.querySelectorAll(
+      ".home-title-japanese,.home-title-accessible,.home-display-settings",
+    ).length,
+    words: [...document.querySelectorAll(".home-title-static > span")].map((n) =>
+      n.textContent.trim(),
+    ),
+    hidden: document.querySelector('#home-title [aria-hidden="true"]') !== null,
+  };
+})();
+`);
   const scrollTo = async (y) => {
     await evaluate(`window.scrollTo({top:${y},behavior:'instant'})`);
     await until(
@@ -603,7 +792,16 @@ export async function verifyHomeWorkshopInteraction({
           });
         } finally {
           await evaluate(
-            `(()=>{for(const [node,style] of window.__homeMenuContrastRestore)style===null?node.removeAttribute('style'):node.setAttribute('style',style);delete window.__homeMenuContrastRestore;return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`,
+            `
+(() => {
+  for (const [node, style] of window.__homeMenuContrastRestore)
+    style === null ? node.removeAttribute("style") : node.setAttribute("style", style);
+  delete window.__homeMenuContrastRestore;
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))),
+  );
+})();
+`,
           );
         }
         await screenshot("home-glass-menu-" + mode + "-" + position + "-390.png");
@@ -719,7 +917,15 @@ export async function verifyHomeWorkshopInteraction({
         );
       } finally {
         await evaluate(
-          `(()=>{for(const animation of window.__homeHeaderTransitionSamples??[])animation.finish();delete window.__homeHeaderTransitionSamples;return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`,
+          `
+(() => {
+  for (const animation of window.__homeHeaderTransitionSamples ?? []) animation.finish();
+  delete window.__homeHeaderTransitionSamples;
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))),
+  );
+})();
+`,
         );
       }
     }
@@ -842,7 +1048,13 @@ export async function verifyHomeWorkshopInteraction({
     await navigate();
     assert.equal(
       await evaluate(
-        `[...document.querySelectorAll('#site-menu > ul,.mobile-menu-fallback nav > ul')].every(list=>getComputedStyle(list).opacity==='1'&&parseFloat(getComputedStyle(list).transitionDelay)===0)`,
+        `
+[...document.querySelectorAll("#site-menu > ul,.mobile-menu-fallback nav > ul")].every(
+  (list) =>
+    getComputedStyle(list).opacity === "1" &&
+    parseFloat(getComputedStyle(list).transitionDelay) === 0,
+);
+`,
       ),
       true,
       "No-script menu labels are not hidden or delayed by enhanced entry styling",
@@ -888,7 +1100,20 @@ export async function verifyHomeWorkshopInteraction({
     assert.equal(data.animations, 0);
     assert.ok(
       await evaluate(
-        `(()=>{const header=document.querySelector('.header-band'),nodes=[header,...header.querySelectorAll('*')],styles=[...nodes.map(node=>getComputedStyle(node)),getComputedStyle(header,'::before')],input=header.querySelector('input');if(input)styles.push(getComputedStyle(input,'::placeholder'));return styles.every(style=>[...style.transitionDuration.split(','),...style.transitionDelay.split(',')].every(value=>parseFloat(value)<=.00001))})()`,
+        `
+(() => {
+  const header = document.querySelector(".header-band"),
+    nodes = [header, ...header.querySelectorAll("*")],
+    styles = [...nodes.map((node) => getComputedStyle(node)), getComputedStyle(header, "::before")],
+    input = header.querySelector("input");
+  if (input) styles.push(getComputedStyle(input, "::placeholder"));
+  return styles.every((style) =>
+    [...style.transitionDuration.split(","), ...style.transitionDelay.split(",")].every(
+      (value) => parseFloat(value) <= 0.00001,
+    ),
+  );
+})();
+`,
       ),
       "Reduced motion disables header, foreground, logo and placeholder transitions and delays",
     );

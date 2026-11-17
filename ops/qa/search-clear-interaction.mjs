@@ -41,7 +41,24 @@ export async function verifySearchClearInteraction({
   };
   const state = () =>
     evaluate(
-      `(()=>{const u=new URL(location.href);return {q:u.searchParams.get('q'),tag:u.searchParams.get('tag'),tagPage:u.searchParams.get('tagPage'),keyword:document.querySelector('#search-query').value,tagValue:document.querySelector('#tag-query').value,resultCount:document.querySelectorAll('#search-results a').length,tagCount:document.querySelectorAll('#tag-results li').length,history:history.length,focus:document.activeElement.id,busy:document.querySelector('#search-results').getAttribute('aria-busy'),headerValue:document.querySelector('#header-search-query')?.value};})()`,
+      `
+(() => {
+  const u = new URL(location.href);
+  return {
+    q: u.searchParams.get("q"),
+    tag: u.searchParams.get("tag"),
+    tagPage: u.searchParams.get("tagPage"),
+    keyword: document.querySelector("#search-query").value,
+    tagValue: document.querySelector("#tag-query").value,
+    resultCount: document.querySelectorAll("#search-results a").length,
+    tagCount: document.querySelectorAll("#tag-results li").length,
+    history: history.length,
+    focus: document.activeElement.id,
+    busy: document.querySelector("#search-results").getAttribute("aria-busy"),
+    headerValue: document.querySelector("#header-search-query")?.value,
+  };
+})();
+`,
     );
   const buttonSelector = (id) => `#${id} + button[type=reset]`;
   const pointer = async (id) => {
@@ -185,7 +202,27 @@ export async function verifySearchClearInteraction({
         "Result before clear",
       );
       await evaluate(
-        `window.__clearEvents=[];for(const input of document.querySelectorAll('#search-query,#tag-query'))for(const type of ['input','search','compositionstart','compositionend'])input.addEventListener(type,event=>window.__clearEvents.push({type,id:input.id,value:input.value,trusted:event.isTrusted}));for(const form of document.querySelectorAll('#search-form,.tag-search-form'))form.addEventListener('reset',event=>window.__clearEvents.push({type:'reset',id:form.id||'tag-form',trusted:event.isTrusted}));`,
+        `
+window.__clearEvents = [];
+for (const input of document.querySelectorAll("#search-query,#tag-query"))
+  for (const type of ["input", "search", "compositionstart", "compositionend"])
+    input.addEventListener(type, (event) =>
+      window.__clearEvents.push({
+        type,
+        id: input.id,
+        value: input.value,
+        trusted: event.isTrusted,
+      }),
+    );
+for (const form of document.querySelectorAll("#search-form,.tag-search-form"))
+  form.addEventListener("reset", (event) =>
+    window.__clearEvents.push({
+      type: "reset",
+      id: form.id || "tag-form",
+      trusted: event.isTrusted,
+    }),
+  );
+`,
       );
       const before = await state();
       if (action === "pointer") await pointer(id);

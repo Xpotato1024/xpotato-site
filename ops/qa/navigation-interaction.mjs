@@ -33,7 +33,32 @@ export async function verifyNavigationInteraction({
       await evaluate("document.fonts.ready");
       await evaluate("document.documentElement.style.fontSize=" + JSON.stringify(scale + "%"));
       const geometry = await evaluate(
-        `(()=>{const pick=s=>{const n=document.querySelector(s),r=n.getBoundingClientRect();return{center:r.top+r.height/2,left:r.left,right:r.right,width:r.width,height:r.height}};return{search:pick('.mobile-search'),svg:pick('.mobile-search svg'),menu:pick('.mobile-menu-toggle'),icon:pick('.menu-icon'),brand:pick('.brand'),form:pick('.header-search'),input:pick('.header-search input'),submit:pick('.header-search button'),overflow:document.documentElement.scrollWidth>innerWidth}})()`,
+        `
+(() => {
+  const pick = (s) => {
+    const n = document.querySelector(s),
+      r = n.getBoundingClientRect();
+    return {
+      center: r.top + r.height / 2,
+      left: r.left,
+      right: r.right,
+      width: r.width,
+      height: r.height,
+    };
+  };
+  return {
+    search: pick(".mobile-search"),
+    svg: pick(".mobile-search svg"),
+    menu: pick(".mobile-menu-toggle"),
+    icon: pick(".menu-icon"),
+    brand: pick(".brand"),
+    form: pick(".header-search"),
+    input: pick(".header-search input"),
+    submit: pick(".header-search button"),
+    overflow: document.documentElement.scrollWidth > innerWidth,
+  };
+})();
+`,
       );
       assert.equal(geometry.overflow, false, "Header overflow " + width + "/" + scale);
       if (width <= 1180) {
@@ -179,7 +204,25 @@ export async function verifyNavigationInteraction({
         await evaluate("document.fonts.ready");
         if (future)
           await evaluate(
-            `for(const selector of ['.desktop-navigation ul','#site-menu ul','.mobile-menu-fallback ul','.footer-links']){const list=document.querySelector(selector),li=document.createElement('li'),a=document.createElement('a');a.textContent='追加ページ';a.href='#contact-fixture';li.append(a);const feed=[...list.children].find(item=>item.querySelector('a')?.getAttribute('href')==='/rss.xml');list.insertBefore(li,feed??null);}`,
+            `
+for (const selector of [
+  ".desktop-navigation ul",
+  "#site-menu ul",
+  ".mobile-menu-fallback ul",
+  ".footer-links",
+]) {
+  const list = document.querySelector(selector),
+    li = document.createElement("li"),
+    a = document.createElement("a");
+  a.textContent = "追加ページ";
+  a.href = "#contact-fixture";
+  li.append(a);
+  const feed = [...list.children].find(
+    (item) => item.querySelector("a")?.getAttribute("href") === "/rss.xml",
+  );
+  list.insertBefore(li, feed ?? null);
+}
+`,
           );
         await evaluate("document.documentElement.style.fontSize=" + JSON.stringify(scale + "%"));
         if (width < 1181) {
@@ -187,13 +230,47 @@ export async function verifyNavigationInteraction({
           await until(
             () =>
               evaluate(
-                `(()=>{const panel=document.querySelector('#site-menu');return panel.matches(':popover-open') && getComputedStyle(panel).opacity==='1' && panel.getAnimations().every(a=>['finished','idle'].includes(a.playState));})()`,
+                `
+(() => {
+  const panel = document.querySelector("#site-menu");
+  return (
+    panel.matches(":popover-open") &&
+    getComputedStyle(panel).opacity === "1" &&
+    panel.getAnimations().every((a) => ["finished", "idle"].includes(a.playState))
+  );
+})();
+`,
               ),
             "Navigation open animation settled",
           );
         }
         const state = await evaluate(
-          `(()=>{const selectors=['.desktop-navigation','#site-menu','.mobile-menu-fallback','.footer-nav'];return {width:innerWidth,font:getComputedStyle(document.documentElement).fontSize,title:document.querySelector('main h1').textContent.trim(),overflow:document.documentElement.scrollWidth>innerWidth,groups:selectors.map(selector=>[...document.querySelectorAll(selector+' a')].map(a=>{const r=a.getBoundingClientRect();return {name:a.textContent.trim(),path:a.pathname,href:a.getAttribute('href'),left:r.left,right:r.right,width:r.width,height:r.height,align:getComputedStyle(a).textAlign};}))};})()`,
+          `
+(() => {
+  const selectors = [".desktop-navigation", "#site-menu", ".mobile-menu-fallback", ".footer-nav"];
+  return {
+    width: innerWidth,
+    font: getComputedStyle(document.documentElement).fontSize,
+    title: document.querySelector("main h1").textContent.trim(),
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    groups: selectors.map((selector) =>
+      [...document.querySelectorAll(selector + " a")].map((a) => {
+        const r = a.getBoundingClientRect();
+        return {
+          name: a.textContent.trim(),
+          path: a.pathname,
+          href: a.getAttribute("href"),
+          left: r.left,
+          right: r.right,
+          width: r.width,
+          height: r.height,
+          align: getComputedStyle(a).textAlign,
+        };
+      }),
+    ),
+  };
+})();
+`,
         );
         assert.equal(state.width, width);
         assert.equal(state.font, scale === 200 ? "32px" : "16px");

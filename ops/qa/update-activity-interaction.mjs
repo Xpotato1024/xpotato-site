@@ -27,15 +27,145 @@ export async function verifyUpdateActivityInteraction({
   };
   const palette = () =>
     evaluate(
-      `(()=>{const root=document.querySelector('[data-update-activity]'),style=getComputedStyle(root),visible=[...document.querySelectorAll('.home-new')].filter(n=>!n.hidden&&n.getClientRects().length);return{surface:getComputedStyle(document.documentElement).backgroundColor,accent:getComputedStyle(document.querySelector('.home-update-arrow')).color,levels:[0,1,2,3].map(level=>{const cell=root.querySelector('.home-update-week[data-level="'+level+'"]:not([data-before-launch]) .home-update-count');return cell?getComputedStyle(cell).backgroundColor:null}),marker:getComputedStyle(root.querySelector('.home-update-pointer')).color,prelaunch:root.querySelector('.home-update-prelaunch')?getComputedStyle(root.querySelector('.home-update-prelaunch')).borderTopColor:null,newColors:visible.map(n=>getComputedStyle(n).color)}})()`,
+      `
+(() => {
+  const root = document.querySelector("[data-update-activity]"),
+    style = getComputedStyle(root),
+    visible = [...document.querySelectorAll(".home-new")].filter(
+      (n) => !n.hidden && n.getClientRects().length,
+    );
+  return {
+    surface: getComputedStyle(document.documentElement).backgroundColor,
+    accent: getComputedStyle(document.querySelector(".home-update-arrow")).color,
+    levels: [0, 1, 2, 3].map((level) => {
+      const cell = root.querySelector(
+        '.home-update-week[data-level="' +
+          level +
+          '"]:not([data-before-launch]) .home-update-count',
+      );
+      return cell ? getComputedStyle(cell).backgroundColor : null;
+    }),
+    marker: getComputedStyle(root.querySelector(".home-update-pointer")).color,
+    prelaunch: root.querySelector(".home-update-prelaunch")
+      ? getComputedStyle(root.querySelector(".home-update-prelaunch")).borderTopColor
+      : null,
+    newColors: visible.map((n) => getComputedStyle(n).color),
+  };
+})();
+`,
     );
   const snapshot = () =>
-    evaluate(`(()=>{
-    const root=document.querySelector('[data-update-activity]'),cells=[...root.querySelectorAll('.home-update-week')],bars=cells.map(n=>n.firstElementChild),plot=root.querySelector('.home-update-plot'),banner=root.querySelector('[data-update-banner]'),latest=root.querySelector('[data-update-latest]'),heading=root.querySelector('h2'),article=document.querySelector('#records-heading');
-    const rect=n=>{const r=n.getBoundingClientRect();return{x:r.x,right:r.right,y:r.y,bottom:r.bottom,width:r.width,height:r.height}},font=n=>{const s=getComputedStyle(n);return{family:s.fontFamily,size:s.fontSize,weight:s.fontWeight,spacing:s.letterSpacing}};
-    const slots=[...document.querySelectorAll('[data-home-new]')],visible=[...new Map(slots.filter(n=>!n.hidden).map(n=>[n.dataset.homeNew,n])).values()];
-    return {meta:rect(banner.querySelector('.home-update-meta')),titleRow:rect(banner.querySelector('.home-update-title')),metaSizes:[...banner.querySelector('.home-update-meta').children].map(n=>getComputedStyle(n).fontSize),sectionOrder:[...document.querySelectorAll('main > section')].map(n=>n.getAttribute('aria-labelledby')),metaAlign:getComputedStyle(banner.querySelector('.home-update-meta')).alignItems,metaGap:getComputedStyle(banner.querySelector('.home-update-meta')).columnGap,barRadius:bars[0]?getComputedStyle(bars[0]).borderRadius:null,arrowGap:getComputedStyle(banner.querySelector('.home-update-arrow')).marginInlineStart,heading:heading.textContent,headingFont:font(heading),articleHeadingFont:font(article),articleHeading:rect(article),viewportHeight:innerHeight,plot:rect(plot),banner:rect(banner),count:cells.length,current:root.querySelectorAll('[data-current]').length,recent:root.querySelectorAll('[data-recent]').length,summary:root.querySelector('.home-update-summary')?.textContent,latest:latest.textContent,bannerText:banner.textContent,newBanner:root.querySelectorAll('[data-update-new]').length,newSlots:visible.map(n=>({id:n.dataset.homeNew,text:n.textContent,kind:n.closest('.article-card')?'article':n.closest('.project-slide')?'project':'tool'})),hiddenSlots:slots.filter(n=>n.hidden).length,totals:cells.map(n=>Number(n.dataset.total)),widths:cells.map(n=>rect(n).width),tops:cells.map(n=>rect(n).y),heights:bars.map(n=>rect(n).height),gaps:bars.slice(1).map((n,i)=>rect(n).x-rect(bars[i]).right),visibleNumbers:bars.some(n=>n.textContent.trim()),labels:bars.map(n=>n.getAttribute('aria-label')),tooltips:bars.map(n=>n.title),before:cells.filter(n=>n.hasAttribute('data-before-launch')).length,prelaunch:root.querySelectorAll('.home-update-prelaunch').length,preStyle:root.querySelector('.home-update-prelaunch')?getComputedStyle(root.querySelector('.home-update-prelaunch')).borderTopStyle:null,preWidth:root.querySelector('.home-update-prelaunch')?rect(root.querySelector('.home-update-prelaunch')).width:0,preCellWidth:cells.filter(n=>n.hasAttribute('data-before-launch')).reduce((a,n)=>a+rect(n).width,0),outlines:bars.map(n=>getComputedStyle(n).outlineStyle),zeroFills:cells.filter(n=>!n.hasAttribute('data-before-launch')&&n.dataset.total==='0').map(n=>getComputedStyle(n.firstElementChild).backgroundColor),months:root.querySelector('.home-update-axis')?.textContent,triangle:rect(root.querySelector('.home-update-pointer')),triangleLabel:root.querySelector('.home-update-pointer').getAttribute('aria-label'),launchLabel:root.querySelector('.home-update-launch-axis')?.textContent??'',interactive:root.querySelectorAll('.home-update-strip a,.home-update-strip button,.home-update-strip [tabindex]').length,overflow:document.documentElement.scrollWidth>innerWidth,animation:[...root.querySelectorAll('*')].some(n=>getComputedStyle(n).animationName!=='none'),fixture:root.querySelector('[data-update-fixture]')?.textContent,fonts:[...root.querySelectorAll('.home-meta,.home-number')].map(font),bodyFont:font(document.querySelector('.home-catch')),summaryFont:root.querySelector('.home-update-summary')?font(root.querySelector('.home-update-summary')):null,titleFont:font(root.querySelector('.home-update-title')),articleTitleFont:font(document.querySelector('.article-card h3')),contentTitles:[...document.querySelectorAll('.content-item-title')].map(font),projectMetaFont:font(document.querySelector('.project-slide .content-type-label'))};
-  })()`);
+    evaluate(`
+(() => {
+  const root = document.querySelector("[data-update-activity]"),
+    cells = [...root.querySelectorAll(".home-update-week")],
+    bars = cells.map((n) => n.firstElementChild),
+    plot = root.querySelector(".home-update-plot"),
+    banner = root.querySelector("[data-update-banner]"),
+    latest = root.querySelector("[data-update-latest]"),
+    heading = root.querySelector("h2"),
+    article = document.querySelector("#records-heading");
+  const rect = (n) => {
+      const r = n.getBoundingClientRect();
+      return { x: r.x, right: r.right, y: r.y, bottom: r.bottom, width: r.width, height: r.height };
+    },
+    font = (n) => {
+      const s = getComputedStyle(n);
+      return {
+        family: s.fontFamily,
+        size: s.fontSize,
+        weight: s.fontWeight,
+        spacing: s.letterSpacing,
+      };
+    };
+  const slots = [...document.querySelectorAll("[data-home-new]")],
+    visible = [
+      ...new Map(slots.filter((n) => !n.hidden).map((n) => [n.dataset.homeNew, n])).values(),
+    ];
+  return {
+    meta: rect(banner.querySelector(".home-update-meta")),
+    titleRow: rect(banner.querySelector(".home-update-title")),
+    metaSizes: [...banner.querySelector(".home-update-meta").children].map(
+      (n) => getComputedStyle(n).fontSize,
+    ),
+    sectionOrder: [...document.querySelectorAll("main > section")].map((n) =>
+      n.getAttribute("aria-labelledby"),
+    ),
+    metaAlign: getComputedStyle(banner.querySelector(".home-update-meta")).alignItems,
+    metaGap: getComputedStyle(banner.querySelector(".home-update-meta")).columnGap,
+    barRadius: bars[0] ? getComputedStyle(bars[0]).borderRadius : null,
+    arrowGap: getComputedStyle(banner.querySelector(".home-update-arrow")).marginInlineStart,
+    heading: heading.textContent,
+    headingFont: font(heading),
+    articleHeadingFont: font(article),
+    articleHeading: rect(article),
+    viewportHeight: innerHeight,
+    plot: rect(plot),
+    banner: rect(banner),
+    count: cells.length,
+    current: root.querySelectorAll("[data-current]").length,
+    recent: root.querySelectorAll("[data-recent]").length,
+    summary: root.querySelector(".home-update-summary")?.textContent,
+    latest: latest.textContent,
+    bannerText: banner.textContent,
+    newBanner: root.querySelectorAll("[data-update-new]").length,
+    newSlots: visible.map((n) => ({
+      id: n.dataset.homeNew,
+      text: n.textContent,
+      kind: n.closest(".article-card")
+        ? "article"
+        : n.closest(".project-slide")
+          ? "project"
+          : "tool",
+    })),
+    hiddenSlots: slots.filter((n) => n.hidden).length,
+    totals: cells.map((n) => Number(n.dataset.total)),
+    widths: cells.map((n) => rect(n).width),
+    tops: cells.map((n) => rect(n).y),
+    heights: bars.map((n) => rect(n).height),
+    gaps: bars.slice(1).map((n, i) => rect(n).x - rect(bars[i]).right),
+    visibleNumbers: bars.some((n) => n.textContent.trim()),
+    labels: bars.map((n) => n.getAttribute("aria-label")),
+    tooltips: bars.map((n) => n.title),
+    before: cells.filter((n) => n.hasAttribute("data-before-launch")).length,
+    prelaunch: root.querySelectorAll(".home-update-prelaunch").length,
+    preStyle: root.querySelector(".home-update-prelaunch")
+      ? getComputedStyle(root.querySelector(".home-update-prelaunch")).borderTopStyle
+      : null,
+    preWidth: root.querySelector(".home-update-prelaunch")
+      ? rect(root.querySelector(".home-update-prelaunch")).width
+      : 0,
+    preCellWidth: cells
+      .filter((n) => n.hasAttribute("data-before-launch"))
+      .reduce((a, n) => a + rect(n).width, 0),
+    outlines: bars.map((n) => getComputedStyle(n).outlineStyle),
+    zeroFills: cells
+      .filter((n) => !n.hasAttribute("data-before-launch") && n.dataset.total === "0")
+      .map((n) => getComputedStyle(n.firstElementChild).backgroundColor),
+    months: root.querySelector(".home-update-axis")?.textContent,
+    triangle: rect(root.querySelector(".home-update-pointer")),
+    triangleLabel: root.querySelector(".home-update-pointer").getAttribute("aria-label"),
+    launchLabel: root.querySelector(".home-update-launch-axis")?.textContent ?? "",
+    interactive: root.querySelectorAll(
+      ".home-update-strip a,.home-update-strip button,.home-update-strip [tabindex]",
+    ).length,
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    animation: [...root.querySelectorAll("*")].some(
+      (n) => getComputedStyle(n).animationName !== "none",
+    ),
+    fixture: root.querySelector("[data-update-fixture]")?.textContent,
+    fonts: [...root.querySelectorAll(".home-meta,.home-number")].map(font),
+    bodyFont: font(document.querySelector(".home-catch")),
+    summaryFont: root.querySelector(".home-update-summary")
+      ? font(root.querySelector(".home-update-summary"))
+      : null,
+    titleFont: font(root.querySelector(".home-update-title")),
+    articleTitleFont: font(document.querySelector(".article-card h3")),
+    contentTitles: [...document.querySelectorAll(".content-item-title")].map(font),
+    projectMetaFont: font(document.querySelector(".project-slide .content-type-label")),
+  };
+})();
+`);
   const navigate = async (scenario, query = "") => {
     await send("Page.navigate", { url: origin + "/__updates-fixture__/" + scenario + "/" + query });
     await until(
@@ -238,7 +368,17 @@ export async function verifyUpdateActivityInteraction({
       const data = await snapshot();
       assert.equal(data.overflow, false);
       const labels = await evaluate(
-        `(()=>[...document.querySelectorAll('.home-update-axis span')].filter(n=>n.textContent).map(n=>{const range=document.createRange();range.selectNodeContents(n);const r=range.getBoundingClientRect();return{x:r.x,right:r.right}}))()`,
+        `
+(() =>
+  [...document.querySelectorAll(".home-update-axis span")]
+    .filter((n) => n.textContent)
+    .map((n) => {
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      const r = range.getBoundingClientRect();
+      return { x: r.x, right: r.right };
+    }))();
+`,
       );
       assert.ok(
         labels.every(
@@ -316,7 +456,17 @@ export async function verifyUpdateActivityInteraction({
     await evaluate("window.scrollTo(0,0)");
     const data = await snapshot();
     const spacing = await evaluate(
-      `(()=>{const summary=document.querySelector('.home-update-summary'),divider=document.querySelector('.records[aria-labelledby="records-heading"] .section-heading');return {summaryToDivider:divider.getBoundingClientRect().top-summary.getBoundingClientRect().bottom}})()`,
+      `
+(() => {
+  const summary = document.querySelector(".home-update-summary"),
+    divider = document.querySelector(
+      '.records[aria-labelledby="records-heading"] .section-heading',
+    );
+  return {
+    summaryToDivider: divider.getBoundingClientRect().top - summary.getBoundingClientRect().bottom,
+  };
+})();
+`,
     );
     assert.ok(spacing.summaryToDivider >= 0 && spacing.summaryToDivider <= 20);
     assert.equal(data.overflow, false);
