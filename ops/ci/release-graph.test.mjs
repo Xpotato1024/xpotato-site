@@ -1,3 +1,4 @@
+import {applicationBuildScripts,runApplicationBuilds} from '../build/apps-graph.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -7,6 +8,7 @@ const scripts = JSON.parse(readFileSync(new URL("../../package.json", import.met
 function expanded(name, ancestors = []) {
   assert.ok(!ancestors.includes(name), `Cycle: ${name}`);
   return scripts[name].split(' && ').flatMap(cmd => {
+    if (cmd === 'node ops/build/apps.mjs') return applicationBuildScripts.flatMap(script=>expanded(script,[...ancestors,name]));
     if (cmd === 'node ops/ci/ci-source.mjs') return sourceLanes.flatMap(lane => expanded(lane, [...ancestors, name]));
     const match = /^npm run ([\w:-]+)$/.exec(cmd);
     return match ? expanded(match[1], [...ancestors, name]) : [cmd];
@@ -147,4 +149,12 @@ test('parallel public UI suite retains required design-role checks and both qual
   for (const artifact of ['axe-*-final-dist.json', 'release-*-result.json', 'design-roles-final-dist.json', 'project-carousel-browser.json', 'carousel-*.png']) {
     assert.ok(workflow.includes('/release-validation/'+artifact), 'Retain quality artifact: '+artifact);
   }
+});
+
+test('site and editor build concurrently once, and all settlements precede composition',async()=>{
+ const started=[],releases=[];let ended=false;
+ const run=runApplicationBuilds(script=>{started.push(script);return new Promise(resolve=>releases.push(resolve));}).then(()=>{ended=true;});
+ assert.deepEqual(started,['build:site','build:editor']);assert.equal(ended,false);releases[0]();await Promise.resolve();assert.equal(ended,false);releases[1]();await run;assert.equal(ended,true);
+ const graph=expanded('release:produce');assert.equal(graph.filter(c=>c==='npm run build --workspace @xpotato/editor').length,1);
+ let settled=false;await assert.rejects(runApplicationBuilds(async script=>{if(script==='build:site')throw Error('fixture failure');await Promise.resolve();settled=true;}));assert.equal(settled,true);
 });

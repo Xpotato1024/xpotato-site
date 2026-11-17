@@ -29,7 +29,7 @@ interface Props {
   taxonomy?: string | undefined;
   seo?: SeoOverride | undefined;
   headings?: readonly ContentHeading[];
-  publication?: { pubDate: string; updatedDate?: string | undefined; draft: boolean; preview?: boolean | undefined };
+  publication?: { pubDate: string; updatedDate?: string | undefined; draft: boolean; preview?: boolean | undefined } | undefined;
   breadcrumbs?: readonly import("../../features/discovery/model/seo.js").ContentBreadcrumb[] | undefined;
 }
 const { id, collection, title, description, taxonomy = "", seo, headings = [], publication } = Astro.props;

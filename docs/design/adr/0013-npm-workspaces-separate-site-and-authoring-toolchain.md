@@ -17,7 +17,7 @@ vNext includes:
 - technical-example isolated verification
 - schema/registry/site validators
 
-Putting all of these into one Astro package `src/ + ops/` would make production/runtime, AI/provider, native media, and code-execution boundaries depend on convention only。
+Putting all of these into one Astro package `src/ + tools/` would make production/runtime, AI/provider, native media, and code-execution boundaries depend on convention only。
 
 Moving them to completely separate repositories would make shared contract/migration versioning unnecessarily difficult。
 
@@ -45,7 +45,7 @@ Dependency/security direction:
 
 ## Alternatives
 
-### Single package `src/ + ops/`
+### Single package `src/ + tools/`
 
 Simpler at first but weak import/dependency/capability separation, especially once AI provider/native decoder/example execution are present。
 
@@ -69,7 +69,7 @@ Positive:
 
 Costs:
 
-- deeper directory/workspace ops/ci/tsconfig configuration
+- deeper directory/workspace scripts/tsconfig configuration
 - architecture/import tests required
 - cross-workspace version changes must remain coordinated
 

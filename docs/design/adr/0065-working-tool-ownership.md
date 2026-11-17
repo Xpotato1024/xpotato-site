@@ -12,7 +12,7 @@ PR140の公開契約統一を基点とする追加の開発変更。採用・配
 
 root scriptsには定常CLI、build integration、QA、過去の比較実験が混在する。さらにsite-validatorsが下書き生成と導入更新の書込みも所有しており、「検査を読む」つもりでwriterへ到達する。名前だけを一括変更せず、npm/workflow/import/描画来歴から利用が確認できた範囲を選ぶ。
 
-新しいworkspace/serviceは作らず、`ops/authoring`、`ops/build`、`ops/qa`、`ops/media/publication`へ作業コードを配置する。npm名・引数・出力先は維持する。配信/復旧/監視コードとCI分類は既存`ops/deployment`等に残す。選別の根拠と保留理由は[tools所有表](../../../tools/README.md)を参照。
+新しいworkspace/serviceは作らず、`tools/authoring`、`tools/build`、`tools/qa`、`tools/publication`へ作業コードを配置する。npm名・引数・出力先は維持する。配信/復旧/監視コードとCI分類は既存`scripts/release`等に残す。選別の根拠と保留理由は[tools所有表](../../../tools/README.md)を参照。
 
 page/tool generatorとinstaller writerをvalidatorsから外す。導入configuration/schema、同じgenerated projection、identity/rights/pin/lockの読取り検査はvalidatorsの一実装を再利用する。writerはその検査を呼び、複製しない。synthetic builderはtests/fixturesへ移し、実sourceレビューとの境界を明確にする。共有header parserはサイト固有の配信規則を持つためsite-validatorsへ置き、検証と配信の二系統化を避ける。
 
@@ -26,7 +26,7 @@ root旧実装は現行build/deploy先ではない。fixed-Git inventoryとhome�
 
 古いvendorは全7pinの通常実bytes照合と旧版回帰の実入力で、採用契約も旧bytes保持を要求する。active-only検査へ緩めて削除せず、現行選択1版と履歴6版の責務・除去時の固定Git復元契約をvendor/READMEに明記する。別subrootへの配置だけでは削減効果がなくresolverが増えるので採用しない。
 
-追加整理では、移行CLIと8つのcanonical writerをops/migrationへ、再現比較をops/qa/reviewへ、素材生成をops/build/assetsへ移す。builders/read-only checksは共有し、Phase5のmanual revision上書き拒否は維持。Phase6 local encoding/診断は書込みを持つためIO orchestration全体をmigrationへ移す。release package writerもbuildへ。旧WordPress importer・status-only curl2本・CSP単独writerを廃止し、CSP検査をpublication compilerへ一本化する。旧scriptを多数のforwarderとして残さない。固定描画来歴7本だけはsource fingerprintがpathを固定するため既存scriptsに残し、日常入口にはしない。
+追加整理では、移行CLIと8つのcanonical writerをtools/migrationへ、再現比較をtools/reviewへ、素材生成をtools/assetsへ移す。builders/read-only checksは共有し、Phase5のmanual revision上書き拒否は維持。Phase6 local encoding/診断は書込みを持つためIO orchestration全体をmigrationへ移す。release package writerもbuildへ。旧WordPress importer・status-only curl2本・CSP単独writerを廃止し、CSP検査をpublication compilerへ一本化する。旧scriptを多数のforwarderとして残さない。固定描画来歴7本だけはsource fingerprintがpathを固定するため既存scriptsに残し、日常入口にはしない。
 
 ## 移行と検証
 

@@ -8,7 +8,7 @@ last_verified: 2026-11-02
 
 依頼から仕上げまでの進行は[記事・ツールの一貫制作](content-production.md)、必要な項目と共通部品は[ページ構成](../content/page-composition.md)を使う。記事は japanese-technical-blog、ツールは create-browser-tool が工程全体を担当し、本ページは正確なCLIと編集先の参照先とする。数式・構成図・グラフは[技術ビジュアル](technical-visuals.md)、回路・CAD・simulationは[工学素材](engineering-visuals.md)へ進む。
 
-作業コードの所有と旧資産の保留理由は[toolsの案内](../../tools/README.md)を参照する。通常編集は次の入口を使う。記事・画像の保存や公開、PRのReady・merge・配信の許可は、この手順の存在からは発生しない。
+作業コードの所有と旧資産の保留理由は[toolsの案内](../../ops/README.md)を参照する。通常編集は次の入口を使う。記事・画像の保存や公開、PRのReady・merge・配信の許可は、この手順の存在からは発生しない。
 
 | 作業 | 最初の操作 | 人が編集する正本 | 自動生成されるもの |
 |---|---|---|---|

@@ -55,11 +55,15 @@ const currentRequired=Object.freeze({config:'tree',tools:'tree',templates:'tree'
   '.gitattributes':'blob','.gitignore':'blob','.nvmrc':'blob','tsconfig.base.json':'blob','tsconfig.json':'blob','vitest.config.ts':'blob'});
 // Packages/scripts/docs have their own comparisons. Workflow/approval checks
 // supplement exact .github tree parity; agent instructions are not build inputs.
-const separatelyChecked=new Set(['packages','scripts','docs','.agents','README.md','AGENTS.md']);
+const separatelyChecked=new Set(['packages','scripts','ops','docs','.agents','README.md','AGENTS.md']);
 export function assertBuildSourceParity(trees,layout) {
   if(!Array.isArray(trees)||trees.length!==2||!['current','legacy'].includes(layout))stop('SOURCE_TREE_INCOMPLETE');
   const rows=trees.map(tree=>entries({truncated:false,tree},'SOURCE_TREE_INCOMPLETE'));
-  for(const list of rows)for(const [path,type]of Object.entries({...commonRequired,...(layout==='current'?currentRequired:{})})) {
+  const operationLayouts=rows.map(list=>list.some(r=>r.path==='ops'));
+  if(operationLayouts[0]!==operationLayouts[1]||operationLayouts.some((usesOps,index)=>usesOps&&rows[index].some(r=>r.path==='scripts'||r.path==='tools')))stop('PUBLIC_BUILD_INPUTS_CHANGED');
+  const required=layout==='current'?{...currentRequired}:{};
+  if(operationLayouts[0]){delete required.tools;required.ops='tree';required.content='tree';}
+  for(const list of rows)for(const [path,type]of Object.entries({...commonRequired,...required})) {
     const entry=list.find(r=>r.path===path);
     if(!entry||entry.type!==type||entry.mode!==(type==='tree'?'040000':'100644'))stop('PUBLIC_BUILD_INPUTS_CHANGED');
   }
@@ -96,4 +100,16 @@ export function assertDocumentationSourceParity(trees) {
     return list.filter(r=>r.type!=='tree'&&r.path!=='operations/current-deployment-status.md');
   });
   if(signature(rows[0])!==signature(rows[1]))stop('SOURCE_VALIDATION_DOCUMENTS_CHANGED');
+}
+
+// New ownership paths mirror only the already reviewed manual-operation exceptions.
+// All build/CI/media/tool scripts and unknown additions remain exact-source inputs.
+export const operationManualControlPaths=Object.freeze([...manualFiles.map(name=>'deployment/'+name),'deployment/artifact/Read-ManualArtifactHandoff.ps1']);
+export function assertOperationSourceParity(trees){
+ if(!Array.isArray(trees)||trees.length!==2)stop('SCRIPTS_TREE_INCOMPLETE');
+ const rows=trees.map(tree=>entries(tree,'SCRIPTS_TREE_INCOMPLETE').filter(r=>r.type!=='tree'));
+ for(const list of rows)for(const path of operationManualControlPaths)if(!list.some(r=>r.path===path&&r.type==='blob'&&r.mode==='100644'))stop('MANUAL_CONTROL_PLANE_PATH_OR_MODE');
+ const exempt=new Set(operationManualControlPaths);
+ const protectedRows=rows.map(list=>list.filter(r=>!r.path.endsWith('.test.mjs')&&!exempt.has(r.path)).sort(order));
+ if(signature(protectedRows[0])!==signature(protectedRows[1]))stop('BUILD_OR_POLICY_SCRIPTS_CHANGED');
 }

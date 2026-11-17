@@ -56,7 +56,7 @@
       "articleSources": 0,
       "changedEntries": 20,
       "registryOrAdmission": [
-        "content/registry/taxonomy/editorial.ts"
+        "apps/site/src/content-registry/taxonomy/editorial.ts"
       ]
     },
     {
@@ -70,10 +70,10 @@
       "articleSources": 1,
       "changedEntries": 15,
       "registryOrAdmission": [
-        "content/registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/provenance/index.ts"
+        "apps/site/src/content-registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/index.ts"
       ]
     },
     {
@@ -87,7 +87,7 @@
       "articleSources": 0,
       "changedEntries": 32,
       "registryOrAdmission": [
-        "content/registry/content-modules.ts",
+        "apps/site/src/content-registry/content-modules.ts",
         "config/article-publication-admissions/09e6785f-6da5-4c2f-892b-e573845f0e9c.json"
       ]
     },
@@ -102,13 +102,13 @@
       "articleSources": 2,
       "changedEntries": 9,
       "registryOrAdmission": [
-        "content/registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/media-rights/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
-        "content/registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/media/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
-        "content/registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/provenance/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
-        "content/registry/provenance/index.ts"
+        "apps/site/src/content-registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media-rights/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/provenance/index.ts"
       ]
     },
     {
@@ -150,7 +150,7 @@
       "articleSources": 0,
       "changedEntries": 5,
       "registryOrAdmission": [
-        "content/registry/taxonomy/editorial.ts"
+        "apps/site/src/content-registry/taxonomy/editorial.ts"
       ]
     },
     {
@@ -164,7 +164,7 @@
       "articleSources": 0,
       "changedEntries": 14,
       "registryOrAdmission": [
-        "content/registry/taxonomy/editorial.ts"
+        "apps/site/src/content-registry/taxonomy/editorial.ts"
       ]
     },
     {
@@ -190,10 +190,10 @@
       "articleSources": 1,
       "changedEntries": 5,
       "registryOrAdmission": [
-        "content/registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/provenance/index.ts"
+        "apps/site/src/content-registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/index.ts"
       ]
     },
     {
@@ -219,7 +219,7 @@
       "articleSources": 0,
       "changedEntries": 9,
       "registryOrAdmission": [
-        "content/registry/taxonomy/editorial.ts",
+        "apps/site/src/content-registry/taxonomy/editorial.ts",
         "config/article-publication-admissions/09e6785f-6da5-4c2f-892b-e573845f0e9c.json"
       ]
     },
@@ -246,13 +246,13 @@
       "articleSources": 1,
       "changedEntries": 55,
       "registryOrAdmission": [
-        "content/registry/media-evidence/index.ts",
-        "content/registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/media-rights/index.ts",
-        "content/registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/media/index.ts",
-        "content/registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
-        "content/registry/provenance/index.ts"
+        "apps/site/src/content-registry/media-evidence/index.ts",
+        "apps/site/src/content-registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media-rights/index.ts",
+        "apps/site/src/content-registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media/index.ts",
+        "apps/site/src/content-registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/index.ts"
       ]
     },
     {
@@ -266,10 +266,10 @@
       "articleSources": 1,
       "changedEntries": 6,
       "registryOrAdmission": [
-        "content/registry/media-rights/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
-        "content/registry/media/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
-        "content/registry/provenance/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
-        "content/registry/provenance/index.ts"
+        "apps/site/src/content-registry/media-rights/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/media/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/provenance/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/provenance/index.ts"
       ]
     },
     {
@@ -395,8 +395,8 @@
       "articleSources": 0,
       "changedEntries": 125,
       "registryOrAdmission": [
-        "content/registry/content-modules.ts",
-        "content/registry/editorial/manual-revisions-v1.json"
+        "apps/site/src/content-registry/content-modules.ts",
+        "apps/site/src/content-registry/editorial/manual-revisions-v1.json"
       ]
     },
     {
@@ -422,7 +422,7 @@
       "articleSources": 0,
       "changedEntries": 8,
       "registryOrAdmission": [
-        "content/registry/editorial/manual-revisions-v1.json"
+        "apps/site/src/content-registry/editorial/manual-revisions-v1.json"
       ]
     },
     {
@@ -436,9 +436,9 @@
       "articleSources": 0,
       "changedEntries": 117,
       "registryOrAdmission": [
-        "content/registry/interactive/generated/manifests.ts",
-        "content/registry/interactive/generated/records.ts",
-        "content/registry/interactive/releases.ts"
+        "apps/site/src/content-registry/interactive/generated/manifests.ts",
+        "apps/site/src/content-registry/interactive/generated/records.ts",
+        "apps/site/src/content-registry/interactive/releases.ts"
       ]
     },
     {

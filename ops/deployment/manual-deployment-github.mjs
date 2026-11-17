@@ -1,7 +1,7 @@
 import {createJsonTransport,transportFailureCode} from "./shared/deployment-http.mjs";
 import {authority,validateSelection} from './deployment-policy.mjs';
 import {requireManualRun} from './manual-deployment.mjs';
-import {assertPackageSourceParity,assertBuildSourceParity,assertScriptSourceParity,assertDocumentationSourceParity} from './manual-deployment-source-policy.mjs';
+import {assertPackageSourceParity,assertBuildSourceParity,assertOperationSourceParity,assertScriptSourceParity,assertDocumentationSourceParity} from './manual-deployment-source-policy.mjs';
 import {stop} from './manual-deployment-provider.mjs';
 export function createManualGitHub({env,selection,credentialProvider,fetchImpl}) {
   requireManualRun(env);validateSelection(selection);
@@ -44,13 +44,14 @@ export function createManualGitHub({env,selection,credentialProvider,fetchImpl})
     const {layout}=assertPackageSourceParity(packageTrees);
     assertBuildSourceParity(trees,layout);
     const scriptTrees=[];
+    const operationRoot=trees[0].some(r=>r.path==='ops')?'ops':'scripts';
     for(const tree of trees) {
-      const scripts=tree.find(r=>r.path==='scripts');
+      const scripts=tree.find(r=>r.path===operationRoot);
       if(!scripts || scripts.type!=='tree'||scripts.mode!=='040000')stop('SCRIPTS_TREE_REQUIRED');
       const content=await get(base+'/git/trees/'+scripts.sha+'?recursive=1');
       scriptTrees.push(content);
     }
-    assertScriptSourceParity(scriptTrees,layout);
+    if(operationRoot==='ops')assertOperationSourceParity(scriptTrees);else assertScriptSourceParity(scriptTrees,layout);
     if(layout==='current') {
       const documentTrees=[];
       for(const tree of trees)documentTrees.push(await get(base+'/git/trees/'+tree.find(r=>r.path==='docs').sha+'?recursive=1'));

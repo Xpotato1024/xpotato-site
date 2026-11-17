@@ -1,6 +1,6 @@
 # CI・配信・監視の運用コード
 
-日常の作成・更新・build補助・画面QAは[tools](../tools/README.md)。ここはGitHub Actionsと配信consumerが実際に使う運用コードだけを所有する。
+日常の作成・更新・build補助・画面QAは[tools](../README.md)。ここはGitHub Actionsと配信consumerが実際に使う運用コードだけを所有する。
 
 | 場所 | 現役の責務 |
 |---|---|

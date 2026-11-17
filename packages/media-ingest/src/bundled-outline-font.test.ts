@@ -16,7 +16,7 @@ describe("bundled font admission", () => {
   it("rejects absent/changed fonts and treats LF/CRLF text as the same binding", async () => {
     const root = await mkdtemp(join(tmpdir(), "social-font-"));
     try {
-      const fonts = join(root, "apps/site/public/fonts"), styles = join(root, "apps/site/src/shared/styles");
+      const fonts = join(root, "apps/site/public/fonts"), styles = join(root, "packages/design-system/src");
       await mkdir(fonts, { recursive: true }); await mkdir(styles, { recursive: true });
       await writeFile(join(fonts, "zenkakugothicnew-OFL.txt"), await readFile(resolve("apps/site/public/fonts/zenkakugothicnew-OFL.txt")));
       await writeFile(join(styles, "fonts.css"), "");

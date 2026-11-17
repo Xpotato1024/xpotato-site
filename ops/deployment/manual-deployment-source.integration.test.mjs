@@ -19,7 +19,7 @@ const parseTree=text=>text.split('\0').filter(Boolean).map(line=>{
 // Only GitHub approval envelopes and provider/handoff/deploy ports are synthetic.
 const snapshot={root:parseTree(git('ls-tree','-z','HEAD')),
   packages:{truncated:false,tree:parseTree(git('ls-tree','-r','-t','-z','HEAD:packages'))},
-  scripts:{truncated:false,tree:parseTree(git('ls-tree','-r','-t','-z','HEAD:scripts'))},
+  scripts:{truncated:false,tree:parseTree(git('ls-tree','-r','-t','-z','HEAD:ops'))},
   docs:{truncated:false,tree:parseTree(git('ls-tree','-r','-t','-z','HEAD:docs'))}};
 const authorityPaths=['docs/migration/content-materialization-v1.json','docs/architecture/infrastructure-handoff.md'];
 const sourceDocuments=Object.fromEntries(authorityPaths.map(path=>[path,{sha:git('rev-parse','HEAD:'+path),path,encoding:'base64',
@@ -48,7 +48,7 @@ function fixture(change=()=>{}) {
     else if(p.includes('/git/trees/')){
       if(!u.searchParams.has('recursive')){side=p.endsWith('1'.repeat(40))?0:1;body={truncated:false,tree:structuredClone(snapshot.root)};scope='root';}
       else if(p.endsWith(snapshot.root.find(r=>r.path==='packages').sha)){side=packageReads++%2;body=structuredClone(snapshot.packages);scope='packages';}
-      else if(p.endsWith(snapshot.root.find(r=>r.path==='scripts').sha)){side=scriptReads++%2;body=structuredClone(snapshot.scripts);scope='scripts';}
+      else if(p.endsWith(snapshot.root.find(r=>r.path==='ops').sha)){side=scriptReads++%2;body=structuredClone(snapshot.scripts);scope='scripts';}
       else if(p.endsWith(snapshot.root.find(r=>r.path==='docs').sha)){side=documentReads++%2;body=structuredClone(snapshot.docs);scope='docs';}
       else throw Error('Unexpected fixture tree endpoint');
     }else if(p.includes('/contents/')){const path=p.split('/contents/')[1];assert.ok(sourceDocuments[path]);body=structuredClone(sourceDocuments[path]);side=u.searchParams.get('ref')===artifactSha?0:1;scope='authority';}
@@ -93,7 +93,7 @@ test('frozen historical workflow tree pair stays a legacy-only boundary, never a
   assert.throws(()=>assertBuildSourceParity(roots,'current'),/PUBLIC_BUILD_INPUTS_CHANGED/);
 });
 test('only exact manual-control paths can differ while actual current build inputs remain fixed',async()=>{
-  const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)rootEntry(body,'release/deployment/manual-deployment-github.mjs').sha=changed;});
+  const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)rootEntry(body,'deployment/manual-deployment-github.mjs').sha=changed;});
   assert.equal((await run(f)).status,'DEPLOYED_READBACK_VERIFIED');
 });
 for(const [name,change,code]of [
@@ -113,7 +113,7 @@ test('only the explicit operational status prose can differ in docs',async()=>{
   const f=fixture(({body,scope,side})=>{if(scope==='docs'&&side===1)rootEntry(body,'operations/current-deployment-status.md').sha=changed;});
   assert.equal((await run(f)).status,'DEPLOYED_READBACK_VERIFIED');assert.ok(f.requests.length<=64);
 });
-for(const path of ['apps','schemas','package.json','package-lock.json','.node-version','tools','config','vendor','templates','tests','.github','.gitattributes','.gitignore','.nvmrc','tsconfig.base.json','tsconfig.json','vitest.config.ts'])
+for(const path of ['apps','schemas','package.json','package-lock.json','.node-version','content','config','vendor','templates','tests','.github','.gitattributes','.gitignore','.nvmrc','tsconfig.base.json','tsconfig.json','vitest.config.ts'])
   test('actual preflight rejects changed build owner '+path+' before handoff/provider/deploy',async()=>{
     const f=fixture(({body,scope,side})=>{if(scope==='root'&&side===1)rootEntry(body,path).sha=changed;});
     const result=await run(f);assert.equal(result.code,'PUBLIC_BUILD_INPUTS_CHANGED');assert.equal(result.deployCount,0);assert.equal(result.deployment.status,'not_attempted');assert.deepEqual(f.ports,[]);
@@ -135,17 +135,17 @@ for(const [name,change,code]of [
   const f=fixture(({body,scope,side})=>{if(scope==='packages'&&side===1)change(body);});
   assert.equal((await run(f)).code,code);assert.deepEqual(f.ports,[]);
 });
-for(const path of ['release/shared/deployment-http.mjs','release/deployment/publication-plan.mjs','release/artifact/ReleaseConsumer.psm1'])
+for(const path of ['deployment/shared/deployment-http.mjs','deployment/publication-plan.mjs','deployment/artifact/ReleaseConsumer.psm1'])
   test('actual preflight protects other release dependency '+path,async()=>{
     const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)rootEntry(body,path).sha=changed;});
     assert.equal((await run(f)).code,'BUILD_OR_POLICY_SCRIPTS_CHANGED');assert.deepEqual(f.ports,[]);
   });
 test('unknown same-basename script is not a manual-control exception',async()=>{
-  const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)body.tree.push({path:'release/other/manual-deployment-github.mjs',sha:changed,type:'blob',mode:'100644'});});
+  const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)body.tree.push({path:'deployment/other/manual-deployment-github.mjs',sha:changed,type:'blob',mode:'100644'});});
   assert.equal((await run(f)).code,'BUILD_OR_POLICY_SCRIPTS_CHANGED');assert.deepEqual(f.ports,[]);
 });
 test('missing control-plane dependency stops before handoff or provider',async()=>{
-  const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)body.tree=body.tree.filter(r=>r.path!=='release/artifact/Read-ManualArtifactHandoff.ps1');});
+  const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)body.tree=body.tree.filter(r=>r.path!=='deployment/artifact/Read-ManualArtifactHandoff.ps1');});
   assert.equal((await run(f)).code,'MANUAL_CONTROL_PLANE_PATH_OR_MODE');assert.deepEqual(f.ports,[]);
 });
 for(const path of authorityPaths)test('actual preflight binds authority record '+path,async()=>{
@@ -157,8 +157,8 @@ test('a newly introduced unclassified root cannot escape source comparison',asyn
   assert.equal((await run(f)).code,'PUBLIC_BUILD_INPUTS_CHANGED');assert.deepEqual(f.ports,[]);
 });
 for(const [name,change,code]of [
-  ['missing build owner',b=>{b.tree=b.tree.filter(r=>r.path!=='tools');},'PUBLIC_BUILD_INPUTS_CHANGED'],
-  ['build owner file instead of tree',b=>{Object.assign(rootEntry(b,'tools'),{type:'blob',mode:'100644'});},'PUBLIC_BUILD_INPUTS_CHANGED'],
+  ['missing build owner',b=>{b.tree=b.tree.filter(r=>r.path!=='content');},'PUBLIC_BUILD_INPUTS_CHANGED'],
+  ['build owner file instead of tree',b=>{Object.assign(rootEntry(b,'content'),{type:'blob',mode:'100644'});},'PUBLIC_BUILD_INPUTS_CHANGED'],
   ['duplicate root',b=>{b.tree.push({...b.tree[0]});},'SOURCE_TREE_INCOMPLETE'],
   ['truncated root',b=>{b.truncated=true;},'SOURCE_TREE_INCOMPLETE'],
 ])test('actual preflight rejects '+name,async()=>{
@@ -174,7 +174,7 @@ test('current and legacy owner layouts cannot be mixed across source revisions',
   assert.equal((await run(f)).code,'PUBLIC_PACKAGE_INPUTS_CHANGED');assert.deepEqual(f.ports,[]);
 });
 test('manual-control exception does not permit changed executable mode',async()=>{
-  const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)rootEntry(body,'release/deployment/manual-deployment-github.mjs').mode='100755';});
+  const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)rootEntry(body,'deployment/manual-deployment-github.mjs').mode='100755';});
   assert.equal((await run(f)).code,'MANUAL_CONTROL_PLANE_PATH_OR_MODE');assert.deepEqual(f.ports,[]);
 });
 test('a matching real source never promotes a Candidate handoff into Production',async()=>{
@@ -182,7 +182,7 @@ test('a matching real source never promotes a Candidate handoff into Production'
   const result=await run(f);assert.equal(result.code,'CANONICAL_HANDOFF_REQUIRED');assert.equal(result.deployCount,0);assert.deepEqual(f.ports,['handoff']);
 });
 test('second real adapter verification rejects input drift before persisting or invoking deploy',async()=>{
-  const f=fixture(({body,scope,side,pass})=>{if(pass===2&&scope==='root'&&side===1)rootEntry(body,'tools').sha=changed;});
+  const f=fixture(({body,scope,side,pass})=>{if(pass===2&&scope==='root'&&side===1)rootEntry(body,'content').sha=changed;});
   assert.equal((await run(f)).code,'PUBLIC_BUILD_INPUTS_CHANGED');assert.ok(f.ports.includes('handoff'));assert.ok(f.ports.includes('provider'));
   assert.ok(!f.ports.includes('persist'));assert.ok(!f.ports.includes('synthetic-deploy'));
 });

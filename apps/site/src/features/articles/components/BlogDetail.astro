@@ -22,6 +22,9 @@ interface Props {
 
 const { entry, related = [], preview = false } = Astro.props;
 const { Content, headings } = await render(entry);
+const pubDate=entry.data.pubDate;
+if(!entry.data.draft&&!pubDate)throw new Error('PUBLISHED_ARTICLE_DATE_REQUIRED');
+const publication=pubDate?{pubDate,updatedDate:entry.data.updatedDate,draft:entry.data.draft,preview}:undefined;
 const blogContentComponents = { ...contentComponents, a: HistoricalReferenceLink };
 const seo = preview ? { ...entry.data.seo, noindex: true } : entry.data.seo;
 const isCandidate = contentMediaContext(entry.data.id)?.candidate === true;
@@ -42,10 +45,10 @@ const breadcrumbs = linkable ? blogBreadcrumbs({categoryId:category.id,title:ent
   headings={selectTableOfContents(headings, entry.body ?? "")}
   seo={seo}
   breadcrumbs={breadcrumbs}
-  publication={{pubDate:entry.data.pubDate,updatedDate:entry.data.updatedDate,draft:entry.data.draft,preview}}
+  publication={publication}
 >
   <div slot="metadata" class="blog-metadata">
-    <ArticlePublication pubDate={entry.data.pubDate} updatedDate={entry.data.updatedDate} purposes={purposes} preview={preview} />
+    {pubDate ? <ArticlePublication pubDate={pubDate} updatedDate={entry.data.updatedDate} purposes={purposes} preview={preview} /> : <span class="article-meta">公開日未定の下書き</span>}
     <BlogTaxonomy category={{label:category.label,href:linkable ? categoryArchiveRoute(category) : undefined}} tags={tags.filter(tag => tag.kind !== "purpose")} />
   </div>
   <Content components={blogContentComponents} />

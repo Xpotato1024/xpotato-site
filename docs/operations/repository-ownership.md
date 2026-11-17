@@ -6,7 +6,7 @@ last_verified: 2026-11-09
 
 # 現在の配置と旧構成の処分条件
 
-この表はPR141で整理した配置です。[PR141](https://github.com/Xpotato1024/xpotato-site/pull/141)は2026-11-04に`2850960722b46217329db78957c67b3086bee188`でmainへ統合済みです。2026-11-09の`e862538b8cae2249fba7c8fe98a043d7f96b67f5`に対し、配置・vendor保持範囲を確認しました。main統合を本番適用・cutover受入れの証明にはしません。日常の操作は[4経路](content-workflows.md)、作業コードは[tools](../../tools/README.md)。
+この表はPR141で整理した配置です。[PR141](https://github.com/Xpotato1024/xpotato-site/pull/141)は2026-11-04に`2850960722b46217329db78957c67b3086bee188`でmainへ統合済みです。2026-11-09の`e862538b8cae2249fba7c8fe98a043d7f96b67f5`に対し、配置・vendor保持範囲を確認しました。main統合を本番適用・cutover受入れの証明にはしません。日常の操作は[4経路](content-workflows.md)、作業コードは[tools](../../ops/README.md)。
 
 | 場所 | 所有する正本・入力 | 直接編集しないもの・旧資産 |
 |---|---|---|
@@ -19,7 +19,7 @@ last_verified: 2026-11-09
 | `config` | tool採用/配置とtrusted-main admission | 秘密値・private原稿・資料本文を置かない |
 | `packages` | 共有schema、記事/media処理、sandbox、read-only検証 | 明示的な移行writer/CLIはops/migration |
 | `tools` | 作成、build補助、QA、過去比較、素材生成、移行、保存入口 | 公開runtimeや新workspaceではない |
-| `scripts` | 配信境界・CI分類・7本の固定描画来歴 | 残した具体的理由は[scripts所有表](../../scripts/README.md) |
+| `scripts` | 配信境界・CI分類・7本の固定描画来歴 | 残した具体的理由は[scripts所有表](../../ops/ci/README.md) |
 | `templates` | 記事/page/toolの開始source | 正式記事、test fixture、vendorとは別 |
 | `tests/fixtures` | 凍結・合成入力、receipt worker | test本体は実装横にも置く。公開データではない |
 | `schemas/generated` | content-contractsから生成した82 JSON Schema | 生成元を直しschema:generate/checkを使う |

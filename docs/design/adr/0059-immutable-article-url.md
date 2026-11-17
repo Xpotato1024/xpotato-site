@@ -25,7 +25,7 @@ UUIDの全128bitをCrockford Base32の固定alphabet `0123456789abcdefghjkmnpqrs
 
 ## 旧URLと公開保留
 
-`content/registry/article-url-history.json`を旧44件の対応表とする。凍結migrationのContentId割当との完全一致を回帰検査し、旧recordを新しい記事identityで置換しない。frozen migration payloadや原稿hashは変更しない。
+`apps/site/src/content-registry/article-url-history.json`を旧44件の対応表とする。凍結migrationのContentId割当との完全一致を回帰検査し、旧recordを新しい記事identityで置換しない。frozen migration payloadや原稿hashは変更しない。
 
 `currentApplicationRedirects`は実catalogの公開状態で生成する。旧`/blog/`一覧は新一覧へ301。実在する分類・タグ・年別・paginationの旧経路は対応する新経路へ301。空archiveは生成せず、存在しない先へのwildcard redirectを設けない。旧記事44件はhold中なので対応表だけを保持し、実際にpublic detailが生成されるときにだけ301を有効にする。noindexでもpublished detailは存在するため、その互換redirectは成立する。hold解除は別の公開手続きであり、本変更では実行しない。
 

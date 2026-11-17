@@ -35,7 +35,7 @@
 
 旧operator/sessionの説明と日付付き準備記録は`docs/history/`へ分離し、現在の手順から実記録を直接参照し、旧入口の案内stubは残さない。現行保存方式は[公開CI](../docs/operations/article-media-publication-ci.md)。旧writer/session APIの存在を本番で利用可能な経路と解釈しない。
 
-未分類のroot手動scriptは残さない。CI分類・配信・監視だけを[scripts所有表](../scripts/README.md)へ限定し、比較用はreview、素材補助はassetsへ移した。旧WordPress importer/status-only curl確認の廃止と固定Gitの読取り先も同表に記録する。歴史的な受入記録内の旧pathを現在pathへ書き換えない。
+未分類のroot手動scriptは残さない。CI分類・配信・監視だけを[scripts所有表](./ci/README.md)へ限定し、比較用はreview、素材補助はassetsへ移した。旧WordPress importer/status-only curl確認の廃止と固定Gitの読取り先も同表に記録する。歴史的な受入記録内の旧pathを現在pathへ書き換えない。
 
 ## 変更時の確認
 

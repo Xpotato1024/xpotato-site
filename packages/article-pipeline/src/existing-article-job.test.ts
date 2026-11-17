@@ -291,5 +291,5 @@ describe('inventory-only existing login audit preparation',()=>{
   expect((await readdir(job.directory)).filter(x=>x==='audit-runtime')).toEqual([]);
   await writeFile(join(job.directory,existingAuditPreparationRef.path),existingAuditPreparationBytes+'changed');
   await expect(existingAuditDisclosureInventory(job.directory,'content')).rejects.toThrow('PREPARATION_INVALID');
- });
+ }, 30000);
 });

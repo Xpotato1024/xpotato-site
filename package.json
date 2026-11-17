@@ -55,7 +55,7 @@
     "validate:repository": "npm run validate --workspace @xpotato/site-validators",
     "validate:static": "npm run validate:static --workspace @xpotato/site-validators",
     "phase7:check": "npm run migration:interactive:check",
-    "build": "npm run build:site && npm run search:build && npm run publication:generate",
+    "build": "npm run build:apps && npm run search:build && npm run publication:generate",
     "validate": "npm run ci",
     "ci": "npm run ci:source && npm run build && npm run ci:final",
     "test:phase8": "vitest run apps/site/src/shared/lib apps/site/src/features/discovery/search packages/site-validators/src/migration/phase8-route-discovery-readiness.test.ts packages/site-validators/src/migration/phase8-search-evidence.test.ts",
@@ -118,7 +118,11 @@
     "quality:home-webkit": "node ops/qa/home-design-webkit.mjs",
     "release:build:hosted": "npm run toolchain:check && npm run browser-tools:install -- check && npm run ci:fixtures:isolation && npm run build",
     "editor:manifest": "tsx ops/authoring/editor-manifest.ts",
-    "editor:manifest:check": "tsx ops/authoring/editor-manifest.ts --check"
+    "editor:manifest:check": "tsx ops/authoring/editor-manifest.ts --check",
+    "build:editor": "npm run build --workspace @xpotato/editor",
+    "build:apps": "node ops/build/apps.mjs",
+    "editor:check": "npm run editor:manifest:check && npm run typecheck --workspace @xpotato/editor && npm run typecheck --workspace @xpotato/editor-api",
+    "editor:browser": "node ops/qa/editor-browser-smoke.mjs"
   },
   "devDependencies": {
     "@astrojs/compiler": "2.13.1",

@@ -154,7 +154,7 @@ test('all suites must pass, and a failing suite still waits for sibling cleanup'
     assert.equal(await readFile(receipt,'utf8'),'cleaned');
     await assert.rejects(runBrowserSuites([{name:'unlaunchable', command:join(folder,'missing-executable'), args:[], stdio:'ignore'}]),/Browser suite failure/);
     await assert.rejects(runBrowserSuites([suite('terminated',"process.kill(process.pid,'SIGTERM')")]),/Browser suite failure/);
-  } finally { await rm(folder,{recursive:true,force:true}); }
+  } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
 });
 
 // Exercise the real orchestration/merge without Chrome or rebuilding public dist.
@@ -193,7 +193,7 @@ test('eight independent suites merge every report and preserve both carousel sce
     assert.deepEqual(carousel.mobileReport, {holdPastDeadline:true});
     assert.equal(carousel.scenario, 'all');
     assert.equal(JSON.parse(await readFile(join(folder,'release-interaction-timing.json'),'utf8')).suites.length, 8);
-  } finally { await rm(folder,{recursive:true,force:true}); }
+  } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
 });
 
 for (const fault of ['missing', 'stale', 'wrong-suite', 'invalid-reports', 'missing-common-result', 'extra-private-build', 'wrong-result-set', 'child-failure']) {
@@ -218,7 +218,7 @@ for (const fault of ['missing', 'stale', 'wrong-suite', 'invalid-reports', 'miss
       for (const name of ['axe-final-dist.json','release-interaction-timing.json']) {
         await assert.rejects(readFile(join(folder,name)), {code:'ENOENT'});
       }
-    } finally { await rm(folder,{recursive:true,force:true}); }
+    } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
   });
 }
 
@@ -232,7 +232,7 @@ test('release merge waits for every surviving suite after failure', async () => 
     }}), /Browser suite failure/);
     for (const name of releaseBrowserSuites.filter(name => name !== 'common-tool')) assert.equal(await readFile(join(folder,name+'-closed'),'utf8'),'cleaned');
     await assert.rejects(readFile(join(folder,'axe-final-dist.json')), {code:'ENOENT'});
-  } finally { await rm(folder,{recursive:true,force:true}); }
+  } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
 });
 
 test('independent suite execution cannot claim the full gate until all fresh exit receipts merge', async () => {
@@ -251,7 +251,7 @@ test('independent suite execution cannot claim the full gate until all fresh exi
     await assert.rejects(readFile(join(folder,'axe-final-dist.json')), {code:'ENOENT'});
     await assert.rejects(runReleaseBrowserSuite({temp:folder, name:'unknown', runId, createSuite}), /Known release browser suite/);
     await assert.rejects(runReleaseBrowserSuite({temp:folder, name:'remaining', runId:'', createSuite}), /Browser run identity required/);
-  } finally { await rm(folder,{recursive:true,force:true}); }
+  } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
 });
 
 for (const fault of ['missing-result','failed-result','nonzero-result','terminated-result','wrong-result-name','stale-result','invalid-duration','wrong-carousel-scenario','failed-carousel','missing-mobile']) {
@@ -286,7 +286,7 @@ for (const fault of ['missing-result','failed-result','nonzero-result','terminat
       for (const artifact of ['axe-final-dist.json','project-carousel-browser.json','release-interaction-timing.json']) {
         await assert.rejects(readFile(join(folder,artifact)), {code:'ENOENT'});
       }
-    } finally { await rm(folder,{recursive:true,force:true}); }
+    } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
   });
 }
 
@@ -298,7 +298,7 @@ test('a failed standalone child never leaves its previous success receipt', asyn
     await assert.rejects(runReleaseBrowserSuite({temp:folder, name, runId,
       createSuite:() => writeReportSuite(folder, name, successfulReport(name, runId), 'process.exit(3)')}));
     await assert.rejects(readFile(join(folder,`release-${name}-result.json`)), {code:'ENOENT'});
-  } finally { await rm(folder,{recursive:true,force:true}); }
+  } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
 });
 
 import {verifyProjectCarouselInteraction} from './project-carousel-interaction.mjs';
@@ -323,7 +323,7 @@ test('public mode has exactly seven public suites and cannot claim common Tool v
     await assert.rejects(readFile(join(folder,'release-common-tool-result.json')), {code:'ENOENT'});
     await assert.rejects(mergeReleaseBrowserReports({temp:folder, runId:combined.runId}), {code:'ENOENT'}, 'A public receipt set never passes all mode');
     await assert.rejects(readFile(join(folder,'axe-final-dist.json')), {code:'ENOENT'});
-  } finally { await rm(folder,{recursive:true,force:true}); }
+  } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
 });
 
 for (const mode of ['carousel', 'common', '', ['carousel-desktop'], '__proto__']) {
@@ -349,7 +349,7 @@ for (const fault of ['missing', 'stale', 'invalid', 'wrong-suite', 'missing-comm
         return writeReportSuite(folder, name, report);
       }}));
       await assert.rejects(readFile(join(folder,`release-${name}-result.json`)), {code:'ENOENT'});
-    } finally { await rm(folder,{recursive:true,force:true}); }
+    } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
   });
 }
 
@@ -384,7 +384,7 @@ for (const mode of ['all', 'public']) {
         for (const name of ['axe-final-dist.json','project-carousel-browser.json','release-interaction-timing.json']) {
           await assert.rejects(readFile(join(folder,name)), {code:'ENOENT'});
         }
-      } finally { await rm(folder,{recursive:true,force:true}); }
+      } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
     });
   }
 }
@@ -397,7 +397,7 @@ for (const name of releaseBrowserSuites) {
         await assert.rejects(runReleaseBrowserSuite({temp:folder,name,runId:'build-count-run',createSuite:(_, runId) =>
           writeReportSuite(folder,name,{...successfulReport(name,runId),buildCount})}), /Browser suite must not rebuild public dist/);
         await assert.rejects(readFile(join(folder,`release-${name}-result.json`)), {code:'ENOENT'});
-      } finally { await rm(folder,{recursive:true,force:true}); }
+      } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
     });
   }
 }
@@ -531,7 +531,7 @@ test('host-only tools overlap public suites without replaying upstream product d
    assert.match(smoke,/autoAttach:true,waitForDebuggerOnStart:false/);
    assert.doesNotMatch(smoke,/Target\.getTargets/);
    assert.doesNotMatch(smoke,/waitForDebuggerOnStart:true|reportedFactors|finite 1-second outcome|for\(const engine/);
-  } finally {await rm(folder,{recursive:true,force:true});}
+  } finally {await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100});}
 });
 
 import {primeLicenseSource,observeSiteWorkerLifecycle} from './prime-site-smoke.mjs';
@@ -571,6 +571,6 @@ for (const target of ['home-content','home-shell','navigation']) for (const faul
     await writeFile(join(folder,`release-${name}-result.json`),JSON.stringify({name,runId,status:'passed',code:name===target&&fault==='failed-exit'?1:0,signal:null,elapsedMs:1}));
    }
    await assert.rejects(mergeReleaseBrowserReports({temp:folder,runId,mode:'public'}));
-  } finally {await rm(folder,{recursive:true,force:true});}
+  } finally {await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100});}
  });
 }
