@@ -72,3 +72,11 @@ npm run editor:integration
 前者は固定Wranglerの実bundleをworkerdとローカルR2で動かし、認可/CSRF、条件付きstate更新、画像byte一致、再起動後の永続化を確認する。外部ネットワークは拒否する。後者は実Chromiumと模擬GitHub/R2で人間→AI/PR/画像の操作を確認する。どちらも実アカウントの認証・実R2の保存・実iPhoneの証拠ではない。
 
 実環境受入れはIssue #220へ記録する。操作コマンド、実行revision、成功/未完了範囲だけを残し、secretやcallback codeを記録しない。
+
+## Cloudflare Accessによる編集画面の入口保護
+
+管理UIの公開配信は `xpotato.net/editor` を親パスとするCloudflare Accessのself-hosted applicationで保護する。編集画面のHTML、JS/CSS、manifest、Service Workerも同じアクセス制限内に置き、許可するのは所有者の検証済みメールアドレス1件のみとする。Accessを `/editor*` に適用すると `/editor-api/*` も巻き込むため禁止する。GitHub OAuth callback、署名付きWebhook、既存のAPI本人認証・CSRFは変更しない。
+
+編集PWAのService Workerは、認証済み同一originの静的シェルを `credentials: include` で取得する。認証ページのリダイレクトや内容のhash不一致はキャッシュしない。端末に既に残るオフライン画面は引き続き表示される場合があるが、APIへのアクセス許可とは別である。
+
+Accessの設定正本・適用CLI・readbackはXpotato-Serverの `inventory/desired/website-editor-access.json` と `docs/operations/website-editor-access.md` が所有する。サイトの正規配信でPWA修正を反映した後にAccessを有効化し、未認証端末から `/editor` と配下がログイン画面へ誘導されること、および `/` と `/editor-api/session` が従来通り動作することを受入れ条件とする。Access設定だけで正式記事公開を実行しない。
