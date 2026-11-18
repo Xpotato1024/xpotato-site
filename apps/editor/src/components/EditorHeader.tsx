@@ -1,66 +1,32 @@
 import type { LoginState } from "../data/api.js";
-
 interface Props {
   online: boolean;
   localStatus: string;
   auth: LoginState;
   onToggleNavigation: () => void;
-  onLogout: () => void;
-  onUnavailable: () => void;
+  onWorkflow: () => void;
 }
-
-export function EditorHeader({
-  online,
-  localStatus,
-  auth,
-  onToggleNavigation,
-  onLogout,
-  onUnavailable,
-}: Props) {
+export function EditorHeader({ online, localStatus, auth, onToggleNavigation, onWorkflow }: Props) {
   return (
     <header className="editor-header">
       <button
         type="button"
-        className="mobile-nav"
-        aria-label="下書き一覧を開く"
+        className="brand-button"
         onClick={onToggleNavigation}
+        aria-label="原稿一覧"
       >
-        ☰
-      </button>
-      <a className="editor-brand" href="/editor/">
-        <span className="brand-mark">X</span>
-        <span>
-          Xpotato <strong>Editor</strong>
+        <span className="editor-brand">
+          <span className="brand-mark">X</span>potato
         </span>
-      </a>
-      <div className="save-state">
+        <span className="editor-wordmark">Editor</span>
+      </button>
+      <div className="save-state" role="status">
         <span className={"status-dot " + (online ? "online" : "offline")} />
         {online ? localStatus : "オフライン · " + localStatus}
       </div>
-      <div className="auth-control">
-        {auth.authenticated ? (
-          <>
-            <span>{auth.user}</span>
-            <button type="button" onClick={onLogout}>
-              切断
-            </button>
-          </>
-        ) : (
-          <a
-            className="button"
-            href="/editor-api/auth/start"
-            aria-disabled={!auth.configured}
-            onClick={(event) => {
-              if (!auth.configured) {
-                event.preventDefault();
-                onUnavailable();
-              }
-            }}
-          >
-            GitHubと接続
-          </a>
-        )}
-      </div>
+      <button type="button" className="workflow-button" onClick={onWorkflow}>
+        {auth.authenticated ? "保存と確認" : "接続・書き出し"}
+      </button>
     </header>
   );
 }

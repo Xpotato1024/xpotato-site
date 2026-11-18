@@ -1,3 +1,17 @@
+import { taxonomyRegistrySchema } from "@xpotato/content-contracts/content";
+import { seriesRegistrySchema } from "@xpotato/content-contracts/series";
+import { validateSeriesReferences } from "@xpotato/portable-content/series";
+import {
+  applyTaxonomyAdditions,
+  editorContentIndexPath,
+  parseEditorContentIndex,
+  parseRegistryChanges,
+  seriesRegistryPath,
+  taxonomyRegistryPath,
+  taxonomySnapshotFields,
+  updateEditorContentIndex,
+  type EditorRegistryChanges,
+} from "./registry.js";
 import { reviewArtifactName } from "./review.js";
 import {
   assertEditablePath,
@@ -157,15 +171,22 @@ export class GitRepository {
     assertSha(data.object.sha);
     return { branch, commit: data.object.sha };
   }
-  async manifest(snapshot: GitSnapshot): Promise<TaxonomySnapshot> {
+  private async registryJson(
+    snapshot: GitSnapshot,
+    path: string,
+    maxBytes = 256 * 1024,
+  ): Promise<unknown> {
     assertSha(snapshot.commit);
     const content = await this.api<GitContent>({
       method: "GET",
-      path: "/contents/" + editorManifestPath + "?ref=" + snapshot.commit,
+      path: "/contents/" + path + "?ref=" + snapshot.commit,
     });
-    if (content.type !== "file" || content.encoding !== "base64" || content.size > 256 * 1024)
+    if (content.type !== "file" || content.encoding !== "base64" || content.size > maxBytes)
       throw new GitError("EDITOR_CONTRACT_INVALID");
-    const value = JSON.parse(fromBase64(content.content)) as TaxonomySnapshot;
+    return JSON.parse(fromBase64(content.content));
+  }
+  async manifest(snapshot: GitSnapshot): Promise<TaxonomySnapshot> {
+    const value = (await this.registryJson(snapshot, editorManifestPath)) as TaxonomySnapshot;
     if (
       value.contractVersion !== 1 ||
       !value.categories ||
@@ -173,7 +194,18 @@ export class GitRepository {
       !Array.isArray(value.modules)
     )
       throw new GitError("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
-    return value;
+    // Older work branches remain readable. New editorial registries require the new manifest contract.
+    if (!value.terms) return value;
+    taxonomyRegistrySchema.parse(value.terms);
+    const [index, series] = await Promise.all([
+      this.registryJson(snapshot, editorContentIndexPath, 2 * 1024 * 1024),
+      this.registryJson(snapshot, seriesRegistryPath),
+    ]);
+    return {
+      ...value,
+      contentIndex: parseEditorContentIndex(index).documents,
+      seriesRegistry: seriesRegistrySchema.parse(series),
+    };
   }
   async documents(snapshot: GitSnapshot): Promise<{ path: string; sha: string; bytes: number }[]> {
     assertSha(snapshot.commit);
@@ -220,7 +252,13 @@ export class GitRepository {
     source: string;
     message?: string;
     producer: "human" | "ai" | "mixed";
-  }): Promise<{ commit: string; blobSha: string; handoff: ReturnType<typeof documentHandoff> }> {
+    registryChanges?: EditorRegistryChanges;
+  }): Promise<{
+    commit: string;
+    blobSha: string;
+    handoff: ReturnType<typeof documentHandoff>;
+    manifest: TaxonomySnapshot;
+  }> {
     assertWorkingBranch(input.branch);
     assertSha(input.expectedHead);
     assertEditablePath(input.path);
@@ -229,8 +267,51 @@ export class GitRepository {
     if (current.commit !== input.expectedHead) throw new GitError("GIT_CONFLICT", 409);
     const { data } = parseDraft(input.source);
     if (data.draft !== true) throw new GitError("DRAFT_ONLY", 403);
-    const manifest = await this.manifest(current),
-      issues = validateDraft(input.source, collectionFromPath(input.path), manifest);
+    let manifest = await this.manifest(current);
+    const changes =
+      input.registryChanges === undefined ? undefined : parseRegistryChanges(input.registryChanges);
+    const writes: { path: string; source: string }[] = [{ path: input.path, source: input.source }];
+    const json = (value: unknown) => JSON.stringify(value, null, 2) + "\n";
+    if (changes && !manifest.terms) throw new GitError("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
+    if (changes?.taxonomy?.length) {
+      const registry = taxonomyRegistrySchema.parse(
+        await this.registryJson(current, taxonomyRegistryPath),
+      );
+      if (JSON.stringify(registry) !== JSON.stringify(manifest.terms))
+        throw new GitError("EDITOR_MANIFEST_STALE");
+      const updated = applyTaxonomyAdditions(registry, changes.taxonomy);
+      manifest = { ...manifest, ...taxonomySnapshotFields(updated) };
+      writes.push({ path: taxonomyRegistryPath, source: json(updated) });
+      // The checked-in public manifest contains taxonomy/modules only. Private index/series stay API-only.
+      const { contentIndex: _index, seriesRegistry: _series, ...publicManifest } = manifest;
+      writes.push({ path: editorManifestPath, source: json(publicManifest) });
+    }
+    if (manifest.contentIndex) {
+      const index = updateEditorContentIndex(
+        { schemaVersion: 1, documents: manifest.contentIndex },
+        {
+          contentId: data.id,
+          path: input.path,
+          title: data.title,
+          collection: collectionFromPath(input.path),
+        },
+      );
+      manifest = { ...manifest, contentIndex: index.documents };
+      writes.push({ path: editorContentIndexPath, source: json(index) });
+    }
+    if (changes?.series) {
+      if (JSON.stringify(changes.seriesBase) !== JSON.stringify(manifest.seriesRegistry))
+        throw new GitError("SERIES_CONFLICT", 409);
+      if (!manifest.contentIndex) throw new GitError("EDITOR_CONTENT_INDEX_REQUIRED");
+      const errors = validateSeriesReferences(
+        changes.series,
+        manifest.contentIndex.map((entry) => entry.contentId),
+      );
+      if (errors.length) throw new GitError("SERIES_REFERENCE_INVALID: " + errors.join("; "));
+      manifest = { ...manifest, seriesRegistry: changes.series };
+      writes.push({ path: seriesRegistryPath, source: json(changes.series) });
+    }
+    const issues = validateDraft(input.source, collectionFromPath(input.path), manifest);
     if (issues.length) throw new GitError("DRAFT_INVALID: " + issues.join("; "));
     try {
       const before = await this.read(current, input.path);
@@ -242,18 +323,19 @@ export class GitRepository {
       method: "GET",
       path: "/git/commits/" + current.commit,
     });
-    const blob = await this.api<{ sha: string }>({
-      method: "POST",
-      path: "/git/blobs",
-      body: { encoding: "base64", content: utf8Base64(input.source) },
-    });
+    const entries: { path: string; mode: string; type: string; sha: string }[] = [];
+    for (const write of writes) {
+      const blob = await this.api<{ sha: string }>({
+        method: "POST",
+        path: "/git/blobs",
+        body: { encoding: "base64", content: utf8Base64(write.source) },
+      });
+      entries.push({ path: write.path, mode: "100644", type: "blob", sha: blob.sha });
+    }
     const tree = await this.api<{ sha: string }>({
       method: "POST",
       path: "/git/trees",
-      body: {
-        base_tree: commit.tree.sha,
-        tree: [{ path: input.path, mode: "100644", type: "blob", sha: blob.sha }],
-      },
+      body: { base_tree: commit.tree.sha, tree: entries },
     });
     const created = await this.api<{ sha: string }>({
       method: "POST",
@@ -277,7 +359,8 @@ export class GitRepository {
     });
     return {
       commit: created.sha,
-      blobSha: blob.sha,
+      blobSha: entries[0]!.sha,
+      manifest,
       handoff: documentHandoff(input.source, created.sha, input.path),
     };
   }

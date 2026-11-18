@@ -91,6 +91,7 @@ import {
   technicalExampleVerificationResultSchema,
 } from "./technical-example.js";
 import { visualAuditRecordSchema, visualPlanSetSchema } from "./article/visual.js";
+import { seriesRegistrySchema } from "./series.js";
 
 export const generatedSchemaRegistry = {
   "example-verification-request": exampleVerificationRequestSchema,
@@ -139,6 +140,7 @@ export const generatedSchemaRegistry = {
   "publication-candidate-manifest": publicationCandidateManifestSchema,
   "publication-provenance": publicationProvenanceRecordSchema,
   "search-document": searchDocumentSchema,
+  "series-registry": seriesRegistrySchema,
   "semantic-request-envelope": semanticRequestEnvelopeSchema,
   "semantic-response-envelope": semanticResponseEnvelopeSchema,
   "site-config": siteConfigSchema,

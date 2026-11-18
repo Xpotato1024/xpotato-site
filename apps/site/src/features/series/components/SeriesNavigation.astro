@@ -1,0 +1,46 @@
+---
+import type { SeriesNavigation } from "@xpotato/portable-content/series";
+import { seriesKindLabel, seriesStatusLabel } from "../model/labels.js";
+
+interface Props {
+  navigation: SeriesNavigation;
+}
+const { series, current, previous, next } = Astro.props.navigation;
+---
+
+<nav class="series-navigation" aria-label={`${series.title}の読み順`} data-search-exclude="true">
+  <div class="series-navigation-heading">
+    <div>
+      <p class="series-meta">
+        {seriesKindLabel(series.kind)} · {seriesStatusLabel(series.status)}
+      </p>
+      <h2>
+        <a href={series.route}>{series.title}</a>
+      </h2>
+    </div>
+    <span class="series-position">
+      第{current.ordinal}回 / 公開{series.entries.length}回
+    </span>
+  </div>
+  <div class="series-adjacent">
+    {previous ? (
+      <a class="series-step" rel="prev" href={previous.route}>
+        <span class="series-meta">← 前の回 · 第{previous.ordinal}回</span>
+        <span>{previous.label ?? previous.title}</span>
+      </a>
+    ) : (
+      <p class="series-boundary">この連載の最初の回です。</p>
+    )}
+    {next ? (
+      <a class="series-step" rel="next" href={next.route}>
+        <span class="series-meta">次の回 · 第{next.ordinal}回 →</span>
+        <span>{next.label ?? next.title}</span>
+      </a>
+    ) : (
+      <p class="series-boundary">現在の最新回です。</p>
+    )}
+  </div>
+  <a class="series-all-link" href={series.route}>
+    全{series.entries.length}回の目次を見る →
+  </a>
+</nav>

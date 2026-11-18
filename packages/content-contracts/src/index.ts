@@ -3,6 +3,7 @@ export * from "./article/article-job.js";
 export * from "./common.js";
 export * from "./article-route.js";
 export * from "./content.js";
+export * from "./series.js";
 export * from "./disclosure.js";
 export * from "./media.js";
 export * from "./provenance.js";

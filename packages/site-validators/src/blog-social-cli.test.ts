@@ -3,9 +3,6 @@ import { mkdtemp, mkdir, writeFile, readFile, symlink, readdir, rm } from "node:
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
-import { createRequire } from "node:module";
-const require = createRequire(import.meta.url),
-  cli = require.resolve("tsx/cli");
 const fm = {
   id: "00000000-0000-4000-8000-000000000001",
   title: "安全な設計を小さく試す",
@@ -29,7 +26,15 @@ it("prepares repeatable private PNG and refuses a link in the derived ContentId 
       JSON.parse(
         execFileSync(
           process.execPath,
-          [cli, "ops/authoring/blog-social-card.ts", "--input", input, "--output", output],
+          [
+            "--import",
+            "tsx",
+            "ops/authoring/blog-social-card.ts",
+            "--input",
+            input,
+            "--output",
+            output,
+          ],
           { cwd: resolve("."), encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
         ),
       );

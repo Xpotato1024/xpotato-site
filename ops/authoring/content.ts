@@ -30,32 +30,30 @@ if (
   process.exitCode = 2;
 } else {
   try {
-    console.log(
-      JSON.stringify(
-        await createContentDraft(
-          process.cwd(),
-          page
-            ? {
-                collection: "pages",
-                slug: values.slug,
-                title: values.title,
-                description: values.description,
-              }
-            : {
-                collection: "notes",
-                slug: values.slug,
-                title: values.title,
-                description: values.description,
-                pubDate: values["pub-date"]!,
-                ...(values.subject ? { subject: values.subject } : {}),
-                ...(values.tag ? { tags: values.tag } : {}),
-                feed: values.feed === "include",
-              },
-        ),
-        null,
-        2,
-      ),
+    const created = await createContentDraft(
+      process.cwd(),
+      page
+        ? {
+            collection: "pages",
+            slug: values.slug,
+            title: values.title,
+            description: values.description,
+          }
+        : {
+            collection: "notes",
+            slug: values.slug,
+            title: values.title,
+            description: values.description,
+            pubDate: values["pub-date"]!,
+            ...(values.subject ? { subject: values.subject } : {}),
+            ...(values.tag ? { tags: values.tag } : {}),
+            feed: values.feed === "include",
+          },
     );
+    // New content must be selectable by the authenticated CMS at the same source revision.
+    const { generateEditorManifest } = await import("./editor-manifest.js");
+    await generateEditorManifest(false, process.cwd());
+    console.log(JSON.stringify(created, null, 2));
   } catch (error) {
     console.error(error instanceof Error ? error.message : "CONTENT_CREATE_FAILED");
     process.exitCode = 1;

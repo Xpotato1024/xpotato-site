@@ -11,6 +11,7 @@
     "./media-picture": "./src/media-picture.ts",
     "./compact-media": "./src/compact-media.ts",
     "./catalog": "./src/catalog.ts",
+    "./series": "./src/series.ts",
     "./feed": "./src/feed.ts",
     "./taxonomy": "./src/taxonomy.ts",
     "./discovery": "./src/discovery.ts",

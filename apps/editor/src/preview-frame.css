@@ -1,0 +1,45 @@
+@import "../../site/src/shared/styles/global.css";
+@import "../../site/src/shared/styles/content.css";
+@import "../../site/src/shared/styles/article-structure.css";
+@import "../../site/src/shared/styles/article-modules.css";
+@import "../../site/src/shared/styles/article-bar-chart.css";
+@import "../../site/src/shared/styles/media-credit.css";
+@import "../../site/src/shared/styles/code.css";
+@import "../../site/src/features/series/styles/series.css";
+@import "../../../packages/design-system/src/fonts.css";
+
+.preview-unavailable {
+  padding: 1rem;
+  border: 1px dashed var(--border-control);
+  color: var(--text-muted);
+  margin-block: 1.5rem;
+  overflow-wrap: anywhere;
+}
+.prose .preview-unavailable p {
+  margin-block: 0.5rem 0;
+}
+.preview-image-missing {
+  min-height: 10rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface-control);
+  border: 1px dashed var(--border-control);
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1rem;
+}
+.preview-image-missing small {
+  overflow-wrap: anywhere;
+}
+.prose [data-align="center"] {
+  text-align: center;
+}
+.prose [data-align="right"] {
+  text-align: right;
+}
+.prose [data-align="left"] {
+  text-align: left;
+}

@@ -1,6 +1,7 @@
+import { validateReviewComments } from "@xpotato/editor-core/annotations";
 import { quotaState } from "@xpotato/editor-core/policy";
 import { APIError } from "../types.js";
-import { type DraftStore, safeUUID } from "../state.js";
+import { type DraftStore, safeUUID, requireDraft } from "../state.js";
 import {
   createDraftRecord,
   reserveMedia,
@@ -36,6 +37,27 @@ export async function handleDraftRoute({
     return json(
       await createDraftRecord(store, await body<Parameters<typeof createDraftRecord>[1]>(request)),
       201,
+    );
+  }
+  if (route === "/draft-review" && request.method === "POST") {
+    const input = await body<{ id: string; expectedRevision: number; comments: unknown }>(request);
+    safeUUID(input.id);
+    if (!Number.isSafeInteger(input.expectedRevision) || input.expectedRevision < 0)
+      throw new APIError("REVIEW_REVISION_INVALID");
+    if (new TextEncoder().encode(JSON.stringify(input.comments)).length > 512 * 1024)
+      throw new APIError("REVIEW_SIZE_LIMIT", 413);
+    return json(
+      await store.transact((state) => {
+        const draft = requireDraft(state, input.id);
+        if ((draft.review?.revision ?? 0) !== input.expectedRevision)
+          throw new APIError("REVIEW_CONFLICT", 409);
+        const comments = validateReviewComments(input.comments, draft.contentId);
+        draft.review = { revision: input.expectedRevision + 1, comments };
+        draft.revision++;
+        draft.lastEditedAt = new Date(store.now()).toISOString();
+        store.log(state, "review.save", input.id);
+        return { review: draft.review, revision: draft.revision };
+      }),
     );
   }
   if (route === "/draft-state" && request.method === "POST") {

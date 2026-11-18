@@ -1,12 +1,27 @@
-import { createDraft, draftPath, parseDraft } from "@xpotato/editor-core/draft";
+import {
+  createDraftForCollection,
+  draftPath,
+  parseDraft,
+  type TaxonomySnapshot,
+} from "@xpotato/editor-core/draft";
+import { remainingRegistryChanges } from "@xpotato/editor-core/registry";
+import type { ContentCollection } from "@xpotato/content-contracts/common";
 import type { LocalDraft } from "../../data/storage.js";
 
-export function createLocalDraft(): LocalDraft {
-  const source = createDraft("", "software");
+export type DraftKind = ContentCollection | "education";
+export function createLocalDraft(
+  kind: DraftKind = "blog",
+  options: { education?: boolean } = {},
+): LocalDraft {
+  const collection = kind === "education" ? "blog" : kind;
+  const source = createDraftForCollection({
+    collection,
+    education: options.education ?? kind === "education",
+  });
   return {
     id: crypto.randomUUID(),
     source,
-    path: draftPath(parseDraft(source).data.id),
+    path: draftPath(parseDraft(source).data.id, collection),
     sourceBranch: "main",
     workingBranch: "",
     baseCommit: "",
@@ -39,6 +54,38 @@ export function mergeGitSaveResult(
     baseCommit: commit,
     syncedCommit: commit,
     syncedSource: submitted.source,
+  };
+}
+
+/** A successful commit remains recorded even when edits made during the save need review. */
+export function acceptGitSaveResult(
+  current: LocalDraft,
+  submitted: LocalDraft,
+  commit: string,
+  manifest: TaxonomySnapshot,
+): { draft: LocalDraft; registryConflict: boolean } {
+  if (
+    current.id === submitted.id &&
+    current.syncedCommit === commit &&
+    current.syncedSource === submitted.source
+  )
+    return { draft: current, registryConflict: false };
+  const merged = mergeGitSaveResult(current, submitted, commit);
+  let pending = merged.pendingRegistryChanges;
+  let registryConflict = false;
+  try {
+    pending = remainingRegistryChanges(pending, submitted.pendingRegistryChanges);
+  } catch {
+    registryConflict = true;
+  }
+  return {
+    draft: {
+      ...merged,
+      registrySnapshot: manifest,
+      baseSource: submitted.source,
+      pendingRegistryChanges: pending,
+    },
+    registryConflict,
   };
 }
 

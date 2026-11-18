@@ -10,7 +10,9 @@
     "./git": "./src/git.ts",
     "./retention": "./src/retention.ts",
     "./image-inspection": "./src/image-inspection.ts",
-    "./review": "./src/review.ts"
+    "./review": "./src/review.ts",
+    "./registry": "./src/registry.ts",
+    "./annotations": "./src/annotations.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"

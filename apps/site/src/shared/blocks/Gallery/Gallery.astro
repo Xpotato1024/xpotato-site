@@ -3,14 +3,38 @@ interface Props {
   label?: string;
   width?: "content" | "wide";
   layout?: "images" | "diagrams";
+  columns?: "1" | "2" | "3" | "4";
+  tabletColumns?: "1" | "2" | "3" | "4";
+  mobileColumns?: "1" | "2" | "3" | "4";
+  gap?: "none" | "small" | "medium" | "large";
+  fit?: "contain" | "cover";
 }
-const { label = "ギャラリー", width = "content", layout = "images" } = Astro.props;
+const {
+  label = "ギャラリー",
+  width = "content",
+  layout = "images",
+  columns,
+  tabletColumns,
+  mobileColumns,
+  gap = "medium",
+  fit = "contain",
+} = Astro.props;
+const explicitGrid =
+  layout === "images" ||
+  !!(columns || tabletColumns || mobileColumns) ||
+  gap !== "medium" ||
+  fit !== "contain";
 ---
 
 <section
-  class:list={{ "article-diagrams": layout === "diagrams" }}
+  class:list={{ "article-diagrams": layout === "diagrams", "article-gallery": explicitGrid }}
   aria-label={label}
   data-width={width}
+  data-columns={explicitGrid ? (columns ?? "2") : undefined}
+  data-tablet-columns={explicitGrid ? (tabletColumns ?? columns ?? "2") : undefined}
+  data-mobile-columns={explicitGrid ? (mobileColumns ?? "1") : undefined}
+  data-gap={gap}
+  data-fit={fit}
 >
   <slot />
 </section>

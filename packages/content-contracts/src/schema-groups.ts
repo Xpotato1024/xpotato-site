@@ -10,6 +10,7 @@ export const generatedSchemaGroups = {
     "page-frontmatter",
     "project-frontmatter",
     "search-document",
+    "series-registry",
     "site-config",
     "taxonomy-registry",
     "tool-frontmatter",

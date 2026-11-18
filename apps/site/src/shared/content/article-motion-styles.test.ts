@@ -20,13 +20,16 @@ describe("conditional article motion styles", () => {
       "articleMotionCssHref",
       "articleBarChartCssHref",
       "mediaCreditCssHref",
+      "seriesNavigation",
+      "seriesCssHref",
       `return ${selection![1]};`,
     );
-    for (let flags = 0; flags < 16; flags++) {
+    for (let flags = 0; flags < 32; flags++) {
       const code = !!(flags & 1),
         motion = !!(flags & 2),
         chart = !!(flags & 4),
-        credits = !!(flags & 8);
+        credits = !!(flags & 8),
+        series = !!(flags & 16);
       const selected = select(
         code,
         motion,
@@ -36,6 +39,8 @@ describe("conditional article motion styles", () => {
         "motion",
         "chart",
         "credits",
+        series ? [{}] : [],
+        "series",
       ) as string[];
       expect([...selected].sort()).toEqual(
         [
@@ -43,6 +48,7 @@ describe("conditional article motion styles", () => {
           ...(motion ? ["motion"] : []),
           ...(chart ? ["chart"] : []),
           ...(credits ? ["credits"] : []),
+          ...(series ? ["series"] : []),
         ].sort(),
       );
     }

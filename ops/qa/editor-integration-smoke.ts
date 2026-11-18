@@ -7,6 +7,7 @@ import axe from "axe-core";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 import { editorStaticServer } from "./editor-static-server.mjs";
+import { writeBody, readBody, showBlocks, panel, closePanel } from "./editor-browser-helpers.mjs";
 import { EditorGitHubFixture } from "./fixtures/editor-github.js";
 import { MemoryBucket } from "../../apps/editor-api/src/test-bucket.js";
 import { DraftStore } from "../../apps/editor-api/src/state.js";
@@ -92,6 +93,7 @@ try {
   const executable = [
     process.env.CHROME_PATH,
     "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
     chromium.executablePath(),
   ].find((value) => value && existsSync(value));
   browser = await chromium.launch({
@@ -111,11 +113,16 @@ try {
     page = await context.newPage();
   page.on("pageerror", (error) => failures.push(error.message));
   await page.goto(server.origin + "/editor/");
-  const title = page.getByRole("textbox", { name: "記事タイトル", exact: true });
+  const title = page.getByRole("textbox", { name: "タイトル", exact: true });
   await title.waitFor();
   await title.fill("Git引継ぎと私有画像の統合テスト");
-  await page.getByRole("button", { name: "追加", exact: true }).click();
-  await page.getByRole("textbox", { name: "段落を編集" }).fill("人間が執筆した最初の文章。");
+  await writeBody(page, "人間が執筆した最初の文章。\n");
+  await showBlocks(page);
+  await panel(
+    page,
+    "保存と確認を開く",
+    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+  );
   await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
   await page.locator(".message").filter({ hasText: "Gitへ保存しました" }).waitFor();
   const branch = [...git.refs.keys()].find((name) => name.startsWith("content/"))!;
@@ -135,6 +142,7 @@ try {
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWOoCJj2HwAFAAJeoZPDtAAAAABJRU5ErkJggg==",
     "base64",
   );
+  await panel(page, "画像を開く", page.getByRole("region", { name: "画像とGIF", exact: true }));
   await page
     .locator("input[type=file][multiple]")
     .setInputFiles({ name: "synthetic.png", mimeType: "image/png", buffer: png });
@@ -147,6 +155,11 @@ try {
   const media = Object.values(state.assets)[0]!;
   assert.equal(state.usedBytes, media.bytes);
   assert.equal(bucket.deletions.length, 0);
+  await panel(
+    page,
+    "保存と確認を開く",
+    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+  );
   await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
   await page.waitForFunction(() =>
     document.querySelector(".save-state")?.textContent?.includes("保存済み"),
@@ -166,11 +179,17 @@ try {
     source: aiSource,
     producer: "ai",
   });
+  await closePanel(page);
   await title.fill("手元に残す未同期の変更");
+  await panel(
+    page,
+    "保存と確認を開く",
+    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+  );
   await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
   await page.locator(".conflict-panel").waitFor();
   assert.equal(await title.inputValue(), "手元に残す未同期の変更");
-  assert.match(await page.locator(".conflict-panel textarea").inputValue(), /AIが同じPR/u);
+  assert.match(await page.locator(".conflict-panel").innerText(), /AIが同じPR/u);
   assert.equal(git.refs.get(branch), ai.commit);
   const second = await browser.newContext({
       viewport: { width: 390, height: 844 },
@@ -179,7 +198,7 @@ try {
     mobile = await second.newPage();
   mobile.on("pageerror", (error) => failures.push(error.message));
   await mobile.goto(server.origin + "/editor/");
-  await mobile.getByRole("textbox", { name: "記事タイトル", exact: true }).waitFor();
+  await mobile.getByRole("textbox", { name: "タイトル", exact: true }).waitFor();
   await mobile.getByRole("button", { name: "下書き一覧を開く", exact: true }).click();
   await mobile.getByLabel("読み込み元ブランチ").selectOption(branch);
   await mobile.getByRole("button", { name: "ブランチを読み込む", exact: true }).click();
@@ -187,17 +206,15 @@ try {
     .getByRole("button", { name: file.replace(/^content\//u, ""), exact: true })
     .waitFor();
   await mobile.getByRole("button", { name: file.replace(/^content\//u, ""), exact: true }).click();
+  await panel(mobile, "画像を開く", mobile.getByRole("region", { name: "画像とGIF", exact: true }));
   await mobile.locator(".media-card").filter({ hasText: "非公開R2に同期済み" }).waitFor();
   await mobile.locator(".media-card img").first().scrollIntoViewIfNeeded();
   await mobile.waitForFunction(() => {
     const image = document.querySelector(".media-card img") as HTMLImageElement | null;
     return Boolean(image?.complete && image.naturalWidth > 0);
   });
-  await mobile.getByRole("tab", { name: "MDXソース", exact: true }).click();
-  assert.match(
-    await mobile.getByRole("textbox", { name: "MDXソース", exact: true }).inputValue(),
-    /AIが同じPRに追記/u,
-  );
+  await closePanel(mobile);
+  assert.match(await readBody(mobile), /AIが同じPRに追記/u);
   assert(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   await audit(mobile, "mobile editor restored private media");
   await mobile.screenshot({ path: resolve(output, "mobile-synthetic-draft.png"), fullPage: true });

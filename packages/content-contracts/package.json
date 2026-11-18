@@ -9,6 +9,7 @@
     "./profiles/external-ai-disclosure-v1": "./src/profiles/external-ai-disclosure-v1.ts",
     "./article-media-targets": "./src/profiles/article-media-targets-v1.ts",
     "./content": "./src/content.ts",
+    "./series": "./src/series.ts",
     "./common": "./src/common.ts",
     "./article-route": "./src/article-route.ts"
   },

@@ -1,12 +1,32 @@
 ---
 status: canonical
 owner: development
-last_verified: 2026-11-17
+last_verified: 2026-11-18
 ---
 
 # CMS基盤実装の状態
 
-この文書はPR #217/#219でmainへ採用済みのCMSコードと、未完了の実環境接続を区別する。既存サイトの本番配信、GitHub App登録、R2 resource作成、認証API activation、記事の公開を実施した記録ではない。
+この文書はPR #217/#219でmainへ採用済みのCMS基盤、現在の機能ブランチで追加した編集画面、未完了の実環境接続を区別する。既存サイトの本番配信、GitHub App登録、R2 resource作成、認証API activation、記事の公開を実施した記録ではない。
+
+## 2026-11-18 編集画面・連載の実装
+
+以下は`3e0d12a890aba8370e880ffc6b586490bc9a4af3`を基準にした`feat/cms-workbench-series-20261118`のコードである。この記録自体はmainへのmergeや実サイトへの反映を示さない。採用状態は対応PR・commit、公開状態は[現行配信状態](../operations/current-deployment-status.md)で確認する。
+
+| 項目 | 機能ブランチにある実装 | 区別する範囲 |
+| --- | --- | --- |
+| 投稿先・記事情報 | 記事、メモ、教育記事、固定ページ、ツール、プロダクトの新規作成。目的・技術・話題タグの検索、分類とタグの追加、教育メタデータ。 | 教育は記事・メモの属性。既存原稿を別collectionへ移すUIは追加していない。 |
+| 本文編集 | 元のMDXを保持する領域編集、文字装飾・リンク・引用・リスト・表、入れ子の部品、本文内ハンドルでの移動。 | 未知構文は原文を保持してソース編集へ切り替える。全MDXをリッチエディタで再生成しない。 |
+| MDX・コード・数式 | 本文だけのCodeMirror、色分けと折り返し、コードの言語指定、公開側と合わせた`math` fenceのMathML表示。 | 全体ソースはfrontmatterを読めない場合の修復用。通常コード中のTeXを勝手に数式化しない。 |
+| 添削 | 原稿上の引用・文脈・ブロックによる位置指定、指摘管理、修正案JSON、位置を再確認して部分適用。私有APIにreview revisionの比較更新。 | AI provider・Article Jobの自動起動は未接続。公開MDXへ私有の指摘を混ぜない。 |
+| 履歴 | source・添削・registry変更の元に戻す／やり直す、端末の直近40件、復元前の保存、バックアップ取込時の別下書き作成。 | 履歴は媒体ファイルやGit headを巻き戻さない。端末保存をGit保存・公開承認と区別する。 |
+| 即時プレビュー | 実サイトのCSS・フォントを共有し、PC・タブレット・スマートフォン幅と表示倍率を切り替える。端末画像と安全なsemantic module描画。 | ASTによる即時表示。正規Astroの固定commitレビューは別経路。Demo等の実行・未対応部品を完全再現したとはしない。 |
+| 連載 | 中央registry、CMSでの作成・所属・順序、サイトの前後リンク・目次・教育一覧。本文・registry・内容索引を同じGit commitで保存。 | 実registryは空。既存記事を自動登録せず、未公開・hold・noindexの項目を公開目次へ出さない。 |
+
+実装の責務と保存境界は[CMS編集画面の契約](../contracts/cms-workbench-contract.md)、順序と公開導出は[連載契約](../contracts/series-contract.md)、採用理由は[ADR-0083](../design/adr/0083-managed-series-reading-order.md)・[ADR-0084](../design/adr/0084-source-preserving-rich-cms-editor.md)を参照する。
+
+本文の保持、部分置換、添削の位置、APIの競合拒否、未公開情報を除く連載、プレビューの非実行、追加フォントの遅延cacheに対する回帰試験を追加した。ローカル試験・production editor buildの記録はこのブランチの検証結果であり、以下に残す以前のブラウザー受入れや、未完了の外部接続を代替しない。新しい画面のIME・フォーカス・ドラッグ・モバイル表示の実行結果は、実際に試した対象buildとともに記録する。
+
+CodeMirrorはCMS内の編集テーマをCSPに沿って適用するためopen ShadowRootを使う。Issue #218で延期している公開サイトのツール表示の隔離は別の課題であり、今回完了した扱いにしない。
 
 ## 目的と実装境界
 
@@ -28,7 +48,7 @@ last_verified: 2026-11-17
 
 ローカルの単体テスト、実Chromium上の操作、GitHub-hosted CI、実GitHub App認証、実R2保存、iPhone実機は別の検証である。合成store/APIのテスト成功を外部サービスでの動作確認と呼ばない。
 
-CMSコードはmainへ採用済みであり、実環境の有効化はIssue #220で追跡する。固定commitとCIの結果、残る設定依存、実操作の未検証箇所はPRへ記録する。Secretsや私有媒体をCI artifactへ含めない。
+PR #217/#219のCMS基盤はmainへ採用済みであり、実環境の有効化はIssue #220で追跡する。冒頭の新しい編集画面・連載機能は機能ブランチの実装として区別する。固定commitとCIの結果、残る設定依存、実操作の未検証箇所はPRへ記録する。Secretsや私有媒体をCI artifactへ含めない。
 
 ## 外部環境に必要な準備
 
@@ -51,7 +71,7 @@ CMSのJavaScriptは専用の `/editor/` と `/editor/assets/` に限定する。
 
 具体的な操作入口と接続準備は[CMS制作手順](../operations/editor-workflow.md)、設計判断は[ADR-0079](../design/adr/0079-public-git-cms-private-media-staging.md)を参照する。
 
-## 正規レビューのブラウザ受入れ
+## 2026-11-17 正規レビューのブラウザ受入れ記録
 
 実Astroの固定commit出力をCMSで開き、実際のCSSと非公開画像、同一source/hash、scriptを許可しないiframe、CSP違反ゼロ、390px横あふれなし、本文変更後の旧レビュー失効を確認した。Cookie/tokenや署名付きURLをレビューHTMLに埋め込まない。ZodのJITをschema import前に無効化し、unsafe-evalを追加しない。画像の遅延読込試験は画像をviewportへ移してからdecodeを確認する。
 
@@ -67,4 +87,4 @@ CMSのJavaScriptは専用の `/editor/` と `/editor/assets/` に限定する。
 
 初回設定を標準GitHub App ManifestとWranglerへ接続するCLI、App/所有者/対象repositoryの照合、認証後のGit/R2接続状態表示を追加。Serverがprovider値と限定readbackを所有する。操作方法は[接続手順](../operations/editor-connection.md)。
 
-この開発環境ではWrangler未認証、公開/editor/と/editor-api/sessionは404と観測した。実App登録・R2作成・公開Site配信は未実施。これらが完了するまでIssue #220を閉じない。
+初回接続の検証時点ではWrangler未認証、公開/editor/と/editor-api/sessionは404と観測した。この観測を新しい編集画面の実環境配信確認とは扱わない。実App登録・R2作成・公開Site配信は未実施。これらが完了するまでIssue #220を閉じない。

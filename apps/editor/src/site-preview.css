@@ -1,0 +1,104 @@
+.cms-site-preview {
+  min-width: 0;
+}
+.cms-site-preview-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  background: var(--surface-control);
+  border-bottom: 1px solid var(--border-divider);
+}
+.cms-preview-devices,
+.cms-preview-zoom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.cms-site-preview-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.8rem;
+}
+.cms-site-preview-toolbar button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: rgba(var(--brand-rgb), 0.08);
+  color: var(--accent);
+}
+.cms-preview-devices small {
+  font: 0.65rem var(--font-mono);
+}
+.cms-preview-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: 0.5rem 0.85rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.cms-preview-warnings,
+.cms-preview-error {
+  margin: 0.5rem 0.85rem;
+  font-size: 0.8rem;
+}
+.cms-preview-warnings summary {
+  min-height: 44px;
+  padding-block: 0.5rem;
+  cursor: pointer;
+}
+.cms-preview-warnings ul {
+  padding-inline-start: 1.3rem;
+}
+.cms-preview-viewport {
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+  padding-block: 0.75rem;
+  background: rgba(var(--brand-rgb), 0.06);
+  overscroll-behavior-x: contain;
+}
+.cms-preview-stage {
+  position: relative;
+  margin-inline: auto;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--border-divider);
+}
+.cms-preview-viewport[data-zoom="actual"] .cms-preview-stage {
+  margin-inline: 0;
+}
+.cms-preview-frame {
+  display: block;
+  max-width: none;
+  min-width: 0;
+  border: 0;
+  transform-origin: top left;
+  background: var(--surface);
+}
+.cms-preview-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+@media (max-width: 480px) {
+  .cms-preview-devices {
+    width: 100%;
+  }
+  .cms-preview-devices button {
+    flex: 1;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding-inline: 0.35rem;
+  }
+}

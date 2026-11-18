@@ -9,6 +9,9 @@ canonical_for:
 
 # Architecture Decision Records
 
+- [ADR-0084: 原文を保持するリッチ編集とCMS専用runtime予算](0084-source-preserving-rich-cms-editor.md) — Accepted 2026-11-18。MDXの部分編集、Lexical／CodeMirror、初期と全graphの独立した予算。
+- [ADR-0083: ContentIdで管理する連載と学習順序](0083-managed-series-reading-order.md) — Accepted 2026-11-18。中央registry、公開目次・前後リンク、非公開項目の除外を実装する判断。本番deployの完了記録ではない。
+
 - [ADR-0071: 問い合わせ・解析・コメントの分離](0071-optional-site-services.md)は実装候補。provider設定・有効化・production受入れは別。
 
 - [ADR-0070: Prime専用オフラインPWA](0070-prime-scoped-offline-pwa.md)は実装候補。production受入れは別。

@@ -4,27 +4,27 @@ import {
   blogSourceFrontmatterSchema,
   contentDiscoveryRecordSchema,
   contentRouteRecordSchema,
-  noteFrontmatterSchema,
-  pageFrontmatterSchema,
-  projectFrontmatterSchema,
-  toolFrontmatterSchema,
+  noteSourceFrontmatterSchema,
+  pageSourceFrontmatterSchema,
+  projectSourceFrontmatterSchema,
+  toolSourceFrontmatterSchema,
   type BlogSourceFrontmatter,
   type ContentCollection,
   type ContentDiscoveryRecord,
-  type NoteFrontmatter,
-  type PageFrontmatter,
-  type ProjectFrontmatter,
+  type NoteSourceFrontmatter,
+  type PageSourceFrontmatter,
+  type ProjectSourceFrontmatter,
   type TaxonomyRegistry,
-  type ToolFrontmatter,
+  type ToolSourceFrontmatter,
 } from "@xpotato/content-contracts";
 import { isFeedEligible } from "./feed.js";
 
 export type CatalogSourceRecord =
   | { collection: "blog"; slug: string; data: BlogSourceFrontmatter }
-  | { collection: "notes"; slug: string; data: NoteFrontmatter }
-  | { collection: "projects"; slug: string; data: ProjectFrontmatter }
-  | { collection: "tools"; slug: string; data: ToolFrontmatter }
-  | { collection: "pages"; slug: string; data: PageFrontmatter };
+  | { collection: "notes"; slug: string; data: NoteSourceFrontmatter }
+  | { collection: "projects"; slug: string; data: ProjectSourceFrontmatter }
+  | { collection: "tools"; slug: string; data: ToolSourceFrontmatter }
+  | { collection: "pages"; slug: string; data: PageSourceFrontmatter };
 
 export type ContentRouteRecord = ReturnType<typeof contentRouteRecordSchema.parse>;
 export type CatalogDisposition = "published" | "held_candidate";
@@ -49,13 +49,13 @@ const parseFrontmatter = (record: CatalogSourceRecord) => {
     case "blog":
       return blogSourceFrontmatterSchema.parse(record.data);
     case "notes":
-      return noteFrontmatterSchema.parse(record.data);
+      return noteSourceFrontmatterSchema.parse(record.data);
     case "projects":
-      return projectFrontmatterSchema.parse(record.data);
+      return projectSourceFrontmatterSchema.parse(record.data);
     case "tools":
-      return toolFrontmatterSchema.parse(record.data);
+      return toolSourceFrontmatterSchema.parse(record.data);
     case "pages":
-      return pageFrontmatterSchema.parse(record.data);
+      return pageSourceFrontmatterSchema.parse(record.data);
   }
 };
 
@@ -86,6 +86,7 @@ const reservedPageRoutes = new Set([
   "/pages/",
   "/tools/",
   "/search/",
+  "/series/",
   "/rss/",
   "/robots/",
   "/404/",
@@ -107,7 +108,10 @@ export const deriveContentCatalog = (
       source.collection === "blog"
         ? articleRoute(data.id)
         : `/${prefix ? `${prefix}/` : ""}${slug}/`;
-    if (source.collection === "pages" && reservedPageRoutes.has(route)) {
+    if (
+      source.collection === "pages" &&
+      (reservedPageRoutes.has(route) || route.startsWith("/series/"))
+    ) {
       throw new Error(`Page content route collides with a reserved site route: ${route}`);
     }
     if (contentIds.has(data.id))

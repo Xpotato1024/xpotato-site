@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../shared/layouts/BaseLayout.astro";
+import SeriesCard from "../../features/series/components/SeriesCard.astro";
+import { getPublicSeries } from "../../features/series/model/live-series.js";
+import seriesCssHref from "../../features/series/styles/series.css?url&no-inline";
+
+const series = await getPublicSeries();
+---
+
+<BaseLayout
+  title="連載・学習コース"
+  description="記事やメモを、連載や学習コースの順序で読むための目次。"
+  noindex={series.length === 0}
+  pageCssHrefs={[seriesCssHref]}
+>
+  <main id="main-content" class="series-page">
+    <div class="page-heading">
+      <h1>連載・学習コース</h1>
+      <p>続きものの記事やメモを、目次から順に読めます。</p>
+    </div>
+    {series.length > 0 ? (
+      <ul class="series-list">
+        {series.map((item) => (
+          <li>
+            <SeriesCard series={item} />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div class="empty-state">
+        <p>公開された連載はまだありません。</p>
+        <a href="/articles/">記事を見る →</a>
+      </div>
+    )}
+  </main>
+</BaseLayout>

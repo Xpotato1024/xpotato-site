@@ -65,6 +65,71 @@ describe("derived content catalog", () => {
     expect(selectSearchEligibleCatalog([entry])).toEqual([]);
   });
 
+  it("catalogs unfinished drafts in every collection without publishing or inventing dates", () => {
+    const base = { title: "書きかけ", description: "", draft: true as const };
+    const catalog = deriveContentCatalog(
+      [
+        {
+          collection: "blog",
+          slug: "draft-article",
+          data: {
+            ...base,
+            id: "00000000-0000-4000-8000-000000000001",
+            category: "software",
+            tags: [],
+          },
+        },
+        {
+          collection: "notes",
+          slug: "draft-note",
+          data: {
+            ...base,
+            id: "00000000-0000-4000-8000-000000000002",
+            subject: "daily",
+            tags: [],
+          },
+        },
+        {
+          collection: "projects",
+          slug: "draft-project",
+          data: {
+            ...base,
+            id: "00000000-0000-4000-8000-000000000003",
+            status: "planned",
+            tags: [],
+          },
+        },
+        {
+          collection: "tools",
+          slug: "draft-tool",
+          data: {
+            ...base,
+            id: "00000000-0000-4000-8000-000000000004",
+            category: "utility",
+            tags: [],
+          },
+        },
+        {
+          collection: "pages",
+          slug: "draft-page",
+          data: {
+            ...base,
+            id: "00000000-0000-4000-8000-000000000005",
+          },
+        },
+      ],
+      taxonomyRegistry,
+    );
+    expect(catalog).toHaveLength(5);
+    expect(selectPublishedCatalog(catalog)).toEqual([]);
+    expect(selectWebIndexableCatalog(catalog)).toEqual([]);
+    for (const entry of catalog) {
+      expect(entry.source.data.description).toBe("");
+      expect(entry.discoveryRecord.pubDate).toBeUndefined();
+      expect(entry.disposition).toBe("held_candidate");
+    }
+  });
+
   it("uses the page entry slug for its route and rejects duplicate identity or reserved routes", () => {
     const page: CatalogSourceRecord = {
       collection: "pages",

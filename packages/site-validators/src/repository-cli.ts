@@ -1,4 +1,6 @@
 import { privateDraftOutputErrors } from "@xpotato/portable-content/private-output";
+import { validateSeriesReferences } from "@xpotato/portable-content/series";
+import { seriesRegistrySchema } from "@xpotato/content-contracts/series";
 import { execFile as execFileCallback } from "node:child_process";
 import { readFile, readdir } from "node:fs/promises";
 import { dirname, extname, join, relative, resolve } from "node:path";
@@ -199,6 +201,19 @@ const importModule = async <T>(repositoryPath: string): Promise<T> =>
 const { taxonomyRegistry } = await importModule<{ taxonomyRegistry: TaxonomyRegistry }>(
   "content/registry/taxonomy/index.ts",
 );
+try {
+  const seriesRegistry = seriesRegistrySchema.parse(
+    JSON.parse(await readFile(join(root, "content/registry/series/series.json"), "utf8")),
+  );
+  errors.push(
+    ...validateSeriesReferences(
+      seriesRegistry,
+      contentRecords.map((record) => record.contentId),
+    ),
+  );
+} catch (error) {
+  errors.push(`Series registry validation failed: ${String(error)}`);
+}
 const { mediaRegistries } = await importModule<{
   mediaRegistries: readonly MediaRegistryInvariantRecord[];
 }>("content/registry/media/index.ts");

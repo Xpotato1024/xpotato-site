@@ -19,7 +19,9 @@ import { request } from "../data/api.js";
 interface Props {
   draft: LocalDraft;
   authenticated: boolean;
-  onInsert: (assetId: string, alt: string) => void;
+  onInsert: (assetId: string, alt: string, caption?: string) => void;
+  onHero?: (assetId: string) => void;
+  onGallery?: (items: { asset: string; alt: string; caption?: string }[]) => void;
   onDraft: (value: LocalDraft) => void;
   onError: (message: string) => void;
 }
@@ -36,7 +38,16 @@ function Thumbnail({ media }: { media: LocalMedia }) {
   }, [media.blob]);
   return <img src={url} alt={media.assetId} loading="lazy" />;
 }
-export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }: Props) {
+export function MediaPanel({
+  draft,
+  authenticated,
+  onInsert,
+  onHero,
+  onGallery,
+  onDraft,
+  onError,
+}: Props) {
+  const [selected, setSelected] = useState<string[]>([]);
   const [items, setItems] = useState<LocalMedia[]>([]),
     [kind, setKind] = useState<MediaKind>("photo"),
     [busy, setBusy] = useState(false),
@@ -52,6 +63,18 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
   useEffect(() => {
     void reload();
   }, [draft.id]);
+  async function presentation(
+    media: LocalMedia,
+    fields: Partial<Pick<LocalMedia, "alt" | "caption">>,
+  ) {
+    try {
+      const latest = (await localMedia(draft.id)).find((item) => item.id === media.id);
+      if (latest) await saveLocalMedia({ ...latest, ...fields });
+      await reload();
+    } catch {
+      onError("画像の情報を保存できませんでした。");
+    }
+  }
   async function add(files: FileList | null) {
     if (!files?.length) return;
     setBusy(true);
@@ -246,9 +269,58 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
         </label>
       </details>
       {busy && <p role="status">画像を処理しています…</p>}
+      {onGallery && selected.length > 1 && (
+        <button
+          type="button"
+          className="primary"
+          onClick={() =>
+            onGallery(
+              items
+                .filter((item) => selected.includes(item.id))
+                .map((item) => ({
+                  asset: item.assetId,
+                  alt: item.alt ?? "",
+                  ...(item.caption ? { caption: item.caption } : {}),
+                })),
+            )
+          }
+        >
+          選択した画像をギャラリーへ
+        </button>
+      )}
       {items.map((media) => (
         <article className="media-card" key={media.id}>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={selected.includes(media.id)}
+              onChange={(event) =>
+                setSelected(
+                  event.target.checked
+                    ? [...selected, media.id]
+                    : selected.filter((id) => id !== media.id),
+                )
+              }
+            />
+            {media.originalName || media.assetId}
+          </label>
           <Thumbnail media={media} />
+          <label>
+            代替テキスト
+            <input
+              defaultValue={media.alt ?? ""}
+              placeholder="画像から伝えたい内容"
+              onBlur={(event) => void presentation(media, { alt: event.target.value })}
+            />
+          </label>
+          <label>
+            キャプション
+            <textarea
+              rows={2}
+              defaultValue={media.caption ?? ""}
+              onBlur={(event) => void presentation(media, { caption: event.target.value })}
+            />
+          </label>
           <div>
             <strong>{media.assetId}</strong>
             <p>
@@ -260,9 +332,17 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
             </p>
           </div>
           <div className="media-actions">
-            <button type="button" onClick={() => onInsert(media.assetId, "画像の説明")}>
+            <button
+              type="button"
+              onClick={() => onInsert(media.assetId, media.alt ?? "", media.caption)}
+            >
               本文に挿入
             </button>
+            {onHero && (
+              <button type="button" onClick={() => onHero(media.assetId)}>
+                アイキャッチに設定
+              </button>
+            )}
             <button
               type="button"
               disabled={!authenticated || busy || Boolean(media.remoteId)}

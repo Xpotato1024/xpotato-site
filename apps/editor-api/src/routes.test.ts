@@ -36,6 +36,7 @@ describe("API routing preserves the authorization and failure boundary", () => {
     ["POST", "/pull-request"],
     ["GET", "/drafts"],
     ["POST", "/draft-state"],
+    ["POST", "/draft-review"],
     ["POST", "/media/reserve"],
     ["PUT", "/media/upload/11111111-1111-4111-8111-111111111111"],
     ["GET", "/gc/plan"],

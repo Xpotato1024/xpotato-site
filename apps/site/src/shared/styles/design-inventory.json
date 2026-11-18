@@ -216,10 +216,10 @@
   "apps/site/src/features/discovery/components/BlogArchiveNavigation.astro": {
     "elements": {
       "TagLinks": 1,
-      "a": 4,
+      "a": 5,
       "details class=\"archive-categories\"": 1,
       "details class=\"archive-tags\"": 1,
-      "div class=\"tag-actions\"": 1,
+      "div class=\"tag-actions\"": 2,
       "nav": 1,
       "nav class=\"archive-category-options\"": 1,
       "small": 1,
@@ -423,6 +423,35 @@
       ".archive-category-options a -> display [local], align-items [local], min-height [token:--control-min-size], max-width [local], padding [local], border [token:--border-control], border-radius [local], text-decoration [local], overflow-wrap [local]",
       ".archive-category-options a:hover, .archive-category-options a[aria-current] -> color [token:--accent], border-color [token:--accent]",
       ".archive-category-options a[aria-current] -> font-weight [local]"
+    ],
+    "conditions": [],
+    "script": []
+  },
+  "apps/site/src/features/education/components/EducationDirectory.astro": {
+    "elements": {
+      "a": 3,
+      "details": 1,
+      "h2": 1,
+      "h3": 2,
+      "h4": 2,
+      "li": 3,
+      "p": 3,
+      "p class=\"education-meta\"": 3,
+      "section": 2,
+      "section class=\"education-directory\"": 1,
+      "summary": 1,
+      "ul": 2,
+      "ul class=\"education-goals\"": 1
+    },
+    "rules": [
+      ".education-directory -> margin-block [local]",
+      ".education-directory section -> margin-block [local]",
+      ".education-directory h4 -> margin [local], font-size [local], font-weight [local], overflow-wrap [local]",
+      ".education-directory ul:not(.education-goals) -> list-style [local], padding [local]",
+      ".education-directory ul:not(.education-goals) > li -> padding-block [local], border-bottom [token:--border-divider]",
+      ".education-meta -> color [token:--text-muted], font-size [local]",
+      ".education-directory summary -> cursor [local], padding-block [local], min-height [token:--control-min-size]",
+      ".education-goals -> padding-inline-start [local]"
     ],
     "conditions": [],
     "script": []
@@ -841,6 +870,74 @@
     "conditions": [],
     "script": []
   },
+  "apps/site/src/features/series/components/SeriesCard.astro": {
+    "elements": {
+      "a": 1,
+      "a class=\"series-all-link\"": 1,
+      "article class=\"series-card\"": 1,
+      "h2": 1,
+      "p": 1,
+      "p class=\"series-meta\"": 1
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
+  "apps/site/src/features/series/components/SeriesNavigation.astro": {
+    "elements": {
+      "a": 1,
+      "a class=\"series-all-link\"": 1,
+      "a class=\"series-step\"": 2,
+      "div": 1,
+      "div class=\"series-adjacent\"": 1,
+      "div class=\"series-navigation-heading\"": 1,
+      "h2": 1,
+      "nav class=\"series-navigation\" data-search-exclude=\"true\"": 1,
+      "p class=\"series-boundary\"": 2,
+      "p class=\"series-meta\"": 1,
+      "span": 2,
+      "span class=\"series-meta\"": 2,
+      "span class=\"series-position\"": 1
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
+  "apps/site/src/features/series/styles/series.css": {
+    "elements": {},
+    "rules": [
+      ".series-page -> max-width [local]",
+      ".series-page .page-heading -> display [local], gap [local], margin-block [local]",
+      ".series-meta, .series-position, .series-boundary -> color [token:--text-muted], font-size [local]",
+      ".series-location -> display [local], flex-wrap [local], align-items [local], gap [local], margin-block [local], font-size [local]",
+      ".series-location a -> color [token:--accent]",
+      ".series-list -> list-style [local], padding [local], display [local], gap [local]",
+      ".series-card -> padding-block [local], border-top [token:--border-divider], display [local], gap [local], overflow-wrap [local]",
+      ".series-card h2 -> font-size [local]",
+      ".series-navigation -> margin-block [local], padding-block [local], border-block [token:--border-divider], overflow-wrap [local]",
+      ".series-navigation-heading -> display [local], flex-wrap [local], justify-content [local], align-items [local], gap [local]",
+      ".series-navigation-heading h2 -> margin-top [local], font-size [local]",
+      ".series-adjacent -> display [local], grid-template-columns [local], gap [local], margin-block [local]",
+      ".series-step -> display [local], align-content [local], gap [local], padding [local], border [token:--border-divider], border-radius [local], min-height [token:--control-min-size], text-decoration [local], background [token:--surface-control]",
+      ".series-step:hover -> border-color [token:--accent]",
+      ".series-boundary -> padding [local]",
+      ".series-all-link -> display [local], align-items [local], min-height [token:--control-min-size], width [local], max-width [local]",
+      ".series-entries -> padding [local], margin-block [local], list-style [local]",
+      ".series-entries li -> display [local], grid-template-columns [local], gap [local], padding-block [local], border-top [token:--border-divider]",
+      ".series-entries h2 -> font-family [token:--font-body], font-size [local], font-weight [local], margin-bottom [local]",
+      ".series-entries p, .series-entries a -> overflow-wrap [local]",
+      ".series-ordinal -> color [token:--accent], font [token:--font-meta]",
+      ".series-entry-label -> color [token:--text-muted], font-size [local], margin-bottom [local]",
+      "@media (max-width: 40rem) / .series-adjacent -> grid-template-columns [local]",
+      "@media (max-width: 40rem) / .series-entries li -> grid-template-columns [local], gap [local]",
+      "@media print / .series-navigation -> break-inside [local]"
+    ],
+    "conditions": [
+      "@media (max-width: 40rem)",
+      "@media print"
+    ],
+    "script": []
+  },
   "apps/site/src/features/tools/components/Demo.astro": {
     "elements": {
       "Renderer": 2,
@@ -1010,7 +1107,8 @@
     "elements": {
       "ContactDetails": 1,
       "Content": 1,
-      "ContentLayout": 1
+      "ContentLayout": 1,
+      "EducationDirectory": 1
     },
     "rules": [],
     "conditions": [],
@@ -1192,6 +1290,44 @@
     "conditions": [],
     "script": []
   },
+  "apps/site/src/pages/series/[slug].astro": {
+    "elements": {
+      "BaseLayout": 1,
+      "a": 1,
+      "a class=\"series-all-link\"": 2,
+      "div": 1,
+      "div class=\"page-heading\"": 1,
+      "h1": 1,
+      "h2": 1,
+      "li": 1,
+      "main class=\"series-page\"": 1,
+      "ol class=\"series-entries\"": 1,
+      "p": 2,
+      "p class=\"series-entry-label\"": 1,
+      "p class=\"series-meta\"": 2,
+      "span class=\"series-ordinal\"": 1
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
+  "apps/site/src/pages/series/index.astro": {
+    "elements": {
+      "BaseLayout": 1,
+      "SeriesCard": 1,
+      "a": 1,
+      "div class=\"empty-state\"": 1,
+      "div class=\"page-heading\"": 1,
+      "h1": 1,
+      "li": 1,
+      "main class=\"series-page\"": 1,
+      "p": 2,
+      "ul class=\"series-list\"": 1
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
   "apps/site/src/pages/tools/[...slug].astro": {
     "elements": {
       "Content": 1,
@@ -1350,7 +1486,7 @@
   },
   "apps/site/src/shared/blocks/Gallery/Gallery.astro": {
     "elements": {
-      "section class:list={{ \"article-diagrams\": layout === \"diagrams\" }} data-width={width}": 1,
+      "section class:list={{ \"article-diagrams\": layout === \"diagrams\", \"article-gallery\": explicitGrid }} data-width={width} data-columns={explicitGrid ? (columns ?? \"2\") : undefined} data-tablet-columns={explicitGrid ? (tabletColumns ?? columns ?? \"2\") : undefined} data-mobile-columns={explicitGrid ? (mobileColumns ?? \"1\") : undefined} data-gap={gap} data-fit={fit}": 1,
       "slot": 1
     },
     "rules": [],
@@ -1532,8 +1668,10 @@
       "BaseLayout": 1,
       "MediaHero": 1,
       "PageShare": 1,
+      "SeriesNavigation": 1,
       "TableOfContents": 1,
       "ToolBreadcrumbs": 1,
+      "a": 1,
       "a class=\"back-link\" data-search-exclude=\"true\"": 1,
       "a class=\"eyebrow\"": 1,
       "article": 1,
@@ -1544,8 +1682,9 @@
       "h1": 1,
       "main class=\"content-page\" data-search-body data-search-id={id} data-search-collection={collection} data-search-title={title} data-search-description={description} data-search-taxonomy={taxonomy}": 1,
       "p class=\"content-description\"": 1,
+      "p class=\"series-location\" data-search-exclude=\"true\"": 1,
       "slot": 2,
-      "span": 1
+      "span": 2
     },
     "rules": [],
     "conditions": [],
@@ -1759,10 +1898,33 @@
       "@media print / :not(:where([data-bt], [data-bt] *)) -> ",
       "@media print / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams& -> break-inside [local], grid-template-columns [local], gap [local]",
       "@media print / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams img& -> max-height [local]",
-      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose p:has(+ .article-diagrams)& -> break-after [local]"
+      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose p:has(+ .article-diagrams)& -> break-after [local]",
+      ".prose .article-gallery:not(:where([data-bt], [data-bt] *)) -> display [local], align-items [local], margin-block [local], gap [local]",
+      ".prose .article-gallery > :is(figure, p, div):not(:where([data-bt], [data-bt] *)) -> min-width [local], margin [local]",
+      ".prose .article-gallery img:not(:where([data-bt], [data-bt] *)) -> display [local], width [local], max-width [local], height [local]",
+      ".prose .article-gallery[data-columns=\"1\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]",
+      ".prose .article-gallery[data-columns=\"2\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]",
+      ".prose .article-gallery[data-columns=\"3\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]",
+      ".prose .article-gallery[data-columns=\"4\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]",
+      ".prose .article-gallery[data-gap=\"none\"]:not(:where([data-bt], [data-bt] *)) -> gap [local]",
+      ".prose .article-gallery[data-gap=\"small\"]:not(:where([data-bt], [data-bt] *)) -> gap [local]",
+      ".prose .article-gallery[data-gap=\"medium\"]:not(:where([data-bt], [data-bt] *)) -> gap [local]",
+      ".prose .article-gallery[data-gap=\"large\"]:not(:where([data-bt], [data-bt] *)) -> gap [local]",
+      ".prose .article-gallery[data-fit=\"contain\"] img:not(:where([data-bt], [data-bt] *)) -> object-fit [local]",
+      ".prose .article-gallery[data-fit=\"cover\"] img:not(:where([data-bt], [data-bt] *)) -> aspect-ratio [local], object-fit [local]",
+      "@media (max-width: 64rem) / .prose .article-gallery[data-tablet-columns=\"1\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]",
+      "@media (max-width: 64rem) / .prose .article-gallery[data-tablet-columns=\"2\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]",
+      "@media (max-width: 64rem) / .prose .article-gallery[data-tablet-columns=\"3\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]",
+      "@media (max-width: 64rem) / .prose .article-gallery[data-tablet-columns=\"4\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]",
+      "@media (max-width: 40rem) / .prose .article-gallery[data-mobile-columns=\"1\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]",
+      "@media (max-width: 40rem) / .prose .article-gallery[data-mobile-columns=\"2\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]",
+      "@media (max-width: 40rem) / .prose .article-gallery[data-mobile-columns=\"3\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]",
+      "@media (max-width: 40rem) / .prose .article-gallery[data-mobile-columns=\"4\"]:not(:where([data-bt], [data-bt] *)) -> grid-template-columns [local]"
     ],
     "conditions": [
+      "@media (max-width: 40rem)",
       "@media (max-width: 560px)",
+      "@media (max-width: 64rem)",
       "@media (max-width: 760px)",
       "@media print"
     ],

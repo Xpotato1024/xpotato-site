@@ -827,6 +827,49 @@
           "ops/qa/home-design-webkit.mjs"
         ]
       }
+    },
+    {
+      "id": "series-reading-order",
+      "owner": "content-discovery",
+      "tokens": [
+        "--text-muted",
+        "--accent",
+        "--border-divider",
+        "--control-min-size",
+        "--surface-control",
+        "--font-body",
+        "--font-meta"
+      ],
+      "sources": [
+        "apps/site/src/features/education/components/EducationDirectory.astro",
+        "apps/site/src/features/series/components/SeriesCard.astro",
+        "apps/site/src/features/series/components/SeriesNavigation.astro",
+        "apps/site/src/features/series/styles/series.css",
+        "apps/site/src/pages/series/[slug].astro",
+        "apps/site/src/pages/series/index.astro"
+      ],
+      "exceptions": [],
+      "coverage": {
+        "routes": [
+          "/series/",
+          "/education/"
+        ],
+        "states": [
+          "empty",
+          "published",
+          "single-entry",
+          "ongoing",
+          "completed",
+          "mobile",
+          "keyboard-focus",
+          "no-javascript"
+        ],
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "packages/portable-content/src/series.test.ts"
+        ]
+      }
     }
   ],
   "exceptions": [

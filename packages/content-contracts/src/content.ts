@@ -98,6 +98,27 @@ const withDateOrder = <T extends z.ZodType>(schema: T) =>
         });
     });
 
+export const educationSchema = z
+  .object({
+    subject: z.string().trim().min(1),
+    audience: z.string().trim().min(1).optional(),
+    prerequisites: z.string().trim().min(1).optional(),
+    goals: z.array(z.string().trim().min(1)).optional(),
+  })
+  .strict();
+export const educationDraftSchema = educationSchema.extend({ subject: z.string() });
+export type EducationMetadata = z.infer<typeof educationSchema>;
+
+const draftDatedFrontmatterShape = {
+  ...datedFrontmatterShape,
+  description: z.string(),
+  pubDate: isoDateSchema.optional(),
+};
+const draftPublicationShape = { ...publicationShape, draft: z.literal(true) };
+const cardDisplaySchema = z
+  .object({ lines: z.array(z.string().min(1)).min(1).max(4).optional() })
+  .strict();
+
 export const blogFrontmatterSchema = withDateOrder(
   z
     .object({
@@ -106,10 +127,8 @@ export const blogFrontmatterSchema = withDateOrder(
       tags: uniqueStableIdArraySchema,
       ...publicationShape,
       featured: z.boolean().optional(),
-      cardDisplay: z
-        .object({ lines: z.array(z.string().min(1)).min(1).max(4).optional() })
-        .strict()
-        .optional(),
+      cardDisplay: cardDisplaySchema.optional(),
+      education: educationSchema.optional(),
     })
     .strict()
     .superRefine((value, context) => {
@@ -130,18 +149,13 @@ export const blogFrontmatterSchema = withDateOrder(
 export const blogDraftFrontmatterSchema = withDateOrder(
   z
     .object({
-      ...datedFrontmatterShape,
-      description: z.string(),
-      pubDate: isoDateSchema.optional(),
+      ...draftDatedFrontmatterShape,
       category: stableIdSchema,
       tags: uniqueStableIdArraySchema,
-      ...publicationShape,
-      draft: z.literal(true),
+      ...draftPublicationShape,
       featured: z.boolean().optional(),
-      cardDisplay: z
-        .object({ lines: z.array(z.string().min(1)).min(1).max(4).optional() })
-        .strict()
-        .optional(),
+      cardDisplay: cardDisplaySchema.optional(),
+      education: educationDraftSchema.optional(),
     })
     .strict(),
 );
@@ -151,79 +165,141 @@ export const blogSourceFrontmatterSchema = z.union([
 ]);
 export type BlogSourceFrontmatter = z.infer<typeof blogSourceFrontmatterSchema>;
 
+const noteFrontmatterShape = {
+  subject: stableIdSchema,
+  tags: uniqueStableIdArraySchema,
+};
 export const noteFrontmatterSchema = withDateOrder(
   z
     .object({
       ...datedFrontmatterShape,
-      subject: stableIdSchema,
-      tags: uniqueStableIdArraySchema,
+      ...noteFrontmatterShape,
       ...publicationShape,
+      education: educationSchema.optional(),
     })
     .strict(),
 );
-
-export const projectFrontmatterSchema = withDateOrder(
+export const noteDraftFrontmatterSchema = withDateOrder(
   z
     .object({
-      ...datedFrontmatterShape,
-      startedDate: isoDateSchema.optional(),
-      completedDate: isoDateSchema.optional(),
-      status: z.enum(["planned", "active", "paused", "completed", "archived"]),
-      tags: uniqueStableIdArraySchema,
-      stack: z.array(stableIdSchema).optional(),
-      featured: z.boolean().optional(),
-      featuredOrder: z.number().int().nonnegative().optional(),
-      links: z
-        .object({
-          repository: httpsUrlSchema.optional(),
-          demo: httpsUrlSchema.optional(),
-          documentation: httpsUrlSchema.optional(),
-        })
-        .strict()
-        .optional(),
-      sourceAvailability: z.enum(["public", "private", "mixed", "not_applicable"]).optional(),
-      ...publicationShape,
+      ...draftDatedFrontmatterShape,
+      ...noteFrontmatterShape,
+      ...draftPublicationShape,
+      education: educationDraftSchema.optional(),
+    })
+    .strict(),
+);
+export const noteSourceFrontmatterSchema = z.union([
+  noteFrontmatterSchema,
+  noteDraftFrontmatterSchema,
+]);
+export type NoteSourceFrontmatter = z.infer<typeof noteSourceFrontmatterSchema>;
+
+const projectFrontmatterShape = {
+  startedDate: isoDateSchema.optional(),
+  completedDate: isoDateSchema.optional(),
+  status: z.enum(["planned", "active", "paused", "completed", "archived"]),
+  tags: uniqueStableIdArraySchema,
+  stack: uniqueStableIdArraySchema.optional(),
+  featured: z.boolean().optional(),
+  featuredOrder: z.number().int().nonnegative().optional(),
+  links: z
+    .object({
+      repository: httpsUrlSchema.optional(),
+      demo: httpsUrlSchema.optional(),
+      documentation: httpsUrlSchema.optional(),
     })
     .strict()
-    .superRefine((value, context) => {
-      if (value.featuredOrder !== undefined && value.featured !== true) {
-        context.addIssue({
-          code: "custom",
-          message: "featuredOrder requires featured=true",
-          path: ["featuredOrder"],
-        });
-      }
-      if (value.startedDate && value.completedDate && value.startedDate > value.completedDate) {
-        context.addIssue({
-          code: "custom",
-          message: "completedDate must not precede startedDate",
-          path: ["completedDate"],
-        });
-      }
-    }),
+    .optional(),
+  sourceAvailability: z.enum(["public", "private", "mixed", "not_applicable"]).optional(),
+};
+const withProjectOrder = <T extends z.ZodType>(schema: T) =>
+  schema.superRefine((input, context) => {
+    const value = input as {
+      featuredOrder?: number;
+      featured?: boolean;
+      startedDate?: string;
+      completedDate?: string;
+    };
+    if (value.featuredOrder !== undefined && value.featured !== true) {
+      context.addIssue({
+        code: "custom",
+        message: "featuredOrder requires featured=true",
+        path: ["featuredOrder"],
+      });
+    }
+    if (value.startedDate && value.completedDate && value.startedDate > value.completedDate) {
+      context.addIssue({
+        code: "custom",
+        message: "completedDate must not precede startedDate",
+        path: ["completedDate"],
+      });
+    }
+  });
+export const projectFrontmatterSchema = withDateOrder(
+  withProjectOrder(
+    z
+      .object({ ...datedFrontmatterShape, ...projectFrontmatterShape, ...publicationShape })
+      .strict(),
+  ),
 );
+export const projectDraftFrontmatterSchema = withDateOrder(
+  withProjectOrder(
+    z
+      .object({
+        ...draftDatedFrontmatterShape,
+        ...projectFrontmatterShape,
+        ...draftPublicationShape,
+      })
+      .strict(),
+  ),
+);
+export const projectSourceFrontmatterSchema = z.union([
+  projectFrontmatterSchema,
+  projectDraftFrontmatterSchema,
+]);
+export type ProjectSourceFrontmatter = z.infer<typeof projectSourceFrontmatterSchema>;
 
+const toolFrontmatterShape = {
+  category: stableIdSchema,
+  tags: uniqueStableIdArraySchema,
+  featured: z.boolean().optional(),
+};
 export const toolFrontmatterSchema = withDateOrder(
+  z.object({ ...datedFrontmatterShape, ...toolFrontmatterShape, ...publicationShape }).strict(),
+);
+export const toolDraftFrontmatterSchema = withDateOrder(
   z
-    .object({
-      ...datedFrontmatterShape,
-      category: stableIdSchema,
-      tags: uniqueStableIdArraySchema,
-      featured: z.boolean().optional(),
-      ...publicationShape,
-    })
+    .object({ ...draftDatedFrontmatterShape, ...toolFrontmatterShape, ...draftPublicationShape })
     .strict(),
 );
+export const toolSourceFrontmatterSchema = z.union([
+  toolFrontmatterSchema,
+  toolDraftFrontmatterSchema,
+]);
+export type ToolSourceFrontmatter = z.infer<typeof toolSourceFrontmatterSchema>;
 
+const pageFrontmatterShape = {
+  id: contentIdSchema,
+  title: z.string().min(1),
+  description: z.string().min(1),
+  updatedDate: isoDateSchema.optional(),
+};
 export const pageFrontmatterSchema = z
+  .object({ ...pageFrontmatterShape, ...publicationShape })
+  .strict();
+export const pageDraftFrontmatterSchema = z
   .object({
-    id: contentIdSchema,
-    title: z.string().min(1),
-    description: z.string().min(1),
-    updatedDate: isoDateSchema.optional(),
-    ...publicationShape,
+    ...pageFrontmatterShape,
+    description: z.string(),
+    ...draftPublicationShape,
   })
   .strict();
+export const pageSourceFrontmatterSchema = z.union([
+  pageFrontmatterSchema,
+  pageDraftFrontmatterSchema,
+]);
+export type PageSourceFrontmatter = z.infer<typeof pageSourceFrontmatterSchema>;
 
 const taxonomyStatusSchema = z.enum(["active", "retired"]);
 const taxonomyBaseShape = {
@@ -460,6 +536,11 @@ export const galleryModulePropsSchema = z
     label: z.string().min(1).optional(),
     width: z.enum(["content", "wide"]).optional(),
     layout: z.enum(["images", "diagrams"]).optional(),
+    columns: z.enum(["1", "2", "3", "4"]).optional(),
+    tabletColumns: z.enum(["1", "2", "3", "4"]).optional(),
+    mobileColumns: z.enum(["1", "2", "3", "4"]).optional(),
+    gap: z.enum(["none", "small", "medium", "large"]).optional(),
+    fit: z.enum(["contain", "cover"]).optional(),
   })
   .strict();
 export const calloutModulePropsSchema = z

@@ -21,6 +21,9 @@ import { fileURLToPath } from "node:url";
 import { writeFile } from "node:fs/promises";
 import { redirectArtifact, currentApplicationRedirects } from "../../content/registry/redirects.ts";
 import { readSiteContent } from "../../packages/site-validators/src/site-content.ts";
+import { seriesRegistry } from "../../content/registry/series/index.ts";
+import { derivePublicSeries } from "@xpotato/portable-content/series";
+import { isSeriesSitemapEligible } from "./src/features/series/model/sitemap.ts";
 
 import { assertNoPrivateCandidateEnvironment } from "@xpotato/portable-content/private-output";
 assertNoPrivateCandidateEnvironment(process.env);
@@ -31,6 +34,7 @@ const sitemapExcludedUrls = await collectSitemapExcludedUrls({
   canonicalOrigin: astroCanonicalOrigin,
   searchPath: siteConfig.discovery.searchPath,
 });
+const publicSeries = derivePublicSeries(seriesRegistry, (await readSiteContent()).catalog);
 
 export default defineConfig({
   site: astroCanonicalOrigin,
@@ -62,7 +66,12 @@ export default defineConfig({
       }),
     }),
     react(),
-    sitemap({ filter: (page) => !sitemapExcludedUrls.has(page) && isArchiveSitemapEligible(page) }),
+    sitemap({
+      filter: (page) =>
+        !sitemapExcludedUrls.has(page) &&
+        isArchiveSitemapEligible(page) &&
+        isSeriesSitemapEligible(page, publicSeries),
+    }),
   ],
   vite: {
     build: {

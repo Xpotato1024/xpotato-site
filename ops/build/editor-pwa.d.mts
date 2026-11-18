@@ -4,5 +4,11 @@ export interface EditorShellFile {
   sha256: string;
 }
 export function editorShellInventory(dist: string): Promise<EditorShellFile[]>;
-export function editorWorkerSource(files: EditorShellFile[]): string;
-export function buildEditorPwa(dist: string): Promise<{ files: number; bytes: number }>;
+export interface EditorPwaOptions {
+  lazyFontPaths?: readonly string[];
+}
+export function editorWorkerSource(files: EditorShellFile[], options?: EditorPwaOptions): string;
+export function buildEditorPwa(
+  dist: string,
+  options?: EditorPwaOptions,
+): Promise<{ files: number; bytes: number }>;

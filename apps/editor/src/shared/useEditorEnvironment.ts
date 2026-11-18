@@ -8,12 +8,22 @@ export function useEditorEnvironment() {
   useEffect(() => {
     // PWA登録の失敗で執筆を止めない。保存成否はIndexedDB側で別に通知する。
     void registerEditorWorker().catch(() => {});
+    const viewport = () =>
+      document.documentElement.style.setProperty(
+        "--editor-viewport-height",
+        (window.visualViewport?.height ?? window.innerHeight) + "px",
+      );
+    viewport();
+    window.visualViewport?.addEventListener("resize", viewport);
+    window.addEventListener("resize", viewport);
     const network = () => setOnline(navigator.onLine);
     const update = () => setUpdateReady(true);
     window.addEventListener("online", network);
     window.addEventListener("offline", network);
     window.addEventListener("editor-update-ready", update);
     return () => {
+      window.visualViewport?.removeEventListener("resize", viewport);
+      window.removeEventListener("resize", viewport);
       window.removeEventListener("online", network);
       window.removeEventListener("offline", network);
       window.removeEventListener("editor-update-ready", update);

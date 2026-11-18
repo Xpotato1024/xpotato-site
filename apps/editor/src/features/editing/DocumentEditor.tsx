@@ -1,159 +1,201 @@
-import { useEffect, useState } from "react";
-import {
-  collectionFromPath,
-  type DraftMetadata,
-  type ParsedDraft,
-  type TaxonomySnapshot,
-} from "@xpotato/editor-core/draft";
+import { lazy, Suspense, useEffect, useState } from "react";
+import type { DraftMetadata, ParsedDraft } from "@xpotato/editor-core/draft";
+import type { SourceSelection, LocatedAnchor } from "@xpotato/editor-core/annotations";
 import type { LocalDraft } from "../../data/storage.js";
-import { previewDocument } from "../../preview.js";
 import { BlockEditor } from "../../components/BlockEditor.js";
-
+import { SitePreview, type PreviewMedia } from "../../components/SitePreview.js";
+const SourceEditor = lazy(() =>
+  import("./SourceEditor.js").then((module) => ({ default: module.SourceEditor })),
+);
 interface Props {
   draft: LocalDraft;
   parsed: ParsedDraft | null;
-  taxonomy: TaxonomySnapshot;
+  media: PreviewMedia[];
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
   onSource: (source: string) => void;
   onBody: (body: string) => void;
   onMetadata: (fields: Partial<DraftMetadata>) => void;
+  onSelection: (selection: SourceSelection) => void;
+  onActiveBlock: (block: { start: number; end: number; source: string; index: number }) => void;
+  onReview: () => void;
+  reveal: (LocatedAnchor & { token: number }) | null;
   onError: (message: string) => void;
 }
-
 export function DocumentEditor({
   draft,
   parsed,
-  taxonomy,
+  media,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
   onSource,
-  onBody: body,
-  onMetadata: metadata,
+  onBody,
+  onMetadata,
+  onSelection,
+  onActiveBlock,
+  onReview,
+  reveal,
   onError,
 }: Props) {
-  const [tab, setTab] = useState<"blocks" | "source" | "preview">("blocks");
-  const [preview, setPreview] = useState<{ html: string; warnings: string[] } | null>(null);
+  const [mode, setMode] = useState<"write" | "review" | "preview">("write");
+  const [source, setSource] = useState(false);
+  const [sourceOpened, setSourceOpened] = useState(false);
+  const [split, setSplit] = useState(false);
   useEffect(() => {
-    if (tab !== "preview") {
-      return;
-    }
-    let active = true;
-    void previewDocument(draft.source)
-      .then((result) => {
-        if (active) {
-          setPreview(result);
-        }
-      })
-      .catch((error) => {
-        if (active) {
-          setPreview(null);
-          onError(error instanceof Error ? error.message : "PREVIEW_FAILED");
-        }
-      });
-    // 遅れて完了した旧本文のプレビューを、新しい本文の結果へ上書きしない。
-    return () => {
-      active = false;
-    };
-  }, [tab, draft.source, onError]);
-  const setError = onError;
+    if (reveal) setMode("review");
+  }, [reveal]);
   return (
-    <>
-      <label className="title-label">
-        <span className="sr-only">記事タイトル</span>
-        <input
-          placeholder="記事のタイトル"
-          value={parsed?.data.title ?? ""}
-          disabled={!parsed}
-          onChange={(event) => metadata({ title: event.target.value })}
-        />
-      </label>
-      <details className="metadata" open>
-        <summary>記事情報</summary>
-        <div className="metadata-grid">
-          <label>
-            概要
-            <textarea
-              rows={2}
-              value={parsed?.data.description ?? ""}
-              disabled={!parsed}
-              placeholder="読者に何が伝わる記事ですか"
-              onChange={(event) => metadata({ description: event.target.value })}
-            />
-          </label>
-          <label>
-            主分類
-            <select
-              value={parsed?.data.category ?? parsed?.data.subject ?? "software"}
-              disabled={!parsed}
-              onChange={(event) =>
-                metadata(
-                  collectionFromPath(draft.path) === "notes"
-                    ? { subject: event.target.value }
-                    : { category: event.target.value },
-                )
-              }
-            >
-              {(taxonomy.categories[collectionFromPath(draft.path)] ?? []).map((id) => (
-                <option key={id} value={id}>
-                  {taxonomy.labels?.[id] ?? id}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            タグ
-            <select
-              multiple
-              value={parsed?.data.tags ?? []}
-              disabled={!parsed}
-              onChange={(event) =>
-                metadata({ tags: Array.from(event.target.selectedOptions).map((o) => o.value) })
-              }
-            >
-              {taxonomy.tags.map((id) => (
-                <option key={id} value={id}>
-                  {taxonomy.labels?.[id] ?? id}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <p className="small muted">
-          公開日・URL・SEOの定型情報は正式な公開処理で確定します。画像や分類はIDで参照します。
-        </p>
-      </details>
-      <div className="editor-tabs" role="tablist" aria-label="編集モード">
-        {(["blocks", "source", "preview"] as const).map((mode) => (
+    <div className={"document-workbench" + (split ? " is-split" : "")}>
+      <div className="workbench-toolbar">
+        <div className="history-buttons">
           <button
             type="button"
-            role="tab"
-            aria-selected={mode === tab}
-            key={mode}
-            onClick={() => setTab(mode)}
+            title="元に戻す"
+            aria-label="元に戻す"
+            disabled={!canUndo}
+            onClick={onUndo}
           >
-            {mode === "blocks" ? "ブロック編集" : mode === "source" ? "MDXソース" : "プレビュー"}
+            ↶
           </button>
-        ))}
+          <button
+            type="button"
+            title="やり直す"
+            aria-label="やり直す"
+            disabled={!canRedo}
+            onClick={onRedo}
+          >
+            ↷
+          </button>
+        </div>
+        <div className="editor-tabs" role="tablist" aria-label="作業モード">
+          {(["write", "review", "preview"] as const).map((tab) => (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === mode}
+              key={tab}
+              onClick={() => {
+                setMode(tab);
+                if (tab === "review") onReview();
+              }}
+            >
+              {tab === "write" ? "執筆" : tab === "review" ? "添削" : "プレビュー"}
+            </button>
+          ))}
+        </div>
+        <div className="view-buttons">
+          <button
+            type="button"
+            className="split-button"
+            aria-pressed={split}
+            title="編集とプレビューを並べる"
+            aria-label="編集とプレビューを並べる"
+            onClick={() => setSplit(!split)}
+          >
+            ◫
+          </button>
+          <button
+            type="button"
+            aria-pressed={source}
+            aria-label="MDX本文を表示"
+            title="MDX本文"
+            onClick={() => {
+              setSourceOpened(true);
+              setSource(!source);
+              if (mode === "preview") setMode("write");
+            }}
+          >
+            {"{ }"}
+          </button>
+        </div>
       </div>
-      <div className="document-editor">
-        {tab === "blocks" && parsed ? (
-          <BlockEditor body={parsed.body} onChange={body} onError={setError} />
-        ) : tab === "source" || !parsed ? (
-          <textarea
-            className="source-editor"
-            aria-label="MDXソース"
-            spellCheck={false}
-            value={draft.source}
-            onChange={(event) => onSource(event.target.value)}
-          />
-        ) : (
-          <section className="preview-pane" aria-label="下書きプレビュー">
-            <p className="preview-note">
-              編集用プレビュー。共通部品の最終レイアウトと実画像は、固定commitからのAstroレビュー画面で確認します。
-            </p>
-            {preview && (
-              <div className="preview-prose" dangerouslySetInnerHTML={{ __html: preview.html }} />
+      <div className={"document-panes" + (mode === "preview" && !split ? " preview-only" : "")}>
+        <div className="writing-pane" hidden={mode === "preview" && !split}>
+          <div className="document-heading">
+            <span className="document-kind">
+              {parsed?.data.education
+                ? "教育記事"
+                : ((
+                    {
+                      blog: "記事",
+                      notes: "メモ",
+                      projects: "プロダクト",
+                      tools: "ツール",
+                      pages: "固定ページ",
+                    } as Record<string, string>
+                  )[draft.path.split("/")[1] === "articles" ? "blog" : draft.path.split("/")[1]!] ??
+                  "下書き")}
+            </span>
+            <label className="title-label">
+              <span className="sr-only">タイトル</span>
+              <textarea
+                rows={2}
+                placeholder="タイトル"
+                value={parsed?.data.title ?? ""}
+                disabled={!parsed}
+                onChange={(event) => onMetadata({ title: event.target.value.replace(/\n/gu, " ") })}
+              />
+            </label>
+          </div>
+          <div className="document-editor" data-review-mode={mode === "review"}>
+            {parsed ? (
+              <>
+                <div hidden={source}>
+                  <BlockEditor
+                    body={parsed.body}
+                    onChange={onBody}
+                    onError={onError}
+                    onSelection={onSelection}
+                    onActiveBlock={onActiveBlock}
+                    media={media.map((item) => ({
+                      id: item.assetId,
+                      label: item.alt || item.assetId,
+                      src: item.src,
+                    }))}
+                    {...(reveal ? { revealSelection: reveal } : {})}
+                  />
+                </div>
+                {sourceOpened && (
+                  <div hidden={!source}>
+                    <Suspense fallback={<p className="small muted">MDXを開いています…</p>}>
+                      <SourceEditor
+                        value={parsed.body}
+                        onChange={onBody}
+                        onSelection={onSelection}
+                        onError={onError}
+                        {...(reveal ? { reveal } : {})}
+                      />
+                    </Suspense>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="source-recovery">
+                <p className="message error">
+                  記事情報の構文を確認してください。修復用にファイル全体を表示しています。
+                </p>
+                <Suspense fallback={<p>MDXを開いています…</p>}>
+                  <SourceEditor
+                    value={draft.source}
+                    onChange={onSource}
+                    label="MDXの修復"
+                    onError={onError}
+                  />
+                </Suspense>
+              </div>
             )}
-          </section>
+          </div>
+        </div>
+        {(mode === "preview" || split) && (
+          <div className="preview-column">
+            <SitePreview draft={draft} media={media} />
+          </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
