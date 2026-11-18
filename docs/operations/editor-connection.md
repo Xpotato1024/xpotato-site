@@ -22,6 +22,8 @@ npm run editor:connect -- verify --server-root /path/to/Xpotato-Server
 
 `check` はprovider設定・本文・媒体を書き換えない読取り確認。`connect` は本人認可済みの初回リソース作成・API配備・App登録。`verify` は読取り再確認で、不完全なら終了コード2を返す。
 
+Cloudflareは`wrangler login --device --browser=false`で端末認証を開始する。表示されるURLと一時コードを別端末で開いて承認でき、`localhost:8976`への接続は不要。コードは発行後5分で期限切れとなり、過去のURL・コードを再利用しない。GitHub App登録のローカルCallbackはCloudflare認証とは別で、登録画面とcallbackを同じ操作端末（LLM-01）で開く。
+
 Cloudflareのlogin画面とGitHubのApp作成画面は本人が操作する。初期設定で入力すべき権限・Callback・Webhook URLはnative Manifestから供給する。インストール対象は `Xpotato1024/xpotato-site` 一つだけを選択する。秘密値をチャット・Git・ブラウザの入力欄へ手動転記する必要はない。App登録結果は一時メモリから標準Wranglerのsecret bulkへ渡す。
 
 元からあるWrangler sessionは終了しない。この操作が新しくloginした場合だけ終了時にlogoutする。強制終了で残った場合は同じprofileから `wrangler logout`。登録済みAppのsecretが一部だけ存在する場合は自動上書きせず、Serverの復旧手順へ戻る。
