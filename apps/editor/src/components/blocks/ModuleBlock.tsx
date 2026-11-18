@@ -369,14 +369,12 @@ function ModuleFields({
 }
 export function ModuleBlock({
   source,
-  active,
   onChange,
   renderChildren,
   media = [],
   tools = [],
 }: {
   source: string;
-  active: boolean;
   onChange: (source: string) => void;
   renderChildren: (
     source: string,
@@ -532,9 +530,6 @@ export function ModuleBlock({
       {children}
       {module.name === "Step" && value("result") && (
         <p className="cms-step-result">結果：{value("result")}</p>
-      )}
-      {!active && settings && (
-        <small className="cms-empty-hint">設定後に「設定を適用」で反映できます。</small>
       )}
     </section>
   );

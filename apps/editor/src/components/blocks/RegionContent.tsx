@@ -52,7 +52,6 @@ function pointerTextOffset(event: PointerEvent<HTMLElement>): number | undefined
 }
 export function RegionContent({
   source,
-  active,
   editing,
   initialCaret,
   raw,
@@ -66,7 +65,6 @@ export function RegionContent({
   inlineOnly,
 }: {
   source: string;
-  active: boolean;
   editing: boolean;
   initialCaret: number | undefined;
   raw: boolean;
@@ -137,7 +135,6 @@ export function RegionContent({
     return (
       <ModuleBlock
         source={source}
-        active={active}
         onChange={onChange}
         renderChildren={childrenEditor}
         media={media}

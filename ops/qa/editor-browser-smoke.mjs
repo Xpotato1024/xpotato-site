@@ -157,10 +157,11 @@ try {
   await writeBody(page, fixture);
   await showBlocks(page);
   const gallery = page.locator(".cms-module-gallery").first();
-  await gallery
+  const gallerySettings = gallery
     .locator(":scope > .cms-module-caption")
-    .getByRole("button", { name: "設定", exact: true })
-    .click();
+    .getByRole("button", { name: "設定", exact: true });
+  await gallerySettings.click();
+  assert.equal(await gallerySettings.getAttribute("aria-expanded"), "true");
   const fields = gallery.locator(":scope > .cms-module-fields");
   assert.equal(
     await fields.getByLabel(/代替テキスト/u).count(),
@@ -177,11 +178,22 @@ try {
   assert(!afterParent.includes("columns={"), "Gallery uses portable literal attributes");
   beginPhase("Details optional boolean setting");
   await showBlocks(page);
+  assert.equal(
+    await gallerySettings.getAttribute("aria-expanded"),
+    "true",
+    "Gallery settings remain open when focus moves to the following module",
+  );
   const details = page.locator(".cms-module-details").first();
-  await details
+  const detailsSettings = details
     .locator(":scope > .cms-module-caption")
-    .getByRole("button", { name: "設定", exact: true })
-    .click();
+    .getByRole("button", { name: "設定", exact: true });
+  assert.equal(await detailsSettings.getAttribute("aria-expanded"), "false");
+  await detailsSettings.click();
+  assert.equal(
+    await detailsSettings.getAttribute("aria-expanded"),
+    "true",
+    "One pointer click opens Details settings without a focus-induced layout shift",
+  );
   const detailFields = details.locator(":scope > .cms-module-fields");
   await detailFields.locator("summary").click();
   await detailFields.getByLabel("初めから開く", { exact: true }).check();

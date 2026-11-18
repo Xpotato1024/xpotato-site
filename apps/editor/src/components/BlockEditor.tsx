@@ -335,7 +335,6 @@ export function BlockEditor({
               </div>
               <RegionContent
                 source={region.source}
-                active={selected}
                 editing={selected && editing === region.id}
                 initialCaret={initialCaret}
                 inlineOnly={parentModule === "ArticleEndnote"}
