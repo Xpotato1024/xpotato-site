@@ -46,6 +46,10 @@ GitHub tokenは暗号化HttpOnly cookieに保持し、ブラウザのJavaScript�
 
 CMSの静的シェルは通常SiteのProduction artifactに含まれる。 `/editor/` が404の場合、既存 `deploy-site.yml` のowner/main/manual/Environmentと復旧確認を通す。初回設定CLIが公開サイト全体を無条件にdeployすることはない。Shell/認証APIの両方が成立してから本人がログインする。
 
+## R2ロック規則の実環境診断
+
+2026-11-18の接続ではCloudflareの端末認証は成功したが、古いServer版のBucket Lock読取り `/locks` がHTTP 404（error 10015）で停止した。公式APIは単数形 `/lock` で、同じR2 bucketの応答はHTTP 200。Server PR #103で修正し、CMS用Server固定版を `f37b677309de13597b442bb3a06d4e38da06b48f` に更新した。認証失敗と誤診して繰返しログインしない。R2バケットは既に存在し、今回のreadbackで作成・削除・公開の副作用は起きていない。
+
 ## 接続後の確認
 
 CMSにGitHubと私有媒体の状態が別々に表示される。これは認証後の読取り検査であり、保存完了の証明ではない。本人が少量の試験記事と画像を作り、Git保存→Draft PR→正規Astroレビュー→別端末復元を確認する。競合時は本文が残ること、ログアウト後は私有画像を取得できないことも確認する。正式な記事公開は従来の別工程。

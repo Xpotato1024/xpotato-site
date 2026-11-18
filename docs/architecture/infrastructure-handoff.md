@@ -16,12 +16,12 @@ canonical_for:
 
 ## CMS接続の固定counterpart
 
-所有者CMSのDraft R2・専用API route・初回接続検査は、[Server PR #102](https://github.com/Xpotato1024/Xpotato-Server/pull/102)の統合済み版へ固定する。公開Site・A/B/Cの既存counterpartとは操作範囲が異なるため、下記の公開配信pinを進めない。
+所有者CMSのDraft R2・専用API route・初回接続検査は、[Server PR #102](https://github.com/Xpotato1024/Xpotato-Server/pull/102)を基礎とし、実CloudflareのBucket Lock API修正を含む[Server PR #103](https://github.com/Xpotato1024/Xpotato-Server/pull/103)の統合済み版へ固定する。公開Site・A/B/Cの既存counterpartとは操作範囲が異なるため、下記の公開配信pinを進めない。
 
 ```yaml
 cms_repository: Xpotato1024/Xpotato-Server
-cms_server_revision: 14f80b6612933334ef7fa4815678fc97bc8ace12
-cms_merge_pr: 102
+cms_server_revision: f37b677309de13597b442bb3a06d4e38da06b48f
+cms_merge_pr: 103
 cms_adr: docs/decisions/ADR-0035-owner-cms-draft-staging.md
 cms_desired: inventory/desired/website-editor.json
 cms_operations: docs/operations/website-editor-setup.md
