@@ -1,26 +1,55 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 
 export async function verifyHomeToolRows({ send, evaluate, until, origin, audit, screenshot }) {
   const records = [];
   const navigate = async () => {
+    // A same-URL navigation must replace the old document before its DOM can satisfy readiness.
+    const marker = randomUUID();
+    await evaluate(`window.__homeToolsNavigationMarker=${JSON.stringify(marker)}`);
     await send("Page.navigate", { url: origin + "/" });
     await until(
       () =>
         evaluate(
-          `location.pathname==='/'&&document.readyState==='complete'&&Boolean(document.querySelector('.home-tool-row'))`,
+          `window.__homeToolsNavigationMarker!==${JSON.stringify(marker)}&&location.pathname==='/'&&document.readyState==='complete'&&Boolean(document.querySelector('.home-tool-row'))`,
         ),
       "Home tool rows ready",
     );
     await evaluate("document.fonts.ready.then(()=>true)");
   };
-  const settle = () =>
-    until(
-      () =>
-        evaluate(
-          `document.querySelector('.header-band').getAnimations({subtree:true}).every(a=>a.playState==='finished'||a.playState==='idle')`,
-        ),
-      "Home header settles",
-    );
+  const settle = async (noScript = false) => {
+    let lastObservation = null;
+    try {
+      await until(async () => {
+        lastObservation = await evaluate(`(() => {
+          const header = document.querySelector('.header-band');
+          const state = header?.dataset.homeHeaderState ?? null;
+          const animations = (header?.getAnimations({subtree:true}) ?? []).map(a => ({
+            property: a.transitionProperty ?? null,
+            currentTime: a.currentTime,
+            playState: a.playState,
+            pending: a.pending,
+            duration: a.effect?.getTiming().duration ?? null,
+          }));
+          return {
+            scrollY,
+            state,
+            noScript: ${noScript},
+            animations,
+            visibility: document.visibilityState,
+            timeOrigin: performance.timeOrigin,
+            settled: Boolean(header) &&
+              (${noScript} || state === (scrollY > 24 ? 'scrolled' : 'top')) &&
+              animations.every(a => a.playState === 'finished' || a.playState === 'idle'),
+          };
+        })()`);
+        return lastObservation.settled;
+      }, "Home header settles");
+    } catch (error) {
+      console.error("Home header settle failed: " + JSON.stringify({ noScript, lastObservation }));
+      throw error;
+    }
+  };
   const snapshot = () =>
     evaluate(`
 (() => {
@@ -256,7 +285,7 @@ document.activeElement.matches(".home-tool-row") &&
         "Tool row history back",
       );
       await evaluate(`document.querySelector('.home-tool-row').scrollIntoView({block:'center'})`);
-      await settle();
+      await settle(noScript);
       const point = await evaluate(
         `
 (() => {

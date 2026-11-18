@@ -266,15 +266,19 @@ let socket, commands;
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 async function until(check, label) {
   const deadline = Date.now() + 20000;
+  let lastError;
   while (Date.now() < deadline) {
     if (launchError) throw launchError;
     try {
       const value = await check();
+      lastError = undefined;
       if (value) return value;
-    } catch {}
+    } catch (error) {
+      lastError = error;
+    }
     await delay(100);
   }
-  throw new Error(`Timed out: ${label}`);
+  throw new Error(`Timed out: ${label}`, lastError ? { cause: lastError } : undefined);
 }
 try {
   ({ socket } = await connectChromePage({ profile, processState: chromeState }));

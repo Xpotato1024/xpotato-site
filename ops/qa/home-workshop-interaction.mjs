@@ -2,6 +2,7 @@ import { verifySharedHeaderInteraction } from "./shared-header-interaction.mjs";
 import { verifyHomeMenuTransition } from "./home-menu-transition.mjs";
 import { verifyHomeToolRows } from "./home-tools-interaction.mjs";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 export async function verifyHomeWorkshopInteraction({
   send,
@@ -15,11 +16,14 @@ export async function verifyHomeWorkshopInteraction({
 }) {
   const records = [];
   const navigate = async () => {
+    // A same-URL navigation must replace the old document before its DOM can satisfy readiness.
+    const marker = randomUUID();
+    await evaluate(`window.__homeWorkshopNavigationMarker=${JSON.stringify(marker)}`);
     await send("Page.navigate", { url: origin + "/" });
     await until(
       () =>
         evaluate(
-          'document.readyState === "complete" && Boolean(document.querySelector(".workshop-photo img"))',
+          `window.__homeWorkshopNavigationMarker!==${JSON.stringify(marker)}&&document.readyState === "complete" && Boolean(document.querySelector(".workshop-photo img"))`,
         ),
       "Homepage photo markup",
     );
