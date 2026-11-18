@@ -71,10 +71,12 @@ describe("static series navigation", () => {
   it("labels latest publication independently from series completion", async () => {
     for (const status of ["ongoing", "completed", "paused"] as const) {
       const html = await render(seriesForContent("content-3", [{ ...series, status }])[0]!);
-      expect(html).toContain("現在の最新回です。");
+      expect(html).toContain(
+        status === "completed" ? "この連載の最終回です。" : "現在の最新回です。",
+      );
       expect(html).toContain(labels.seriesStatusLabel(status));
       expect(html).not.toContain('rel="next"');
-      expect(html).not.toContain("最終回");
+      expect(html).not.toContain(status === "completed" ? "最新回" : "最終回");
     }
   });
 

@@ -1,0 +1,76 @@
+/* Gallery columns are authored per viewport; attribute rules keep CSP free of inline styles. */
+.prose .article-gallery:not(:where([data-bt], [data-bt] *)) {
+  display: grid;
+  align-items: start;
+  margin-block: 1.5rem;
+  gap: 1.25rem;
+}
+.prose .article-gallery > :is(figure, p, div):not(:where([data-bt], [data-bt] *)) {
+  min-width: 0;
+  margin: 0;
+}
+.prose .article-gallery img:not(:where([data-bt], [data-bt] *)) {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+.prose .article-gallery[data-columns="1"]:not(:where([data-bt], [data-bt] *)) {
+  grid-template-columns: 1fr;
+}
+.prose .article-gallery[data-columns="2"]:not(:where([data-bt], [data-bt] *)) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.prose .article-gallery[data-columns="3"]:not(:where([data-bt], [data-bt] *)) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.prose .article-gallery[data-columns="4"]:not(:where([data-bt], [data-bt] *)) {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.prose .article-gallery[data-gap="none"]:not(:where([data-bt], [data-bt] *)) {
+  gap: 0;
+}
+.prose .article-gallery[data-gap="small"]:not(:where([data-bt], [data-bt] *)) {
+  gap: 0.5rem;
+}
+.prose .article-gallery[data-gap="medium"]:not(:where([data-bt], [data-bt] *)) {
+  gap: 1.25rem;
+}
+.prose .article-gallery[data-gap="large"]:not(:where([data-bt], [data-bt] *)) {
+  gap: 2rem;
+}
+.prose .article-gallery[data-fit="contain"] img:not(:where([data-bt], [data-bt] *)) {
+  object-fit: contain;
+}
+.prose .article-gallery[data-fit="cover"] img:not(:where([data-bt], [data-bt] *)) {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+@media (max-width: 64rem) {
+  .prose .article-gallery[data-tablet-columns="1"]:not(:where([data-bt], [data-bt] *)) {
+    grid-template-columns: 1fr;
+  }
+  .prose .article-gallery[data-tablet-columns="2"]:not(:where([data-bt], [data-bt] *)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .prose .article-gallery[data-tablet-columns="3"]:not(:where([data-bt], [data-bt] *)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .prose .article-gallery[data-tablet-columns="4"]:not(:where([data-bt], [data-bt] *)) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 40rem) {
+  .prose .article-gallery[data-mobile-columns="1"]:not(:where([data-bt], [data-bt] *)) {
+    grid-template-columns: 1fr;
+  }
+  .prose .article-gallery[data-mobile-columns="2"]:not(:where([data-bt], [data-bt] *)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .prose .article-gallery[data-mobile-columns="3"]:not(:where([data-bt], [data-bt] *)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .prose .article-gallery[data-mobile-columns="4"]:not(:where([data-bt], [data-bt] *)) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

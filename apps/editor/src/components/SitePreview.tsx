@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { collectionFromPath } from "@xpotato/editor-core/draft";
 import type { SeriesNavigation } from "@xpotato/portable-content/series";
 import type { LocalDraft } from "../data/storage.js";
-import type { PreviewMedia } from "../preview.js";
+import type { EditorSeriesPreview, PreviewMedia } from "../preview.js";
 import "../site-preview.css";
 
 export type { PreviewMedia } from "../preview.js";
@@ -10,6 +10,7 @@ export interface SitePreviewProps {
   draft: Pick<LocalDraft, "id" | "source" | "path">;
   media?: readonly PreviewMedia[];
   series?: readonly SeriesNavigation[];
+  editorSeries?: EditorSeriesPreview;
 }
 const devices = [
   { id: "desktop", label: "PC", width: 1440 },
@@ -19,7 +20,12 @@ const devices = [
 const emptyMedia: readonly PreviewMedia[] = [];
 const emptySeries: readonly SeriesNavigation[] = [];
 
-export function SitePreview({ draft, media = emptyMedia, series = emptySeries }: SitePreviewProps) {
+export function SitePreview({
+  draft,
+  media = emptyMedia,
+  series = emptySeries,
+  editorSeries,
+}: SitePreviewProps) {
   const [device, setDevice] = useState<(typeof devices)[number]["id"]>("phone");
   const [zoom, setZoom] = useState<"fit" | "actual">("fit");
   const [available, setAvailable] = useState(390);
@@ -55,6 +61,7 @@ export function SitePreview({ draft, media = emptyMedia, series = emptySeries }:
       const result = await renderer.previewDocument(draft.source, {
         media,
         series,
+        ...(editorSeries ? { editorSeries } : {}),
         collection: collectionFromPath(draft.path),
       });
       if (!current) return;
@@ -82,7 +89,7 @@ export function SitePreview({ draft, media = emptyMedia, series = emptySeries }:
       disconnect.current();
       urls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [draft.id, draft.source, draft.path, media, series]);
+  }, [draft.id, draft.source, draft.path, media, series, editorSeries]);
 
   function measureDocument() {
     disconnect.current();

@@ -4,6 +4,7 @@ import type { SourceSelection, LocatedAnchor } from "@xpotato/editor-core/annota
 import type { LocalDraft } from "../../data/storage.js";
 import { BlockEditor } from "../../components/BlockEditor.js";
 import { SitePreview, type PreviewMedia } from "../../components/SitePreview.js";
+import type { EditorSeriesPreview } from "../../preview.js";
 const SourceEditor = lazy(() =>
   import("./SourceEditor.js").then((module) => ({ default: module.SourceEditor })),
 );
@@ -11,6 +12,7 @@ interface Props {
   draft: LocalDraft;
   parsed: ParsedDraft | null;
   media: PreviewMedia[];
+  editorSeries: EditorSeriesPreview;
   canUndo: boolean;
   canRedo: boolean;
   onUndo: () => void;
@@ -28,6 +30,7 @@ export function DocumentEditor({
   draft,
   parsed,
   media,
+  editorSeries,
   canUndo,
   canRedo,
   onUndo,
@@ -192,7 +195,7 @@ export function DocumentEditor({
         </div>
         {(mode === "preview" || split) && (
           <div className="preview-column">
-            <SitePreview draft={draft} media={media} />
+            <SitePreview draft={draft} media={media} editorSeries={editorSeries} />
           </div>
         )}
       </div>

@@ -903,17 +903,12 @@
     "conditions": [],
     "script": []
   },
-  "apps/site/src/features/series/styles/series.css": {
+  "apps/site/src/features/series/styles/series-navigation.css": {
     "elements": {},
     "rules": [
-      ".series-page -> max-width [local]",
-      ".series-page .page-heading -> display [local], gap [local], margin-block [local]",
       ".series-meta, .series-position, .series-boundary -> color [token:--text-muted], font-size [local]",
       ".series-location -> display [local], flex-wrap [local], align-items [local], gap [local], margin-block [local], font-size [local]",
       ".series-location a -> color [token:--accent]",
-      ".series-list -> list-style [local], padding [local], display [local], gap [local]",
-      ".series-card -> padding-block [local], border-top [token:--border-divider], display [local], gap [local], overflow-wrap [local]",
-      ".series-card h2 -> font-size [local]",
       ".series-navigation -> margin-block [local], padding-block [local], border-block [token:--border-divider], overflow-wrap [local]",
       ".series-navigation-heading -> display [local], flex-wrap [local], justify-content [local], align-items [local], gap [local]",
       ".series-navigation-heading h2 -> margin-top [local], font-size [local]",
@@ -922,19 +917,33 @@
       ".series-step:hover -> border-color [token:--accent]",
       ".series-boundary -> padding [local]",
       ".series-all-link -> display [local], align-items [local], min-height [token:--control-min-size], width [local], max-width [local]",
+      "@media (max-width: 40rem) / .series-adjacent -> grid-template-columns [local]",
+      "@media print / .series-navigation -> break-inside [local]"
+    ],
+    "conditions": [
+      "@media (max-width: 40rem)",
+      "@media print"
+    ],
+    "script": []
+  },
+  "apps/site/src/features/series/styles/series.css": {
+    "elements": {},
+    "rules": [
+      ".series-page -> max-width [local]",
+      ".series-page .page-heading -> display [local], gap [local], margin-block [local]",
+      ".series-list -> list-style [local], padding [local], display [local], gap [local]",
+      ".series-card -> padding-block [local], border-top [token:--border-divider], display [local], gap [local], overflow-wrap [local]",
+      ".series-card h2 -> font-size [local]",
       ".series-entries -> padding [local], margin-block [local], list-style [local]",
       ".series-entries li -> display [local], grid-template-columns [local], gap [local], padding-block [local], border-top [token:--border-divider]",
       ".series-entries h2 -> font-family [token:--font-body], font-size [local], font-weight [local], margin-bottom [local]",
       ".series-entries p, .series-entries a -> overflow-wrap [local]",
       ".series-ordinal -> color [token:--accent], font [token:--font-meta]",
       ".series-entry-label -> color [token:--text-muted], font-size [local], margin-bottom [local]",
-      "@media (max-width: 40rem) / .series-adjacent -> grid-template-columns [local]",
-      "@media (max-width: 40rem) / .series-entries li -> grid-template-columns [local], gap [local]",
-      "@media print / .series-navigation -> break-inside [local]"
+      "@media (max-width: 40rem) / .series-entries li -> grid-template-columns [local], gap [local]"
     ],
     "conditions": [
-      "@media (max-width: 40rem)",
-      "@media print"
+      "@media (max-width: 40rem)"
     ],
     "script": []
   },
@@ -1849,33 +1858,12 @@
     ],
     "script": []
   },
-  "apps/site/src/shared/styles/article-modules.css": {
+  "apps/site/src/shared/styles/article-diagnostics.css": {
     "elements": {},
     "rules": [
       ":not(:where([data-bt], [data-bt] *)) -> ",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-figure > figcaption& -> display [local], gap [local], overflow-wrap [local], text-align [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-figure__title& -> display [local], color [token:--text-primary], font-weight [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-figure > figcaption > p& -> margin-block [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-figure__caption& -> color [token:--text-primary]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose :is(.article-figure__note, .article-figure__source)& -> font-size [local], color [token:--text-muted]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-figure__source& -> padding-top [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-endnote& -> margin-block [local], padding-top [local], border-top [token:--border-divider], color [token:--text-muted], font-size [local], line-height [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-endnote-title& -> margin [local], font-weight [local], letter-spacing [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-endnote-body > p& -> margin-block [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-endnote-body > p:last-child& -> margin-bottom [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-icon& -> display [local], width [local], height [local], flex [local], color [token:--accent], vertical-align [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-callout& -> display [local], grid-template-columns [local], gap [local], align-items [local], margin-block [local], padding [local], border-inline-start [token:--accent], border-block [token:--border-divider]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-callout-icon& -> display [local], margin-top [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-callout-content& -> min-width [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-callout-content > strong& -> display [local], margin-bottom [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose :is(.article-callout-content, .article-step-body, .article-diagnostic-explanation) > :first-child& -> margin-top [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose :is(.article-callout-content, .article-step-body, .article-diagnostic-explanation) > :last-child& -> margin-bottom [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose ol.article-steps& -> list-style [local], padding [local], margin-block [local], counter-reset [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-step& -> position [local], margin [local], padding [local], border-inline-start [token:--border-divider], counter-increment [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-step&::before -> content [local], position [local], inset-inline-start [local], top [local], width [local], height [local], display [local], place-items [local], background [token:--surface], color [token:--accent], border [token:--accent], border-radius [local], font [token:--font-body]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-step:last-child& -> border-inline-start-color [local], padding-bottom [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-step-title& -> display [local], margin-bottom [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-step-result& -> margin [local], padding-inline-start [local], border-inline-start [token:--accent], color [token:--text-muted]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagnostic-explanation > :first-child& -> margin-top [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagnostic-explanation > :last-child& -> margin-bottom [local]",
       ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagnostics& -> margin-block [local], border-top [token:--border-divider]",
       ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagnostic& -> display [local], grid-template-columns [local], gap [local], padding-block [local], border-bottom [token:--border-divider]",
       ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagnostic :is(dt, dd, p)& -> min-width [local], margin [local]",
@@ -1886,19 +1874,17 @@
       "@media (max-width: 760px) / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagnostic& -> display [local]",
       "@media (max-width: 760px) / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagnostic dd& -> margin-top [local]",
       "@media print / :not(:where([data-bt], [data-bt] *)) -> ",
-      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose :is(.article-callout, .article-diagnostic)& -> break-inside [local]",
-      ":not(:where([data-bt], [data-bt] *)) -> ",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams& -> display [local], grid-template-columns [local], gap [local], align-items [local], margin-block [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams > figure& -> margin [local], min-width [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams img& -> display [local], width [local], max-width [local], height [local], margin-inline [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams figcaption& -> margin-top [local]",
-      ":not(:where([data-bt], [data-bt] *)) / .prose .article-compact-figure& -> max-width [local], margin-inline [local]",
-      "@media (max-width: 560px) / :not(:where([data-bt], [data-bt] *)) -> ",
-      "@media (max-width: 560px) / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams& -> grid-template-columns [local], gap [local]",
-      "@media print / :not(:where([data-bt], [data-bt] *)) -> ",
-      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams& -> break-inside [local], grid-template-columns [local], gap [local]",
-      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams img& -> max-height [local]",
-      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose p:has(+ .article-diagrams)& -> break-after [local]",
+      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagnostic& -> break-inside [local]"
+    ],
+    "conditions": [
+      "@media (max-width: 760px)",
+      "@media print"
+    ],
+    "script": []
+  },
+  "apps/site/src/shared/styles/article-gallery.css": {
+    "elements": {},
+    "rules": [
       ".prose .article-gallery:not(:where([data-bt], [data-bt] *)) -> display [local], align-items [local], margin-block [local], gap [local]",
       ".prose .article-gallery > :is(figure, p, div):not(:where([data-bt], [data-bt] *)) -> min-width [local], margin [local]",
       ".prose .article-gallery img:not(:where([data-bt], [data-bt] *)) -> display [local], width [local], max-width [local], height [local]",
@@ -1923,9 +1909,54 @@
     ],
     "conditions": [
       "@media (max-width: 40rem)",
+      "@media (max-width: 64rem)"
+    ],
+    "script": []
+  },
+  "apps/site/src/shared/styles/article-modules.css": {
+    "elements": {},
+    "rules": [
+      ":not(:where([data-bt], [data-bt] *)) -> ",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-figure > figcaption& -> display [local], gap [local], overflow-wrap [local], text-align [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-figure__title& -> display [local], color [token:--text-primary], font-weight [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-figure > figcaption > p& -> margin-block [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-figure__caption& -> color [token:--text-primary]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose :is(.article-figure__note, .article-figure__source)& -> font-size [local], color [token:--text-muted]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-figure__source& -> padding-top [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-endnote& -> margin-block [local], padding-top [local], border-top [token:--border-divider], color [token:--text-muted], font-size [local], line-height [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-endnote-title& -> margin [local], font-weight [local], letter-spacing [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-endnote-body > p& -> margin-block [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-endnote-body > p:last-child& -> margin-bottom [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-icon& -> display [local], width [local], height [local], flex [local], color [token:--accent], vertical-align [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-callout& -> display [local], grid-template-columns [local], gap [local], align-items [local], margin-block [local], padding [local], border-inline-start [token:--accent], border-block [token:--border-divider]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-callout-icon& -> display [local], margin-top [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-callout-content& -> min-width [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-callout-content > strong& -> display [local], margin-bottom [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose :is(.article-callout-content, .article-step-body) > :first-child& -> margin-top [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose :is(.article-callout-content, .article-step-body) > :last-child& -> margin-bottom [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose ol.article-steps& -> list-style [local], padding [local], margin-block [local], counter-reset [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-step& -> position [local], margin [local], padding [local], border-inline-start [token:--border-divider], counter-increment [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-step&::before -> content [local], position [local], inset-inline-start [local], top [local], width [local], height [local], display [local], place-items [local], background [token:--surface], color [token:--accent], border [token:--accent], border-radius [local], font [token:--font-body]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-step:last-child& -> border-inline-start-color [local], padding-bottom [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-step-title& -> display [local], margin-bottom [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-step-result& -> margin [local], padding-inline-start [local], border-inline-start [token:--accent], color [token:--text-muted]",
+      "@media print / :not(:where([data-bt], [data-bt] *)) -> ",
+      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose .article-callout& -> break-inside [local]",
+      ":not(:where([data-bt], [data-bt] *)) -> ",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams& -> display [local], grid-template-columns [local], gap [local], align-items [local], margin-block [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams > figure& -> margin [local], min-width [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams img& -> display [local], width [local], max-width [local], height [local], margin-inline [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams figcaption& -> margin-top [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-compact-figure& -> max-width [local], margin-inline [local]",
+      "@media (max-width: 560px) / :not(:where([data-bt], [data-bt] *)) -> ",
+      "@media (max-width: 560px) / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams& -> grid-template-columns [local], gap [local]",
+      "@media print / :not(:where([data-bt], [data-bt] *)) -> ",
+      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams& -> break-inside [local], grid-template-columns [local], gap [local]",
+      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams img& -> max-height [local]",
+      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose p:has(+ .article-diagrams)& -> break-after [local]"
+    ],
+    "conditions": [
       "@media (max-width: 560px)",
-      "@media (max-width: 64rem)",
-      "@media (max-width: 760px)",
       "@media print"
     ],
     "script": []

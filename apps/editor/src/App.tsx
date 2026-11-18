@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ContentCollection } from "@xpotato/content-contracts/common";
 import { collectionFromPath, updateDraft } from "@xpotato/editor-core/draft";
 import { moduleSource, moduleInsertionOffset } from "@xpotato/editor-core/blocks";
@@ -28,6 +28,7 @@ import { useGitWorkspace } from "./features/git/useGitWorkspace.js";
 import { download } from "./shared/download.js";
 import { errorLabel } from "./shared/messages.js";
 import { useEditorEnvironment } from "./shared/useEditorEnvironment.js";
+import type { EditorSeriesPreview } from "./preview.js";
 
 type Panel = "library" | "metadata" | "media" | "series" | "review" | "history" | "workflow";
 const panels: { id: Panel; label: string; title: string; path: string }[] = [
@@ -85,6 +86,25 @@ export default function App() {
   const environment = useEditorEnvironment();
   const { draft, parsed } = workspace;
   const media = usePreviewMedia(draft.id);
+  const editorSeries = useMemo<EditorSeriesPreview>(() => {
+    const current = parsed
+      ? {
+          contentId: parsed.data.id,
+          title: parsed.data.title,
+          collection: collectionFromPath(draft.path),
+          path: draft.path,
+        }
+      : null;
+    return {
+      registry: git.taxonomy.seriesRegistry ?? { schemaVersion: 1, series: [] },
+      documents: [
+        ...(git.taxonomy.contentIndex ?? []).filter(
+          (entry) => entry.contentId !== current?.contentId,
+        ),
+        ...(current ? [current] : []),
+      ],
+    };
+  }, [parsed, draft.path, git.taxonomy.seriesRegistry, git.taxonomy.contentIndex]);
   useEffect(() => {
     setSelection(null);
     setReveal(null);
@@ -203,20 +223,6 @@ export default function App() {
         保存した下書きを読み込んでいます。
       </main>
     );
-  const currentEntry = parsed
-    ? {
-        contentId: parsed.data.id,
-        title: parsed.data.title,
-        collection: collectionFromPath(draft.path),
-        path: draft.path,
-      }
-    : null;
-  const documentIndex = [
-    ...(git.taxonomy.contentIndex ?? []).filter(
-      (entry) => entry.contentId !== currentEntry?.contentId,
-    ),
-    ...(currentEntry ? [currentEntry] : []),
-  ];
   const isSynced = Boolean(
     draft.syncedCommit && draft.syncedSource === draft.source && !draft.pendingRegistryChanges,
   );
@@ -296,6 +302,7 @@ export default function App() {
             draft={draft}
             parsed={parsed}
             media={media}
+            editorSeries={editorSeries}
             canUndo={workspace.canUndo}
             canRedo={workspace.canRedo}
             onUndo={workspace.undo}
@@ -385,7 +392,7 @@ export default function App() {
                   key={draft.id}
                   contentId={parsed.data.id}
                   registry={git.taxonomy.seriesRegistry ?? { schemaVersion: 1, series: [] }}
-                  documents={documentIndex}
+                  documents={editorSeries.documents}
                   onChange={(series) => changeRegistry({ series })}
                   onError={setError}
                 />

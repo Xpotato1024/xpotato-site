@@ -9,7 +9,7 @@ import type { EditorContentRecord } from "@xpotato/editor-core/registry";
 export interface SeriesPanelProps {
   contentId: string;
   registry: SeriesRegistry;
-  documents: Pick<EditorContentRecord, "contentId" | "title" | "collection">[];
+  documents: readonly Pick<EditorContentRecord, "contentId" | "title" | "collection">[];
   onChange: (registry: SeriesRegistry) => void;
   onError?: (message: string) => void;
 }

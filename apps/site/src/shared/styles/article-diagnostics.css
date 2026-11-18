@@ -1,0 +1,57 @@
+/* Diagnostic lists are loaded only where the rendered content contains them. */
+:not(:where([data-bt], [data-bt] *)) {
+  .prose .article-diagnostic-explanation > :first-child& {
+    margin-top: 0;
+  }
+  .prose .article-diagnostic-explanation > :last-child& {
+    margin-bottom: 0;
+  }
+  .prose .article-diagnostics& {
+    margin-block: 1.75rem 2rem;
+    border-top: 1px solid var(--border-divider);
+  }
+  .prose .article-diagnostic& {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.4fr);
+    gap: 0.6rem 1.75rem;
+    padding-block: 1.3rem;
+    border-bottom: 1px solid var(--border-divider);
+  }
+  .prose .article-diagnostic :is(dt, dd, p)& {
+    min-width: 0;
+    margin: 0;
+  }
+  .prose .article-diagnostic-symptom& {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    font-weight: 500;
+  }
+  .prose .article-diagnostic dd& {
+    grid-column: 2;
+    line-height: 1.85;
+  }
+  .prose .article-diagnostic-label& {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0.15rem;
+  }
+}
+@media (max-width: 760px) {
+  :not(:where([data-bt], [data-bt] *)) {
+    .prose .article-diagnostic& {
+      display: block;
+    }
+    .prose .article-diagnostic dd& {
+      margin-top: 0.75rem;
+    }
+  }
+}
+@media print {
+  :not(:where([data-bt], [data-bt] *)) {
+    .prose .article-diagnostic& {
+      break-inside: avoid;
+    }
+  }
+}

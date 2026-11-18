@@ -1,6 +1,6 @@
 ---
 import type { SeriesNavigation } from "@xpotato/portable-content/series";
-import { seriesKindLabel, seriesStatusLabel } from "../model/labels.js";
+import { seriesKindLabel, seriesStatusLabel, seriesLastEntryLabel } from "../model/labels.js";
 
 interface Props {
   navigation: SeriesNavigation;
@@ -37,7 +37,9 @@ const { series, current, previous, next } = Astro.props.navigation;
         <span>{next.label ?? next.title}</span>
       </a>
     ) : (
-      <p class="series-boundary">現在の最新回です。</p>
+      <p class="series-boundary">
+        {`${series.status === "completed" ? "この連載の" : ""}${seriesLastEntryLabel(series.status)}です。`}
+      </p>
     )}
   </div>
   <a class="series-all-link" href={series.route}>

@@ -1,13 +1,21 @@
 import { safeMathMarkup } from "./components/blocks/math.js";
-import { parseDraft } from "@xpotato/editor-core/draft";
+import { collectionFromPath, parseDraft } from "@xpotato/editor-core/draft";
+import type { EditorContentRecord } from "@xpotato/editor-core/registry";
 import { blockTree, type BlockNode } from "@xpotato/editor-core/blocks";
 import {
   semanticContentModulePropsSchemas,
   barChartRowsSchema,
 } from "@xpotato/content-contracts/content";
 import type { ContentCollection } from "@xpotato/content-contracts/common";
-import type { SeriesNavigation } from "@xpotato/portable-content/series";
+import { articleRoute } from "@xpotato/content-contracts/article-route";
+import { seriesRegistrySchema, type SeriesRegistry } from "@xpotato/content-contracts/series";
+import { seriesForContent, type SeriesNavigation } from "@xpotato/portable-content/series";
 import { splitArticleLead } from "../../site/src/features/articles/model/article-lead.js";
+import {
+  seriesKindLabel,
+  seriesStatusLabel,
+  seriesLastEntryLabel,
+} from "../../site/src/features/series/model/labels.js";
 import {
   selectTableOfContents,
   groupTableOfContents,
@@ -27,7 +35,12 @@ export interface PreviewMedia {
 export interface PreviewOptions {
   media?: readonly PreviewMedia[];
   series?: readonly SeriesNavigation[];
+  editorSeries?: EditorSeriesPreview;
   collection?: ContentCollection;
+}
+export interface EditorSeriesPreview {
+  registry: SeriesRegistry;
+  documents: readonly EditorContentRecord[];
 }
 export interface PreviewDocument {
   title: string;
@@ -69,6 +82,40 @@ const iconPaths: Record<string, readonly string[]> = {
 const icon = (name: string) =>
   `<svg class="article-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(iconPaths[name] ?? iconPaths.note!).map((d) => `<path d="${d}"/>`).join("")}</svg>`;
 
+/** Private editing order includes drafts; it must never feed the public projection. */
+function editorSeriesNavigation(
+  input: EditorSeriesPreview,
+  current: { id: string; title: string; collection: ContentCollection },
+): SeriesNavigation[] {
+  const documents = new Map(input.documents.map((document) => [document.contentId, document]));
+  const routeFor = (document: EditorContentRecord | undefined): string => {
+    if (!document || collectionFromPath(document.path) !== document.collection) return "";
+    if (document.collection === "blog") return articleRoute(document.contentId);
+    const slug = document.path.split("/")[2]!.replace(/\.mdx?$/u, "");
+    return `/${document.collection === "pages" ? "" : document.collection + "/"}${slug}/`;
+  };
+  return seriesForContent(
+    current.id,
+    seriesRegistrySchema.parse(input.registry).series.map((series) => ({
+      ...series,
+      route: `/series/${series.slug}/`,
+      entries: series.entries.map((entry, index) => {
+        const document = documents.get(entry.contentId);
+        const isCurrent = entry.contentId === current.id;
+        return {
+          contentId: entry.contentId,
+          ...(entry.label ? { label: entry.label } : {}),
+          collection: isCurrent ? current.collection : (document?.collection ?? "blog"),
+          title: isCurrent ? current.title : (document?.title ?? "未取得の記事"),
+          description: "",
+          route: routeFor(document),
+          ordinal: index + 1,
+        };
+      }),
+    })),
+  );
+}
+
 /** Author input is parsed as data; no MDX compilation, evaluation, or arbitrary HTML. */
 export async function previewDocument(
   source: string,
@@ -95,12 +142,17 @@ export async function previewDocument(
   scan(tree);
   const placeholder = (label: string, detail: string): string =>
     `<aside class="preview-unavailable"><strong>${escape(label)}</strong><p>${escape(detail)}</p></aside>`;
-  const link = (url: string | undefined, label: string, title?: string): string => {
+  const link = (
+    url: string | undefined,
+    label: string,
+    title?: string,
+    className?: string,
+  ): string => {
     if (!url || !safeLink(url)) {
       warnings.add("URLを確認できないリンクがあります。");
       return label;
     }
-    return `<a role="link" aria-disabled="true" data-preview-href="${escape(url)}"${title ? ` title="${escape(title)}"` : ""}>${label}</a>`;
+    return `<a role="link" aria-disabled="true"${className ? ` class="${escape(className)}"` : ""} data-preview-href="${escape(url)}"${title ? ` title="${escape(title)}"` : ""}>${label}</a>`;
   };
   const image = (assetId: string, alt: string, explicit?: PreviewMedia): string => {
     const item = explicit ?? media.get(assetId);
@@ -356,11 +408,45 @@ export async function previewDocument(
     typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value) ? value : "";
   const publication = date(data.pubDate),
     updated = date(data.updatedDate);
-  const membership = (options.series ?? []).filter((item) => item.current.contentId === data.id);
+  const membership = options.editorSeries
+    ? editorSeriesNavigation(options.editorSeries, {
+        id: data.id,
+        title,
+        collection: options.collection ?? "blog",
+      })
+    : (options.series ?? []).filter((item) => item.current.contentId === data.id);
+  const seriesCount = options.editorSeries ? "登録" : "公開";
+  const seriesLink = (route: string, label: string, className?: string) =>
+    route
+      ? link(route, label, undefined, className)
+      : `<span${className ? ` class="${escape(className)}"` : ""}>${label}</span>`;
   const seriesHtml = membership
-    .map(
-      ({ series, current, previous, next }) =>
-        `<nav class="series-navigation" aria-label="${escape(series.title)}の読み順"><div class="series-navigation-heading"><h2>${escape(series.title)}</h2><span class="series-position">第${current.ordinal}回 / 公開${series.entries.length}回</span></div><div class="series-adjacent">${previous ? `<span class="series-step"><span class="series-meta">← 前の回 · 第${previous.ordinal}回</span>${escape(previous.label ?? previous.title)}</span>` : `<p class="series-boundary">最初の回です。</p>`}${next ? `<span class="series-step"><span class="series-meta">次の回 · 第${next.ordinal}回 →</span>${escape(next.label ?? next.title)}</span>` : `<p class="series-boundary">現在の最新回です。</p>`}</div></nav>`,
+    .map(({ series, current, previous, next }) =>
+      [
+        `<nav class="series-navigation" aria-label="${escape(series.title)}の読み順">`,
+        `<div class="series-navigation-heading"><div><p class="series-meta">${seriesKindLabel(series.kind)} · ${seriesStatusLabel(series.status)}</p>`,
+        `<h2>${seriesLink(series.route, escape(series.title))}</h2></div>`,
+        `<span class="series-position">第${current.ordinal}回 / ${seriesCount}${series.entries.length}回</span></div>`,
+        options.editorSeries ? '<p class="series-meta">下書きを含む登録順です。</p>' : "",
+        '<div class="series-adjacent">',
+        previous
+          ? seriesLink(
+              previous.route,
+              `<span class="series-meta">← 前の回 · 第${previous.ordinal}回</span><span>${escape(previous.label ?? previous.title)}</span>`,
+              "series-step",
+            )
+          : '<p class="series-boundary">この連載の最初の回です。</p>',
+        next
+          ? seriesLink(
+              next.route,
+              `<span class="series-meta">次の回 · 第${next.ordinal}回 →</span><span>${escape(next.label ?? next.title)}</span>`,
+              "series-step",
+            )
+          : `<p class="series-boundary">${series.status === "completed" ? "この連載の" : ""}${seriesLastEntryLabel(series.status)}です。</p>`,
+        "</div>",
+        seriesLink(series.route, `全${series.entries.length}回の目次を見る →`, "series-all-link"),
+        "</nav>",
+      ].join(""),
     )
     .join("");
   return {
@@ -386,7 +472,7 @@ export async function previewDocument(
       membership
         .map(
           ({ series, current }) =>
-            `<p class="series-location">${escape(series.title)} · 第${current.ordinal}回</p>`,
+            `<p class="series-location">${seriesLink(series.route, escape(series.title))}<span>第${current.ordinal}回 / ${seriesCount}${series.entries.length}回</span></p>`,
         )
         .join(""),
       "</div>",

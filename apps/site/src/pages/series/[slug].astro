@@ -2,7 +2,11 @@
 import type { PublicSeries } from "@xpotato/portable-content/series";
 import BaseLayout from "../../shared/layouts/BaseLayout.astro";
 import { getPublicSeries } from "../../features/series/model/live-series.js";
-import { seriesKindLabel, seriesStatusLabel } from "../../features/series/model/labels.js";
+import {
+  seriesKindLabel,
+  seriesStatusLabel,
+  seriesLastEntryLabel,
+} from "../../features/series/model/labels.js";
 import seriesCssHref from "../../features/series/styles/series.css?url&no-inline";
 import { siteConfig } from "../../shared/lib/site-config.js";
 
@@ -56,7 +60,9 @@ const breadcrumbs = [
               <a href={entry.route}>{entry.title}</a>
             </h2>
             <p>{entry.description}</p>
-            {index === series.entries.length - 1 && <p class="series-meta">現在の最新回</p>}
+            {index === series.entries.length - 1 && (
+              <p class="series-meta">{seriesLastEntryLabel(series.status)}</p>
+            )}
           </div>
         </li>
       ))}

@@ -403,6 +403,8 @@
       "tokens": [],
       "sources": [
         "apps/site/src/shared/styles/article-modules.css",
+        "apps/site/src/shared/styles/article-diagnostics.css",
+        "apps/site/src/shared/styles/article-gallery.css",
         "apps/site/src/shared/styles/article-bar-chart.css",
         "apps/site/src/shared/styles/article-motion.css",
         "apps/site/public/scripts/article-motion.js",
@@ -845,6 +847,7 @@
         "apps/site/src/features/series/components/SeriesCard.astro",
         "apps/site/src/features/series/components/SeriesNavigation.astro",
         "apps/site/src/features/series/styles/series.css",
+        "apps/site/src/features/series/styles/series-navigation.css",
         "apps/site/src/pages/series/[slug].astro",
         "apps/site/src/pages/series/index.astro"
       ],

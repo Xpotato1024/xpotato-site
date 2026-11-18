@@ -2,6 +2,8 @@
 @import "../../site/src/shared/styles/content.css";
 @import "../../site/src/shared/styles/article-structure.css";
 @import "../../site/src/shared/styles/article-modules.css";
+@import "../../site/src/shared/styles/article-diagnostics.css";
+@import "../../site/src/shared/styles/article-gallery.css";
 @import "../../site/src/shared/styles/article-bar-chart.css";
 @import "../../site/src/shared/styles/media-credit.css";
 @import "../../site/src/shared/styles/code.css";
