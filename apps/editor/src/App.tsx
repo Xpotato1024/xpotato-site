@@ -293,7 +293,7 @@ export default function App() {
               aria-label={item.title}
               title={item.title}
               aria-pressed={panel === item.id}
-              aria-controls="workspace-panel"
+              aria-controls={panel ? "workspace-panel" : undefined}
               onClick={(event) => {
                 panelTrigger.current = event.currentTarget;
                 setPanel(panel === item.id ? null : item.id);
