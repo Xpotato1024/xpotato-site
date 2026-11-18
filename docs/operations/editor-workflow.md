@@ -33,8 +33,10 @@ npm run editor:media -- --input /path/to/simulation.gif --output .local/editor-m
 
 ## 実環境の接続
 
-GitHub Appは対象repositoryだけへインストールし、Contents read/write、Pull requests read/write、Actions read、Metadata readを必要範囲として設定する。Callbackは公開サイト同一originの`/editor-api/auth/callback`。client secret、暗号化session secret、webhook secretはGitやブラウザへ配布しない。ownerの数値IDを認可条件にする。
+GitHub Appは対象repositoryだけへインストールし、Contents read/write、Pull requests read/write、Actions read、Checks read、Metadata readを必要範囲として設定する。Callbackは公開サイト同一originの`/editor-api/auth/callback`。client secret、暗号化session secret、webhook secretはGitやブラウザへ配布しない。ownerの数値IDを認可条件にする。
 
 Cloudflareのeditor-api WorkerにはDraft専用bucketだけをbindする。公開site Worker・公開/原本/保護bucketへこのAPIの権限を流用しない。GitHub push activityの署名検証と参照/保持試験が終わるまではGC_ENABLEDをfalseとする。providerのresource/route/secret作成はXpotato-Server側の認可済み設定工程で扱う。
 
 ローカル・CIの合成GitHub/R2成功は、実際のApp認証、R2へのreadback、iPhone実機や本番配信の成功とは区別する。現時点の設定・受入れ状態は[実装状態](../architecture/cms-implementation-status.md)を確認する。
+
+初回接続の実コマンドと不足項目の確認は[GitHub/R2接続手順](editor-connection.md)を使用する。App IDも検証し、対象repository一つへのinstallation以外はsessionを発行しない。

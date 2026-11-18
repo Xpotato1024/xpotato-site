@@ -13,6 +13,7 @@ last_verified: 2026-11-18
 | 現在の採用・実環境状態 | [Design status](architecture/design-status.md) |
 | ディレクトリ・依存 | [Repository layout](architecture/repository-layout.md) / [ops](../ops/README.md) |
 | 通常の記事・メモ・固定ページ・ツール制作 | [Content workflows](operations/content-workflows.md) / [一貫制作](operations/content-production.md) |
+| GitHub・Draft R2の初回接続 | [Editor connection](operations/editor-connection.md) |
 | CMSと人間→AIの引継ぎ | [Editor workflow](operations/editor-workflow.md) / [実装状態](architecture/cms-implementation-status.md) |
 | コンテンツ・部品・媒体の契約 | [Contracts](contracts/README.md) / packages/content-contracts |
 | 共通デザイン | [Design policy](architecture/design-system-policy.md) / packages/design-system |

@@ -62,3 +62,9 @@ CMSのJavaScriptは専用の `/editor/` と `/editor/assets/` に限定する。
 ツールrendererのimport対応表はsiteのfeatures/tools/registryが所有し、content/registryはAstro componentやsite実装をimportしない。installerが同じconfigからdata recordsとrenderer adapterを各所有者へ生成する。両方の生成物を検査し、手書きの二重定義を作らない。
 
 配布ZIPの許可にはeditor/manifest.webmanifestを正確なパスで追加した。任意のwebmanifest拡張子を一般許可せず、未知の名前・別階層・大文字違い・private bytes・symlinkの拒否をNode/Windows両consumerで維持する。
+
+## 2026-11-18 初回接続の実装
+
+初回設定を標準GitHub App ManifestとWranglerへ接続するCLI、App/所有者/対象repositoryの照合、認証後のGit/R2接続状態表示を追加。Serverがprovider値と限定readbackを所有する。操作方法は[接続手順](../operations/editor-connection.md)。
+
+この開発環境ではWrangler未認証、公開/editor/と/editor-api/sessionは404と観測した。実App登録・R2作成・公開Site配信は未実施。これらが完了するまでIssue #220を閉じない。

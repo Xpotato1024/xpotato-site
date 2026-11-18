@@ -1,3 +1,4 @@
+import { ConnectionStatus } from "./components/ConnectionStatus.js";
 import { useState } from "react";
 import { moduleSource } from "@xpotato/editor-core/blocks";
 import { AstroReview } from "./components/AstroReview.js";
@@ -131,6 +132,7 @@ export default function App() {
               </button>
             </div>
           )}
+          <ConnectionStatus auth={git.auth} />
           <DocumentEditor
             draft={draft}
             parsed={parsed}
