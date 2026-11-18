@@ -174,7 +174,34 @@ try {
     '<Gallery label="親のラベル">\n' +
     childSource +
     '\n</Gallery>\n\n<Details summary="詳細">\n\n説明。\n\n</Details>\n\n```math label="式の説明"\n\\sigma = \\sqrt{\\frac{1}{N}}\n```\n\n```typescript\nconst value: number = 1;\n```\n';
-  await writeBody(page, fixture);
+  const fixtureEditor = await writeBody(page, fixture);
+  try {
+    await page.waitForFunction(
+      ({ element, expected }) =>
+        Array.from(element.querySelectorAll(".cm-line"), (line) => line.textContent ?? "").join(
+          "\n",
+        ) === expected,
+      { element: await fixtureEditor.elementHandle(), expected: fixture },
+      { timeout: 15000 },
+    );
+  } catch (error) {
+    console.error(
+      "Editor source replacement DOM:",
+      await fixtureEditor.evaluate((element) => {
+        const focus = [];
+        for (let active = document.activeElement; active; active = active.shadowRoot?.activeElement)
+          focus.push({ tag: active.tagName, label: active.getAttribute("aria-label") });
+        return {
+          connected: element.isConnected,
+          visible: element.getClientRects().length > 0,
+          text: element.textContent,
+          lines: Array.from(element.querySelectorAll(".cm-line"), (line) => line.textContent),
+          focus,
+        };
+      }),
+    );
+    throw error;
+  }
   assert.equal(
     await readBody(page),
     fixture,
