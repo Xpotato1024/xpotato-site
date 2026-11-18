@@ -99,8 +99,14 @@ async function main() {
       }
       await requireWrangler(siteRoot, ["deploy", "--config", config, "--dry-run"]);
       if (!token) {
-        console.log("Cloudflareのログイン画面で、対象アカウントへの接続を承認してください。");
-        const result = await wrangler(siteRoot, ["login"], undefined, true);
+        console.log("Cloudflareの端末認証URLと短いコードを表示します。別端末でも承認できます。");
+        // ブラウザが別端末でも戻れるよう、localhost:8976のOAuth callbackは使わない。
+        const result = await wrangler(
+          siteRoot,
+          ["login", "--device", "--browser=false"],
+          undefined,
+          true,
+        );
         if (result.code !== 0) {
           throw Error("CLOUDFLARE_LOGIN_REQUIRED");
         }
