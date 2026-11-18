@@ -13,6 +13,7 @@ canonical_for:
 - triggerは `workflow_dispatch` のみ。push・pull requestからdeployしません。
 - 対象repository、本人actor/triggering actor、main、初回attempt、本人の復旧準備確認をjob guardで制限します。
 - `site-production` Environment、直列実行、成功main producerのProduction artifact identity照合、exact config、preimage・read-backを要求します。
+- ルート検査では[固定CMS counterpart](../architecture/infrastructure-handoff.md#cms接続の固定counterpart)が所有する `xpotato.net/editor-api/*` → `xpotato-editor-api` を許容します。公開サイトWorker宛てのルートと、公開ホストに重なるそれ以外のルートは拒否します。
 - PRのcandidate artifactをProductionへ昇格しません。診断modeも明示dispatchです。
 - この実装状況は、実行認可・live provider受入れ・資格情報の有効性の証明ではありません。操作ごとの本人認可とfreshな前後確認が必要です。
 

@@ -398,11 +398,15 @@ test("provider uses readonly fixed GETs and writer only on its own verify endpoi
       .every((c) => new URL(c.url).pathname.endsWith("/tokens/verify")),
   );
 });
-test("third observation completes with the real finite provider adapter and only one deploy invocation", async () => {
+test("the dedicated CMS route allows one Site deploy and successful readback", async () => {
   let deployed = false,
     reads = 0,
     writes = 0;
   const pf = providerFixture((p, b) => {
+    if (p.endsWith("/routes")) {
+      delete b.result_info;
+      b.result = [routeRow("xpotato.net/editor-api/*", "xpotato-editor-api")];
+    }
     if (deployed && p.endsWith("/deployments")) {
       b.result.deployments[0].id = uid(3);
       b.result.deployments[0].versions[0].version_id = uid(3);
@@ -430,6 +434,7 @@ test("third observation completes with the real finite provider adapter and only
   });
   const result = await runManualDeployment(f.input);
   assert.equal(result.status, "DEPLOYED_READBACK_VERIFIED");
+  assert.equal(result.preimage.routes, 0);
   assert.equal(result.readback.attempts, 3);
   assert.equal(writes, 1);
   assert.equal(pf.calls.length, 42);
@@ -1651,6 +1656,27 @@ test("any route targeting the Site Worker remains drift regardless of hostname",
     assessZoneWorkerRoutes(routeBody([routeRow("links.xpotato.net/*", authority.worker)]))
       .diagnostics.reasonCode,
     "SITE_WORKER_ROUTE_PRESENT",
+  );
+});
+test("the CMS route exception does not allow different paths, Workers, or bypasses", () => {
+  const approved = routeRow("xpotato.net/editor-api/*", "xpotato-editor-api");
+  for (const unexpected of [
+    routeRow(approved.pattern),
+    routeRow(approved.pattern, "other-worker"),
+    routeRow("xpotato.net/editor-api*", approved.script),
+    routeRow("xpotato.net/editor-api/session", approved.script),
+    routeRow("https://xpotato.net/editor-api/*", approved.script),
+    routeRow("*xpotato.net/editor-api/*", approved.script),
+  ])
+    assert.equal(
+      assessZoneWorkerRoutes(routeBody([unexpected])).diagnostics.reasonCode,
+      "SITE_HOSTNAME_ROUTE_OVERLAP",
+    );
+  assert.equal(
+    assessZoneWorkerRoutes(
+      routeBody([approved, routeRow("xpotato.net/editor-api/session", undefined, "route-2")]),
+    ).diagnostics.reasonCode,
+    "SITE_HOSTNAME_ROUTE_OVERLAP",
   );
 });
 test("exact and wildcard Site hostname overlap blocks other Workers and bypass routes on every path", () => {

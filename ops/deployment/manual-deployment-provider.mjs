@@ -253,12 +253,17 @@ export function assessZoneWorkerRoutes(body) {
                 reject("siteWorker", "SITE_WORKER_ROUTE_PRESENT");
               else {
                 checks.siteWorker = "PASS";
+                // The pinned CMS counterpart owns this one route. Keep every other
+                // hostname overlap blocked, including bypasses and broader CMS routes.
                 if (
-                  patterns.some(({ host }) =>
-                    host.startsWith("*")
+                  patterns.some(({ host }, index) => {
+                    const { pattern, script } = rows[index];
+                    if (pattern === "xpotato.net/editor-api/*" && script === "xpotato-editor-api")
+                      return false;
+                    return host.startsWith("*")
                       ? authority.hostname.endsWith(host.slice(1))
-                      : host === authority.hostname,
-                  )
+                      : host === authority.hostname;
+                  })
                 )
                   reject("siteHostname", "SITE_HOSTNAME_ROUTE_OVERLAP");
                 else checks.siteHostname = "PASS";
