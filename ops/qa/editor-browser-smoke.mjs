@@ -17,7 +17,23 @@ const root = resolve("."),
 await mkdir(out, { recursive: true });
 const server = await editorStaticServer(root);
 let browser;
+let activePhase = "";
+let phaseStarted = performance.now();
+function finishPhase() {
+  if (activePhase)
+    console.log(
+      `Editor browser phase END: ${activePhase}; elapsedMs=${Math.round(performance.now() - phaseStarted)}`,
+    );
+  activePhase = "";
+}
+function beginPhase(name) {
+  finishPhase();
+  activePhase = name;
+  phaseStarted = performance.now();
+  console.log(`Editor browser phase START: ${name}`);
+}
 try {
+  beginPhase("launch Chromium");
   const executable = [
     process.env.CHROME_PATH,
     "/usr/bin/google-chrome",
@@ -26,16 +42,22 @@ try {
   ].find((value) => value && existsSync(value));
   browser = await chromium.launch({
     headless: true,
+    timeout: 15000,
     ...(executable ? { executablePath: executable } : {}),
   });
   const context = await browser.newContext({
     viewport: { width: 1365, height: 1000 },
     locale: "ja-JP",
   });
+  context.setDefaultTimeout(15000);
+  context.setDefaultNavigationTimeout(15000);
   const page = await context.newPage(),
     errors = [],
     violations = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error) => {
+    errors.push(error.message);
+    console.error(`Editor browser pageerror (${activePhase}):`, error.stack ?? error.message);
+  });
   await page.addInitScript(() => {
     document.addEventListener("securitypolicyviolation", (event) =>
       console.error("CSP_VIOLATION:" + event.violatedDirective + ":" + event.blockedURI),
@@ -44,6 +66,7 @@ try {
   page.on("console", (message) => {
     if (message.text().startsWith("CSP_VIOLATION:")) violations.push(message.text());
   });
+  beginPhase("body-only highlighted MDX");
   await page.goto(server.origin + "/editor/");
   const title = page.getByRole("textbox", { name: "タイトル", exact: true });
   await title.waitFor();
@@ -62,6 +85,7 @@ try {
     (await page.getByRole("textbox", { name: "MDX本文", exact: true }).locator("span").count()) > 0,
     "MDX syntax has token highlighting",
   );
+  beginPhase("source-preserving rich focus");
   await showBlocks(page);
   const blocks = page.getByRole("region", { name: "本文のブロック編集", exact: true });
   await blocks.getByRole("button", { name: "段落を編集", exact: true }).first().click();
@@ -73,6 +97,7 @@ try {
     before,
     "Focusing a rich region must not normalize untouched MDX",
   );
+  beginPhase("caret and inline formatting");
   await rich.click();
   await rich.press("Control+Home");
   await rich.press("ArrowRight");
@@ -89,6 +114,7 @@ try {
   await rich.press("Control+a");
   await blocks.getByLabel("太字", { exact: true }).click();
   assert.match(await readBody(page), /\*\*本文追記の/u, "Inline toolbar edits the selection");
+  beginPhase("keyboard article reorder");
   await showBlocks(page);
   const firstGrip = blocks
     .locator(":scope > .cms-block-list > .cms-editor-region")
@@ -106,6 +132,7 @@ try {
     reordered.indexOf("本文追記") < reordered.indexOf("## 見出しの位置"),
     "Keyboard drop moves the source region",
   );
+  beginPhase("pointer article reorder");
   await showBlocks(page);
   const regions = blocks.locator(":scope > .cms-block-list > .cms-editor-region");
   const dragHandle = regions.nth(1).getByRole("button", { name: "見出しを移動", exact: true });
@@ -120,6 +147,7 @@ try {
     (await readBody(page)).startsWith("## 見出しの位置"),
     "Pointer drop reorders the article itself",
   );
+  beginPhase("Gallery parent and child settings");
   const childSource =
     '  <Figure asset="first" alt="子の説明" caption="子の注釈" />\n  <Figure asset="second" alt="2枚目" />';
   const fixture =
@@ -147,6 +175,7 @@ try {
   assert(afterParent.includes(childSource), "Parent settings preserve child source exactly");
   assert.match(afterParent, /columns="3"/u);
   assert(!afterParent.includes("columns={"), "Gallery uses portable literal attributes");
+  beginPhase("Details optional boolean setting");
   await showBlocks(page);
   const details = page.locator(".cms-module-details").first();
   await details
@@ -158,6 +187,7 @@ try {
   await detailFields.getByLabel("初めから開く", { exact: true }).check();
   await detailFields.getByRole("button", { name: "設定を適用", exact: true }).click();
   assert.match(await readBody(page), /<Details summary="詳細" open>/u);
+  beginPhase("TeX and code language");
   await showBlocks(page);
   await page.locator(".cms-math-preview math").waitFor();
   assert.equal(
@@ -170,12 +200,14 @@ try {
     .filter({ has: page.getByRole("textbox", { name: "コード", exact: true }) });
   await codeBlock.getByLabel("言語", { exact: true }).fill("python");
   assert.match(await readBody(page), /```python\nconst value/u);
+  beginPhase("searchable quote insertion");
   await showBlocks(page);
   await blocks.getByRole("button", { name: "＋ 挿入", exact: true }).click();
   const palette = page.getByRole("dialog", { name: "ブロックを挿入", exact: true });
   await palette.getByRole("searchbox", { name: "ブロックを検索", exact: true }).fill("引用");
   await palette.getByRole("button", { name: /引用/u }).click();
   assert.match(await readBody(page), /> 引用文/u, "Searchable palette inserts a structural quote");
+  beginPhase("table cells and row insertion");
   await showBlocks(page);
   await blocks.getByRole("button", { name: "＋ 挿入", exact: true }).click();
   const tablePalette = page.getByRole("dialog", { name: "ブロックを挿入", exact: true });
@@ -190,6 +222,7 @@ try {
   await showBlocks(page);
   await savedDraft(page);
   await page.screenshot({ path: resolve(out, "editor-desktop.png"), fullPage: true });
+  beginPhase("mobile source wrapping");
   await page.setViewportSize({ width: 390, height: 844 });
   await closePanel(page);
   const longBody =
@@ -213,6 +246,7 @@ try {
   assert.equal(geometry.whitespace, "pre-wrap");
   const persisted = (await savedDraft(page)).source;
   await page.screenshot({ path: resolve(out, "editor-mobile.png"), fullPage: true });
+  beginPhase("IndexedDB reopening");
   await page.reload();
   await title.waitFor();
   assert.equal(await title.inputValue(), "CMS 動作確認（合成データ）");
@@ -221,6 +255,7 @@ try {
     persisted,
     "IndexedDB reopening preserves full source",
   );
+  beginPhase("offline shell and private-cache exclusion");
   await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
   await context.setOffline(true);
   await page.reload();
@@ -242,6 +277,7 @@ try {
   assert(cached.every((url) => !url.includes("editor-api")));
   assert.deepEqual(errors, []);
   assert.deepEqual(violations, []);
+  beginPhase("write browser report");
   await context.close();
   await writeFile(
     resolve(out, "result.json"),
@@ -272,9 +308,15 @@ try {
       2,
     ),
   );
+  finishPhase();
   console.log(
     "Editor browser smoke PASS: rich/block/source editing, nested modules, drag, mobile, offline.",
   );
+} catch (error) {
+  console.error(
+    `Editor browser phase FAIL: ${activePhase}; elapsedMs=${Math.round(performance.now() - phaseStarted)}`,
+  );
+  throw error;
 } finally {
   await browser?.close();
   await server.close();

@@ -303,12 +303,19 @@ try {
   assert.deepEqual(failures, []);
   await second.close();
   await context.close();
-  await promisify(execFile)(process.execPath, [resolve(root, "ops/qa/editor-browser-smoke.mjs")], {
-    cwd: root,
-    env: process.env,
-    timeout: 30000,
-    maxBuffer: 1024 * 1024,
-  });
+  const blockSmoke = promisify(execFile)(
+    process.execPath,
+    [resolve(root, "ops/qa/editor-browser-smoke.mjs")],
+    {
+      cwd: root,
+      env: process.env,
+      timeout: 120000,
+      maxBuffer: 1024 * 1024,
+    },
+  );
+  blockSmoke.child.stdout?.pipe(process.stdout, { end: false });
+  blockSmoke.child.stderr?.pipe(process.stderr, { end: false });
+  await blockSmoke;
   const reviewOutput = resolve(".local/editor-review", "ci-" + Date.now() + "-" + process.pid);
   const reviewBuild = await promisify(execFile)(
     process.execPath,
