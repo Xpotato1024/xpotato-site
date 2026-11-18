@@ -217,7 +217,7 @@ h3 {
   padding: 0.4rem 0.1rem;
   border-color: transparent;
   background: transparent;
-  color: #777080;
+  color: var(--text-muted);
   gap: 0.1rem;
 }
 .workspace-rail svg {

@@ -97,14 +97,8 @@
   gap: 0.35rem;
   align-items: center;
   min-height: 2.2rem;
-  opacity: 0.45;
   color: var(--text-muted, #6d6678);
   font-size: 0.68rem;
-}
-.cms-editor-region:hover > .cms-region-toolbar,
-.cms-editor-region[data-active] > .cms-region-toolbar,
-.cms-region-toolbar:focus-within {
-  opacity: 1;
 }
 .cms-region-toolbar > span {
   min-width: 0;
@@ -895,7 +889,7 @@
     padding: 0.4rem 0.5rem;
   }
   .cms-insert-after {
-    opacity: 0.6;
+    opacity: 1;
   }
 }
 @media (prefers-reduced-motion: reduce) {

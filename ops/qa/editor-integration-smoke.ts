@@ -82,6 +82,27 @@ async function audit(page: import("playwright").Page, name: string) {
     impact: v.impact ?? null,
     nodes: v.nodes.length,
   }));
+  const blocking = result.violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical",
+  );
+  if (blocking.length)
+    console.error(
+      JSON.stringify({
+        audit: name,
+        violations: blocking.map((v) => ({
+          id: v.id,
+          nodes: v.nodes.map((node) => ({
+            target: node.target,
+            html: node.html,
+            failureSummary: node.failureSummary,
+            checks: [...node.any, ...node.all, ...node.none].map((check) => ({
+              id: check.id,
+              data: check.data,
+            })),
+          })),
+        })),
+      }),
+    );
   assert.deepEqual(
     violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
     [],
