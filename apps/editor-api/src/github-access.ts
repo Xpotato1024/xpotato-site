@@ -30,7 +30,7 @@ export async function verifyGitHubInstallation(
         "X-GitHub-Api-Version": "2022-11-28",
         Authorization: "Bearer " + token,
       },
-      redirect: "error",
+      redirect: "manual",
       signal: AbortSignal.timeout(15000),
     });
     if (!response.ok) {

@@ -120,6 +120,16 @@ export async function login(request: Request, env: Environment): Promise<Respons
     },
   });
 }
+// OAuth通信の実行段階のみを公開し、providerからの例外本文や秘密情報は返さない。
+async function oauthStage<T>(stage: string, operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (error instanceof APIError) throw error;
+    throw new APIError(`OAUTH_${stage}_UNEXPECTED`, 500);
+  }
+}
+
 export async function callback(
   request: Request,
   env: Environment,
@@ -137,39 +147,51 @@ export async function callback(
   );
   if (saved.expires < Date.now() || saved.state !== state)
     throw new APIError("OAUTH_STATE_INVALID", 403);
-  const exchange = await fetcher("https://github.com/login/oauth/access_token", {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify({
-      client_id: env.GITHUB_CLIENT_ID,
-      client_secret: env.GITHUB_CLIENT_SECRET,
-      code,
-      code_verifier: saved.verifier,
-      redirect_uri: env.EDITOR_ORIGIN + "/editor-api/auth/callback",
+  const exchange = await oauthStage("TOKEN_EXCHANGE", () =>
+    fetcher("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: env.GITHUB_CLIENT_ID,
+        client_secret: env.GITHUB_CLIENT_SECRET,
+        code,
+        code_verifier: saved.verifier,
+        redirect_uri: env.EDITOR_ORIGIN + "/editor-api/auth/callback",
+      }),
+      redirect: "manual",
+      signal: AbortSignal.timeout(15000),
     }),
-    redirect: "error",
-    signal: AbortSignal.timeout(15000),
-  });
+  );
   if (!exchange.ok) {
     throw new APIError("OAUTH_EXCHANGE_FAILED", 401);
   }
-  const data = (await exchange.json()) as { access_token?: string; expires_in?: number };
+  const data = (await oauthStage("TOKEN_RESPONSE", () => exchange.json())) as {
+    access_token?: string;
+    expires_in?: number;
+  };
   if (!data.access_token) throw new APIError("OAUTH_EXCHANGE_FAILED", 401);
-  const profile = await fetcher("https://api.github.com/user", {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "Xpotato-Editor",
-      Authorization: "Bearer " + data.access_token,
-    },
-    redirect: "error",
-    signal: AbortSignal.timeout(15000),
-  });
+  const profile = await oauthStage("USER_LOOKUP", () =>
+    fetcher("https://api.github.com/user", {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "User-Agent": "Xpotato-Editor",
+        Authorization: "Bearer " + data.access_token,
+      },
+      redirect: "manual",
+      signal: AbortSignal.timeout(15000),
+    }),
+  );
   if (!profile.ok) {
     throw new APIError("OWNER_VERIFICATION_FAILED", 403);
   }
-  const user = (await profile.json()) as { id: number; login: string };
+  const user = (await oauthStage("USER_RESPONSE", () => profile.json())) as {
+    id: number;
+    login: string;
+  };
   if (String(user.id) !== env.OWNER_GITHUB_ID) throw new APIError("OWNER_ONLY", 403);
-  await verifyGitHubInstallation(data.access_token, env, fetcher);
+  await oauthStage("INSTALLATION_CHECK", () =>
+    verifyGitHubInstallation(data.access_token!, env, fetcher),
+  );
   if (
     data.expires_in !== undefined &&
     (!Number.isFinite(data.expires_in) || data.expires_in <= 0)
@@ -191,7 +213,11 @@ export async function callback(
   });
   headers.append(
     "Set-Cookie",
-    makeCookie(cookieName, await seal(value, env.SESSION_SECRET), maxAge),
+    makeCookie(
+      cookieName,
+      await oauthStage("SESSION_COOKIE", () => seal(value, env.SESSION_SECRET)),
+      maxAge,
+    ),
   );
   headers.append("Set-Cookie", makeCookie(stateCookie, "", 0));
   return new Response(null, { status: 303, headers });

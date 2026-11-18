@@ -72,9 +72,14 @@ export function createGitHubTransport(
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-      redirect: "error",
+      // workerd does not support redirect: "error". Manual handling rejects cross-host credential forwarding.
+      redirect: "manual",
       signal: AbortSignal.timeout(20000),
     });
+    // 3xxはGitHub側へだけ返し、CMS APIのレスポンスに転送しない。
+    if (result.status >= 300 && result.status < 400) {
+      throw new GitError("GIT_UPSTREAM_REDIRECT", 502);
+    }
     if (!result.ok)
       throw new GitError(
         result.status === 409 || result.status === 422
@@ -427,7 +432,7 @@ export async function downloadReviewArchive(
       )
     )
       throw new GitError("REVIEW_DOWNLOAD_HOST_REJECTED", 502);
-    response = await fetcher(url, { redirect: "error", signal: AbortSignal.timeout(30000) });
+    response = await fetcher(url, { redirect: "manual", signal: AbortSignal.timeout(30000) });
   }
   if (!response.ok || !response.body) throw new GitError("REVIEW_DOWNLOAD_FAILED", 502);
   const length = Number(response.headers.get("Content-Length") ?? 0);

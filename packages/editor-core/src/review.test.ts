@@ -145,9 +145,13 @@ describe("review artifact selection and credential isolation", () => {
     expect((await new GitRepository(api).reviewArtifact(commit, contentId)).ready).toBe(false);
   });
   it("does not forward the GitHub user token to the signed artifact host", async () => {
-    const calls: { url: string; headers: Headers }[] = [];
+    const calls: { url: string; headers: Headers; redirect: RequestRedirect | undefined }[] = [];
     const fetcher: typeof fetch = async (input, init) => {
-      calls.push({ url: String(input), headers: new Headers(init?.headers) });
+      calls.push({
+        url: String(input),
+        headers: new Headers(init?.headers),
+        redirect: init?.redirect,
+      });
       return calls.length === 1
         ? new Response(null, {
             status: 302,
@@ -158,6 +162,7 @@ describe("review artifact selection and credential isolation", () => {
     const result = await downloadReviewArchive("fixture-token", "owner/site", 45, fetcher);
     expect(calls[0]!.headers.get("Authorization")).toBe("Bearer fixture-token");
     expect(calls[1]!.headers.has("Authorization")).toBe(false);
+    expect(calls.map((call) => call.redirect)).toEqual(["manual", "manual"]);
     expect(result.headers.get("Location")).toBeNull();
     expect(result.headers.get("Cache-Control")).toContain("no-store");
     expect(new Uint8Array(await result.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
