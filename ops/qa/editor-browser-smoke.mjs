@@ -59,12 +59,32 @@ try {
     console.error(`Editor browser pageerror (${activePhase}):`, error.stack ?? error.message);
   });
   await page.addInitScript(() => {
-    document.addEventListener("securitypolicyviolation", (event) =>
-      console.error("CSP_VIOLATION:" + event.violatedDirective + ":" + event.blockedURI),
-    );
+    document.addEventListener("securitypolicyviolation", (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      console.error(
+        "CSP_VIOLATION:" +
+          JSON.stringify({
+            directive: event.violatedDirective,
+            effectiveDirective: event.effectiveDirective,
+            blockedURI: event.blockedURI,
+            sourceFile: event.sourceFile,
+            lineNumber: event.lineNumber,
+            columnNumber: event.columnNumber,
+            sample: event.sample,
+            disposition: event.disposition,
+            target: target?.outerHTML.slice(0, 2000) ?? null,
+          }),
+      );
+    });
   });
   page.on("console", (message) => {
-    if (message.text().startsWith("CSP_VIOLATION:")) violations.push(message.text());
+    const text = message.text();
+    if (text.startsWith("CSP_VIOLATION:")) {
+      violations.push(text);
+      console.error(`Editor browser CSP (${activePhase}): ${text}`);
+    } else if (/Content Security Policy/iu.test(text)) {
+      console.error(`Editor browser CSP console (${activePhase}):`, message.location(), text);
+    }
   });
   beginPhase("body-only highlighted MDX");
   await page.goto(server.origin + "/editor/");
