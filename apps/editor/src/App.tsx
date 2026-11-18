@@ -200,22 +200,40 @@ export default function App() {
     );
   }
   function insertMedia(asset: string, alt: string, caption?: string) {
-    if (!parsed) return;
-    const block = activeBlock.current;
-    const preferred =
-      block && parsed.body.slice(block.start, block.end) === block.source
-        ? block.end
-        : parsed.body.length;
-    const at = moduleInsertionOffset(parsed.body, preferred, "Figure");
-    const source = moduleSource("Figure", { asset, alt, ...(caption ? { caption } : {}) });
-    workspace.edit(
-      {},
-      parsed.body.slice(0, at).trimEnd() +
-        "\n\n" +
-        source +
-        "\n\n" +
-        parsed.body.slice(at).trimStart(),
-    );
+    try {
+      if (!parsed) throw Error("MDX_INVALID");
+      const block = activeBlock.current;
+      const preferred =
+        block && parsed.body.slice(block.start, block.end) === block.source
+          ? block.end
+          : parsed.body.length;
+      const at = moduleInsertionOffset(parsed.body, preferred, "Figure");
+      const source = moduleSource("Figure", { asset, alt, ...(caption ? { caption } : {}) });
+      workspace.edit(
+        {},
+        parsed.body.slice(0, at).trimEnd() +
+          "\n\n" +
+          source +
+          "\n\n" +
+          parsed.body.slice(at).trimStart(),
+      );
+    } catch {
+      setError("画像を挿入できませんでした。画像の情報と本文のMDXを確認してください。");
+    }
+  }
+  function insertGallery(items: { asset: string; alt: string; caption?: string }[]) {
+    try {
+      if (!parsed) throw Error("MDX_INVALID");
+      workspace.edit(
+        {},
+        parsed.body.trimEnd() +
+          '\n\n<Gallery columns="2" mobileColumns="1">\n' +
+          items.map((item) => "  " + moduleSource("Figure", item)).join("\n") +
+          "\n</Gallery>\n",
+      );
+    } catch {
+      setError("ギャラリーを挿入できませんでした。画像の情報と本文のMDXを確認してください。");
+    }
   }
   if (!workspace.hydrated)
     return (
@@ -362,14 +380,14 @@ export default function App() {
                   onSelect={(item) =>
                     void act(async () => {
                       await workspace.openLocal(item);
-                      setPanel(null);
+                      setPanel((current) => (current === "library" ? null : current));
                     })
                   }
                   onReadBranch={() => void act(git.readBranch)}
                   onOpenDocument={(path) =>
                     void act(async () => {
                       await git.openDocument(path);
-                      setPanel(null);
+                      setPanel((current) => (current === "library" ? null : current));
                     })
                   }
                   onImport={(file, collection) => void act(() => importFile(file, collection))}
@@ -418,16 +436,7 @@ export default function App() {
                   onError={setError}
                   onInsert={insertMedia}
                   onHero={(asset) => workspace.edit({ hero: asset })}
-                  onGallery={(items) => {
-                    if (parsed)
-                      workspace.edit(
-                        {},
-                        parsed.body.trimEnd() +
-                          '\n\n<Gallery columns="2" mobileColumns="1">\n' +
-                          items.map((item) => "  " + moduleSource("Figure", item)).join("\n") +
-                          "\n</Gallery>\n",
-                      );
-                  }}
+                  onGallery={insertGallery}
                 />
               )}
               {panel === "history" && (

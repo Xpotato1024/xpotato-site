@@ -69,6 +69,10 @@ let browser;
 const failures: string[] = [],
   audits: { name: string; violations: { id: string; impact: string | null; nodes: number }[] }[] =
     [];
+function capturePageError(error: Error) {
+  failures.push(error.message);
+  console.error("Editor pageerror:", error.stack ?? error.message);
+}
 async function audit(page: import("playwright").Page, name: string) {
   await page.evaluate(axe.source);
   const result = await page.evaluate(
@@ -132,7 +136,7 @@ try {
       locale: "ja-JP",
     }),
     page = await context.newPage();
-  page.on("pageerror", (error) => failures.push(error.message));
+  page.on("pageerror", capturePageError);
   await page.goto(server.origin + "/editor/");
   const title = page.getByRole("textbox", { name: "タイトル", exact: true });
   await title.waitFor();
@@ -168,9 +172,26 @@ try {
     .locator("input[type=file][multiple]")
     .setInputFiles({ name: "synthetic.png", mimeType: "image/png", buffer: png });
   await page.locator(".media-card").waitFor();
+  const beforeInsertion = await readBody(page);
+  await showBlocks(page);
+  const alt = page.getByRole("textbox", { name: "代替テキスト", exact: true });
   await page.getByRole("button", { name: "本文に挿入", exact: true }).click();
+  await page.getByRole("alert").filter({ hasText: "代替テキストを入力してから" }).waitFor();
+  assert(await alt.evaluate((input) => input === document.activeElement));
+  assert.deepEqual(failures, []);
+  assert.equal(await readBody(page), beforeInsertion);
+  await showBlocks(page);
+  const altText = "統合検証用の合成画像";
+  await alt.fill(altText);
+  // The click itself blurs the input: insertion must not wait for IndexedDB reload.
+  await page.getByRole("button", { name: "本文に挿入", exact: true }).click();
+  assert.match(await readBody(page), /<Figure\b[^>]*alt="統合検証用の合成画像"/u);
+  await showBlocks(page);
   await page.getByRole("button", { name: "画像を同期", exact: true }).click();
   await page.locator(".media-card").filter({ hasText: "非公開R2に同期済み" }).waitFor();
+  await closePanel(page);
+  await panel(page, "画像を開く", page.getByRole("region", { name: "画像とGIF", exact: true }));
+  assert.equal(await alt.inputValue(), altText, "Media sync must preserve the entered alt text");
   const state = (await new DraftStore(bucket).read()).state;
   assert.equal(Object.keys(state.assets).length, 1);
   const media = Object.values(state.assets)[0]!;
@@ -181,17 +202,25 @@ try {
     "保存と確認を開く",
     page.getByRole("button", { name: "Gitへ保存", exact: true }),
   );
+  const savedResponse = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/editor-api/save" &&
+      response.request().method() === "POST",
+  );
   await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
-  await page.waitForFunction(() =>
-    document.querySelector(".save-state")?.textContent?.includes("保存済み"),
-  );
-  await page.waitForFunction(() =>
-    document.querySelector(".message")?.textContent?.includes("Gitへ保存しました"),
-  );
+  const response = await savedResponse;
+  assert(response.ok(), "The new Git save must succeed");
+  const savedCommit = (await response.json()).commit as string;
+  await page
+    .locator(".message")
+    .filter({ hasText: "Gitへ保存しました。 " + savedCommit.slice(0, 8) })
+    .waitFor();
   const humanHead = await git.repository.snapshot(branch),
     human = await git.repository.read(humanHead, file);
+  assert.equal(humanHead.commit, savedCommit);
+  assert.notEqual(humanHead.commit, first.commit);
   assert.match(human.source, /人間が執筆/u);
-  assert.match(human.source, /<Figure asset=/u);
+  assert.match(human.source, /<Figure\b[^>]*alt="統合検証用の合成画像"/u);
   const aiSource = human.source + "\nAIが同じPRに追記した検証メモ。\n";
   const ai = await git.repository.save({
     branch,
@@ -217,16 +246,22 @@ try {
       locale: "ja-JP",
     }),
     mobile = await second.newPage();
-  mobile.on("pageerror", (error) => failures.push(error.message));
+  mobile.on("pageerror", capturePageError);
   await mobile.goto(server.origin + "/editor/");
   await mobile.getByRole("textbox", { name: "タイトル", exact: true }).waitFor();
   await mobile.getByRole("button", { name: "下書き一覧を開く", exact: true }).click();
-  await mobile.getByLabel("読み込み元ブランチ").selectOption(branch);
-  await mobile.getByRole("button", { name: "ブランチを読み込む", exact: true }).click();
+  await mobile.getByLabel("読み込み元", { exact: true }).selectOption(branch);
+  await mobile.getByRole("button", { name: "一覧を取得", exact: true }).click();
   await mobile
-    .getByRole("button", { name: file.replace(/^content\//u, ""), exact: true })
-    .waitFor();
-  await mobile.getByRole("button", { name: file.replace(/^content\//u, ""), exact: true }).click();
+    .locator(".repository-documents")
+    .getByRole("button", { name: "Git引継ぎと私有画像の統合テスト", exact: true })
+    .click();
+  await mobile.waitForFunction(
+    () =>
+      (document.querySelector(".title-label textarea") as HTMLTextAreaElement | null)?.value ===
+      "Git引継ぎと私有画像の統合テスト",
+  );
+  await mobile.getByRole("region", { name: "原稿一覧", exact: true }).waitFor({ state: "hidden" });
   await panel(mobile, "画像を開く", mobile.getByRole("region", { name: "画像とGIF", exact: true }));
   await mobile.locator(".media-card").filter({ hasText: "非公開R2に同期済み" }).waitFor();
   await mobile.locator(".media-card img").first().scrollIntoViewIfNeeded();

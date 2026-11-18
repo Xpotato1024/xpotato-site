@@ -5,7 +5,7 @@ import {
   type RemoteMediaSnapshot,
 } from "../data/media-sync.js";
 import { parseDraft } from "@xpotato/editor-core/draft";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mediaPolicy, type MediaKind } from "@xpotato/editor-core/policy";
 import { optimizeImage } from "../media/optimize.js";
 import {
@@ -48,6 +48,10 @@ export function MediaPanel({
   onError,
 }: Props) {
   const [selected, setSelected] = useState<string[]>([]);
+  const altInputs = useRef(new Map<string, HTMLInputElement>());
+  const captionInputs = useRef(new Map<string, HTMLTextAreaElement>());
+  const mediaWrites = useRef<Promise<void>>(Promise.resolve());
+  const [invalidAlt, setInvalidAlt] = useState<string | null>(null);
   const [items, setItems] = useState<LocalMedia[]>([]),
     [kind, setKind] = useState<MediaKind>("photo"),
     [busy, setBusy] = useState(false),
@@ -63,17 +67,52 @@ export function MediaPanel({
   useEffect(() => {
     void reload();
   }, [draft.id]);
+  function updateMedia(
+    id: string,
+    fields: Partial<Pick<LocalMedia, "alt" | "caption" | "remoteId">>,
+  ) {
+    const next = mediaWrites.current
+      .catch(() => {})
+      .then(async () => {
+        const latest = (await localMedia(draft.id)).find((item) => item.id === id);
+        if (!latest) throw Error("MEDIA_NOT_FOUND");
+        await saveLocalMedia({ ...latest, ...fields });
+      });
+    mediaWrites.current = next;
+    return next;
+  }
   async function presentation(
     media: LocalMedia,
     fields: Partial<Pick<LocalMedia, "alt" | "caption">>,
   ) {
     try {
-      const latest = (await localMedia(draft.id)).find((item) => item.id === media.id);
-      if (latest) await saveLocalMedia({ ...latest, ...fields });
+      await updateMedia(media.id, fields);
       await reload();
     } catch {
       onError("画像の情報を保存できませんでした。");
     }
+  }
+  function insertionValues(media: LocalMedia[]) {
+    const values = media.map((item) => ({
+      id: item.id,
+      asset: item.assetId,
+      alt: (altInputs.current.get(item.id)?.value ?? item.alt ?? "").trim(),
+      caption: (captionInputs.current.get(item.id)?.value ?? item.caption ?? "").trim(),
+    }));
+    const missing = values.find((item) => !item.alt);
+    if (missing) {
+      setInvalidAlt(missing.id);
+      onError("代替テキストを入力してから、画像を挿入してください。");
+      altInputs.current.get(missing.id)?.focus();
+      return null;
+    }
+    setInvalidAlt(null);
+    onError("");
+    return values.map(({ asset, alt, caption }) => ({
+      asset,
+      alt,
+      ...(caption ? { caption } : {}),
+    }));
   }
   async function add(files: FileList | null) {
     if (!files?.length) return;
@@ -141,7 +180,7 @@ export function MediaPanel({
         method: "PUT",
         blob: media.blob,
       });
-      await saveLocalMedia({ ...media, remoteId: asset.id });
+      await updateMedia(media.id, { remoteId: asset.id });
       onDraft({ ...draft, remoteDraftId: remote.id, remoteRevision: remote.revision + 1 });
       setQuota(await request("/quota"));
       await reload();
@@ -273,17 +312,10 @@ export function MediaPanel({
         <button
           type="button"
           className="primary"
-          onClick={() =>
-            onGallery(
-              items
-                .filter((item) => selected.includes(item.id))
-                .map((item) => ({
-                  asset: item.assetId,
-                  alt: item.alt ?? "",
-                  ...(item.caption ? { caption: item.caption } : {}),
-                })),
-            )
-          }
+          onClick={() => {
+            const values = insertionValues(items.filter((item) => selected.includes(item.id)));
+            if (values) onGallery(values);
+          }}
         >
           選択した画像をギャラリーへ
         </button>
@@ -308,14 +340,30 @@ export function MediaPanel({
           <label>
             代替テキスト
             <input
+              ref={(input) => {
+                if (input) altInputs.current.set(media.id, input);
+                else altInputs.current.delete(media.id);
+              }}
               defaultValue={media.alt ?? ""}
               placeholder="画像から伝えたい内容"
+              required
+              aria-invalid={invalidAlt === media.id || undefined}
+              onChange={(event) => {
+                if (invalidAlt === media.id && event.currentTarget.value.trim()) {
+                  setInvalidAlt(null);
+                  onError("");
+                }
+              }}
               onBlur={(event) => void presentation(media, { alt: event.target.value })}
             />
           </label>
           <label>
             キャプション
             <textarea
+              ref={(input) => {
+                if (input) captionInputs.current.set(media.id, input);
+                else captionInputs.current.delete(media.id);
+              }}
               rows={2}
               defaultValue={media.caption ?? ""}
               onBlur={(event) => void presentation(media, { caption: event.target.value })}
@@ -334,7 +382,11 @@ export function MediaPanel({
           <div className="media-actions">
             <button
               type="button"
-              onClick={() => onInsert(media.assetId, media.alt ?? "", media.caption)}
+              onClick={() => {
+                const values = insertionValues([media]);
+                const value = values?.[0];
+                if (value) onInsert(value.asset, value.alt, value.caption);
+              }}
             >
               本文に挿入
             </button>
