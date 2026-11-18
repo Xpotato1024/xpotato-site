@@ -93,12 +93,7 @@ try {
   await title.fill("CMS 動作確認（合成データ）");
   const initial =
     "## 見出しの位置\n\n本文の __強調__ と [参照](https://example.com)。\n\n別の段落。\n";
-  const initialSource = await writeBody(page, initial);
-  assert.equal(
-    await initialSource.getAttribute("contenteditable"),
-    "plaintext-only",
-    "Source editing accepts plain text without carrying syntax-highlight styles into input",
-  );
+  await writeBody(page, initial);
   const before = (await savedDraft(page)).source;
   assert.equal(await readBody(page), initial);
   assert.doesNotMatch(

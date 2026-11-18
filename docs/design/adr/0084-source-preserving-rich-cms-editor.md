@@ -24,7 +24,7 @@ semantic moduleの項目は共有スキーマから生成する。親要素の�
 
 CodeMirrorのテーマはopen ShadowRoot内のconstructed stylesheetを使う。CMSのCSPに`unsafe-inline`や固定nonceを追加しない。通常公開ページへCMSのruntimeを持ち込まない。
 
-MDX入力面は`contenteditable="plaintext-only"`を指定する。構文色分けはCodeMirrorのclassとテーマで表示し、全選択して本文を置き換えるときにブラウザーが以前の色・太さをinline styleとして引き継がないようにする。同じ全置換操作で、改行を含むMDXの完全一致とCSP違反がないことを確認する。HTMLのplain text入力の仕様は[MDN](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/contenteditable)を参照する。
+ブラウザー検査でMDX本文を全置換するときは、CodeMirrorのkeymapを通る全選択・Backspace・テキスト入力を使う。Playwrightの`fill`はDOM Rangeを直接選択してCDPの`Input.insertText`へ渡すため、構文色分けの色と太さをChromiumがinline styleとして持ち越し、CSP違反が出た。`plaintext-only`でも同じ違反が残ることを確認したため、その設定変更は採用しない。エディタ内部のstateを直接書き換えず、実キー操作による全置換の全文・改行一致とCSP違反ゼロを検証する。
 
 ## 読み込みと予算
 

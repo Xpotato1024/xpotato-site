@@ -14,7 +14,10 @@ export async function readBody(page) {
 }
 export async function writeBody(page, body) {
   const editor = await sourceEditor(page);
-  await editor.fill(body);
+  // Clear through the editor keymap so native insertion cannot copy highlighted span styles.
+  await editor.press("ControlOrMeta+a");
+  await editor.press("Backspace");
+  if (body) await page.keyboard.insertText(body);
   return editor;
 }
 export async function showBlocks(page) {
