@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-11-02
+last_verified: 2026-11-18
 canonical_for:
   - cross-repository infrastructure design binding
   - website Cloudflare ownership handoff
@@ -13,6 +13,24 @@ canonical_for:
 
 記事media保存の現行設計は [ADR-0063](../design/adr/0063-reusable-r2-publication-ci.md) と [公開CI手順](../operations/article-media-publication-ci.md) に置換する。本人承認・R2-first・原文/権利/根拠/来歴・A/B/C実bytes照合・Cロックは維持する。stage別の一時鍵/Server signer/毎回policy inventoryは廃止し、保護されたowner/main/manual CIのABC限定再利用token1組と標準SDKを使用する。下記の旧operator/session記述は現行本番手順ではない。日付や無関係なcode commitだけでAI全面再監査しない。本文/画像/根拠/権利の変更は監査対象。方式の採用条件と実施済み状態を混同しない。初回設定・実保存・最初の記事公開の記録は[配信状態の正本](../operations/current-deployment-status.md)を参照し、この設計説明を毎回の状態台帳として複製しない。
 
+
+## CMS接続の固定counterpart
+
+所有者CMSのDraft R2・専用API route・初回接続検査は、[Server PR #102](https://github.com/Xpotato1024/Xpotato-Server/pull/102)の統合済み版へ固定する。公開Site・A/B/Cの既存counterpartとは操作範囲が異なるため、下記の公開配信pinを進めない。
+
+```yaml
+cms_repository: Xpotato1024/Xpotato-Server
+cms_server_revision: 14f80b6612933334ef7fa4815678fc97bc8ace12
+cms_merge_pr: 102
+cms_adr: docs/decisions/ADR-0035-owner-cms-draft-staging.md
+cms_desired: inventory/desired/website-editor.json
+cms_operations: docs/operations/website-editor-setup.md
+cms_provider_adapter: tools/website_editor.mjs
+```
+
+Siteの接続CLIはprovider codeをimportする前に、この固定revision、cleanなcheckout、Serverのmainへの統合を確認する。無関係なServer mainの前進だけでは再pinしない。参照はSite→Serverの一方向とし、ServerへSite SHAを戻して固定しない。
+
+本人依頼のCMS接続工程は専用Draft bucket・専用Worker・同一originのAPI routeとGitHub Appを対象とする。公開Siteの配信は既存の保護された手順を用いる。公開/原本/保護媒体の変更、記事公開、有料プランへの変更、GC有効化はこの設定工程に含めない。コード採用と実リソース作成・本人ログイン・保存の受入れは区別する。
 
 ## Exact merged counterpart
 

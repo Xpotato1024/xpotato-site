@@ -29,6 +29,8 @@ const hash = async (bytes: Uint8Array) =>
     .join("");
 const env = (bucket = new MemoryBucket()): Environment => ({
   DRAFT_MEDIA: bucket,
+  GITHUB_APP_ID: "123",
+  EDITOR_REPOSITORY: "Xpotato1024/xpotato-site",
   GITHUB_CLIENT_ID: "fixture-app",
   GITHUB_CLIENT_SECRET: "fixture-secret",
   SESSION_SECRET: "fixture-session-secret-at-least-32-characters",

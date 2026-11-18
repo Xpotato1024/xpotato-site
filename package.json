@@ -91,7 +91,9 @@
     "tools:readiness": "tsx ops/qa/installed-tools.ts",
     "site:output:check": "tsx ops/qa/site-output.ts",
     "format": "prettier --write \"**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,astro,css,yml,yaml}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,astro,css,yml,yaml}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,astro,css,yml,yaml}\"",
+    "editor:connect": "tsx ops/deployment/editor-connect.ts",
+    "editor:runtime": "npm run build --workspace @xpotato/editor-api && tsx ops/qa/editor-worker-smoke.ts"
   },
   "devDependencies": {
     "@astrojs/compiler": "2.13.1",
@@ -113,7 +115,8 @@
     "vega": "6.4.0",
     "vega-lite": "6.5.0",
     "vitest": "4.1.11",
-    "wrangler": "4.151.3"
+    "wrangler": "4.151.3",
+    "miniflare": "5.20261019.1-beta"
   },
   "overrides": {
     "get-uri": {

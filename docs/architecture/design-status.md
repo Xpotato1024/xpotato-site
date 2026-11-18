@@ -11,6 +11,8 @@ last_verified: 2026-11-18
 
 [ADR-0080](../design/adr/0080-current-implementation-only.md)の整理方針は本人承認済みです。旧移行実装の再現を現在の開発の前提にしません。ContentId・公開URL・媒体・権利・44記事のholdを維持し、現在のRegistryと成果物を直接検証します。コード変更の取り込み状態とCIは対応PRで確認します。
 
+[ADR-0082](../design/adr/0082-native-cms-connection.md)の初回接続方式は、GitHub App Manifestと固定Wranglerを用いる。CMS専用Server counterpartは[Infrastructure Handoff](infrastructure-handoff.md)に固定し、本人認証と実保存の確認は下記の実環境受入れへ残す。
+
 ## 実環境との区別
 
 - 既存公開サイトの配信状況は[現行配信状態](../operations/current-deployment-status.md)だけを参照します。本整理は本番デプロイではありません。

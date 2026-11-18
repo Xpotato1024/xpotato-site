@@ -1,3 +1,4 @@
+import { connectionStatus } from "./connection.js";
 import { acceptGitHubActivity } from "./webhook.js";
 import {
   GitRepository,
@@ -81,6 +82,10 @@ export function createHandler(ports: RuntimePorts = {}) {
           createGitHubTransport(current.token, env.EDITOR_REPOSITORY || defaultRepository),
           env.EDITOR_REPOSITORY || defaultRepository,
         );
+
+      if (route === "/connection" && request.method === "GET") {
+        return json(await connectionStatus(env, repository));
+      }
 
       // awaitしないとhandler内の非同期失敗がこの共通エラー応答を通らない。
       const gitResponse = await handleGitRoute({ request, url, route, repository, current });

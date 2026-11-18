@@ -1,3 +1,4 @@
+import { verifyGitHubInstallation } from "./github-access.js";
 import { APIError, type Environment, type Session } from "./types.js";
 const cookieName = "__Host-xpotato-editor",
   stateCookie = "__Host-xpotato-editor-oauth";
@@ -58,6 +59,8 @@ const makeCookie = (name: string, value: string, maxAge: number) =>
   name + "=" + value + "; Path=/; Max-Age=" + maxAge + "; Secure; HttpOnly; SameSite=Lax";
 export function configured(env: Environment): boolean {
   return Boolean(
+    /^[1-9][0-9]*$/u.test(env.GITHUB_APP_ID ?? "") &&
+    env.EDITOR_REPOSITORY &&
     env.GITHUB_CLIENT_ID &&
     env.GITHUB_CLIENT_SECRET &&
     env.OWNER_GITHUB_ID &&
@@ -145,8 +148,11 @@ export async function callback(
       redirect_uri: env.EDITOR_ORIGIN + "/editor-api/auth/callback",
     }),
     redirect: "error",
+    signal: AbortSignal.timeout(15000),
   });
-  if (!exchange.ok) throw new APIError("OAUTH_EXCHANGE_FAILED", 401);
+  if (!exchange.ok) {
+    throw new APIError("OAUTH_EXCHANGE_FAILED", 401);
+  }
   const data = (await exchange.json()) as { access_token?: string; expires_in?: number };
   if (!data.access_token) throw new APIError("OAUTH_EXCHANGE_FAILED", 401);
   const profile = await fetcher("https://api.github.com/user", {
@@ -156,10 +162,20 @@ export async function callback(
       Authorization: "Bearer " + data.access_token,
     },
     redirect: "error",
+    signal: AbortSignal.timeout(15000),
   });
-  if (!profile.ok) throw new APIError("OWNER_VERIFICATION_FAILED", 403);
+  if (!profile.ok) {
+    throw new APIError("OWNER_VERIFICATION_FAILED", 403);
+  }
   const user = (await profile.json()) as { id: number; login: string };
   if (String(user.id) !== env.OWNER_GITHUB_ID) throw new APIError("OWNER_ONLY", 403);
+  await verifyGitHubInstallation(data.access_token, env, fetcher);
+  if (
+    data.expires_in !== undefined &&
+    (!Number.isFinite(data.expires_in) || data.expires_in <= 0)
+  ) {
+    throw new APIError("OAUTH_EXCHANGE_FAILED", 401);
+  }
   const maxAge = Math.min(3600, data.expires_in ?? 3600),
     value: Session = {
       userId: String(user.id),

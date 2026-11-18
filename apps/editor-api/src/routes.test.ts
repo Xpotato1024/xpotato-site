@@ -15,6 +15,8 @@ const identity: Session = {
 function environment(bucket = new MemoryBucket()): Environment {
   return {
     DRAFT_MEDIA: bucket,
+    GITHUB_APP_ID: "123",
+    EDITOR_REPOSITORY: "Xpotato1024/xpotato-site",
     GITHUB_CLIENT_ID: "fixture",
     GITHUB_CLIENT_SECRET: "fixture-secret",
     SESSION_SECRET: "fixture-only-session-secret-32-characters",
@@ -27,6 +29,7 @@ const url = (route: string) => "https://xpotato.example/editor-api" + route;
 
 describe("API routing preserves the authorization and failure boundary", () => {
   it.each([
+    ["GET", "/connection"],
     ["GET", "/branches"],
     ["POST", "/branch"],
     ["POST", "/save"],
