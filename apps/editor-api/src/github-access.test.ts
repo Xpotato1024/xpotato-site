@@ -28,7 +28,9 @@ function fixture() {
   };
   const repos = { total_count: 1, repositories: [{ full_name: "owner/site" }] };
   const paths: string[] = [];
-  const transport = (async (url: string | URL | Request) => {
+  const transport = (async (url: string | URL | Request, options?: RequestInit) => {
+    // GitHubの全通信で自動redirectをせず、資格情報を別ホストへ転送しない。
+    expect(options?.redirect).toBe("manual");
     const path = new URL(String(url)).pathname;
     paths.push(path);
     if (path === "/login/oauth/access_token")
@@ -92,6 +94,70 @@ describe("GitHub App connection", () => {
     expect(f.paths.at(-1)).toBe("/user/installations/45/repositories");
   });
 
+  it("refuses a GitHub OAuth redirect without forwarding the code or client secret", async () => {
+    const env = environment();
+    const saved = await seal(
+      { state: "random-state", verifier: "proof-verifier", expires: Date.now() + 60000 },
+      env.SESSION_SECRET,
+    );
+    const requests: { url: string; redirect: RequestRedirect | undefined }[] = [];
+    const fetcher = (async (url: string | URL | Request, init?: RequestInit) => {
+      requests.push({ url: String(url), redirect: init?.redirect });
+      return new Response(null, {
+        status: 302,
+        headers: { Location: "https://attacker.example/token" },
+      });
+    }) as typeof fetch;
+    await expect(
+      callback(
+        new Request(
+          env.EDITOR_ORIGIN + "/editor-api/auth/callback?state=random-state&code=temporary",
+          {
+            headers: { Cookie: "__Host-xpotato-editor-oauth=" + saved },
+          },
+        ),
+        env,
+        fetcher,
+      ),
+    ).rejects.toMatchObject({ code: "OAUTH_EXCHANGE_FAILED", status: 401 });
+    expect(requests).toEqual([
+      { url: "https://github.com/login/oauth/access_token", redirect: "manual" },
+    ]);
+  });
+
+  it.each([
+    ["/login/oauth/access_token", "OAUTH_TOKEN_RESPONSE_UNEXPECTED"],
+    ["/user", "OAUTH_USER_RESPONSE_UNEXPECTED"],
+  ])("reports %s malformed JSON without leaking provider bytes", async (path, code) => {
+    const env = environment();
+    const f = fixture();
+    const state = await seal(
+      { state: "random-state", verifier: "proof-verifier", expires: Date.now() + 60000 },
+      env.SESSION_SECRET,
+    );
+    const provider = (async (url: string | URL | Request, options?: RequestInit) => {
+      if (new URL(String(url)).pathname === path) {
+        return new Response("sensitive-upstream-body", {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return f.transport(url, options);
+    }) as typeof fetch;
+    await expect(
+      callback(
+        new Request(
+          env.EDITOR_ORIGIN + "/editor-api/auth/callback?state=random-state&code=temporary",
+          {
+            headers: { Cookie: "__Host-xpotato-editor-oauth=" + state },
+          },
+        ),
+        env,
+        provider,
+      ),
+    ).rejects.toMatchObject({ code, status: 500 });
+  });
+
   it.each(["/login/oauth/access_token", "/user"])(
     "ends login when %s stops responding",
     async (stalledPath) => {
@@ -132,7 +198,13 @@ describe("GitHub App connection", () => {
             env,
             fetcher,
           ),
-        ).rejects.toMatchObject({ name: "TimeoutError" });
+        ).rejects.toMatchObject({
+          code:
+            stalledPath === "/user"
+              ? "OAUTH_USER_LOOKUP_UNEXPECTED"
+              : "OAUTH_TOKEN_EXCHANGE_UNEXPECTED",
+          status: 500,
+        });
       } finally {
         timeout.mockRestore();
       }

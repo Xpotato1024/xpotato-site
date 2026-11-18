@@ -50,6 +50,12 @@ CMSの静的シェルは通常SiteのProduction artifactに含まれる。 `/edi
 
 2026-11-18の接続ではCloudflareの端末認証は成功したが、古いServer版のBucket Lock読取り `/locks` がHTTP 404（error 10015）で停止した。公式APIは単数形 `/lock` で、同じR2 bucketの応答はHTTP 200。Server PR #103で修正し、CMS用Server固定版を `f37b677309de13597b442bb3a06d4e38da06b48f` に更新した。認証失敗と誤診して繰返しログインしない。R2バケットは既に存在し、今回のreadbackで作成・削除・公開の副作用は起きていない。
 
+## GitHub OAuth callbackの復旧
+
+Cloudflare Workersでは `fetch({ redirect: "error" })` が未実装で、認可コードの交換前に `TypeError` が発生する。旧実装は `REQUEST_FAILED` と表示して失敗段階を隠していた。GitHub APIとOAuthの外向き通信は `redirect: "manual"` に固定し、非2xx応答を拒否する。OAuthコードやBearer tokenをredirect先へ転送しない。GitHubからの3xxは成功と扱わず、インストール対象を拡大して回避しない。
+
+失敗したcallback URLをリロードしない。認可コードは一度限りなので `/editor-api/auth/start` から新規に開始する。通信例外は `OAUTH_TOKEN_EXCHANGE_UNEXPECTED` 等の安全な失敗段階で通知し、GitHubの秘密値やプロバイダー応答本文を表示しない。
+
 ## 接続後の確認
 
 CMSにGitHubと私有媒体の状態が別々に表示される。これは認証後の読取り検査であり、保存完了の証明ではない。本人が少量の試験記事と画像を作り、Git保存→Draft PR→正規Astroレビュー→別端末復元を確認する。競合時は本文が残ること、ログアウト後は私有画像を取得できないことも確認する。正式な記事公開は従来の別工程。

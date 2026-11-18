@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   GitRepository,
   GitError,
+  createGitHubTransport,
   assertWorkingBranch,
   type GitRequest,
   type GitTransport,
@@ -53,6 +54,27 @@ function fixture() {
   };
   return { repository: new GitRepository(api, "test/repo"), state, calls, source };
 }
+describe("GitHub API transport preserves credentials at redirect boundaries", () => {
+  it("never follows an unexpected redirect while carrying the user token", async () => {
+    const calls: { destination: string; redirect: RequestRedirect | undefined }[] = [];
+    const fetcher = (async (url: string | URL | Request, options?: RequestInit) => {
+      calls.push({ destination: String(url), redirect: options?.redirect });
+      return new Response(null, {
+        status: 302,
+        headers: { Location: "https://attacker.example/token" },
+      });
+    }) as typeof fetch;
+    const api = createGitHubTransport("private-token", "owner/site", fetcher);
+    await expect(api({ method: "GET", path: "/branches" })).rejects.toMatchObject({
+      code: "GIT_UPSTREAM_REDIRECT",
+      status: 502,
+    });
+    expect(calls).toEqual([
+      { destination: "https://api.github.com/repos/owner/site/branches", redirect: "manual" },
+    ]);
+  });
+});
+
 describe("Git updates are snapshot-bound and do not publish", () => {
   it("refuses direct main/dev writes and ref escapes", () => {
     for (const branch of [
