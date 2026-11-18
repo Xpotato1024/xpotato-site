@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { blockTemplates, moduleChildKinds } from "@xpotato/editor-core/blocks";
 export type BlockKind = keyof typeof blockTemplates;
 interface Choice {
@@ -126,12 +126,21 @@ export function BlockPalette({
   allowed,
   onInsert,
   onClose,
+  modal = false,
 }: {
   allowed: BlockKind[];
   onInsert: (kind: BlockKind) => void;
   onClose: () => void;
+  modal?: boolean;
 }) {
   const [query, setQuery] = useState("");
+  const search = useRef<HTMLInputElement>(null);
+  const palette = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // Desktop keeps its inline palette in view. Mobile uses a viewport-anchored dialog.
+    if (!modal) palette.current?.scrollIntoView({ block: "nearest" });
+    search.current?.focus({ preventScroll: true });
+  }, [modal]);
   const choices = useMemo(
     () =>
       blockChoices.filter(
@@ -146,7 +155,9 @@ export function BlockPalette({
   return (
     <div
       className="cms-insert-palette"
+      ref={palette}
       role="dialog"
+      aria-modal={modal || undefined}
       aria-label="ブロックを挿入"
       onKeyDown={(event) => {
         if (event.key === "Escape") {
@@ -158,7 +169,7 @@ export function BlockPalette({
       <div className="cms-palette-header">
         <input
           type="search"
-          autoFocus
+          ref={search}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="ブロックを検索"

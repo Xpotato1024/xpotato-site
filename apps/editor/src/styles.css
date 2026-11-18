@@ -127,6 +127,9 @@ h3 {
   display: none !important;
 }
 .editor-app {
+  position: fixed;
+  inset-inline: 0;
+  top: var(--editor-viewport-offset-top, 0px);
   height: var(--editor-viewport-height, 100dvh);
   display: flex;
   flex-direction: column;

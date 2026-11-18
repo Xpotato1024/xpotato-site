@@ -310,6 +310,58 @@ try {
   assert.equal(geometry.whitespace, "pre-wrap");
   const persisted = (await savedDraft(page)).source;
   await page.screenshot({ path: resolve(out, "editor-mobile.png"), fullPage: true });
+  beginPhase("mobile insertion with software keyboard viewport");
+  await showBlocks(page);
+  await page.locator(".editing-main").evaluate((element) => {
+    element.scrollTop = 0;
+  });
+  const beforePaletteScroll = await page
+    .locator(".editing-main")
+    .evaluate((element) => element.scrollTop);
+  await blocks.getByRole("button", { name: "＋ 挿入", exact: true }).click();
+  const mobilePalette = page.getByRole("dialog", { name: "ブロックを挿入", exact: true });
+  const search = mobilePalette.getByRole("searchbox", { name: "ブロックを検索" });
+  await search.waitFor();
+  assert.equal(await mobilePalette.getAttribute("aria-modal"), "true");
+  assert.equal(await page.locator(".cms-insert-overlay").count(), 1);
+  assert.equal(await search.evaluate((element) => element === document.activeElement), true);
+  assert.equal(
+    await page.locator(".editing-main").evaluate((element) => element.scrollTop),
+    beforePaletteScroll,
+    "Focusing insertion search must not scroll the underlying document",
+  );
+  const keyboardGeometry = await page.evaluate(async () => {
+    const viewport = window.visualViewport;
+    if (!viewport) throw Error("VisualViewport required for keyboard regression test");
+    Object.defineProperty(viewport, "height", { value: 375, configurable: true });
+    Object.defineProperty(viewport, "offsetTop", { value: 24, configurable: true });
+    viewport.dispatchEvent(new Event("resize"));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const overlay = document.querySelector(".cms-insert-overlay");
+    const list = overlay?.querySelector(".cms-palette-scroll");
+    const app = document.querySelector(".editor-app");
+    const result = {
+      overlayTop: overlay?.getBoundingClientRect().top,
+      overlayHeight: overlay?.getBoundingClientRect().height,
+      appTop: app?.getBoundingClientRect().top,
+      appHeight: app?.getBoundingClientRect().height,
+      listHeight: list?.getBoundingClientRect().height,
+    };
+    delete viewport.height;
+    delete viewport.offsetTop;
+    viewport.dispatchEvent(new Event("resize"));
+    return result;
+  });
+  assert(Math.abs(keyboardGeometry.overlayTop - 24) <= 1);
+  assert(Math.abs(keyboardGeometry.overlayHeight - 375) <= 1);
+  assert(Math.abs(keyboardGeometry.appTop - 24) <= 1);
+  assert(Math.abs(keyboardGeometry.appHeight - 375) <= 1);
+  assert(keyboardGeometry.listHeight > 100, "Suggestions remain usable above the keyboard");
+  await search.fill("引用");
+  await mobilePalette.getByRole("button", { name: /引用/u }).waitFor();
+  await mobilePalette.getByRole("button", { name: "挿入メニューを閉じる" }).click();
+  assert.equal(await page.locator(".cms-insert-overlay").count(), 0);
+  assert.equal((await savedDraft(page)).source, persisted);
   beginPhase("IndexedDB reopening");
   await page.reload();
   await title.waitFor();

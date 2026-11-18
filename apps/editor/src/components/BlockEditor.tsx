@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   blockTemplates,
   createBlockDocument,
@@ -74,12 +75,34 @@ export function BlockEditor({
   const [initialCaret, setInitialCaret] = useState<number | undefined>();
   const [sourceRegions, setSourceRegions] = useState<Set<string>>(() => new Set());
   const [paletteAfter, setPaletteAfter] = useState<number | null>(null);
+  const [paletteMobile, setPaletteMobile] = useState(
+    () => window.matchMedia("(max-width: 800px)").matches,
+  );
+  const paletteTrigger = useRef<HTMLButtonElement | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const [composing, setComposing] = useState(false);
   const list = useRef<HTMLDivElement>(null);
   const callbacks = useRef({ onChange, onActiveBlock });
   callbacks.current = { onChange, onActiveBlock };
   const allowed = useMemo(() => allowedBlockKinds(parentModule), [parentModule]);
+  useEffect(() => {
+    if (paletteAfter === null) return;
+    const mediaQuery = window.matchMedia("(max-width: 800px)");
+    const update = () => setPaletteMobile(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, [paletteAfter]);
+  const closePalette = () => {
+    setPaletteAfter(null);
+    paletteTrigger.current?.focus({ preventScroll: true });
+  };
+  const openPalette = (index: number, trigger: HTMLButtonElement) => {
+    paletteTrigger.current = trigger;
+    // Determine layout before the search is mounted; an initial inline frame scrolls iOS.
+    setPaletteMobile(window.matchMedia("(max-width: 800px)").matches);
+    setPaletteAfter(index);
+  };
   useEffect(() => {
     if (body !== lastBody.current) {
       lastBody.current = body;
@@ -199,11 +222,12 @@ export function BlockEditor({
           <button
             type="button"
             disabled={composing}
-            onClick={() =>
-              setPaletteAfter(
+            onClick={(event) =>
+              openPalette(
                 active
                   ? model.regions.findIndex((region) => region.id === active)
                   : model.regions.length - 1,
+                event.currentTarget,
               )
             }
             aria-expanded={paletteAfter !== null}
@@ -212,9 +236,17 @@ export function BlockEditor({
           </button>
         </div>
       )}
-      {paletteAfter !== null && (
-        <BlockPalette allowed={allowed} onInsert={insert} onClose={() => setPaletteAfter(null)} />
-      )}
+      {paletteAfter !== null &&
+        (paletteMobile ? (
+          createPortal(
+            <div className="cms-insert-overlay">
+              <BlockPalette allowed={allowed} onInsert={insert} onClose={closePalette} modal />
+            </div>,
+            document.body,
+          )
+        ) : (
+          <BlockPalette allowed={allowed} onInsert={insert} onClose={closePalette} />
+        ))}
       {model.parseError && (
         <p className="cms-field-error">
           構文が未完成です。MDXを編集できます。原文は保持されています。
@@ -369,7 +401,7 @@ export function BlockEditor({
                 className="cms-insert-after"
                 aria-label={info.label + "の後に挿入"}
                 disabled={composing}
-                onClick={() => setPaletteAfter(index)}
+                onClick={(event) => openPalette(index, event.currentTarget)}
               >
                 ＋
               </button>
@@ -380,7 +412,7 @@ export function BlockEditor({
       {!model.regions.length && (
         <div className="cms-empty-blocks">
           <p>{parentModule ? "ブロックを追加" : "ここから書き始めましょう。"}</p>
-          <button type="button" onClick={() => setPaletteAfter(-1)}>
+          <button type="button" onClick={(event) => openPalette(-1, event.currentTarget)}>
             ＋{" "}
             {parentModule === "Gallery"
               ? "画像"

@@ -84,6 +84,34 @@ export default function App() {
   const workspace = useDraftWorkspace(setError);
   const git = useGitWorkspace(workspace, setError, setNotice);
   const environment = useEditorEnvironment();
+  // Keep the editor anchored to the visible iOS viewport while the software keyboard resizes it.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const root = document.documentElement;
+    let frame = 0;
+    const update = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        root.style.setProperty(
+          "--editor-viewport-height",
+          `${Math.max(1, viewport?.height ?? window.innerHeight)}px`,
+        );
+        root.style.setProperty("--editor-viewport-offset-top", `${viewport?.offsetTop ?? 0}px`);
+      });
+    };
+    update();
+    window.addEventListener("resize", update);
+    viewport?.addEventListener("resize", update);
+    viewport?.addEventListener("scroll", update);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", update);
+      viewport?.removeEventListener("resize", update);
+      viewport?.removeEventListener("scroll", update);
+      root.style.removeProperty("--editor-viewport-height");
+      root.style.removeProperty("--editor-viewport-offset-top");
+    };
+  }, []);
   const { draft, parsed } = workspace;
   const media = usePreviewMedia(draft.id);
   const editorSeries = useMemo<EditorSeriesPreview>(() => {
