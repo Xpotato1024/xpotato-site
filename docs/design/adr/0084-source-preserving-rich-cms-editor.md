@@ -24,6 +24,8 @@ semantic moduleの項目は共有スキーマから生成する。親要素の�
 
 CodeMirrorのテーマはopen ShadowRoot内のconstructed stylesheetを使う。CMSのCSPに`unsafe-inline`や固定nonceを追加しない。通常公開ページへCMSのruntimeを持ち込まない。
 
+MDX入力面は`contenteditable="plaintext-only"`を指定する。構文色分けはCodeMirrorのclassとテーマで表示し、全選択して本文を置き換えるときにブラウザーが以前の色・太さをinline styleとして引き継がないようにする。同じ全置換操作で、改行を含むMDXの完全一致とCSP違反がないことを確認する。HTMLのplain text入力の仕様は[MDN](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/contenteditable)を参照する。
+
 ## 読み込みと予算
 
 リッチ編集、MDXソース編集、数式、サイトプレビューは必要時に読み込む。React本体と`@lexical/react`・Radixを同じ名前一致でまとめない。Viteのpreload helperも小さい専用chunkへ置く。helperが大きな遅延chunkへ入ると、初期画面からそのchunk全体が必要になるためである。

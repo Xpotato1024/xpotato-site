@@ -93,7 +93,12 @@ try {
   await title.fill("CMS 動作確認（合成データ）");
   const initial =
     "## 見出しの位置\n\n本文の __強調__ と [参照](https://example.com)。\n\n別の段落。\n";
-  await writeBody(page, initial);
+  const initialSource = await writeBody(page, initial);
+  assert.equal(
+    await initialSource.getAttribute("contenteditable"),
+    "plaintext-only",
+    "Source editing accepts plain text without carrying syntax-highlight styles into input",
+  );
   const before = (await savedDraft(page)).source;
   assert.equal(await readBody(page), initial);
   assert.doesNotMatch(
@@ -175,6 +180,11 @@ try {
     childSource +
     '\n</Gallery>\n\n<Details summary="詳細">\n\n説明。\n\n</Details>\n\n```math label="式の説明"\n\\sigma = \\sqrt{\\frac{1}{N}}\n```\n\n```typescript\nconst value: number = 1;\n```\n';
   await writeBody(page, fixture);
+  assert.equal(
+    await readBody(page),
+    fixture,
+    "Replacing highlighted source preserves the complete multiline MDX fixture",
+  );
   await showBlocks(page);
   const gallery = page.locator(".cms-module-gallery").first();
   const gallerySettings = gallery

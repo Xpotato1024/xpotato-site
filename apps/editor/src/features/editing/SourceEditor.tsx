@@ -67,6 +67,7 @@ export function SourceEditor(props: Props) {
           keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
           EditorView.contentAttributes.of({
             "aria-label": callbacks.current.label ?? "MDX本文",
+            contenteditable: "plaintext-only",
             spellcheck: "false",
             autocapitalize: "off",
             autocorrect: "off",
