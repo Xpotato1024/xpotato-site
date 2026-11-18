@@ -41,6 +41,16 @@ CodeMirrorのテーマはopen ShadowRoot内のconstructed stylesheetを使う。
 
 公開記事、検索、ツール、共有メニュー、CSS等の既存上限は変更しない。CMS用上限の変更で通常公開ページのruntime混入を許可しない。今後は全graphと初期graphの両方を満たし、必要な依存変更には新しい計測と理由を残す。
 
+## 配信後照合の件数予算
+
+CMSのプレビューは本文が今後変わっても公開サイトと同じ日本語フォントを表示できるよう、サイトのunicode-range付き367 subsetと編集画面用core 4個を同梱する。文字ごとの遅延読込とPWA cacheの内容照合を維持し、初期画面で371個を一括取得しない。
+
+この追加で、commit `470ad39d740827247513a8c13d4e008340654493` のsite/editor build、search/PWA生成物と既存media registryから導く配信照合計画は677対象・64,954,353 bytesになり、CI run `44341933441` の通常publication compilerが従来の512対象上限で停止した。内訳はCMS font 371、CMS runtime等18、サイトCSS/JS 47、その他サイト資産88、既存の正規外部画像153である。これはファイルと登録bytesの計測であり、本番GETや配信成功の記録ではない。
+
+全てのfontをpath/size/hashで照合するため、件数上限を768、factory全体のGET上限を `2 × 768 + before 3 + after 2 = 1541` に更新する。現在の677件に対して91件、約13%の余裕を持たせる。対象総量64MiB、実観測総量138MiB、通常の個別body 2MiB（既存Prime chunkだけ6MB）、全体120秒、1要求10秒、最大3観測は変更しない。3回目は残余予算内の不一致だけを扱い、期限内の完了を保証しない。対象の省略やhash検証の免除は行わず、超過は引き続き通常CIで失敗する。
+
+ADR-0064の512対象/1029GETは導入時の記録であり、以後の件数はこの変更を反映した共有policyを使う。変更はアプリケーション内部の有限な照合件数だけで、provider quota、資格情報、公開権限、配信の起動・承認条件は維持する。
+
 ## 検証と制約
 
 既存の全content collectionの本文についてbyte単位の無変更round tripを確認する。部分置換、CRLF保持、任意位置への移動、親子属性の分離、booleanの保存、未知構文の保持、source anchorの曖昧性を回帰テストにする。初期graphの検査は遅延import・modulepreload・許可graph外の資源をfixtureで検証する。

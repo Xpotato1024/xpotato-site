@@ -3,10 +3,11 @@ import { stop } from "../manual-deployment-provider.mjs";
 import { publicationMediaOrigin } from "../publication-media-policy.mjs";
 // A complete initial pass and one re-observation pass, plus before(3)/after(2).
 // These are finite application budgets, checked against the actual artifact in CI.
+// CMS site-font subsets require 677 targets at introduction (ADR-0084).
 export const publicReadbackPolicy = Object.freeze({
-  maxTargets: 512,
+  maxTargets: 768,
   maxTargetBytes: 64 * 1024 * 1024,
-  maxReads: 1029,
+  maxReads: 1541,
   maxObservedBytes: 138 * 1024 * 1024,
   phaseMs: 120000,
   requestMs: 10000,
