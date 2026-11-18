@@ -28,7 +28,7 @@ const colors = HighlightStyle.define([
   { tag: [tags.keyword, tags.tagName], color: "#79519d" },
   { tag: [tags.string, tags.attributeValue, tags.link], color: "#286c5a" },
   { tag: tags.attributeName, color: "#92621b" },
-  { tag: [tags.comment, tags.meta], color: "#777181" },
+  { tag: [tags.comment, tags.meta], color: "#625e6e" },
   { tag: tags.strong, fontWeight: "700" },
   { tag: tags.emphasis, fontStyle: "italic" },
   { tag: [tags.number, tags.bool], color: "#a24c35" },

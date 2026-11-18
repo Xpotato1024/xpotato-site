@@ -250,7 +250,7 @@ try {
   await mobile.goto(server.origin + "/editor/");
   await mobile.getByRole("textbox", { name: "タイトル", exact: true }).waitFor();
   await mobile.getByRole("button", { name: "下書き一覧を開く", exact: true }).click();
-  await mobile.getByLabel("読み込み元", { exact: true }).selectOption(branch);
+  await mobile.locator(".repository-panel").getByLabel("読み込み元").selectOption(branch);
   await mobile.getByRole("button", { name: "一覧を取得", exact: true }).click();
   await mobile
     .locator(".repository-documents")

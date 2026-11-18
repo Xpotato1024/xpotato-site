@@ -141,7 +141,7 @@ try {
   );
   await fields.locator("summary").click();
   await fields.getByLabel("ラベル", { exact: true }).fill("新しい親ラベル");
-  await fields.getByLabel("PCの列数", { exact: true }).selectOption("3");
+  await fields.getByLabel("PCの列数").selectOption("3");
   await fields.getByRole("button", { name: "設定を適用", exact: true }).click();
   const afterParent = await readBody(page);
   assert(afterParent.includes(childSource), "Parent settings preserve child source exactly");
