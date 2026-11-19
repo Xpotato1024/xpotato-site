@@ -30,6 +30,8 @@ import { useRegistryWorkspace } from "./features/workspace/useRegistryWorkspace.
 import { WorkspaceHome, WorkspaceNavigation } from "./features/workspace/WorkspaceHome.js";
 import { StartWorkspace } from "./features/workspace/StartWorkspace.js";
 import { RegistryWorkspace } from "./features/workspace/RegistryWorkspace.js";
+import { reviewCommentSelection } from "./features/review/review-actions.js";
+import { useReviewComposerDrafts } from "./features/review/useReviewComposerDrafts.js";
 import {
   cloneLocalDraftForBranch,
   localDrafts,
@@ -117,6 +119,7 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [panel, setPanel] = useState<Panel | null>(null);
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
+  const [reviewSelectionRequest, setReviewSelectionRequest] = useState(0);
   const [editorVisited, setEditorVisited] = useState(false);
   const [selection, setSelection] = useState<SourceSelection | null>(null);
   const [reveal, setReveal] = useState<(LocatedAnchor & { token: number }) | null>(null);
@@ -134,6 +137,7 @@ export default function App() {
     if (page === "edit") setEditorVisited(true);
   }, [page]);
   const { draft, parsed } = workspace;
+  const [reviewComposerDraft, changeReviewComposer] = useReviewComposerDrafts(draft.id);
   const media = usePreviewMedia(draft.id);
   const editorSeries = useMemo<EditorSeriesPreview>(() => {
     const current = parsed
@@ -163,6 +167,7 @@ export default function App() {
   const selectBlock = useCallback(
     (block: { start: number; end: number; source: string; index: number }) => {
       activeBlock.current = block;
+      setSelectedCommentId(null);
       setSelection({
         quote: block.source,
         start: block.start,
@@ -295,7 +300,7 @@ export default function App() {
     for (const item of sample.media) await saveLocalMedia(item);
     await workspace.openLocal(sample.draft);
     await workspace.persist();
-    setNotice("操作サンプルをこの端末に作成しました。添削の色・状態とグループ移動を試せます。");
+    setNotice("操作サンプルをこの端末に保存しました。");
     openEditor();
   }
   async function exportBundle() {
@@ -425,7 +430,6 @@ export default function App() {
             <span className="editor-brand">
               <span className="brand-mark">X</span>potato
             </span>
-            <span className="workspace-brand-caption">CMS</span>
           </button>
           <button
             type="button"
@@ -443,7 +447,7 @@ export default function App() {
             <div className="message error" role="alert">
               {errorLabel(error)}
               <button type="button" aria-label="エラーを閉じる" onClick={() => setError("")}>
-                ×
+                <WorkspaceIcon name="close" />
               </button>
             </div>
           )}
@@ -451,7 +455,7 @@ export default function App() {
             <div className="message" role="status">
               {notice}
               <button type="button" aria-label="通知を閉じる" onClick={() => setNotice("")}>
-                ×
+                <WorkspaceIcon name="close" />
               </button>
             </div>
           )}
@@ -509,9 +513,7 @@ export default function App() {
             {page === "connection" && (
               <section className="workspace-connection">
                 <header className="workspace-page-heading">
-                  <p className="eyebrow">CONNECTION</p>
                   <h1>接続</h1>
-                  <p>GitHubへの保存と下書き画像の同期を確認します。</p>
                 </header>
                 <ConnectionStatus auth={git.auth} />
                 {git.auth.authenticated ? (
@@ -599,12 +601,21 @@ export default function App() {
                   onSource={workspace.setSource}
                   onBody={(body) => workspace.edit({}, body)}
                   onMetadata={(fields) => workspace.edit(fields)}
-                  onSelection={setSelection}
+                  onSelection={(next) => {
+                    setSelection(next);
+                    setSelectedCommentId(null);
+                  }}
                   onActiveBlock={selectBlock}
                   reviewActive={panel === "review"}
                   activeCommentId={selectedCommentId}
-                  onReviewSelect={(id) => {
+                  onReviewSelect={(id, trigger) => {
+                    const comment = draft.annotations?.find((item) => item.id === id);
+                    setSelection(
+                      parsed && comment ? reviewCommentSelection(parsed.body, comment) : null,
+                    );
+                    panelTrigger.current = trigger;
                     setSelectedCommentId(id);
+                    setReviewSelectionRequest((request) => request + 1);
                     setPanel("review");
                   }}
                   reveal={reveal}
@@ -729,6 +740,9 @@ export default function App() {
                         authenticated={git.auth.authenticated}
                         onChange={reviewChanged}
                         selectedCommentId={selectedCommentId}
+                        selectionRequest={reviewSelectionRequest}
+                        composerDraft={reviewComposerDraft}
+                        onComposerChange={changeReviewComposer}
                         onSelect={setSelectedCommentId}
                         onDraft={workspace.setDraft}
                         onLocate={(location) => {

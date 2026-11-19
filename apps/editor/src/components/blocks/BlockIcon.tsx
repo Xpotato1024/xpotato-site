@@ -41,7 +41,7 @@ export function BlockIcon({ name }: { name: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={name === "grip" || name === "more" ? 3 : 1.7}
+      strokeWidth={name === "grip" || name === "more" ? 3 : 1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"

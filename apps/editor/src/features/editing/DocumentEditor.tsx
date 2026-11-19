@@ -25,7 +25,7 @@ interface Props {
   onActiveBlock: (block: { start: number; end: number; source: string; index: number }) => void;
   reviewActive: boolean;
   activeCommentId: string | null;
-  onReviewSelect: (id: string) => void;
+  onReviewSelect: (id: string, trigger: HTMLButtonElement) => void;
   reveal: (LocatedAnchor & { token: number }) | null;
   onError: (message: string) => void;
 }

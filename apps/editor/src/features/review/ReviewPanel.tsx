@@ -15,6 +15,9 @@ import { findMediaSnapshot, type RemoteDraft } from "../../data/media-sync.js";
 import { download } from "../../shared/download.js";
 import { locateReviewComment, reviewMarkState, reviewStateLabel } from "./review-marks.js";
 import { ReviewStatusIcon } from "./ReviewIndicator.js";
+import { ReviewComposer } from "./ReviewComposer.js";
+import { followUpReviewComment, reviewCommentSelection } from "./review-actions.js";
+import type { ReviewComposerDraft } from "./useReviewComposerDrafts.js";
 import "./review-marks.css";
 
 interface Props {
@@ -26,6 +29,9 @@ interface Props {
   onLocate: (location: LocatedAnchor) => void;
   onError: (message: string) => void;
   selectedCommentId?: string | null | undefined;
+  selectionRequest?: number | undefined;
+  composerDraft: ReviewComposerDraft;
+  onComposerChange: (commentId: string | null, value: string) => void;
   onSelect?: ((id: string) => void) | undefined;
 }
 export function ReviewPanel({
@@ -37,18 +43,24 @@ export function ReviewPanel({
   onLocate,
   onError,
   selectedCommentId,
+  selectionRequest = 0,
+  composerDraft,
+  onComposerChange,
   onSelect,
 }: Props) {
   const canSync = authenticated && Boolean(draft.workingBranch && draft.baseCommit);
   const syncUnavailableMessage = authenticated
     ? "同期するには、下書きの開始画面で作業ブランチを選んでください。"
     : "同期するには、GitHubに接続してください。";
-  const [instruction, setInstruction] = useState("");
+  const { instruction, followUps } = composerDraft;
   const [busy, setBusy] = useState(false);
   const [showClosed, setShowClosed] = useState(false);
   const [notice, setNotice] = useState("");
   const { data, body } = parseDraft(draft.source);
   const comments = draft.annotations ?? [];
+  const selectedComment = comments.find((comment) => comment.id === selectedCommentId);
+  const selectedLocation = selectedComment && reviewCommentSelection(body, selectedComment);
+  const manualSelection = selectedCommentId ? null : selection;
   const cards = useRef(new Map<string, HTMLElement>());
   const focusedComment = useRef<string | null>(null);
   useEffect(() => {
@@ -56,16 +68,17 @@ export function ReviewPanel({
       focusedComment.current = null;
       return;
     }
-    if (focusedComment.current === selectedCommentId) return;
+    const focusKey = selectedCommentId + ":" + selectionRequest;
+    if (focusedComment.current === focusKey) return;
     const selected = cards.current.get(selectedCommentId);
     if (!selected) return;
     const frame = requestAnimationFrame(() => {
       selected.scrollIntoView({ block: "nearest" });
       selected.focus({ preventScroll: true });
-      focusedComment.current = selectedCommentId;
+      focusedComment.current = focusKey;
     });
     return () => cancelAnimationFrame(frame);
-  }, [selectedCommentId, comments, showClosed]);
+  }, [selectedCommentId, selectionRequest, comments, showClosed]);
   function act(action: () => void) {
     try {
       action();
@@ -75,18 +88,24 @@ export function ReviewPanel({
     }
   }
   function add() {
-    if (!selection || !instruction.trim()) return;
+    if (!manualSelection || !instruction.trim()) return;
     const next: ReviewComment = {
       id: crypto.randomUUID(),
       contentId: data.id,
-      anchor: anchorSelection(body, selection),
+      anchor: anchorSelection(body, manualSelection),
       instruction: instruction.trim(),
       createdAt: new Date().toISOString(),
       status: "open",
     };
     onChange([...comments, next]);
     onSelect?.(next.id);
-    setInstruction("");
+    onComposerChange(null, "");
+  }
+  function addFollowUp(comment: ReviewComment) {
+    const next = followUpReviewComment(body, comment, followUps[comment.id] ?? "");
+    onChange([...comments, next]);
+    onSelect?.(next.id);
+    onComposerChange(comment.id, "");
   }
   async function load() {
     if (!canSync) {
@@ -203,36 +222,15 @@ export function ReviewPanel({
         <h2>添削</h2>
         <span>{comments.filter((c) => c.status === "open").length}件</span>
       </div>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          act(add);
-        }}
-      >
-        {selection?.quote ? (
-          <blockquote className="selected-quote">
-            {selection.quote.length > 180 ? selection.quote.slice(0, 180) + "…" : selection.quote}
-          </blockquote>
-        ) : (
-          <p className="muted small">本文の範囲、またはブロックを選択して指摘を付けます。</p>
-        )}
-        <label>
-          指摘
-          <textarea
-            rows={3}
-            value={instruction}
-            onChange={(event) => setInstruction(event.target.value)}
-            placeholder="説明を具体的に、ここに比較表を追加、など"
-          />
-        </label>
-        <button
-          type="submit"
-          className="primary"
-          disabled={!selection?.quote || !instruction.trim()}
-        >
-          指摘を追加
-        </button>
-      </form>
+      {!selectedLocation && (
+        <ReviewComposer
+          contextual={Boolean(selectedCommentId)}
+          selection={manualSelection}
+          instruction={selectedCommentId ? (followUps[selectedCommentId] ?? "") : instruction}
+          onInstruction={(value) => onComposerChange(selectedCommentId ?? null, value)}
+          onSubmit={() => act(add)}
+        />
+      )}
       <div className="panel-toolbar">
         <button
           type="button"
@@ -299,6 +297,39 @@ export function ReviewPanel({
           .map((c) => {
             const location = locateReviewComment(body, c);
             const state = reviewMarkState(c);
+            const contextual = c.id === selectedCommentId && location;
+            const composer = contextual && (
+              <ReviewComposer
+                contextual
+                selection={reviewCommentSelection(body, c)}
+                instruction={followUps[c.id] ?? ""}
+                onInstruction={(value) => onComposerChange(c.id, value)}
+                onSubmit={() => act(() => addFollowUp(c))}
+              />
+            );
+            const history = (
+              <>
+                <blockquote>{c.anchor.quote}</blockquote>
+                <p>{c.instruction}</p>
+                {c.proposal && (
+                  <div className="proposal-diff">
+                    <div className="diff-before">
+                      <span>変更前</span>
+                      <pre>
+                        <del>{c.proposal.expected}</del>
+                      </pre>
+                    </div>
+                    <div className="diff-after">
+                      <span>修正案</span>
+                      <pre>
+                        {c.proposal.replacement ? <ins>{c.proposal.replacement}</ins> : "（削除）"}
+                      </pre>
+                    </div>
+                    {c.proposal.reason && <p className="small">{c.proposal.reason}</p>}
+                  </div>
+                )}
+              </>
+            );
             return (
               <article
                 className="review-card"
@@ -331,14 +362,26 @@ export function ReviewPanel({
                     対象へ
                   </button>
                 </div>
-                <blockquote>{c.anchor.quote}</blockquote>
-                <p>{c.instruction}</p>
+                {c.status !== "open" && composer}
+                {contextual && c.status !== "open" ? (
+                  <details className="review-history">
+                    <summary>{c.proposal ? "前の指摘と修正案" : "前の指摘"}</summary>
+                    {history}
+                  </details>
+                ) : (
+                  history
+                )}
                 {!location && c.status === "open" && (
                   <p className="small muted">
                     対象が変更または削除されています。本文を再選択すると指摘を付け直せます。
                   </p>
                 )}
-                {!location && selection?.quote && c.status === "open" && (
+                {!location && c.status !== "open" && c.id === selectedCommentId && (
+                  <p className="small muted">
+                    現在の本文で対象を特定できません。追加の指摘は本文を選び直して付けてください。
+                  </p>
+                )}
+                {!location && manualSelection?.quote && c.status === "open" && (
                   <button
                     type="button"
                     onClick={() =>
@@ -348,7 +391,7 @@ export function ReviewPanel({
                             item.id === c.id
                               ? {
                                   ...item,
-                                  anchor: anchorSelection(body, selection),
+                                  anchor: anchorSelection(body, manualSelection),
                                   proposal: undefined,
                                 }
                               : item,
@@ -359,23 +402,6 @@ export function ReviewPanel({
                   >
                     選択箇所へ付け直す
                   </button>
-                )}
-                {c.proposal && (
-                  <div className="proposal-diff">
-                    <div className="diff-before">
-                      <span>変更前</span>
-                      <pre>
-                        <del>{c.proposal.expected}</del>
-                      </pre>
-                    </div>
-                    <div className="diff-after">
-                      <span>修正案</span>
-                      <pre>
-                        {c.proposal.replacement ? <ins>{c.proposal.replacement}</ins> : "（削除）"}
-                      </pre>
-                    </div>
-                    {c.proposal.reason && <p className="small">{c.proposal.reason}</p>}
-                  </div>
                 )}
                 {c.status === "open" && (
                   <div className="panel-toolbar">
@@ -425,7 +451,8 @@ export function ReviewPanel({
                     )}
                   </div>
                 )}
-                {c.status !== "open" && (
+                {c.status === "open" && composer}
+                {c.status !== "open" && c.status !== "applied" && (
                   <button
                     type="button"
                     onClick={() =>
@@ -435,7 +462,6 @@ export function ReviewPanel({
                             ? {
                                 ...item,
                                 status: "open",
-                                proposal: item.status === "applied" ? undefined : item.proposal,
                               }
                             : item,
                         ),

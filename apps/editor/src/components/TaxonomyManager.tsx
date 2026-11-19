@@ -10,6 +10,7 @@ import {
   type TaxonomyNamespace,
 } from "@xpotato/editor-core/registry";
 import "./registry-management.css";
+import { WorkspaceIcon } from "./WorkspaceIcon.js";
 
 export interface TaxonomyManagerProps {
   taxonomy: TaxonomySnapshot;
@@ -285,7 +286,8 @@ export function TaxonomyManager({
           disabled={disabled || !taxonomy.terms}
           onClick={() => setCreating(filter === "all" ? "topic" : filter)}
         >
-          ＋ 新規追加
+          <WorkspaceIcon name="plus" />
+          新規追加
         </button>
         <label className="check-label">
           <input

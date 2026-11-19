@@ -15,6 +15,7 @@ import {
   type TaxonomyNamespace,
 } from "@xpotato/editor-core/registry";
 import type { LocalDraft } from "../data/storage.js";
+import { WorkspaceIcon } from "./WorkspaceIcon.js";
 
 export interface MetadataPanelProps {
   draft: LocalDraft;
@@ -81,7 +82,7 @@ function Terms({
             onClick={() => onChange(selected.filter((value) => value !== id))}
           >
             {terms.find((term) => term.id === id)?.label ?? id}
-            {multiple && <span aria-hidden="true"> ×</span>}
+            {multiple && <WorkspaceIcon name="close" />}
           </button>
         ))}
       </div>
@@ -120,7 +121,8 @@ function Terms({
       )}
       {onCreate && (
         <button type="button" className="text-button" onClick={onCreate}>
-          ＋ {label}を追加
+          <WorkspaceIcon name="plus" />
+          {label}を追加
         </button>
       )}
     </fieldset>

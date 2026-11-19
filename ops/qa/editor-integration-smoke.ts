@@ -138,7 +138,7 @@ try {
     page = await context.newPage();
   page.on("pageerror", capturePageError);
   await page.goto(server.origin + "/editor/");
-  await page.getByRole("heading", { name: "どこから始めますか", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "原稿", level: 1, exact: true }).waitFor();
   await page
     .locator(".entry-cards")
     .getByRole("button", { name: /^新規作成/u })
@@ -265,7 +265,7 @@ try {
     mobile = await second.newPage();
   mobile.on("pageerror", capturePageError);
   await mobile.goto(server.origin + "/editor/");
-  await mobile.getByRole("heading", { name: "どこから始めますか", exact: true }).waitFor();
+  await mobile.getByRole("heading", { name: "原稿", level: 1, exact: true }).waitFor();
   await mobile
     .locator(".entry-cards")
     .getByRole("button", { name: /^下書きの続き/u })

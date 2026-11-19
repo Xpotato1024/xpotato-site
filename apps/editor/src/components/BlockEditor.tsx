@@ -48,7 +48,7 @@ export interface BlockEditorProps {
   tools?: EditorTool[] | undefined;
   annotations?: readonly ReviewComment[] | undefined;
   activeCommentId?: string | null | undefined;
-  onReviewSelect?: ((id: string) => void) | undefined;
+  onReviewSelect?: ((id: string, trigger: HTMLButtonElement) => void) | undefined;
   /** Children reuse root document locations instead of re-anchoring against a partial body. */
   reviewMarks?: readonly LocatedReviewMark[] | undefined;
   /** Nested semantic modules share absolute offsets with the outer document. */
@@ -145,6 +145,7 @@ export function BlockEditor({
     const region = model.regions[index];
     if (
       region &&
+      !document.activeElement?.closest(".cms-review-indicator") &&
       document.activeElement?.closest("[data-region-id]")?.getAttribute("data-region-id") ===
         region.id
     ) {
@@ -397,12 +398,14 @@ export function BlockEditor({
                     setEditing(null);
                     setInitialCaret(undefined);
                   }
-                  callbacks.current.onActiveBlock?.({
-                    start: offset,
-                    end: baseOffset + range.end,
-                    source: region.source,
-                    index,
-                  });
+                  if (!event.target.closest(".cms-review-indicator")) {
+                    callbacks.current.onActiveBlock?.({
+                      start: offset,
+                      end: baseOffset + range.end,
+                      source: region.source,
+                      index,
+                    });
+                  }
                 }
                 if (active !== region.id) {
                   setActive(region.id);
@@ -536,12 +539,11 @@ export function BlockEditor({
       </div>
       {!model.regions.length && (
         <div className="cms-empty-blocks">
-          <p>{parentModule ? "ブロックを追加" : "ここから書き始めましょう。"}</p>
           <button
             type="button"
             onClick={(event) => openPalette(-1, event.currentTarget, event.detail === 0)}
           >
-            ＋{" "}
+            <BlockIcon name="plus" />
             {parentModule === "Gallery"
               ? "画像"
               : parentModule === "Steps"
@@ -562,7 +564,9 @@ export function BlockEditor({
             openPalette(model.regions.length - 1, event.currentTarget, event.detail === 0)
           }
         >
-          ＋ {parentModule === "Gallery" ? "画像" : parentModule === "Steps" ? "手順" : "ブロック"}
+          <BlockIcon name="plus" />
+          {parentModule === "Gallery" ? "画像" : parentModule === "Steps" ? "手順" : "ブロック"}
+          を追加
         </button>
       )}
     </section>

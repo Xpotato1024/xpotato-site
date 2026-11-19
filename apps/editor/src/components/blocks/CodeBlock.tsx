@@ -1,6 +1,7 @@
 import { useId, useMemo, type Ref } from "react";
 import { blockTree } from "@xpotato/editor-core/blocks";
 import { MathPreview } from "./BlockPreview.js";
+import { readMathMeta, writeMathMeta } from "./math.js";
 export interface CodeFieldsProps {
   code: string;
   language: string;
@@ -21,12 +22,8 @@ export function CodeFields({
 }: CodeFieldsProps) {
   const id = useId();
   const math = language === "math";
-  const labelMatch = /^label="(.*)"(?: print="source")?$/u.exec(meta);
-  const label = labelMatch?.[1] ?? "";
-  const printSource = / print="source"$/u.test(meta);
-  const validMathMeta = /^label="[^"\r\n]{1,160}"(?: print="source")?$/u.test(meta);
-  const updateLabel = (value: string, print = printSource) =>
-    onMeta('label="' + value.replace(/[\r\n]/gu, "") + '"' + (print ? ' print="source"' : ""));
+  const { label, printSource, valid: validMathMeta } = readMathMeta(meta);
+  const updateLabel = (value: string, print = printSource) => onMeta(writeMathMeta(value, print));
   return (
     <div className="cms-code-block">
       <div className="cms-code-options">

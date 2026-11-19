@@ -19,7 +19,7 @@
   margin-block: 1rem;
   padding: 1rem;
   border: 1px solid var(--border-divider);
-  border-radius: 8px;
+  border-radius: var(--cms-control-radius);
   background: var(--surface-control);
 }
 .taxonomy-create fieldset {
@@ -50,7 +50,7 @@
   min-width: 0;
   padding: 0.8rem;
   border: 1px solid var(--border-divider);
-  border-radius: 6px;
+  border-radius: var(--cms-control-radius);
   overflow-wrap: anywhere;
 }
 .taxonomy-record-heading {

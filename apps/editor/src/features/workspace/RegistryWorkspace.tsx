@@ -40,13 +40,7 @@ export function RegistryWorkspace({
   return (
     <div className="registry-workspace">
       <header className="workspace-page-heading">
-        <p className="eyebrow">{kind === "taxonomy" ? "CLASSIFY" : "SERIES"}</p>
         <h1>{kind === "taxonomy" ? "分類・タグ" : "連載・コース"}</h1>
-        <p>
-          {kind === "taxonomy"
-            ? "記事種別ごとの分類とタグを整えます。"
-            : "連載を作り、記事を読む順序を決めます。"}
-        </p>
       </header>
       <section className="registry-workplace" aria-label="管理項目の保存先">
         <div className="registry-status">

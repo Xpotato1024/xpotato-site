@@ -387,6 +387,43 @@ try {
   await blocks.getByRole("textbox", { name: "表の3行1列", exact: true }).waitFor();
   assert.match(await readBody(page), /UIから編集した値/u, "Table cell changes persist as Markdown");
   await showBlocks(page);
+  beginPhase("narrow table controls stay within the table scroll area");
+  await page.setViewportSize({ width: 320, height: 740 });
+  await blocks.getByRole("button", { name: "表を編集", exact: true }).press("Enter");
+  const addColumn = blocks.getByRole("button", { name: "列を追加", exact: true });
+  await addColumn.waitFor();
+  const tableOverflow = await addColumn.evaluate((button) => {
+    let container = button.parentElement;
+    while (
+      container &&
+      !(
+        container.scrollWidth > container.clientWidth &&
+        /auto|scroll/.test(getComputedStyle(container).overflowX)
+      )
+    )
+      container = container.parentElement;
+    const editor = document.querySelector(".editing-main");
+    return {
+      contained: Boolean(container && !container.matches(".editing-main,body,html")),
+      editorWidth: editor.clientWidth,
+      editorContentWidth: editor.scrollWidth,
+    };
+  });
+  assert(tableOverflow.contained, "Wide tables own their horizontal scrolling");
+  assert(
+    tableOverflow.editorContentWidth <= tableOverflow.editorWidth + 1,
+    "A wide table does not widen the editor",
+  );
+  await addColumn.scrollIntoViewIfNeeded();
+  const columnBounds = await addColumn.boundingBox();
+  assert(
+    columnBounds && columnBounds.x >= 0 && columnBounds.x + columnBounds.width <= 321,
+    "The last column control remains reachable at 320px",
+  );
+  await addColumn.click();
+  assert.match(await readBody(page), /UIから編集した値/u, "Adding a column preserves edited cells");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await showBlocks(page);
   await savedDraft(page);
   await page.screenshot({ path: resolve(out, "editor-desktop.png"), fullPage: true });
   beginPhase("mobile source wrapping");

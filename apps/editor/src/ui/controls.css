@@ -1,0 +1,172 @@
+/* CMS chrome shares the site palette; authored content keeps its own typography. */
+@theme inline {
+  --color-cms-ink: var(--text-primary);
+  --color-cms-muted: var(--text-muted);
+  --color-cms-surface: var(--surface-control);
+  --color-cms-divider: var(--border-divider);
+  --color-cms-border: var(--border-control);
+  --color-cms-accent: var(--accent);
+  --color-cms-hover: var(--cms-surface-hover);
+  --radius-cms-control: var(--cms-control-radius);
+  --spacing-cms-control: var(--control-min-size);
+  --text-cms-control: 0.875rem;
+  --text-cms-label: 0.8125rem;
+}
+
+:root {
+  --cms-font-body: var(--font-body);
+  --cms-font-mono: var(--font-mono);
+  --cms-control-radius: 0.375rem;
+  --cms-control-padding-block: 0.5rem;
+  --cms-control-padding-inline: 0.75rem;
+  --cms-icon-size: 22px;
+  --cms-icon-stroke: 1.8;
+  --cms-focus-offset: 2px;
+  --cms-surface-hover: color-mix(in srgb, var(--text-muted) 6%, var(--surface-control));
+  --cms-surface-subtle: color-mix(in srgb, var(--text-muted) 3%, var(--surface-control));
+  --cms-accent-soft: color-mix(in srgb, var(--accent) 8%, var(--surface-control));
+  --cms-accent-border: color-mix(in srgb, var(--accent) 45%, var(--border-divider));
+  --cms-success: #27614b;
+  --cms-warning: #805417;
+  --cms-success-fill: color-mix(in srgb, var(--cms-success) 10%, var(--surface-control));
+  --cms-warning-fill: color-mix(in srgb, var(--cms-warning) 12%, var(--surface-control));
+  --cms-danger-fill: color-mix(in srgb, var(--text-danger) 7%, var(--surface-control));
+  --cms-popup-shadow: 0 4px 16px color-mix(in srgb, var(--text-primary) 12%, transparent);
+}
+
+@utility cms-button {
+  @apply inline-flex min-h-cms-control items-center justify-center gap-2 rounded-cms-control border border-cms-divider bg-cms-surface text-cms-control text-cms-ink;
+  padding: var(--cms-control-padding-block) var(--cms-control-padding-inline);
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+@utility cms-icon-button {
+  @apply inline-flex size-cms-control shrink-0 items-center justify-center rounded-cms-control p-0;
+  min-width: var(--control-min-size);
+  min-height: var(--control-min-size);
+}
+
+@utility cms-quiet-button {
+  border-color: transparent;
+  background: transparent;
+}
+
+@utility cms-field {
+  @apply w-full min-w-0 min-h-cms-control rounded-cms-control border border-cms-border bg-cms-surface text-cms-ink;
+  padding: var(--cms-control-padding-block) var(--cms-control-padding-inline);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+@utility cms-check-label {
+  @apply flex min-h-cms-control flex-row items-center gap-2 text-cms-control;
+  cursor: pointer;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+.button,
+.file-button {
+  @apply cms-button;
+}
+
+:where(button, .button, .file-button):not(:disabled):hover {
+  border-color: var(--border-control);
+  background: var(--cms-surface-hover);
+}
+
+:where(button):disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+button.primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--accent) 90%, var(--text-primary));
+  color: var(--on-accent);
+}
+
+button[aria-pressed="true"],
+button[aria-selected="true"] {
+  color: var(--accent);
+  background: var(--cms-accent-soft);
+  border-color: var(--cms-accent-border);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea,
+select {
+  @apply cms-field;
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+label {
+  @apply flex flex-col gap-1 text-cms-label;
+}
+
+.cms-check-field,
+.check-label,
+.checkbox-label,
+.branch-options label,
+.review-entry {
+  @apply cms-check-label;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+input[type="file"] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+input[type="file"]::file-selector-button {
+  @apply cms-button;
+  margin-inline-end: 0.75rem;
+}
+
+input[type="file"]::file-selector-button:hover {
+  border-color: var(--border-control);
+  background: var(--cms-surface-hover);
+}
+
+:where(button, .button, .file-button) > svg {
+  flex: none;
+  width: var(--cms-icon-size);
+  height: var(--cms-icon-size);
+  stroke-width: var(--cms-icon-stroke);
+}
+
+:focus-visible,
+.file-button:focus-within {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--cms-focus-offset);
+}

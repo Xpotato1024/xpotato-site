@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { semanticContentModuleJsonSchemas } from "@xpotato/content-contracts/content";
+import { BlockIcon } from "./BlockIcon.js";
 import {
   readModuleSource,
   updateModuleChildren,
@@ -181,7 +182,7 @@ function ChartRows({ value, onChange }: { value: string; onChange: (value: strin
             disabled={rows.length <= 1}
             onClick={() => onChange(JSON.stringify(rows.filter((_, i) => i !== index)))}
           >
-            ×
+            <BlockIcon name="close" />
           </button>
         </div>
       ))}
@@ -190,7 +191,8 @@ function ChartRows({ value, onChange }: { value: string; onChange: (value: strin
         disabled={rows.length >= 30}
         onClick={() => onChange(JSON.stringify([...rows, { label: "新しい項目", value: 0 }]))}
       >
-        ＋ 項目
+        <BlockIcon name="plus" />
+        項目を追加
       </button>
     </fieldset>
   );
@@ -453,7 +455,7 @@ export function ModuleBlock({
             <img src={image.src} alt={value("alt")} />
           ) : (
             <div className="cms-figure-placeholder">
-              <span aria-hidden="true">▧</span>
+              <BlockIcon name="Figure" />
               <strong>{value("alt") || "画像を選択"}</strong>
               <small>{value("asset")}</small>
             </div>
@@ -486,7 +488,7 @@ export function ModuleBlock({
       )}
       {module.name === "LinkCard" && (
         <div className="cms-link-card">
-          <span aria-hidden="true">↗</span>
+          <BlockIcon name="LinkCard" />
           <div>
             <strong>{value("title")}</strong>
             <p>{value("description")}</p>
@@ -496,7 +498,7 @@ export function ModuleBlock({
       )}
       {module.name === "Demo" && (
         <div className="cms-demo-placeholder">
-          <span aria-hidden="true">▷</span>
+          <BlockIcon name="Demo" />
           <div>
             <strong>
               {tools.find((tool) => tool.id === value("module"))?.label ?? value("module")}

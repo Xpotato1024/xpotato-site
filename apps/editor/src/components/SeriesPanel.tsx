@@ -5,6 +5,7 @@ import {
   type SeriesRegistry,
 } from "@xpotato/content-contracts/series";
 import type { EditorContentRecord } from "@xpotato/editor-core/registry";
+import { WorkspaceIcon } from "./WorkspaceIcon.js";
 
 export interface SeriesPanelProps {
   contentId?: string;
@@ -213,9 +214,12 @@ export function SeriesPanel({
           </p>
         )}
       </div>
-      <button type="button" onClick={() => setForm({ value: emptySeries(), creating: true })}>
-        ＋ 連載を作成
-      </button>
+      {!form && (
+        <button type="button" onClick={() => setForm({ value: emptySeries(), creating: true })}>
+          <WorkspaceIcon name="plus" />
+          連載を作成
+        </button>
+      )}
       {form && (
         <SeriesForm
           key={form.value.id}
@@ -301,7 +305,7 @@ export function SeriesPanel({
                     disabled={index === 0}
                     onClick={() => move(index, index - 1)}
                   >
-                    ↑
+                    <WorkspaceIcon name="up" />
                   </button>
                   <button
                     type="button"
@@ -309,7 +313,7 @@ export function SeriesPanel({
                     disabled={index === selected.entries.length - 1}
                     onClick={() => move(index, index + 1)}
                   >
-                    ↓
+                    <WorkspaceIcon name="down" />
                   </button>
                   <button
                     type="button"
@@ -352,7 +356,8 @@ export function SeriesPanel({
                     })
                   }
                 >
-                  ＋ {item.title}
+                  <WorkspaceIcon name="plus" />
+                  {item.title}
                 </button>
               ))}
             </div>

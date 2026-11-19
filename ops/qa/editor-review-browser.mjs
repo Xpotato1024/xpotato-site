@@ -103,7 +103,7 @@ try {
     if (message.text().startsWith("CSP_VIOLATION:")) violations.push(message.text());
   });
   await page.goto(server.origin + "/editor/");
-  await page.getByRole("heading", { name: "どこから始めますか", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "原稿", level: 1, exact: true }).waitFor();
   await page.waitForFunction(async () =>
     (await indexedDB.databases()).some((database) => database.name === "xpotato-editor-v1"),
   );

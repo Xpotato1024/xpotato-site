@@ -137,6 +137,8 @@ function reviewProps(draft: LocalDraft, authenticated = true) {
     draft,
     authenticated,
     selection: null,
+    composerDraft: { instruction: "", followUps: {} },
+    onComposerChange: vi.fn(),
     onChange: vi.fn(),
     onDraft: vi.fn(),
     onLocate: vi.fn(),

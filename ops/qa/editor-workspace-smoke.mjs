@@ -84,7 +84,7 @@ async function waitRegistrySaved(page) {
 
 async function addTerm(page, group, label, alias) {
   const manager = page.getByRole("region", { name: "タグ・分類", exact: true });
-  await manager.getByRole("button", { name: "＋ 新規追加", exact: true }).click();
+  await manager.getByRole("button", { name: "新規追加", exact: true }).click();
   const form = manager.locator(".taxonomy-create");
   const kind = form.getByRole("combobox", { name: "種類", exact: true });
   await kind.selectOption(group);
@@ -151,7 +151,7 @@ try {
 
   begin("empty home and three explicit entry points");
   await page.goto(server.origin + "/editor/");
-  await page.getByRole("heading", { name: "どこから始めますか", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "原稿", level: 1, exact: true }).waitFor();
   assert.equal(
     (await snapshot(page)).drafts.length,
     0,
@@ -226,7 +226,7 @@ try {
   assert.equal((await snapshot(page)).drafts.length, 0);
   await manage(page, "連載");
   const series = page.getByRole("region", { name: "連載", exact: true });
-  await series.getByRole("button", { name: "＋ 連載を作成", exact: true }).click();
+  await series.getByRole("button", { name: "連載を作成", exact: true }).click();
   await series.getByLabel("連載名", { exact: true }).fill(seriesName);
   await series
     .getByLabel("説明", { exact: true })
@@ -349,7 +349,7 @@ try {
     .click();
   await page.getByRole("heading", { name: "連載・コース", exact: true }).waitFor();
   await page.goBack();
-  await page.getByRole("heading", { name: "どこから始めますか", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "原稿", level: 1, exact: true }).waitFor();
   await page.goBack();
   await page.locator(".editor-header:not(.workspace-header)").waitFor({ state: "visible" });
   assert.equal(
@@ -397,6 +397,59 @@ try {
   const sampleRecord = (await snapshot(page)).drafts.find((draft) => draft.id === sample.id);
   assert.equal(sampleRecord.annotations.length, 4);
   const blocks = page.getByRole("region", { name: "本文のブロック編集", exact: true });
+  begin("math print option is reversible without metadata corruption");
+  const printSource = blocks.getByRole("checkbox", { name: "印刷時はTeX原文を表示", exact: true });
+  const mathLabel = blocks.getByRole("textbox", { name: "式の説明", exact: true });
+  const label = await mathLabel.inputValue();
+  const checkedSource = sample.source.replace(
+    'label="' + label + '"',
+    'label="' + label + '" print="source"',
+  );
+  assert.notEqual(checkedSource, sample.source);
+  await printSource.check();
+  assert.equal(await mathLabel.inputValue(), label);
+  assert.equal((await savedDraft(page, { source: checkedSource })).source, checkedSource);
+  await page.getByRole("button", { name: "元に戻す", exact: true }).click();
+  assert.equal(await printSource.isChecked(), false);
+  assert.equal((await savedDraft(page, { source: sample.source })).source, sample.source);
+  await page.getByRole("button", { name: "やり直す", exact: true }).click();
+  assert.equal(await printSource.isChecked(), true);
+  assert.equal((await savedDraft(page, { source: checkedSource })).source, checkedSource);
+  for (const checked of [false, true, false]) {
+    await printSource.setChecked(checked);
+    assert.equal(await mathLabel.inputValue(), label);
+    const expected = checked ? checkedSource : sample.source;
+    assert.equal((await savedDraft(page, { source: expected })).source, expected);
+  }
+  await page.reload();
+  await ensureEditing(page);
+  await showBlocks(page);
+  assert.equal(await printSource.isChecked(), false);
+  assert.equal(await mathLabel.inputValue(), label);
+  assert.equal((await savedDraft(page)).source, sample.source);
+  const checkBounds = await printSource.evaluate((input) => {
+    const label = input.closest("label");
+    const text = Array.from(label.childNodes).find(
+      (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim(),
+    );
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    const check = input.getBoundingClientRect();
+    const caption = range.getBoundingClientRect();
+    return {
+      height: label.getBoundingClientRect().height,
+      checkRight: check.right,
+      captionLeft: caption.left,
+    };
+  });
+  assert(
+    checkBounds.height >= 44 && checkBounds.captionLeft >= checkBounds.checkRight,
+    "Checkbox label is a full-height horizontal tap target",
+  );
+  checks.push(
+    "math print toggle, undo/redo and reload preserve description, formula and all other source",
+  );
+  begin("sample review indicators and target selection");
   for (const state of ["open", "proposal", "resolved", "applied"]) {
     assert.equal(
       await blocks.locator(`.cms-review-indicator[data-review-state="${state}"]`).count(),
@@ -502,7 +555,9 @@ try {
   await blocks.locator('.cms-review-indicator[data-review-state="proposal"]').click();
   await selectedCard.getByRole("button", { name: "修正案を反映", exact: true }).click();
   await closePanel(page);
-  const appliedSample = await savedDraft(page);
+  const appliedSample = await savedDraft(page, {
+    source: sample.source.replace(proposed.proposal.expected, proposed.proposal.replacement),
+  });
   assert.equal(
     appliedSample.source,
     sample.source.replace(proposed.proposal.expected, proposed.proposal.replacement),
@@ -513,6 +568,79 @@ try {
     2,
   );
   await page.screenshot({ path: resolve(out, "sample-review-mobile.png"), fullPage: true });
+
+  begin("one-tap follow-up review keeps the earlier applied decision");
+  const previousApplied = sampleRecord.annotations.find((comment) => comment.status === "applied");
+  const appliedBadge = blocks.locator('.cms-review-indicator[data-review-state="applied"]').last();
+  await appliedBadge.click();
+  const additional = selectedCard.getByLabel("追加の指摘", { exact: true });
+  await additional.waitFor();
+  assert.equal(
+    await selectedCard.locator(".review-context-composer .selected-quote").innerText(),
+    previousApplied.proposal.replacement,
+  );
+  assert.notEqual(
+    await page.evaluate(() => document.activeElement?.tagName),
+    "TEXTAREA",
+    "Opening a review does not open the software keyboard",
+  );
+  assert.equal(
+    await selectedCard.getByRole("button", { name: "指摘を再開", exact: true }).count(),
+    0,
+  );
+  const followUpInstruction = "反映後の文に操作例を補足する";
+  await additional.fill(followUpInstruction);
+  await selectedCard.getByRole("button", { name: "対象へ", exact: true }).click();
+  await review.waitFor({ state: "hidden" });
+  await appliedBadge.click();
+  await additional.waitFor();
+  assert.equal(
+    await additional.inputValue(),
+    followUpInstruction,
+    "Returning to the target keeps the unfinished instruction",
+  );
+  await closePanel(page);
+  await page.waitForFunction(() => document.activeElement?.matches(".cms-review-indicator"));
+  await appliedBadge.click();
+  assert.equal(
+    await additional.inputValue(),
+    followUpInstruction,
+    "Closing and reopening the panel keeps the unfinished instruction",
+  );
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await appliedBadge.click();
+  await page.waitForFunction(
+    () => document.activeElement?.getAttribute("data-review-selected") === "true",
+  );
+  assert.equal(
+    await additional.inputValue(),
+    followUpInstruction,
+    "Reopening the same target keeps the unfinished instruction",
+  );
+  await selectedCard.getByRole("button", { name: "指摘を追加", exact: true }).click();
+  const followed = await savedDraft(page, { annotationCount: 5 });
+  assert.equal(
+    followed.source,
+    appliedSample.source,
+    "A new instruction does not change body text",
+  );
+  assert.deepEqual(
+    followed.annotations.find((comment) => comment.id === previousApplied.id),
+    previousApplied,
+    "The previous applied proposal and diff remain unchanged",
+  );
+  const followUp = followed.annotations.find(
+    (comment) => comment.instruction === followUpInstruction,
+  );
+  assert(followUp && followUp.id !== previousApplied.id);
+  assert.equal(followUp.anchor.quote, previousApplied.proposal.replacement);
+  assert.equal(followUp.status, "open");
+  assert.equal(followed.annotations.length, 5);
+  await closePanel(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  checks.push(
+    "review status opens an exact current-text composer; repeated opening keeps input and adding preserves applied history",
+  );
   await page.reload();
   await ensureEditing(page);
   assert.equal((await savedDraft(page)).source, appliedSample.source);
@@ -610,7 +738,7 @@ try {
     { draft: originalRecord, bytes: [...png], sha },
   );
   await migration.goto(server.origin + "/editor/");
-  await migration.getByRole("heading", { name: "どこから始めますか", exact: true }).waitFor();
+  await migration.getByRole("heading", { name: "原稿", level: 1, exact: true }).waitFor();
   const upgraded = await snapshot(migration);
   assert.equal(upgraded.version, 3);
   assert.equal(upgraded.drafts.length, 1);

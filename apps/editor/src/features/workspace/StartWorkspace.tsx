@@ -12,7 +12,7 @@ export const draftKinds: { id: DraftKind; label: string; description: string }[]
   { id: "education", label: "教育記事", description: "教材・学習コース" },
   { id: "pages", label: "固定ページ", description: "案内・プロフィール" },
   { id: "tools", label: "ツール", description: "操作画面と使い方" },
-  { id: "projects", label: "プロダクト", description: "制作物・製品の紹介" },
+  { id: "projects", label: "プロダクト紹介", description: "制作物・製品" },
 ];
 
 export function initialBranchPlan(authenticated: boolean, draft?: LocalDraft): BranchPlan {
@@ -209,19 +209,9 @@ export function StartWorkspace({
   return (
     <div className="start-workspace">
       <header className="workspace-page-heading">
-        <p className="eyebrow">
-          {intent === "new" ? "CREATE" : intent === "revise" ? "REVISE" : "CONTINUE"}
-        </p>
         <h1>
           {intent === "new" ? "新規作成" : intent === "revise" ? "既存記事を改稿" : "下書きの続き"}
         </h1>
-        <p>
-          {intent === "new"
-            ? "投稿先と作業場所を選んで始めます。"
-            : intent === "revise"
-              ? "公開済みの記事を選び、改稿用の下書きとして開きます。"
-              : "保存した原稿を再開します。AI下書きは添削から確認できます。"}
-        </p>
       </header>
       <fieldset className="start-controls" disabled={busy}>
         {intent === "new" ? (
@@ -330,7 +320,7 @@ export function StartWorkspace({
               </div>
               {!git.auth.authenticated && (
                 <p className="small muted">
-                  GitHubに接続すると取得できます。<a href="#/connection">接続を確認</a>
+                  GitHub未接続 · <a href="#/connection">接続を確認</a>
                 </p>
               )}
               {git.snapshot?.branch === git.sourceBranch && (

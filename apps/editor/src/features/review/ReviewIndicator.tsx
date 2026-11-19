@@ -32,28 +32,45 @@ export function ReviewIndicator({
 }: {
   marks: readonly LocatedReviewMark[];
   activeCommentId?: string | null | undefined;
-  onSelect?: ((id: string) => void) | undefined;
+  onSelect?: ((id: string, trigger: HTMLButtonElement) => void) | undefined;
 }) {
   const primary = primaryReviewMark(marks);
   if (!primary) return null;
   const current = marks.find((mark) => mark.id === activeCommentId);
-  const label = reviewStateLabel(primary.state);
+  const target = current ?? primary;
+  const label = reviewStateLabel(target.state);
   return (
     <button
       type="button"
       className="cms-review-indicator"
-      data-review-state={primary.state}
+      data-review-state={target.state}
       aria-pressed={Boolean(current)}
-      aria-label={label + "、添削" + marks.length + "件を確認"}
-      title={marks.map((mark) => reviewStateLabel(mark.state)).join("・")}
+      aria-controls="workspace-panel"
+      aria-label={
+        label + "、この箇所を添削" + (marks.length > 1 ? "、指摘" + marks.length + "件" : "")
+      }
+      title="この箇所を添削"
       disabled={!onSelect}
-      onClick={() => onSelect?.((current ?? primary).id)}
+      onClick={(event) => onSelect?.(target.id, event.currentTarget)}
     >
-      <ReviewStatusIcon complete={primary.state === "resolved" || primary.state === "applied"} />
+      <ReviewStatusIcon complete={target.state === "resolved" || target.state === "applied"} />
       <span>
         {label}
         {marks.length > 1 ? " " + marks.length : ""}
       </span>
+      <svg
+        className="cms-review-action-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="m15 5 4 4M5 15l10-10a2.8 2.8 0 0 1 4 4L9 19l-5 1 1-5Z" />
+      </svg>
     </button>
   );
 }

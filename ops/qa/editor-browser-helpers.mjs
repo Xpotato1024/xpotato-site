@@ -1,6 +1,6 @@
 /** Exercise the visible editing surface; do not reach into React or CodeMirror state. */
 export async function goHome(page) {
-  const heading = page.getByRole("heading", { name: "どこから始めますか", exact: true });
+  const heading = page.getByRole("heading", { name: "原稿", level: 1, exact: true });
   if (await heading.isVisible()) return;
   await closePanel(page);
   const fromEditor = page
@@ -104,20 +104,36 @@ export async function closePanel(page) {
   const close = page.getByRole("button", { name: "パネルを閉じる", exact: true });
   if (await close.isVisible()) await close.click();
 }
-export async function savedDraft(page) {
+export async function savedDraft(page, expected = {}) {
   await page.locator(".save-state").filter({ hasText: "保存済み" }).waitFor();
-  return page.evaluate(async () => {
-    const database = await new Promise((resolve, reject) => {
-      const request = indexedDB.open("xpotato-editor-v1");
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+  const read = () =>
+    page.evaluate(async () => {
+      const database = await new Promise((resolve, reject) => {
+        const request = indexedDB.open("xpotato-editor-v1");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const drafts = await new Promise((resolve, reject) => {
+        const request = database.transaction("drafts", "readonly").objectStore("drafts").getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      database.close();
+      return drafts.sort((left, right) => right.savedAt.localeCompare(left.savedAt))[0];
     });
-    const drafts = await new Promise((resolve, reject) => {
-      const request = database.transaction("drafts", "readonly").objectStore("drafts").getAll();
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    database.close();
-    return drafts.sort((left, right) => right.savedAt.localeCompare(left.savedAt))[0];
-  });
+  // Consecutive edits can precede the save indicator's next render. Poll the
+  // persisted revision explicitly; an async browser predicate is not a save gate.
+  const deadline = Date.now() + 15000;
+  while (Date.now() < deadline) {
+    const latest = await read();
+    if (
+      latest &&
+      (expected.source === undefined || latest.source === expected.source) &&
+      (expected.annotationCount === undefined ||
+        latest.annotations.length === expected.annotationCount)
+    )
+      return latest;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  throw Error("Expected draft revision did not reach local storage");
 }

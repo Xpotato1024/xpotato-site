@@ -1,0 +1,174 @@
+@reference "../styles.css";
+
+/* MDXEditor resets its controls with all: unset, including controls rendered in a portal. */
+:is(.cms-rich-editor .mdxeditor, .mdxeditor-popup-container) {
+  --font-body: var(--cms-font-body);
+  --font-mono: var(--cms-font-mono);
+  --basePageBg: var(--surface-control);
+  --baseBase: var(--surface-control);
+  --baseBgSubtle: var(--cms-surface-subtle);
+  --baseBg: var(--cms-surface-hover);
+  --baseBgHover: var(--cms-surface-hover);
+  --baseBgActive: var(--cms-accent-soft);
+  --baseLine: var(--border-divider);
+  --baseBorder: var(--border-control);
+  --baseBorderHover: var(--cms-accent-border);
+  --baseSolid: var(--text-muted);
+  --baseSolidHover: var(--text-primary);
+  --baseText: var(--text-primary);
+  --baseTextContrast: var(--text-primary);
+  --accentBase: var(--cms-accent-soft);
+  --accentBgSubtle: var(--cms-accent-soft);
+  --accentBg: var(--cms-accent-soft);
+  --accentBgHover: var(--cms-accent-soft);
+  --accentBgActive: var(--cms-accent-soft);
+  --accentLine: var(--cms-accent-border);
+  --accentBorder: var(--cms-accent-border);
+  --accentBorderHover: var(--accent);
+  --accentSolid: var(--accent);
+  --accentSolidHover: var(--accent);
+  --accentText: var(--accent);
+  --accentTextContrast: var(--accent);
+  --radius-base: var(--cms-control-radius);
+  --radius-medium: var(--cms-control-radius);
+  --text-sm: var(--text-cms-control);
+  font-family: var(--cms-font-body);
+}
+
+:is(.cms-rich-editor .mdxeditor, .mdxeditor-popup-container) :is(button, [role="button"]) {
+  @apply cms-button;
+  box-sizing: border-box;
+  max-width: 100%;
+  font-family: inherit;
+}
+
+:is(.cms-rich-editor .mdxeditor, .mdxeditor-popup-container)
+  :is(button, [role="button"]):not(:disabled):hover {
+  border-color: var(--border-control);
+  background: var(--cms-surface-hover);
+}
+
+:is(.cms-rich-editor .mdxeditor, .mdxeditor-popup-container)
+  :is(button:disabled, button[data-disabled]) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+:is(.cms-rich-editor .mdxeditor, .mdxeditor-popup-container)
+  :is(button[class*="primaryButton"], button[data-state="on"], button[aria-pressed="true"]) {
+  color: var(--accent);
+  border-color: var(--cms-accent-border);
+  background: var(--cms-accent-soft);
+}
+
+:is(.cms-rich-editor .mdxeditor, .mdxeditor-popup-container)
+  :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea, select) {
+  @apply cms-field;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+:is(.cms-rich-editor .mdxeditor, .mdxeditor-popup-container)
+  :is(button, input, textarea, select, [role="button"]):focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--cms-focus-offset);
+}
+
+:is(.cms-rich-editor .mdxeditor, .mdxeditor-popup-container) :is(button, [role="button"]) > svg {
+  width: var(--cms-icon-size);
+  height: var(--cms-icon-size);
+  flex: none;
+}
+
+:is(.cms-rich-editor .mdxeditor, .mdxeditor-popup-container)
+  :is(
+    button[class*="tableColumnEditorTrigger"],
+    button[class*="tableRowEditorTrigger"],
+    button[class*="toolbarToggleItem"],
+    button[class*="toolbarButton"],
+    button[class*="iconButton"],
+    button[class*="dialogCloseButton"]
+  ),
+.cms-rich-editor .mdxeditor .cms-rich-toolbar-main > button,
+.cms-rich-editor .mdxeditor .cms-rich-toolbar-extra button,
+:is(.cms-rich-editor .mdxeditor, .mdxeditor-popup-container)
+  :is(
+    [class*="tableColumnEditorToolbar"],
+    [class*="linkDialogInputWrapper"],
+    [class*="toggleGroupRoot"]
+  )
+  > button {
+  @apply cms-icon-button cms-quiet-button;
+}
+
+.cms-rich-editor
+  .mdxeditor
+  [class*="tableEditor"]
+  :is(
+    button[class*="tableColumnEditorTrigger"],
+    button[class*="tableRowEditorTrigger"],
+    button[class*="addRowButton"],
+    button[class*="addColumnButton"],
+    button[class*="iconButton"]
+  ):not(:disabled):not([data-disabled]) {
+  min-width: var(--control-min-size);
+  opacity: 1;
+}
+
+.mdxeditor-popup-container [class*="tableColumnEditorToolbar"] {
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.mdxeditor-popup-container :is([role="menuitem"], [role="menuitemcheckbox"], [role="option"]) {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-min-size);
+  padding: var(--cms-control-padding-block) var(--cms-control-padding-inline);
+  border-radius: var(--cms-control-radius);
+  font-size: var(--text-cms-control);
+}
+
+.mdxeditor-popup-container
+  :is(
+    [class*="linkDialogPopoverContent"],
+    [class*="tableColumnEditorPopoverContent"],
+    [class*="dialogContent"],
+    [class*="largeDialogContent"]
+  ) {
+  max-width: calc(100vw - 1.5rem);
+  max-height: calc(var(--editor-viewport-height, 100dvh) - 1.5rem);
+  overflow: auto;
+  box-shadow: var(--cms-popup-shadow);
+  filter: none;
+  border-color: var(--border-divider);
+  border-radius: var(--cms-control-radius);
+  background: var(--surface-control);
+}
+
+.mdxeditor-popup-container :is([class*="linkDialogEditForm"], [class*="linkDialogInputContainer"]) {
+  min-width: 0;
+  width: 100%;
+}
+
+.mdxeditor-popup-container [class*="linkDialogInputWrapper"] {
+  min-width: 0;
+  max-width: 100%;
+  gap: 0.25rem;
+  border: 0;
+  background: transparent;
+}
+
+.mdxeditor-popup-container [class*="linkDialogInputWrapper"] > input {
+  flex: 1;
+  width: auto;
+}
+
+.mdxeditor-popup-container button[class*="dialogCloseButton"] {
+  top: 0.25rem;
+  right: 0.25rem;
+}
+
+.mdxeditor-popup-container [class*="dialogTitle"] {
+  padding-inline-end: var(--control-min-size);
+}
