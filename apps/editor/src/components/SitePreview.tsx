@@ -126,18 +126,20 @@ export function SitePreview({
             </button>
           ))}
         </div>
-        <div className="cms-preview-zoom" role="group" aria-label="プレビューの表示倍率">
-          <button type="button" aria-pressed={zoom === "fit"} onClick={() => setZoom("fit")}>
-            幅に合わせる
-          </button>
-          <button type="button" aria-pressed={zoom === "actual"} onClick={() => setZoom("actual")}>
-            100%
-          </button>
-        </div>
+        <label className="cms-preview-zoom">
+          <span className="cms-sr-only">表示倍率</span>
+          <select
+            aria-label="表示倍率"
+            value={zoom}
+            onChange={(event) => setZoom(event.target.value as "fit" | "actual")}
+          >
+            <option value="fit">
+              幅に合わせる（{Math.round(Math.min(1, available / width) * 100)}%）
+            </option>
+            <option value="actual">等倍（100%）</option>
+          </select>
+        </label>
       </div>
-      <p className="cms-preview-caption">
-        サイトのCSS・フォントを使用 <span>{Math.round(scale * 100)}%</span>
-      </p>
       {warnings.length > 0 && (
         <details className="cms-preview-warnings">
           <summary>未表示の内容を確認（{warnings.length}）</summary>

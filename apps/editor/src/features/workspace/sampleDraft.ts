@@ -4,6 +4,7 @@ import {
   type ReviewComment,
 } from "@xpotato/editor-core/annotations";
 import { parseDraft, updateDraft } from "@xpotato/editor-core/draft";
+import { moduleSource } from "@xpotato/editor-core/blocks";
 import type { LocalDraft, LocalMedia } from "../../data/storage.js";
 import { hashBlob } from "../../media/optimize.js";
 import { createLocalDraft } from "../drafts/model.js";
@@ -17,6 +18,78 @@ const openText = "この操作は誰にとっても簡単です。";
 const proposalText = "見出しを動かすと記事全体を移動できます。";
 const resolvedText = "画像の説明は、図だけでは分からない点を補います。";
 const beforeAppliedText = "修正案はすべて自動で本文へ反映されます。";
+
+const sampleComparison = [
+  "<Comparison>",
+  '<ComparisonCase label="条件A">',
+  "本文のみで説明する例です。この文章は、条件Aの中で編集できます。",
+  "</ComparisonCase>",
+  '<ComparisonCase label="条件B">',
+  "図と本文を組み合わせた例です。",
+  '<Figure asset="sample-block-group" alt="条件Bに添えたブロック構成のサンプル図" />',
+  "</ComparisonCase>",
+  '<ComparisonCase label="条件C">',
+  "- 確認すること\n- 変更すること",
+  "</ComparisonCase>",
+  "</Comparison>",
+].join("\n\n");
+
+const sampleCharts = [
+  moduleSource("LineChart", {
+    title: "折れ線の操作サンプル",
+    description: "入力と表示を試す合成データです。実測結果ではありません。",
+    kind: "line",
+    xLabel: "時間 (任意単位)",
+    yLabel: "値 (任意単位)",
+    series: JSON.stringify([
+      {
+        label: "系列A",
+        points: [
+          { x: 0, y: 2 },
+          { x: 1, y: 5 },
+          { x: 2, y: 3 },
+          { x: 3, y: 6 },
+        ],
+      },
+      {
+        label: "系列B",
+        points: [
+          { x: 0, y: 1 },
+          { x: 1, y: 3 },
+          { x: 2, y: 5 },
+          { x: 3, y: 4 },
+        ],
+      },
+    ]),
+  }),
+  moduleSource("LineChart", {
+    title: "散布図の操作サンプル",
+    description: "点の追加と表示を試す合成データです。実測結果や相関を示しません。",
+    kind: "scatter",
+    xLabel: "横軸 (任意単位)",
+    yLabel: "縦軸 (任意単位)",
+    series: JSON.stringify([
+      {
+        label: "系列A",
+        points: [
+          { x: 2, y: 1 },
+          { x: 1, y: 3 },
+          { x: 2, y: 2 },
+          { x: 3, y: 4 },
+        ],
+      },
+      {
+        label: "系列B",
+        points: [
+          { x: 1, y: 3 },
+          { x: 2, y: 1 },
+          { x: 1, y: 2 },
+          { x: 3, y: 3 },
+        ],
+      },
+    ]),
+  }),
+];
 
 const sampleBody = [
   "これはCMSの操作を試すためのサンプルです。AI下書きと添削の状態を模擬しています。文や画像を書き換えながら、構成の変更と修正案の確認を試してください。",
@@ -41,6 +114,10 @@ const sampleBody = [
   "この文には、修正案を反映した状態を用意しています。元の文と修正後の文は添削パネルで確認できます。本文には修正後の文章だけが入り、指摘や差分の情報は本文と別に保存されます。",
   '<Figure asset="sample-block-group" alt="複数の文章ブロックを一つにまとめた図" caption="この節も、見出し・本文・数式・コード・図をまとめて移動できます。" />',
   "</Group>",
+  "## 比較とグラフを試す",
+  "比較の条件は追加・並べ替えができます。グラフは設定から系列や数値を変更し、プレビューで図とデータ表を確認できます。",
+  sampleComparison,
+  ...sampleCharts,
 ].join("\n\n");
 
 export interface SampleDraft {
@@ -120,7 +197,7 @@ export async function createSampleDraft(): Promise<SampleDraft> {
       {
         title: "操作サンプル：記事の構成と添削",
         description:
-          "グループ移動、数式・コード、AI下書きへの指摘と修正案を試す操作サンプルです。添削は模擬データです。",
+          "グループ移動、数式・コード、比較・グラフ、AI下書きへの指摘と修正案を試す操作サンプルです。添削は模擬データです。",
       },
       applied.body + "\n",
     ),

@@ -130,9 +130,11 @@ export async function savedDraft(page, expected = {}) {
       latest &&
       (expected.source === undefined || latest.source === expected.source) &&
       (expected.annotationCount === undefined ||
-        latest.annotations.length === expected.annotationCount)
-    )
+        (Array.isArray(latest.annotations) &&
+          latest.annotations.length === expected.annotationCount))
+    ) {
       return latest;
+    }
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
   throw Error("Expected draft revision did not reach local storage");

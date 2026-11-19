@@ -1429,10 +1429,22 @@
   },
   "apps/site/src/shared/blocks/Comparison/Comparison.astro": {
     "elements": {
-      "header": 1,
-      "section data-left-label={leftLabel} data-right-label={rightLabel}": 1,
+      "div class={legacy ? \"article-comparison__legacy-body\" : \"article-comparison__cases\"}": 1,
+      "header class=\"article-comparison__legacy-labels\"": 1,
+      "section class=\"article-comparison\" data-left-label={leftLabel} data-right-label={rightLabel}": 1,
       "slot": 1,
       "span": 2
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
+  "apps/site/src/shared/blocks/Comparison/ComparisonCase.astro": {
+    "elements": {
+      "div class=\"article-comparison__case-body\"": 1,
+      "section class=\"article-comparison__case\"": 1,
+      "slot": 1,
+      "strong class=\"article-comparison__case-title\"": 1
     },
     "rules": [],
     "conditions": [],
@@ -1510,9 +1522,17 @@
     "conditions": [],
     "script": []
   },
+  "apps/site/src/shared/blocks/LineChart/LineChart.astro": {
+    "elements": {
+      "Fragment set:html={markup}": 1
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
   "apps/site/src/shared/blocks/LinkCard/LinkCard.astro": {
     "elements": {
-      "a": 1,
+      "a class=\"article-link-card\"": 1,
       "span": 2,
       "strong": 1
     },
@@ -1866,6 +1886,26 @@
     ],
     "script": []
   },
+  "apps/site/src/shared/styles/article-comparison.css": {
+    "elements": {},
+    "rules": [
+      ":not(:where([data-bt], [data-bt] *)) -> ",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-comparison& -> margin-block [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-comparison__cases& -> display [local], grid-template-columns [local], gap [local], align-items [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-comparison__case& -> min-width [local], padding [local], border [token:--border-divider], border-radius [local], overflow-wrap [local], background [token:--surface]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-comparison__case-title& -> display [local], padding-bottom [local], margin-bottom [local], border-bottom [token:--accent], color [token:--text-primary]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-comparison__case-body > :first-child& -> margin-top [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-comparison__case-body > :last-child& -> margin-bottom [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-comparison__case-body :is(img, svg, pre, table)& -> max-width [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-comparison__legacy-labels& -> display [local], grid-template-columns [local], gap [local], margin-bottom [local], color [token:--text-muted], font-weight [local]",
+      "@media print / :not(:where([data-bt], [data-bt] *)) -> ",
+      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose .article-comparison__case& -> break-inside [local]"
+    ],
+    "conditions": [
+      "@media print"
+    ],
+    "script": []
+  },
   "apps/site/src/shared/styles/article-diagnostics.css": {
     "elements": {},
     "rules": [
@@ -1921,6 +1961,41 @@
     ],
     "script": []
   },
+  "apps/site/src/shared/styles/article-line-chart.css": {
+    "elements": {},
+    "rules": [
+      ":not(:where([data-bt], [data-bt] *)) -> ",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart& -> margin-block [local], min-width [local], max-width [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__title& -> display [local], margin-bottom [local], color [token:--text-primary], font-weight [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__plot& -> display [local], width [local], height [local], min-width [local], max-width [local], overflow [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__grid& -> stroke [token:--border-divider], stroke-width [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__axis& -> stroke [token:--text-muted], stroke-width [local], fill [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) :is(.article-line-chart__tick, .article-line-chart__axis-title)& -> font [token:--font-body], fill [token:--text-muted]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__series--1& -> --chart-color [token:--accent]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__series--2& -> --chart-color [token:--text-primary], --chart-dash [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__series--3& -> --chart-color [token:--text-muted], --chart-dash [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__series--4& -> --chart-color [token:--accent|--accent-hover], --chart-dash [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__series--5& -> --chart-color [token:--text-primary], --chart-dash [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__series--6& -> --chart-color [token:--text-muted], --chart-dash [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__line& -> fill [local], stroke [token:--chart-color], stroke-width [local], stroke-linejoin [local], stroke-linecap [local], stroke-dasharray [token:--chart-dash]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__point& -> fill [token:--chart-color], stroke [token:--chart-color], stroke-width [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__legend& -> list-style [local], display [local], flex-wrap [local], gap [local], padding [local], margin [local], font-size [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__legend-item& -> display [local], align-items [local], gap [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__legend-item svg& -> width [local], height [local], flex [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) :is(.article-line-chart__viewport, .article-line-chart__table)& -> max-width [local], overflow-x [local], overscroll-behavior-inline [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__data :is(th, td)& -> padding [local], text-align [local], border-bottom [token:--border-divider], overflow-wrap [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__data td& -> font-variant-numeric [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__data& -> margin-top [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__data summary& -> cursor [local]",
+      ":not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart__data table& -> width [local]",
+      "@media print / :not(:where([data-bt], [data-bt] *)) -> ",
+      "@media print / :not(:where([data-bt], [data-bt] *)) / :is(.prose, .cms-chart-preview) .article-line-chart& -> break-inside [local]"
+    ],
+    "conditions": [
+      "@media print"
+    ],
+    "script": []
+  },
   "apps/site/src/shared/styles/article-modules.css": {
     "elements": {},
     "rules": [
@@ -1961,7 +2036,12 @@
       "@media print / :not(:where([data-bt], [data-bt] *)) -> ",
       "@media print / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams& -> break-inside [local], grid-template-columns [local], gap [local]",
       "@media print / :not(:where([data-bt], [data-bt] *)) / .prose .article-diagrams img& -> max-height [local]",
-      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose p:has(+ .article-diagrams)& -> break-after [local]"
+      "@media print / :not(:where([data-bt], [data-bt] *)) / .prose p:has(+ .article-diagrams)& -> break-after [local]",
+      ":not(:where([data-bt], [data-bt] *)) -> ",
+      ":not(:where([data-bt], [data-bt] *)) / .prose a.article-link-card& -> display [local], gap [local], margin-block [local], padding [local], border [token:--border-divider], border-radius [local], background [token:--surface-control], color [token:--text-primary], text-decoration [local], overflow-wrap [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-link-card > strong& -> color [token:--accent], text-decoration [local], text-underline-offset [local]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose .article-link-card > span& -> font-size [local], color [token:--text-muted]",
+      ":not(:where([data-bt], [data-bt] *)) / .prose a.article-link-card[href]&:hover -> border-color [token:--border-control]"
     ],
     "conditions": [
       "@media (max-width: 560px)",
@@ -2777,6 +2857,53 @@
     ],
     "conditions": [],
     "script": []
+  },
+  "packages/portable-content/src/charts.ts": {
+    "elements": {},
+    "rules": [],
+    "conditions": [],
+    "script": [
+      "markup: caption",
+      "markup: circle",
+      "markup: details class=article-line-chart__data",
+      "markup: div class=article-line-chart__table",
+      "markup: div class=article-line-chart__viewport role",
+      "markup: figcaption class=article-line-chart__title",
+      "markup: figure class=article-line-chart data-kind",
+      "markup: g",
+      "markup: g class=article-line-chart__series--__expression__",
+      "markup: li class=article-line-chart__legend-item article-line-chart__series--__expression__",
+      "markup: line class=article-line-chart__grid",
+      "markup: p class=article-line-chart__description",
+      "markup: path",
+      "markup: path",
+      "markup: path",
+      "markup: path",
+      "markup: path class=article-line-chart__axis",
+      "markup: path class=article-line-chart__line",
+      "markup: path class=article-line-chart__line",
+      "markup: rect",
+      "markup: summary class=disclosure-summary",
+      "markup: svg",
+      "markup: svg class=article-line-chart__plot role",
+      "markup: table",
+      "markup: tbody",
+      "markup: td",
+      "markup: td",
+      "markup: text class=article-line-chart__axis-title",
+      "markup: text class=article-line-chart__axis-title",
+      "markup: text class=article-line-chart__tick",
+      "markup: text class=article-line-chart__tick",
+      "markup: th",
+      "markup: th",
+      "markup: th",
+      "markup: th",
+      "markup: thead",
+      "markup: title",
+      "markup: tr",
+      "markup: tr",
+      "markup: ul class=article-line-chart__legend"
+    ]
   },
   "packages/portable-content/src/media-picture.ts": {
     "elements": {},

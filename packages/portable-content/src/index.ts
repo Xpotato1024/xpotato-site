@@ -143,16 +143,45 @@ export const validatePortableMdx = (source: string): readonly string[] => {
             "LinkCard",
             "Demo",
             "BarChart",
+            "LineChart",
           ].includes(parentName)
         ) {
           errors.push(`Group is not a direct child of ${parentName}`);
         }
       }
       if (
-        element.name === "BarChart" &&
+        (element.name === "BarChart" || element.name === "LineChart") &&
         element.children?.some((child) => child.type !== "text" || child.value?.trim())
       ) {
-        errors.push("BarChart does not accept children");
+        errors.push(element.name + " does not accept children");
+      }
+      if (
+        element.name === "ComparisonCase" &&
+        (parent as { name?: string } | undefined)?.name !== "Comparison"
+      ) {
+        errors.push("ComparisonCase must be inside Comparison");
+      }
+      if (element.name === "Comparison") {
+        const items =
+          element.children?.filter((child) => child.type !== "text" || child.value?.trim()) ?? [];
+        const cases = items.filter((item) => item.name === "ComparisonCase");
+        if (cases.length) {
+          if (cases.length < 2 || cases.length !== items.length)
+            errors.push("Comparison requires at least two ComparisonCase children only");
+          if (
+            element.attributes.some(
+              (attr) =>
+                (attr as MdxJsxAttribute).name === "leftLabel" ||
+                (attr as MdxJsxAttribute).name === "rightLabel",
+            )
+          )
+            errors.push("Comparison case labels belong to ComparisonCase children");
+        } else if (
+          !element.attributes.some((attr) => (attr as MdxJsxAttribute).name === "leftLabel") ||
+          !element.attributes.some((attr) => (attr as MdxJsxAttribute).name === "rightLabel")
+        ) {
+          errors.push("Comparison requires cases or the legacy two labels");
+        }
       }
       if (element.name === "ArticleEndnote") validateEndnote(node as EndnoteNode, parent, errors);
       if (

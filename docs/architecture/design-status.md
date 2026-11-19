@@ -29,6 +29,8 @@ last_verified: 2026-11-19
 
 グループの保存モデルは[ADR-0085](../design/adr/0085-writing-workspace-and-explicit-groups.md)、今回の作業順と管理の独立は[ADR-0086](../design/adr/0086-cms-workflow-and-independent-registries.md)に提案状態で記録しています。この追加に対する実ブラウザー・CI・実機の受入れ、main取り込み、Sites更新、本番配信は別々に確認し、文書更新だけで完了扱いにしません。
 
+2026-11-20の追加候補は、条件ごとの本文を持つComparisonCase、CMSで数値を編集する静的LineChart、リンクの選択範囲を保つ編集、添削ファイル操作と倍率表示の整理です。[ADR-0087](../design/adr/0087-cms-comparison-and-static-charts.md)と[部品点検](../audits/cms-block-coverage-20261120.md)に記録しています。既存Vega-Lite/Mermaid制作CLIと、任意の図式のブラウザー編集への対応は区別します。
+
 ## 実環境との区別
 
 - 既存公開サイトの配信状況は[現行配信状態](../operations/current-deployment-status.md)だけを参照します。本整理は本番デプロイではありません。

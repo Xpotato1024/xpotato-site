@@ -370,6 +370,57 @@
 .cms-empty-blocks p {
   margin-top: 0;
 }
+/* Authoring view follows the published comparison/chart structure. */
+.cms-comparison-grid {
+  margin-block: 0.5rem;
+  min-width: 0;
+}
+.cms-comparison-grid > .cms-block-editor > .cms-block-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 0.75rem;
+  align-items: stretch;
+}
+.cms-comparison-grid > .cms-block-editor > .cms-block-list > .cms-editor-region {
+  min-width: 0;
+  margin: 0;
+}
+.cms-module-comparisoncase {
+  min-width: 0;
+  border: 1px solid var(--border-divider);
+  border-radius: 0.35rem;
+  padding: 0.75rem;
+}
+.cms-module-comparisoncase > .cms-module-caption {
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 0.5rem;
+}
+.cms-chart-series {
+  border: 1px solid var(--border-divider);
+  padding: 0.65rem;
+  margin-block: 0.65rem;
+  min-width: 0;
+}
+.cms-chart-series-points {
+  display: grid;
+  gap: 0.45rem;
+}
+.cms-chart-point {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.4rem;
+}
+.cms-chart-point input {
+  min-width: 0;
+  width: 100%;
+}
+.cms-chart-series-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+}
 .cms-insert-overlay {
   --cms-block-accent: var(--accent);
   position: fixed;

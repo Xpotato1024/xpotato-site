@@ -240,58 +240,6 @@ export function ReviewPanel({
           />
         </div>
       )}
-      <div className="panel-toolbar">
-        <button
-          type="button"
-          disabled={!comments.some((c) => c.status === "open")}
-          onClick={() =>
-            download(
-              "review-request-" + data.id + ".json",
-              new Blob(
-                [
-                  JSON.stringify(
-                    {
-                      version: 1,
-                      contentId: data.id,
-                      sourceCommit: draft.syncedCommit ?? null,
-                      body,
-                      comments: comments.filter((c) => c.status === "open"),
-                      responseFormat: {
-                        version: 1,
-                        contentId: data.id,
-                        proposals: [
-                          {
-                            commentId: "指摘のid",
-                            expected: "anchor.quoteと同一の原文",
-                            replacement: "置換後のMDX",
-                            reason: "変更の理由",
-                          },
-                        ],
-                      },
-                    },
-                    null,
-                    2,
-                  ),
-                ],
-                { type: "application/json" },
-              ),
-            )
-          }
-        >
-          AIへの依頼を書き出す
-        </button>
-        <label className="file-button">
-          修正案を取り込む
-          <input
-            type="file"
-            accept=".json,application/json"
-            onChange={(event) => {
-              void importFile(event.target.files?.[0]);
-              event.target.value = "";
-            }}
-          />
-        </label>
-      </div>
       <label className="checkbox-label">
         <input
           type="checkbox"
@@ -484,6 +432,64 @@ export function ReviewPanel({
             );
           })}
       </div>
+      <details className="review-file-actions">
+        <summary>添削ファイル</summary>
+        <p className="muted small">
+          既存の指摘に対する修正案を読み込みます。本文への反映は差分を確認してから行えます。
+        </p>
+        <div className="panel-toolbar">
+          <button
+            type="button"
+            disabled={!comments.some((c) => c.status === "open")}
+            onClick={() =>
+              download(
+                "review-request-" + data.id + ".json",
+                new Blob(
+                  [
+                    JSON.stringify(
+                      {
+                        version: 1,
+                        contentId: data.id,
+                        sourceCommit: draft.syncedCommit ?? null,
+                        body,
+                        comments: comments.filter((c) => c.status === "open"),
+                        responseFormat: {
+                          version: 1,
+                          contentId: data.id,
+                          proposals: [
+                            {
+                              commentId: "指摘のid",
+                              expected: "anchor.quoteと同一の原文",
+                              replacement: "置換後のMDX",
+                              reason: "変更の理由",
+                            },
+                          ],
+                        },
+                      },
+                      null,
+                      2,
+                    ),
+                  ],
+                  { type: "application/json" },
+                ),
+              )
+            }
+          >
+            AIへの依頼を書き出す
+          </button>
+          <label className="file-button">
+            修正案ファイルを読み込む
+            <input
+              type="file"
+              accept=".json,application/json"
+              onChange={(event) => {
+                void importFile(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+      </details>
       <div className="panel-toolbar">
         <button type="button" disabled={!canSync || busy} onClick={() => void sync()}>
           添削を同期

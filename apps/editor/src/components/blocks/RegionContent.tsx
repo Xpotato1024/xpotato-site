@@ -1,24 +1,13 @@
 import { lazy, Suspense, useMemo, useState, type PointerEvent, type ReactNode } from "react";
-import { blockTree, readModuleSource } from "@xpotato/editor-core/blocks";
+import { blockTree, readModuleSource, moduleChildKinds } from "@xpotato/editor-core/blocks";
 import { BlockPreview, canEditRich } from "./BlockPreview.js";
 import { blockChoices } from "./BlockPalette.js";
 import { CodeBlock } from "./CodeBlock.js";
 import { ModuleBlock, type EditorMedia, type EditorTool } from "./ModuleBlock.js";
 import type { LocatedReviewMark } from "../../features/review/review-marks.js";
 const RichTextBlock = lazy(() => import("./RichTextBlock.js"));
-const containerModules = new Set([
-  "Group",
-  "Gallery",
-  "Callout",
-  "Steps",
-  "Step",
-  "Comparison",
-  "Details",
-  "DiagnosticList",
-  "ArticleEndnote",
-]);
 export function hasNestedEditor(moduleName: string): boolean {
-  return containerModules.has(moduleName);
+  return Boolean(moduleChildKinds[moduleName]?.length);
 }
 const blockLabels: Record<string, string> = {
   paragraph: "段落",
@@ -94,6 +83,7 @@ export function RegionContent({
     offset: number,
     parent: string,
     onChange: (body: string) => void,
+    allowedKinds?: readonly string[],
   ) => ReactNode;
   media: EditorMedia[];
   tools: EditorTool[];

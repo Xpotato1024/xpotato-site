@@ -142,3 +142,18 @@
   margin-top: 0.75rem;
   border-top: 1px solid var(--border-divider);
 }
+
+.review-file-actions {
+  border-top: 1px solid var(--border-divider);
+  padding-block: 0.5rem;
+  margin-top: 1rem;
+}
+.review-file-actions > summary {
+  min-height: var(--control-min-size);
+  padding-block: var(--cms-control-padding-block);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+.review-file-actions .panel-toolbar {
+  align-items: stretch;
+}

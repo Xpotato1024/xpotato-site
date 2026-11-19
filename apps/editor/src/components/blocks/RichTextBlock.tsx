@@ -33,6 +33,7 @@ import { INDENT_CONTENT_COMMAND, OUTDENT_CONTENT_COMMAND } from "lexical";
 import "@mdxeditor/editor/style.css";
 import { CodeFields } from "./CodeBlock.js";
 import { BlockIcon } from "./BlockIcon.js";
+import { SmartLinkDialog } from "./SmartLinkDialog.js";
 
 function EmbeddedCodeEditor({ code, language, meta, focusEmitter }: CodeBlockEditorProps) {
   const input = useRef<HTMLTextAreaElement>(null);
@@ -265,7 +266,7 @@ export default function RichTextBlock({
     () => [
       ...(inlineOnly ? [] : [headingsPlugin(), listsPlugin(), quotePlugin()]),
       linkPlugin({ validateUrl: (url) => /^(?:https?:|mailto:|\/|#|\.\.?\/)/iu.test(url) }),
-      linkDialogPlugin(),
+      linkDialogPlugin({ LinkDialog: SmartLinkDialog, showLinkTitleField: false }),
       ...(inlineOnly ? [] : [tablePlugin(), accessibleTablesPlugin(), thematicBreakPlugin()]),
       codeBlockPlugin({
         defaultCodeBlockLanguage: "text",

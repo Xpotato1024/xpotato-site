@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: development
-last_verified: 2026-11-19
+last_verified: 2026-11-20
 ---
 
 # CMS基盤実装の状態
@@ -70,6 +70,16 @@ CodeMirrorはCMS内の編集テーマをCSPに沿って適用するためopen Sh
 2026-11-19にLLM-01のNode 24.22.1とEdgeでproduction editor buildを検証した。`editor-workspace-smoke.mjs`は3種類の入口、独立した管理、目的タグの原稿への引継ぎ、320pxの3モード、添削サンプル、IndexedDB v2からv3への原稿・媒体・履歴保持を確認した。`editor-keyboard-smoke.mjs`は320px/390pxでvisualViewportを模擬し、入れ子の本文、CodeMirror、通常フォームの計14ケースでcaretの可視性と保存済み全文・selectionの保持を確認した。既存`editor-browser-smoke.mjs`もrich/block/source、グループと画像の移動、数式・コード、mobile、offlineを通過した。
 
 模擬イベントの成功を実iPhone・実IMEの受入れとして扱わない。最終commitの統合試験・GitHub CIとSitesへの反映は、対応PRに対象commit・versionとともに記録する。公開Siteの接続設定・実機受入れは引き続き別の確認項目である。
+
+## 2026-11-20 ブロック対応・リンク・プレビューの点検
+
+条件比較は、条件名と子の本文・画像を独立して保持する `ComparisonCase` を追加した。CMSから3件以上の条件を追加し、条件全体を移動・削除できる。2件未満の編集中データは内容を残して案内を出す。従来の2ラベルと共通本文は自動分割しない。症状と対処の補足本文、Calloutの子要素定義、リンクカードの表示も公開側と対応させた。
+
+数値X/Yの折れ線・散布図を `LineChart` として追加し、系列・点・軸・説明をCMSで編集する。CMSの表示、即時プレビュー、公開Astroは同じ静的SVG・データ表の処理を共有する。既存Vega-LiteやMermaidのローカル制作処理をCMSから実行する接続とは区別する。16独自部品と通常Markdownの対応表、見つかった不足、GUIを用意していない機能は[ブロック機能点検](../audits/cms-block-coverage-20261120.md)に記録した。[ADR-0087](../design/adr/0087-cms-comparison-and-static-charts.md)はproposedの判断候補である。
+
+リンクは選択した文章・URL・既存リンクから表示文字とリンク先を設定する。URLだけの変更では文字装飾を保持し、キャンセルで本文・選択位置を戻す。修正案JSONは指摘作成欄から「添削ファイル」へ移し、「修正案ファイルを読み込む」と表示する。既存指摘への提案読込と本文への反映は別操作のままとする。プレビューの倍率は一つの選択欄へまとめ、重複する倍率やCSS・フォントの説明帯を削除した。
+
+操作サンプルには3条件の比較と2系列の折れ線・散布図を追加した。合成データであることを明示し、元のグループ・画像・数式・コード・添削4状態を維持する。検証は単体・公開Astro描画、実ブラウザー操作、同一commitのCI、所有者限定Sitesへの配布を分け、対象commit・結果・versionはPR #229で照合する。実iPhoneの操作や本番配信をこの記録から推定しない。
 
 ## 目的と実装境界
 

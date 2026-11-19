@@ -45,6 +45,12 @@ export const blockChoices: Choice[] = [
     group: "図表・コード",
   },
   {
+    kind: "LineChart",
+    label: "折れ線・散布図",
+    description: "複数系列・数値の座標",
+    group: "図表・コード",
+  },
+  {
     kind: "code",
     label: "コード",
     description: "言語とソースを指定",
@@ -60,7 +66,13 @@ export const blockChoices: Choice[] = [
   { kind: "Group", label: "グループ", description: "見出し・本文・画像をまとめる", group: "構成" },
   { kind: "Steps", label: "手順", description: "複数の手順をまとめる", group: "構成" },
   { kind: "Step", label: "手順を追加", description: "操作と結果", group: "構成" },
-  { kind: "Comparison", label: "比較", description: "2つの条件を比較", group: "構成" },
+  { kind: "Comparison", label: "比較", description: "複数の条件を比較", group: "構成" },
+  {
+    kind: "ComparisonCase",
+    label: "比較条件を追加",
+    description: "条件の説明・画像",
+    group: "構成",
+  },
   {
     kind: "Details",
     label: "折りたたみ",
@@ -105,7 +117,7 @@ export function allowedBlockKinds(parent?: string): BlockKind[] {
   return blockChoices
     .filter(
       (item) =>
-        !["Step", "DiagnosticItem"].includes(item.kind) &&
+        !["Step", "DiagnosticItem", "ComparisonCase"].includes(item.kind) &&
         (!parent || item.kind !== "ArticleEndnote"),
     )
     .map((item) => item.kind);

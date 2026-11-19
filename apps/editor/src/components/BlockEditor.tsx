@@ -56,6 +56,7 @@ export interface BlockEditorProps {
   /** Nested semantic modules share absolute offsets with the outer document. */
   baseOffset?: number;
   parentModule?: string;
+  allowedKinds?: readonly string[] | undefined;
 }
 export function BlockEditor({
   body,
@@ -73,6 +74,7 @@ export function BlockEditor({
   reviewMarks,
   baseOffset = 0,
   parentModule,
+  allowedKinds,
 }: BlockEditorProps) {
   const marks = useMemo(
     () => reviewMarks ?? locateReviewMarks(body, annotations ?? []),
@@ -116,7 +118,23 @@ export function BlockEditor({
   const list = useRef<HTMLDivElement>(null);
   const callbacks = useRef({ onChange, onActiveBlock });
   callbacks.current = { onChange, onActiveBlock };
-  const allowed = useMemo(() => allowedBlockKinds(parentModule), [parentModule]);
+  const allowed = useMemo(
+    () =>
+      allowedKinds
+        ? allowedKinds.filter((kind): kind is BlockKind => kind in blockTemplates)
+        : allowedBlockKinds(parentModule),
+    [allowedKinds, parentModule],
+  );
+  const insertionLabel =
+    parentModule === "Gallery"
+      ? "画像"
+      : parentModule === "Steps"
+        ? "手順"
+        : parentModule === "DiagnosticList"
+          ? "症状"
+          : parentModule === "Comparison" && allowed.includes("ComparisonCase")
+            ? "条件"
+            : "ブロック";
   useEffect(() => {
     if (paletteAfter === null) return;
     const mediaQuery = window.matchMedia("(max-width: 800px)");
@@ -557,7 +575,7 @@ export function BlockEditor({
                   end: mark.end - offset,
                 }))}
                 activeCommentId={activeCommentId}
-                childrenEditor={(children, childOffset, parent, onChildChange) => (
+                childrenEditor={(children, childOffset, parent, onChildChange, childKinds) => (
                   <BlockEditor
                     body={children}
                     onChange={onChildChange}
@@ -567,6 +585,7 @@ export function BlockEditor({
                     revealSelection={revealSelection}
                     baseOffset={offset + childOffset}
                     parentModule={parent}
+                    allowedKinds={childKinds}
                     media={media}
                     tools={tools}
                     reviewMarks={marks}
@@ -598,13 +617,7 @@ export function BlockEditor({
             onClick={(event) => openPalette(-1, event.currentTarget, event.detail === 0)}
           >
             <BlockIcon name="plus" />
-            {parentModule === "Gallery"
-              ? "画像"
-              : parentModule === "Steps"
-                ? "手順"
-                : parentModule === "DiagnosticList"
-                  ? "症状"
-                  : "ブロック"}
+            {insertionLabel}
             を追加
           </button>
         </div>
@@ -619,7 +632,7 @@ export function BlockEditor({
           }
         >
           <BlockIcon name="plus" />
-          {parentModule === "Gallery" ? "画像" : parentModule === "Steps" ? "手順" : "ブロック"}
+          {insertionLabel}
           を追加
         </button>
       )}

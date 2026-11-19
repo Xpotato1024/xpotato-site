@@ -1,0 +1,120 @@
+/* Static SVG chart with a collapsible, readable data table. */
+:not(:where([data-bt], [data-bt] *)) {
+  :is(.prose, .cms-chart-preview) .article-line-chart& {
+    margin-block: 1.75rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__title& {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-weight: 650;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__plot& {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-width: 32rem;
+    max-width: none;
+    overflow: visible;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__grid& {
+    stroke: var(--border-divider);
+    stroke-width: 1;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__axis& {
+    stroke: var(--text-muted);
+    stroke-width: 1.5;
+    fill: none;
+  }
+  :is(.prose, .cms-chart-preview) :is(.article-line-chart__tick, .article-line-chart__axis-title)& {
+    font: 18px var(--font-body);
+    fill: var(--text-muted);
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__series--1& {
+    --chart-color: var(--accent);
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__series--2& {
+    --chart-color: var(--text-primary);
+    --chart-dash: 9 5;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__series--3& {
+    --chart-color: var(--text-muted);
+    --chart-dash: 2 5;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__series--4& {
+    --chart-color: var(--accent-hover, var(--accent));
+    --chart-dash: 9 4 2 4;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__series--5& {
+    --chart-color: var(--text-primary);
+    --chart-dash: 14 6;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__series--6& {
+    --chart-color: var(--text-muted);
+    --chart-dash: 3 3;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__line& {
+    fill: none;
+    stroke: var(--chart-color);
+    stroke-width: 3;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    stroke-dasharray: var(--chart-dash, none);
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__point& {
+    fill: var(--chart-color);
+    stroke: var(--chart-color);
+    stroke-width: 1;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__legend& {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 1.25rem;
+    padding: 0;
+    margin: 0.65rem 0;
+    font-size: 0.875rem;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__legend-item& {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__legend-item svg& {
+    width: 1.5rem;
+    height: 0.875rem;
+    flex: none;
+  }
+  :is(.prose, .cms-chart-preview) :is(.article-line-chart__viewport, .article-line-chart__table)& {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__data :is(th, td)& {
+    padding: 0.35rem 0.65rem;
+    text-align: start;
+    border-bottom: 1px solid var(--border-divider);
+    overflow-wrap: anywhere;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__data td& {
+    font-variant-numeric: tabular-nums;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__data& {
+    margin-top: 0.75rem;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__data summary& {
+    cursor: pointer;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__data table& {
+    width: 100%;
+  }
+}
+@media print {
+  :not(:where([data-bt], [data-bt] *)) {
+    :is(.prose, .cms-chart-preview) .article-line-chart& {
+      break-inside: avoid;
+    }
+  }
+}

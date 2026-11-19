@@ -182,3 +182,30 @@
     }
   }
 }
+
+:not(:where([data-bt], [data-bt] *)) {
+  .prose a.article-link-card& {
+    display: grid;
+    gap: 0.4rem;
+    margin-block: 1.25rem;
+    padding: 1rem;
+    border: 1px solid var(--border-divider);
+    border-radius: 0.375rem;
+    background: var(--surface-control);
+    color: var(--text-primary);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+  .prose .article-link-card > strong& {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .prose .article-link-card > span& {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+  .prose a.article-link-card[href]&:hover {
+    border-color: var(--border-control);
+  }
+}

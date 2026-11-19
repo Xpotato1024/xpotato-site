@@ -9,6 +9,8 @@ const paths: Record<string, string> = {
   Gallery: "M3 3h7v7H3Z M14 3h7v7h-7Z M3 14h7v7H3Z M14 14h7v7h-7Z",
   table: "M3 4h18v16H3Z M3 10h18 M10 4v16",
   BarChart: "M3 3v18h18 M7 16v-5 M12 16V7 M17 16V4",
+  LineChart: "M3 3v18h18 M5 17l5-6 4 3 6-9 M10 11h.01 M14 14h.01 M20 5h.01",
+  ComparisonCase: "M4 4h16v16H4Z M8 8h8 M8 12h8 M8 16h5",
   code: "m8 6-6 6 6 6 M16 6l6 6-6 6 M14 4l-4 16",
   math: "M19 4H5l8 8-8 8h14",
   Group: "M8 3H3v5 M16 3h5v5 M3 16v5h5 M21 16v5h-5 M7 8h10 M7 12h10 M7 16h6",

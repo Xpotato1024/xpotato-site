@@ -20,7 +20,8 @@
         "apps/site/src/features/tools/components/PrimeOffline.astro",
         "apps/site/src/features/tools/components/ToolReleaseNotice.astro",
         "apps/site/src/features/discovery/components/BlogArchiveNavigation.astro",
-        "apps/site/src/features/pages/components/ContactIssuePicker.astro"
+        "apps/site/src/features/pages/components/ContactIssuePicker.astro",
+        "packages/portable-content/src/charts.ts"
       ],
       "comparison": [
         "fontFamily",
@@ -419,7 +420,12 @@
         "apps/site/src/shared/blocks/Group/Group.astro",
         "apps/site/src/shared/blocks/LinkCard/LinkCard.astro",
         "apps/site/src/shared/blocks/Step/Step.astro",
-        "apps/site/src/shared/blocks/Steps/Steps.astro"
+        "apps/site/src/shared/blocks/Steps/Steps.astro",
+        "apps/site/src/shared/blocks/Comparison/ComparisonCase.astro",
+        "apps/site/src/shared/blocks/LineChart/LineChart.astro",
+        "apps/site/src/shared/styles/article-comparison.css",
+        "apps/site/src/shared/styles/article-line-chart.css",
+        "packages/portable-content/src/charts.ts"
       ],
       "exceptions": [
         "editorial-heading"
@@ -428,7 +434,11 @@
         "checks": [
           "apps/site/src/shared/styles/design-roles.test.ts",
           "apps/site/src/shared/styles/design-inventory.test.ts",
-          "ops/qa/design-role-interaction.mjs"
+          "ops/qa/design-role-interaction.mjs",
+          "apps/site/src/shared/blocks/content-module-rendering.test.ts",
+          "apps/editor/src/content-module-coverage.test.ts",
+          "ops/qa/editor-comparison-smoke.mjs",
+          "ops/qa/editor-chart-preview-smoke.mjs"
         ],
         "kind": "source-contract-plus-representative-route",
         "limitation": "すべての未使用module/variantの実表示を網羅するものではない。変更するvariantは専用fixtureまたは利用routeで検証する。"

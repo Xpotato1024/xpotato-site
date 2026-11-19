@@ -22,6 +22,8 @@ import articleModulesCssHref from "../styles/article-modules.css?url";
 import articleDiagnosticsCssHref from "../styles/article-diagnostics.css?url&no-inline";
 import articleGalleryCssHref from "../styles/article-gallery.css?url&no-inline";
 import articleBarChartCssHref from "../styles/article-bar-chart.css?url&no-inline";
+import articleLineChartCssHref from "../styles/article-line-chart.css?url&no-inline";
+import articleComparisonCssHref from "../styles/article-comparison.css?url&no-inline";
 import articleMotionCssHref from "../styles/article-motion.css?url&no-inline";
 import articleCssHref from "../styles/article-structure.css?url";
 import ToolBreadcrumbs from "../../features/tools/components/ToolBreadcrumbs.astro";
@@ -96,8 +98,10 @@ const hasAnimatedMedia = bodyHtml.includes("data-article-motion");
 const hasDiagnostics = /class="[^"\n]*\barticle-diagnostics\b/u.test(bodyHtml);
 const hasGallery = /class="[^"\n]*\barticle-gallery\b/u.test(bodyHtml);
 const hasBarChart = /class="[^"\n]*\barticle-bar-chart\b/u.test(bodyHtml);
+const hasLineChart = /class="[^"\n]*\barticle-line-chart\b/u.test(bodyHtml);
+const hasComparison = /class="[^"\n]*\barticle-comparison\b/u.test(bodyHtml);
 const hasArticleModules =
-  /class="[^"\n]*\barticle-(?:figure|callout|steps|diagnostics|diagrams|gallery|compact-figure|endnote)\b/u.test(
+  /class="[^"\n]*\barticle-(?:figure|callout|steps|diagnostics|diagrams|gallery|compact-figure|endnote|link-card)\b/u.test(
     bodyHtml,
   );
 const metadata = deriveContentSeo({
@@ -153,6 +157,8 @@ const seriesNavigation =
     ...(hasDiagnostics ? [articleDiagnosticsCssHref] : []),
     ...(hasGallery ? [articleGalleryCssHref] : []),
     ...(hasBarChart ? [articleBarChartCssHref] : []),
+    ...(hasLineChart ? [articleLineChartCssHref] : []),
+    ...(hasComparison ? [articleComparisonCssHref] : []),
     ...(hasCodeBlocks ? [codeCssHref] : []),
     ...(hasAnimatedMedia ? [articleMotionCssHref] : []),
     ...(hasMediaCredits ? [mediaCreditCssHref] : []),

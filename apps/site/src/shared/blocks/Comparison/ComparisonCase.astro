@@ -1,0 +1,11 @@
+---
+import { comparisonCaseModulePropsSchema } from "@xpotato/content-contracts/content";
+const { label } = comparisonCaseModulePropsSchema.parse(Astro.props);
+---
+
+<section class="article-comparison__case" aria-label={label}>
+  <strong class="article-comparison__case-title">{label}</strong>
+  <div class="article-comparison__case-body">
+    <slot />
+  </div>
+</section>

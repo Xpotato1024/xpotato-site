@@ -188,20 +188,27 @@ export function updateModuleChildren(source: string, children: string): string {
   return source.slice(0, module.openingEnd) + children + source.slice(module.closingStart);
 }
 
+/** Content containers share the same authoring vocabulary as ordinary document flow. */
+export const flowChildKinds: readonly string[] = Object.freeze([
+  "paragraph",
+  "heading",
+  "list",
+  "orderedList",
+  "quote",
+  "divider",
+  "table",
+  "code",
+  "math",
+  ...moduleNames.filter(
+    (name) => !["Step", "DiagnosticItem", "ComparisonCase", "ArticleEndnote"].includes(name),
+  ),
+]);
 /** Direct child choices shared by insertion UI and external insertion actions. */
 export const moduleChildKinds: Readonly<Record<string, readonly string[]>> = Object.freeze({
-  Group: Object.freeze([
-    "paragraph",
-    "heading",
-    "list",
-    "orderedList",
-    "quote",
-    "divider",
-    "table",
-    "code",
-    "math",
-    ...moduleNames.filter((name) => !["Step", "DiagnosticItem", "ArticleEndnote"].includes(name)),
-  ]),
+  Group: flowChildKinds,
+  Callout: flowChildKinds,
+  Step: flowChildKinds,
+  Details: flowChildKinds,
   Gallery: Object.freeze(["Figure"]),
   Steps: Object.freeze(["Step"]),
   DiagnosticList: Object.freeze(["DiagnosticItem"]),
@@ -209,8 +216,11 @@ export const moduleChildKinds: Readonly<Record<string, readonly string[]>> = Obj
   Figure: Object.freeze([]),
   LinkCard: Object.freeze([]),
   BarChart: Object.freeze([]),
+  LineChart: Object.freeze([]),
+  Comparison: Object.freeze(["ComparisonCase"]),
+  ComparisonCase: flowChildKinds,
   Demo: Object.freeze([]),
-  DiagnosticItem: Object.freeze([]),
+  DiagnosticItem: flowChildKinds,
 });
 /** Preferred offsets are block boundaries; restricted containers promote to their end. */
 export function moduleInsertionOffset(
@@ -242,9 +252,10 @@ export function moduleInsertionOffset(
   visit(tree);
   let result = offset;
   for (const parent of ancestors.reverse()) {
-    const allowed = Object.hasOwn(moduleChildKinds, parent.name!)
-      ? moduleChildKinds[parent.name!]
-      : undefined;
+    const legacyComparison =
+      parent.name === "Comparison" &&
+      parent.attributes?.some((attribute) => attribute.name === "leftLabel");
+    const allowed = legacyComparison ? flowChildKinds : moduleChildKinds[parent.name!];
     if (!allowed || allowed.includes(moduleName)) break;
     result = parent.position!.end.offset!;
   }
@@ -492,8 +503,12 @@ export const blockTemplates = Object.freeze({
   Step: '<Step title="手順">\n\n操作を記述します。\n\n</Step>',
   Callout: '<Callout kind="note" title="補足">\n\n補足内容。\n\n</Callout>',
   BarChart: '<BarChart title="比較" unit="件" max="10" rows=\'[{"label":"条件A","value":5}]\' />',
+  LineChart:
+    '<LineChart title="グラフのタイトル" xLabel="時間 (s)" yLabel="変位 (mm)" series=\'[{"label":"条件A","points":[{"x":0,"y":1},{"x":1,"y":3},{"x":2,"y":2}]},{"label":"条件B","points":[{"x":0,"y":2},{"x":1,"y":4},{"x":2,"y":3}]}]\' />',
   Details: '<Details summary="詳細">\n\n説明。\n\n</Details>',
-  Comparison: '<Comparison leftLabel="条件A" rightLabel="条件B">\n\n比較内容。\n\n</Comparison>',
+  Comparison:
+    '<Comparison>\n\n<ComparisonCase label="条件A">\n\n条件Aの説明。\n\n</ComparisonCase>\n\n<ComparisonCase label="条件B">\n\n条件Bの説明。\n\n</ComparisonCase>\n\n<ComparisonCase label="条件C">\n\n条件Cの説明。\n\n</ComparisonCase>\n\n</Comparison>',
+  ComparisonCase: '<ComparisonCase label="新しい条件">\n\n条件の説明。\n\n</ComparisonCase>',
   LinkCard: '<LinkCard href="https://example.com" title="リンク先のタイトル" />',
   DiagnosticList:
     '<DiagnosticList>\n  <DiagnosticItem symptom="症状" check="確認すること" action="対処方法" />\n</DiagnosticList>',

@@ -13,11 +13,23 @@
   background: var(--surface-control);
   border-bottom: 1px solid var(--border-divider);
 }
-.cms-preview-devices,
-.cms-preview-zoom {
+.cms-preview-devices {
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
+}
+.cms-preview-zoom {
+  display: flex;
+  align-items: center;
+}
+.cms-preview-zoom select {
+  @apply cms-field;
+  width: auto;
+  max-width: 100%;
+  min-height: 44px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--surface-control);
 }
 .cms-site-preview-toolbar button {
   @apply cms-button cms-quiet-button;
@@ -30,15 +42,6 @@
 }
 .cms-preview-devices small {
   font: 0.65rem var(--font-mono);
-}
-.cms-preview-caption {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin: 0;
-  padding: 0.5rem 0.85rem;
-  color: var(--text-muted);
-  font-size: 0.75rem;
 }
 .cms-preview-warnings,
 .cms-preview-error {
@@ -92,5 +95,9 @@
     flex-direction: column;
     gap: 0.1rem;
     padding-inline: 0.35rem;
+  }
+  .cms-preview-zoom,
+  .cms-preview-zoom select {
+    width: 100%;
   }
 }

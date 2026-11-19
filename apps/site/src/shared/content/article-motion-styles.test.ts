@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { describe, it, expect } from "vitest";
 const get = (p: string) => readFile(new URL(p, import.meta.url), "utf8");
 describe("conditional article styles", () => {
-  it("loads motion CSS with the same rendered-body condition as its script, alongside independent code CSS", async () => {
+  it("loads each article stylesheet independently and keeps motion CSS with its script", async () => {
     const layout = await get("../layouts/ContentLayout.astro");
     expect(layout).toContain('const hasAnimatedMedia = bodyHtml.includes("data-article-motion");');
     expect(layout).toContain(
@@ -15,12 +15,16 @@ describe("conditional article styles", () => {
       "hasCodeBlocks",
       "hasAnimatedMedia",
       "hasBarChart",
+      "hasLineChart",
+      "hasComparison",
       "hasMediaCredits",
       "hasGallery",
       "hasDiagnostics",
       "codeCssHref",
       "articleMotionCssHref",
       "articleBarChartCssHref",
+      "articleLineChartCssHref",
+      "articleComparisonCssHref",
       "mediaCreditCssHref",
       "articleGalleryCssHref",
       "articleDiagnosticsCssHref",
@@ -28,24 +32,30 @@ describe("conditional article styles", () => {
       "seriesCssHref",
       `return ${selection![1]};`,
     );
-    for (let flags = 0; flags < 128; flags++) {
+    for (let flags = 0; flags < 512; flags++) {
       const code = !!(flags & 1),
         motion = !!(flags & 2),
         chart = !!(flags & 4),
         credits = !!(flags & 8),
         series = !!(flags & 16),
         gallery = !!(flags & 32),
-        diagnostics = !!(flags & 64);
+        diagnostics = !!(flags & 64),
+        lineChart = !!(flags & 128),
+        comparison = !!(flags & 256);
       const selected = select(
         code,
         motion,
         chart,
+        lineChart,
+        comparison,
         credits,
         gallery,
         diagnostics,
         "code",
         "motion",
         "chart",
+        "line-chart",
+        "comparison",
         "credits",
         "gallery",
         "diagnostics",
@@ -57,6 +67,8 @@ describe("conditional article styles", () => {
           ...(code ? ["code"] : []),
           ...(motion ? ["motion"] : []),
           ...(chart ? ["chart"] : []),
+          ...(lineChart ? ["line-chart"] : []),
+          ...(comparison ? ["comparison"] : []),
           ...(credits ? ["credits"] : []),
           ...(series ? ["series"] : []),
           ...(gallery ? ["gallery"] : []),
@@ -68,6 +80,26 @@ describe("conditional article styles", () => {
       /hasAnimatedMedia\s*&&\s*\(?\s*<script\s+is:inline\s+src="\/scripts\/article-motion\.js"/u,
     );
   });
+  it.each([
+    ["LineChart", "article-line-chart", "articleLineChartCssHref", "article-line-chart.css"],
+    ["Comparison", "article-comparison", "articleComparisonCssHref", "article-comparison.css"],
+  ])(
+    "selects %s CSS from the actual root class, not prose that mentions the module",
+    async (name, className, href, file) => {
+      const layout = await get("../layouts/ContentLayout.astro");
+      expect(layout).toContain(`import ${href} from "../styles/${file}?url&no-inline";`);
+      const condition = layout.match(
+        new RegExp(`const has${name} = (\\/[^\\r\\n]+\\/u)\\.test\\(bodyHtml\\);`, "u"),
+      );
+      expect(condition).not.toBeNull();
+      const selects = new Function("bodyHtml", `return ${condition![1]}.test(bodyHtml);`);
+      expect(selects(`<figure class="${className}">本文</figure>`)).toBe(true);
+      expect(selects(`<section class="other ${className} selected">本文</section>`)).toBe(true);
+      expect(selects(`<p>${className}</p>`)).toBe(false);
+      expect(selects(`<span class="${className}__title">部品の子だけ</span>`)).toBe(false);
+      expect(selects("<p>通常の文章。</p>")).toBe(false);
+    },
+  );
   it("loads series navigation independently of the series directory styles", async () => {
     const layout = await get("../layouts/ContentLayout.astro"),
       navigation = await get("../../features/series/styles/series-navigation.css");

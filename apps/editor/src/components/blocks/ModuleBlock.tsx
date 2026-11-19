@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { semanticContentModuleJsonSchemas } from "@xpotato/content-contracts/content";
+import { ChartSeriesEditor } from "./ChartSeriesEditor.js";
+import { LineChartPreview } from "./LineChartPreview.js";
 import { BlockIcon } from "./BlockIcon.js";
 import {
   readModuleSource,
   updateModuleChildren,
   updateModuleProps,
+  moduleChildKinds,
+  flowChildKinds,
+  blockTree,
 } from "@xpotato/editor-core/blocks";
 export interface EditorMedia {
   id: string;
@@ -59,6 +64,9 @@ const labels: Record<string, string> = {
   unit: "単位",
   max: "最大値",
   rows: "グラフの値",
+  series: "測定系列",
+  xLabel: "横軸（単位を含む）",
+  yLabel: "縦軸（単位を含む）",
 };
 const choices: Record<string, string> = {
   content: "本文幅",
@@ -77,6 +85,8 @@ const choices: Record<string, string> = {
   tip: "ヒント",
   warning: "注意",
   important: "重要",
+  line: "折れ線",
+  scatter: "散布図",
 };
 const names: Record<string, string> = {
   Group: "グループ",
@@ -93,6 +103,8 @@ const names: Record<string, string> = {
   DiagnosticItem: "症状",
   ArticleEndnote: "エンドノート",
   BarChart: "棒グラフ",
+  LineChart: "折れ線・散布図",
+  ComparisonCase: "比較条件",
 };
 interface ChartRow {
   label: string;
@@ -218,22 +230,30 @@ function ModuleFields({
   }, [serialized]);
   const schema = schemas[module.name];
   const fields = Object.entries(schema?.properties ?? {});
+  const requiredFields =
+    module.name === "Comparison" ? ["leftLabel", "rightLabel"] : (schema?.required ?? []);
   const update = (name: string, value: string | boolean) =>
     setValues((current) => ({ ...current, [name]: value }));
   const apply = () => {
     const prepared = Object.fromEntries(
-      Object.entries(values).filter(
-        ([key, value]) => value !== "" || schema?.required?.includes(key),
-      ),
+      Object.entries(values).filter(([key, value]) => value !== "" || requiredFields.includes(key)),
     );
     try {
+      if (module.name === "Comparison" && (!prepared.leftLabel || !prepared.rightLabel)) {
+        setError("両方の条件名を入力してください。");
+        return;
+      }
       onApply(updateModuleProps(source, prepared));
       setError("");
     } catch (caught) {
       const issues =
         caught && typeof caught === "object" && "issues" in caught && Array.isArray(caught.issues)
-          ? (caught.issues as { path?: (string | number)[] }[])
+          ? (caught.issues as { path?: (string | number)[]; message?: string }[])
           : [];
+      const seriesIssue =
+        module.name === "LineChart"
+          ? issues.find((issue) => issue.path?.[0] === "series" && issue.message)
+          : undefined;
       const fields = [
         ...new Set(
           issues.map(
@@ -242,15 +262,24 @@ function ModuleFields({
         ),
       ];
       setError(
-        fields.length
-          ? fields.join("、") + "を確認してください。必須項目・値の範囲・URL形式を確認できます。"
-          : "入力内容を確認してください。",
+        seriesIssue?.message ??
+          (fields.length
+            ? fields.join("、") + "を確認してください。必須項目・値の範囲・URL形式を確認できます。"
+            : "入力内容を確認してください。"),
       );
     }
   };
   const field = ([name, specification]: [string, FieldSchema]) => {
-    const required = schema?.required?.includes(name);
+    const required = requiredFields.includes(name);
     const value = values[name];
+    if (name === "series")
+      return (
+        <ChartSeriesEditor
+          key={name}
+          value={String(value ?? "[]")}
+          onChange={(next) => update(name, next)}
+        />
+      );
     if (name === "rows")
       return (
         <ChartRows
@@ -349,13 +378,13 @@ function ModuleFields({
   return (
     <div className="cms-module-fields">
       <div className="cms-field-grid">
-        {fields.filter(([name]) => schema?.required?.includes(name)).map(field)}
+        {fields.filter(([name]) => requiredFields.includes(name)).map(field)}
       </div>
-      {fields.some(([name]) => !schema?.required?.includes(name)) && (
+      {fields.some(([name]) => !requiredFields.includes(name)) && (
         <details className="cms-optional-fields">
           <summary>表示・補足の設定</summary>
           <div className="cms-field-grid">
-            {fields.filter(([name]) => !schema?.required?.includes(name)).map(field)}
+            {fields.filter(([name]) => !requiredFields.includes(name)).map(field)}
           </div>
         </details>
       )}
@@ -384,6 +413,7 @@ export function ModuleBlock({
     offset: number,
     parent: string,
     onChange: (source: string) => void,
+    allowedKinds?: readonly string[],
   ) => ReactNode;
   media?: EditorMedia[];
   tools?: EditorTool[];
@@ -392,21 +422,21 @@ export function ModuleBlock({
   const [settings, setSettings] = useState(false);
   if (!module) return null;
   const value = (name: string) => String(module.props[name] ?? "");
-  const container = [
-    "Group",
-    "Gallery",
-    "Callout",
-    "Steps",
-    "Step",
-    "Comparison",
-    "Details",
-    "DiagnosticList",
-    "ArticleEndnote",
-  ].includes(module.name);
+  const container = Boolean(moduleChildKinds[module.name]?.length);
+  const legacyComparison = module.name === "Comparison" && Boolean(value("leftLabel"));
   const childBody = module.children ?? "";
+  const incompleteComparison =
+    module.name === "Comparison" &&
+    !legacyComparison &&
+    (blockTree(childBody).children?.filter((child) => child.name === "ComparisonCase").length ??
+      0) < 2;
   const children = container
-    ? renderChildren(childBody, module.openingEnd, module.name, (body) =>
-        onChange(updateModuleChildren(source, body)),
+    ? renderChildren(
+        childBody,
+        module.openingEnd,
+        module.name,
+        (body) => onChange(updateModuleChildren(source, body)),
+        legacyComparison ? flowChildKinds : undefined,
       )
     : null;
   if (module.name === "Group") {
@@ -439,15 +469,20 @@ export function ModuleBlock({
     >
       <div className="cms-module-caption">
         <strong>
-          {value("title") ||
-            value("summary") ||
-            value("label") ||
-            names[module.name] ||
-            module.name}
+          {module.name === "LineChart"
+            ? names[module.name]
+            : value("title") ||
+              value("summary") ||
+              value("label") ||
+              names[module.name] ||
+              module.name}
         </strong>
-        <button type="button" aria-expanded={settings} onClick={() => setSettings(!settings)}>
-          設定
-        </button>
+        {Object.keys(schemas[module.name]?.properties ?? {}).length > 0 &&
+          (module.name !== "Comparison" || legacyComparison) && (
+            <button type="button" aria-expanded={settings} onClick={() => setSettings(!settings)}>
+              設定
+            </button>
+          )}
       </div>
       {module.name === "Figure" && (
         <figure>
@@ -463,6 +498,7 @@ export function ModuleBlock({
           {value("caption") && <figcaption>{value("caption")}</figcaption>}
         </figure>
       )}
+      {module.name === "LineChart" && <LineChartPreview props={module.props} />}
       {module.name === "BarChart" && (
         <div className="cms-bar-chart">
           {rowData?.map((row, index) => (
@@ -527,14 +563,23 @@ export function ModuleBlock({
           )}
         </dl>
       )}
-      {module.name === "Comparison" && (
+      {module.name === "Comparison" && value("leftLabel") && value("rightLabel") && (
         <div className="cms-comparison-labels">
           <span>{value("leftLabel")}</span>
           <span>{value("rightLabel")}</span>
         </div>
       )}
       {settings && <ModuleFields source={source} onApply={onChange} media={media} tools={tools} />}
-      {children}
+      {incompleteComparison && (
+        <p className="cms-field-error" role="status">
+          比較には条件を2つ以上追加してください。
+        </p>
+      )}
+      {module.name === "Comparison" && !legacyComparison ? (
+        <div className="cms-comparison-grid">{children}</div>
+      ) : (
+        children
+      )}
       {module.name === "Step" && value("result") && (
         <p className="cms-step-result">結果：{value("result")}</p>
       )}

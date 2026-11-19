@@ -1,8 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { applyReviewProposal, validateReviewComments } from "@xpotato/editor-core/annotations";
-import { blockTree, moveBlockTo } from "@xpotato/editor-core/blocks";
+import {
+  blockTree,
+  moveBlockTo,
+  readModuleSource,
+  sourceBlocks,
+} from "@xpotato/editor-core/blocks";
+import {
+  lineChartModulePropsSchema,
+  lineChartSeriesSchema,
+} from "@xpotato/content-contracts/content";
 import { parseDraft, validateDraft } from "@xpotato/editor-core/draft";
 import { inspectImage } from "@xpotato/editor-core/image-inspection";
+import { fromHtml } from "hast-util-from-html";
+import { visit } from "unist-util-visit";
 import { previewDocument } from "../../preview.js";
 import { locateReviewComment, reviewMarkState } from "../review/review-marks.js";
 import { createSampleDraft } from "./sampleDraft.js";
@@ -98,5 +109,59 @@ describe("an explicitly opened local operation sample", () => {
     // Both a pending review and the already-applied sample retain their target after a group move.
     const moved = moveBlockTo(body, 1, 2);
     for (const comment of comments) expect(locateReviewComment(moved, comment)).not.toBeNull();
+  });
+
+  it("includes three editable comparison conditions and two explicitly synthetic chart examples", async () => {
+    const { draft, media } = await createSampleDraft();
+    const { body } = parseDraft(draft.source);
+    const blocks = sourceBlocks(body);
+    const comparison = blocks.find((block) => block.name === "Comparison")!;
+    const conditions = sourceBlocks(readModuleSource(comparison.source)!.children!);
+    expect(conditions.map((block) => readModuleSource(block.source)?.props.label)).toEqual([
+      "条件A",
+      "条件B",
+      "条件C",
+    ]);
+    expect(conditions[0]!.source).toContain("条件Aの中で編集できます");
+    expect(conditions[1]!.source).toContain('asset="sample-block-group"');
+    expect(conditions[2]!.source).toContain("- 確認すること\n- 変更すること");
+
+    const charts = blocks
+      .filter((block) => block.name === "LineChart")
+      .map((block) => lineChartModulePropsSchema.parse(readModuleSource(block.source)!.props));
+    expect(charts.map((chart) => chart.kind)).toEqual(["line", "scatter"]);
+    for (const chart of charts) {
+      expect(chart.title).toContain("操作サンプル");
+      expect(chart.description).toContain("合成データ");
+      expect(chart.description).toContain("実測結果");
+      const series = lineChartSeriesSchema.parse(JSON.parse(chart.series));
+      expect(series.map((item) => item.label)).toEqual(["系列A", "系列B"]);
+      expect(series.every((item) => item.points.length === 4)).toBe(true);
+    }
+
+    const bytes = new Uint8Array(await media[0]!.blob.arrayBuffer());
+    const preview = await previewDocument(draft.source, {
+      media: [
+        {
+          assetId: media[0]!.assetId,
+          src: "data:image/png;base64," + Buffer.from(bytes).toString("base64"),
+        },
+      ],
+    });
+    expect(preview.warnings).toEqual([]);
+    let conditionsShown = 0;
+    const chartKinds: unknown[] = [];
+    visit(fromHtml(preview.html, { fragment: true }), "element", (node) => {
+      const classes = node.properties.className;
+      if (Array.isArray(classes) && classes.includes("article-comparison__case")) {
+        conditionsShown++;
+      }
+      if (Array.isArray(classes) && classes.includes("article-line-chart")) {
+        chartKinds.push(node.properties.dataKind);
+      }
+    });
+    expect(conditionsShown).toBe(3);
+    expect(chartKinds).toEqual(["line", "scatter"]);
+    expect(preview.html).toContain("条件Bに添えたブロック構成のサンプル図");
   });
 });

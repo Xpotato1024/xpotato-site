@@ -9,6 +9,8 @@ canonical_for:
 
 # Architecture Decision Records
 
+- [ADR-0087: CMSから編集する比較条件と静的グラフ](0087-cms-comparison-and-static-charts.md) — Proposed。条件ごとの子本文、数値データを保持する静的グラフ、共通描画。
+
 - [ADR-0084: 原文を保持するリッチ編集とCMS専用runtime予算](0084-source-preserving-rich-cms-editor.md) — Accepted 2026-11-18。MDXの部分編集、Lexical／CodeMirror、初期と全graphの独立した予算。
 - [ADR-0083: ContentIdで管理する連載と学習順序](0083-managed-series-reading-order.md) — Accepted 2026-11-18。中央registry、公開目次・前後リンク、非公開項目の除外を実装する判断。本番deployの完了記録ではない。
 

@@ -2,6 +2,8 @@ import BarChart from "../blocks/BarChart/BarChart.astro";
 import Callout from "../blocks/Callout/Callout.astro";
 import ArticleEndnote from "../blocks/ArticleEndnote/ArticleEndnote.astro";
 import Comparison from "../blocks/Comparison/Comparison.astro";
+import ComparisonCase from "../blocks/Comparison/ComparisonCase.astro";
+import LineChart from "../blocks/LineChart/LineChart.astro";
 import Demo from "../../features/tools/components/Demo.astro";
 import Details from "../blocks/Details/Details.astro";
 import Figure from "../blocks/Figure/Figure.astro";
@@ -19,7 +21,9 @@ export const contentComponents = {
   Callout,
   ArticleEndnote,
   Comparison,
+  ComparisonCase,
   BarChart,
+  LineChart,
   Demo,
   Details,
   Figure,

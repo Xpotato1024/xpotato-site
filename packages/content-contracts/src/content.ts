@@ -506,6 +506,8 @@ export const contentModuleRecordSchema = z
       "Steps",
       "Step",
       "Comparison",
+      "ComparisonCase",
+      "LineChart",
       "LinkCard",
       "Details",
       "Demo",
@@ -575,8 +577,16 @@ export const stepsModulePropsSchema = z.object({}).strict();
 export const stepModulePropsSchema = z
   .object({ title: z.string().min(1), result: z.string().min(1).optional() })
   .strict();
+/** Original two-label Comparison remains valid; new cases own their labels. */
 export const comparisonModulePropsSchema = z
-  .object({ leftLabel: z.string().min(1), rightLabel: z.string().min(1) })
+  .object({
+    leftLabel: z.string().min(1).optional(),
+    rightLabel: z.string().min(1).optional(),
+  })
+  .strict()
+  .refine((value) => Boolean(value.leftLabel) === Boolean(value.rightLabel));
+export const comparisonCaseModulePropsSchema = z
+  .object({ label: z.string().trim().min(1).max(120) })
   .strict();
 export const linkCardModulePropsSchema = z
   .object({
@@ -640,15 +650,87 @@ export const barChartModulePropsSchema = z
     }
   });
 
+export const lineChartSeriesSchema = z
+  .array(
+    z
+      .object({
+        label: z.string().trim().min(1).max(100),
+        points: z
+          .array(
+            z
+              .object({
+                x: z.number().finite().min(-1e12).max(1e12),
+                y: z.number().finite().min(-1e12).max(1e12),
+              })
+              .strict(),
+          )
+          .min(1)
+          .max(500),
+      })
+      .strict(),
+  )
+  .min(1)
+  .max(6);
+export type LineChartSeries = z.infer<typeof lineChartSeriesSchema>;
+export const lineChartModulePropsSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120),
+    description: z.string().trim().min(1).max(1000).optional(),
+    xLabel: z.string().trim().min(1).max(60),
+    yLabel: z.string().trim().min(1).max(60),
+    kind: z.enum(["line", "scatter"]).optional(),
+    series: z.string().min(1).max(240000),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(value.series);
+    } catch {
+      context.addIssue({
+        code: "custom",
+        path: ["series"],
+        message: "系列のデータをJSONで指定してください。",
+      });
+      return;
+    }
+    const series = lineChartSeriesSchema.safeParse(parsed);
+    if (!series.success) {
+      context.addIssue({
+        code: "custom",
+        path: ["series"],
+        message:
+          "名前と数値を確認してください。6系列まで、各500点まで、数値の絶対値は1兆以下です。",
+      });
+      return;
+    }
+    if (
+      (value.kind ?? "line") === "line" &&
+      series.data.some(
+        (item) =>
+          item.points.length < 2 ||
+          item.points.some((point, index) => index > 0 && point.x <= item.points[index - 1]!.x),
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["series"],
+        message: "折れ線は各系列に2点以上必要です。Xの値を小さい順に並べ、重複を除いてください。",
+      });
+    }
+  });
+
 export const semanticContentModulePropsSchemas = Object.freeze({
   Group: groupModulePropsSchema,
   BarChart: barChartModulePropsSchema,
+  LineChart: lineChartModulePropsSchema,
   Figure: figureModulePropsSchema,
   Gallery: galleryModulePropsSchema,
   Callout: calloutModulePropsSchema,
   Steps: stepsModulePropsSchema,
   Step: stepModulePropsSchema,
   Comparison: comparisonModulePropsSchema,
+  ComparisonCase: comparisonCaseModulePropsSchema,
   LinkCard: linkCardModulePropsSchema,
   Details: detailsModulePropsSchema,
   Demo: demoModulePropsSchema,

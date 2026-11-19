@@ -1,3 +1,4 @@
+import { renderLineChart } from "@xpotato/portable-content/charts";
 import { safeMathMarkup } from "./components/blocks/math.js";
 import { collectionFromPath, parseDraft } from "@xpotato/editor-core/draft";
 import type { EditorContentRecord } from "@xpotato/editor-core/registry";
@@ -242,12 +243,23 @@ export async function previewDocument(
         return `<ol class="article-steps">${children(node)}</ol>`;
       case "Step":
         return `<li class="article-step"><strong class="article-step-title">${escape(s("title"))}</strong><div class="article-step-body">${children(node)}</div>${s("result") ? `<p class="article-step-result">${escape(s("result"))}</p>` : ""}</li>`;
-      case "Comparison":
-        return `<section aria-label="比較" data-left-label="${escape(s("leftLabel"))}" data-right-label="${escape(s("rightLabel"))}"><header><span>${escape(s("leftLabel"))}</span><span>${escape(s("rightLabel"))}</span></header>${children(node)}</section>`;
+      case "Comparison": {
+        const legacy = Boolean(s("leftLabel") && s("rightLabel"));
+        const incomplete =
+          !legacy &&
+          (node.children?.filter((child) => child.name === "ComparisonCase").length ?? 0) < 2;
+        const notice = incomplete ? "比較には条件を2つ以上追加してください。" : "";
+        if (notice) warnings.add(notice);
+        return `<section class="article-comparison" aria-label="条件比較"${legacy ? ` data-left-label="${escape(s("leftLabel"))}" data-right-label="${escape(s("rightLabel"))}"` : ""}>${legacy ? `<header class="article-comparison__legacy-labels"><span>${escape(s("leftLabel"))}</span><span>${escape(s("rightLabel"))}</span></header>` : ""}${notice ? `<p class="preview-unavailable" role="status">${escape(notice)}</p>` : ""}<div class="${legacy ? "article-comparison__legacy-body" : "article-comparison__cases"}">${children(node)}</div></section>`;
+      }
+      case "ComparisonCase":
+        return `<section class="article-comparison__case" aria-label="${escape(s("label"))}"><strong class="article-comparison__case-title">${escape(s("label"))}</strong><div class="article-comparison__case-body">${children(node)}</div></section>`;
       case "LinkCard":
         return link(
           s("href"),
           `${s("label") ? `<span>${escape(s("label"))}</span>` : ""}<strong>${escape(s("title"))}</strong>${s("description") ? `<span>${escape(s("description"))}</span>` : ""}`,
+          undefined,
+          "article-link-card",
         );
       case "Details":
         return `<details${p.open === true ? " open" : ""}><summary class="disclosure-summary">${escape(s("summary"))}</summary>${children(node)}</details>`;
@@ -282,6 +294,8 @@ export async function previewDocument(
         );
         return `<figure class="article-bar-chart"><figcaption class="article-bar-chart__title">${escape(s("title"))}</figcaption><p class="article-bar-chart__scale">${escape(s("unit"))} · 0–${format(max)}</p><dl class="article-bar-chart__rows">${rows.map((row, index) => `<div class="article-bar-chart__row"><dt>${escape(row.label)}</dt><dd><span class="article-bar-chart__value">${format(row.value)}<span class="article-bar-chart__unit"> ${escape(s("unit"))}</span></span><span class="article-bar-chart__track" aria-hidden="true"><span class="article-bar-chart__bar article-bar-chart__bar--${row.tone ?? "accent"} ${chartId}-${index}"></span></span>${row.note ? `<span class="article-bar-chart__note">${escape(row.note)}</span>` : ""}</dd></div>`).join("")}</dl><div class="article-bar-chart__axis" aria-hidden="true"><span>0</span><span>${format(max / 2)}</span><span>${format(max)}</span></div></figure>`;
       }
+      case "LineChart":
+        return renderLineChart(props);
       case "Demo":
         warnings.add(`「${s("title", s("module"))}」は正規レイアウトで動作を確認してください。`);
         return placeholder(

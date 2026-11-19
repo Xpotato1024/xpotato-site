@@ -142,17 +142,54 @@ DiagnosticItemはDiagnosticList直下、DiagnosticListには1件以上を配置�
 属性は文字列リテラルのみで、JSX props式/生HTML/記事ごとのスタイル指定は禁止。
 Site側はDefinition Listで症状、確認内容、任意の見直す候補と理由を一貫表示する。未提供の理由ラベルは出さない。アイコンはaria-hidden、意味は文字で伝える。checkに設定名だけを並べず、何を観察するかを書く。DiagnosticListにはDiagnosticItem以外の本文・moduleを直置きしない。
 
-## Comparison
+## Comparison / ComparisonCase
+
+比較する条件ごとに名前と子ブロックを持たせる。通常のMarkdown表で足りる比較は表を優先する。
+
+```mdx
+<Comparison>
+  <ComparisonCase label="条件A">
+
+本文と画像など。
+
+  </ComparisonCase>
+  <ComparisonCase label="条件B">
+
+本文と画像など。
+
+  </ComparisonCase>
+  <ComparisonCase label="条件C">
+
+本文と画像など。
+
+  </ComparisonCase>
+</Comparison>
+```
+
+`ComparisonCase`は`Comparison`直下に2件以上置く。各条件内は通常の本文・画像・グループ等を編集でき、条件全体の順序を変えられる。サイトと即時プレビューは同じCSSで条件をカード状に並べ、狭幅では1列にする。比較対象数を表示列数に合わせて2件へ切り詰めない。
+
+従来の`leftLabel`と`rightLabel`を持つComparisonは互換形式として残す。2つのラベルと共通本文を保持し、本文のどの部分がどちらの条件に属するかを推測しない。新しい条件形式との混在は拒否する。
+
+## LineChart（折れ線・散布図）
+
+CMSで系列・数値を編集する静的グラフ。公開ページにグラフ用JavaScriptやVega runtimeを追加しない。
 
 ```ts
-interface ComparisonProps {
-  leftLabel: string;
-  rightLabel: string;
-  children: MDXContent;
+interface LineChartProps {
+  title: string;
+  description?: string;
+  xLabel: string; // 単位を含む
+  yLabel: string; // 単位を含む
+  kind?: "line" | "scatter"; // 省略時line
+  series: string; // [{ label, points: [{ x, y }] }] のJSON
 }
 ```
 
-child APIはrepresentative fixtureで固定する。
+1〜6系列、各1〜500点、数値の絶対値は1兆以下。折れ線は各系列2点以上でXを厳密な昇順にする。散布図は同じXや順序不同を許す。欠測を0へ変換せず、未完成の入力は設定欄に保持して適用時に指摘する。元データはMDXへ保持し、データ表には丸めていない値を出す。
+
+共有portable rendererをCMSの編集画面、即時プレビュー、Astroが使用する。系列は色だけでなく形と線種でも区別する。狭幅で文字を潰さないよう図の領域だけを横スクロールでき、表でも値を確認できる。任意コード・外部データURL・自動取得は扱わない。
+
+既存の[Vega-Lite/Mermaid制作CLI](../operations/technical-visuals.md)は別の図版制作経路である。新規LineChartが任意のVega仕様やMermaid全形式への対応を意味するものではない。判断の理由は[ADR-0087](../design/adr/0087-cms-comparison-and-static-charts.md)。
 
 ## LinkCard
 

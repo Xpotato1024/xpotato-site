@@ -1419,12 +1419,14 @@
   "modules": [
     "Group",
     "BarChart",
+    "LineChart",
     "Figure",
     "Gallery",
     "Callout",
     "Steps",
     "Step",
     "Comparison",
+    "ComparisonCase",
     "LinkCard",
     "Details",
     "Demo",
@@ -1468,6 +1470,51 @@
         "unit",
         "max",
         "rows"
+      ],
+      "additionalProperties": false
+    },
+    "LineChart": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "xLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "yLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "line",
+            "scatter"
+          ]
+        },
+        "series": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240000
+        }
+      },
+      "required": [
+        "title",
+        "xLabel",
+        "yLabel",
+        "series"
       ],
       "additionalProperties": false
     },
@@ -1649,9 +1696,20 @@
           "minLength": 1
         }
       },
+      "additionalProperties": false
+    },
+    "ComparisonCase": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      },
       "required": [
-        "leftLabel",
-        "rightLabel"
+        "label"
       ],
       "additionalProperties": false
     },
@@ -1784,5 +1842,5 @@
       "status": "active"
     }
   ],
-  "contractHash": "b900d6d19a5d03177848676234a7bb4d82868006cd19b439b880b413e35a5598"
+  "contractHash": "8955e316c7d280f46093379e01b7609a01a6a7b4eccc7ec00cf682a83f4cd448"
 }
