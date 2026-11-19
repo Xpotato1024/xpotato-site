@@ -618,6 +618,13 @@ export default function App() {
                     setReviewSelectionRequest((request) => request + 1);
                     setPanel("review");
                   }}
+                  onReviewCreate={(next, trigger) => {
+                    setSelection(next);
+                    panelTrigger.current = trigger;
+                    setSelectedCommentId(null);
+                    setReviewSelectionRequest((request) => request + 1);
+                    setPanel("review");
+                  }}
                   reveal={reveal}
                   onError={setError}
                 />

@@ -1,5 +1,31 @@
 @reference "../../styles.css";
 
+.cms-review-create {
+  opacity: 0;
+  pointer-events: none;
+}
+.cms-editor-region:focus-within:not(:has(.cms-editor-region:focus-within))
+  > .cms-region-toolbar
+  .cms-review-create,
+.cms-review-create:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cms-editor-region:hover:not(:has(.cms-editor-region:hover))
+    > .cms-region-toolbar
+    .cms-review-create {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+.review-target > p {
+  margin-block: 0 0.25rem;
+}
+.review-new-target:focus {
+  outline: none;
+}
+
 :where(.cms-review-indicator, .cms-review-mark, .review-card)[data-review-state="open"] {
   --review-ink: var(--cms-warning);
   --review-fill: var(--cms-warning-fill);

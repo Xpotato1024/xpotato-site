@@ -179,33 +179,6 @@ h3 {
 .series-membership-link {
   margin-bottom: 1rem;
 }
-.document-outline ol {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.document-outline li[data-depth="1"] {
-  padding-left: 0.65rem;
-}
-.document-outline li[data-depth="2"] {
-  padding-left: 1.3rem;
-}
-.document-outline li[data-depth="3"] {
-  padding-left: 1.95rem;
-}
-.document-outline button {
-  display: grid;
-  justify-items: start;
-  text-align: left;
-  width: 100%;
-  margin-bottom: 0.25rem;
-  border-color: transparent;
-  overflow-wrap: anywhere;
-}
-.outline-kind {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-}
 .workspace-rail {
   grid-area: rail;
   display: flex;

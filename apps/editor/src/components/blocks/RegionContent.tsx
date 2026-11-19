@@ -114,12 +114,11 @@ export function RegionContent({
       onChange={(event) => onChange(event.target.value)}
       onSelect={(event) => {
         const input = event.currentTarget;
-        if (input.selectionEnd > input.selectionStart)
-          onSelection(
-            input.value.slice(input.selectionStart, input.selectionEnd),
-            input.selectionStart,
-            input.selectionEnd,
-          );
+        onSelection(
+          input.value.slice(input.selectionStart, input.selectionEnd),
+          input.selectionStart,
+          input.selectionEnd,
+        );
       }}
     />
   );

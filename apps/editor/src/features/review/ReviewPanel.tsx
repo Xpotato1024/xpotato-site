@@ -62,11 +62,18 @@ export function ReviewPanel({
   const selectedLocation = selectedComment && reviewCommentSelection(body, selectedComment);
   const manualSelection = selectedCommentId ? null : selection;
   const cards = useRef(new Map<string, HTMLElement>());
+  const composer = useRef<HTMLDivElement>(null);
   const focusedComment = useRef<string | null>(null);
   useEffect(() => {
     if (!selectedCommentId) {
-      focusedComment.current = null;
-      return;
+      const focusKey = "new:" + selectionRequest;
+      if (!selectionRequest || focusedComment.current === focusKey) return;
+      const frame = requestAnimationFrame(() => {
+        composer.current?.scrollIntoView({ block: "nearest" });
+        composer.current?.focus({ preventScroll: true });
+        focusedComment.current = focusKey;
+      });
+      return () => cancelAnimationFrame(frame);
     }
     const focusKey = selectedCommentId + ":" + selectionRequest;
     if (focusedComment.current === focusKey) return;
@@ -223,13 +230,15 @@ export function ReviewPanel({
         <span>{comments.filter((c) => c.status === "open").length}件</span>
       </div>
       {!selectedLocation && (
-        <ReviewComposer
-          contextual={Boolean(selectedCommentId)}
-          selection={manualSelection}
-          instruction={selectedCommentId ? (followUps[selectedCommentId] ?? "") : instruction}
-          onInstruction={(value) => onComposerChange(selectedCommentId ?? null, value)}
-          onSubmit={() => act(add)}
-        />
+        <div ref={composer} tabIndex={-1} className="review-new-target">
+          <ReviewComposer
+            contextual={Boolean(selectedCommentId)}
+            selection={manualSelection}
+            instruction={selectedCommentId ? (followUps[selectedCommentId] ?? "") : instruction}
+            onInstruction={(value) => onComposerChange(selectedCommentId ?? null, value)}
+            onSubmit={() => act(add)}
+          />
+        </div>
       )}
       <div className="panel-toolbar">
         <button

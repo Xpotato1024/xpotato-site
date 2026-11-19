@@ -110,6 +110,67 @@ async function assertNoOverflow(page, label) {
   );
 }
 
+async function assertOutlineGeometry(page, outline, width) {
+  await page.setViewportSize({ width, height: 844 });
+  await outline.locator(".outline-row").first().waitFor();
+  const geometry = await outline.locator(".outline-row").evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const row = button.getBoundingClientRect();
+      const icon = button.querySelector("svg")?.getBoundingClientRect();
+      const text = button.querySelector(".outline-text")?.getBoundingClientRect();
+      const parentRow = button
+        .closest(".outline-children")
+        ?.parentElement?.querySelector(":scope > .outline-row")
+        ?.getBoundingClientRect();
+      return {
+        title: button.querySelector(".outline-title")?.textContent,
+        left: row.left,
+        right: row.right,
+        width: row.width,
+        height: row.height,
+        iconLeft: icon?.left,
+        textLeft: text?.left,
+        parentLeft: parentRow?.left,
+      };
+    }),
+  );
+  assert(geometry.length > 4, "The outline includes content blocks beyond groups and headings");
+  for (const item of geometry) {
+    assert(
+      item.width >= 44 && item.height >= 44 && item.left >= 0 && item.right <= width + 1,
+      width + ": outline controls fit the viewport and remain touchable " + JSON.stringify(item),
+    );
+    assert(
+      item.iconLeft >= item.left && item.iconLeft <= item.left + 24,
+      width + ": every outline row starts with an SVG block symbol " + JSON.stringify(item),
+    );
+    assert(
+      item.textLeft > item.iconLeft && item.textLeft <= item.left + 80,
+      width + ": outline text is aligned next to its symbol, not centered " + JSON.stringify(item),
+    );
+    if (item.parentLeft !== undefined)
+      assert(item.left > item.parentLeft, "A child is visually nested under its container");
+  }
+  await assertNoOverflow(page, "outline at " + width + "px");
+  await page.screenshot({ path: resolve(out, "outline-" + width + "px.png"), fullPage: true });
+}
+
+async function insertVisibility(page) {
+  return page.locator(".cms-insert-after").evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const style = getComputedStyle(button);
+      const rect = button.getBoundingClientRect();
+      return {
+        visible: Number(style.opacity) > 0.5 && style.visibility !== "hidden",
+        interactive: style.pointerEvents !== "none",
+        width: rect.width,
+        height: rect.height,
+        focused: button === document.activeElement,
+      };
+    }),
+  );
+}
+
 try {
   const executable = [
     process.env.CHROME_PATH,
@@ -539,13 +600,38 @@ try {
   await closePanel(page);
   await panel(page, "記事構成を開く", page.getByRole("region", { name: "記事構成", exact: true }));
   const outline = page.getByRole("region", { name: "記事構成", exact: true });
-  const outlineLabels = (await outline.getByRole("button").allTextContents()).map((label) =>
+  const outlineLabels = (await outline.locator(".outline-title").allTextContents()).map((label) =>
     label.trim(),
   );
   assert.equal(outlineLabels.filter((label) => label.includes("構成をまとめて動かす")).length, 1);
   assert.equal(outlineLabels.filter((label) => label.includes("本文を確認して直す")).length, 1);
-  assert(outlineLabels.some((label) => /ブロックグループ 1/u.test(label)));
-  assert(outlineLabels.some((label) => /ブロックグループ 2/u.test(label)));
+  assert(outlineLabels.includes("グループ 1"));
+  assert(outlineLabels.includes("グループ 2"));
+  for (const kind of ["paragraph", "heading", "Figure", "code", "math", "Group"])
+    assert(
+      (await outline.locator(`li[data-kind="${kind}"] > .outline-row svg`).count()) > 0,
+      kind + ": the outline shows a visual block type rather than headings alone",
+    );
+  assert.equal(
+    await outline.locator('li[data-kind="Group"] > .outline-children').count(),
+    2,
+    "Each explicit group owns its nested article blocks",
+  );
+  assert(outlineLabels.some((label) => /三つの枠|外側の枠/u.test(label)));
+  assert(outlineLabels.some((label) => label.includes("数式表示のサンプル")));
+  await assertOutlineGeometry(page, outline, 390);
+  await assertOutlineGeometry(page, outline, 320);
+  await outline
+    .locator(".outline-row")
+    .filter({ has: page.getByText("本文を確認して直す", { exact: true }) })
+    .click();
+  await outline.waitFor({ state: "hidden" });
+  const locatedHeading = blocks
+    .locator(".cms-editor-region[data-active]")
+    .filter({ has: page.getByRole("heading", { name: "本文を確認して直す", exact: true }) })
+    .last();
+  await locatedHeading.waitFor();
+  await page.setViewportSize({ width: 390, height: 844 });
   await closePanel(page);
   assert.equal(
     (await savedDraft(page)).source,
@@ -670,6 +756,195 @@ try {
     "sample shows open/proposed/resolved/applied inline marks and nonduplicated group outline",
   );
   checks.push("proposal diff selection, exact application and AI review entry survive reload");
+
+  begin("fresh canvas review and quiet insertion on a touch viewport");
+  const canvasContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    locale: "ja-JP",
+    isMobile: true,
+    hasTouch: true,
+  });
+  canvasContext.setDefaultTimeout(15000);
+  const canvas = await canvasContext.newPage();
+  failurePage = canvas;
+  canvas.on("pageerror", (error) => errors.push(error.message));
+  await canvas.goto(server.origin + "/editor/");
+  await ensureEditing(canvas);
+  await showBlocks(canvas);
+  const emptyDraft = await savedDraft(canvas);
+  const emptyInsert = canvas.locator(".cms-empty-blocks").getByRole("button", {
+    name: "ブロックを追加",
+    exact: true,
+  });
+  await emptyInsert.click();
+  await canvas.getByRole("dialog", { name: "ブロックを挿入", exact: true }).waitFor();
+  await canvas.getByRole("button", { name: "挿入メニューを閉じる", exact: true }).click();
+  assert.equal((await savedDraft(canvas)).source, emptyDraft.source);
+  const wholeQuote = "この段落全体について説明を補います。";
+  const selectedQuote = "選択した文章だけ";
+  const selectionParagraph = selectedQuote + "に指摘を付けます。本文全体は書き換えません。";
+  const canvasBody = [
+    "<Group>",
+    "## ひとまとまりの構成",
+    wholeQuote,
+    selectionParagraph,
+    "最後の段落です。",
+    "</Group>",
+  ].join("\n\n");
+  const header = /^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/u.exec(emptyDraft.source)?.[0];
+  assert(header, "The new draft has a valid metadata delimiter");
+  const canvasSource = header + canvasBody;
+  await writeBody(canvas, canvasBody);
+  await showBlocks(canvas);
+  await savedDraft(canvas, { source: canvasSource });
+  const canvasBlocks = canvas.getByRole("region", { name: "本文のブロック編集", exact: true });
+  const preview = (text) =>
+    canvasBlocks.locator(".cms-preview-target").filter({ hasText: text }).first();
+  const regionFor = (text) => preview(text).locator("xpath=ancestor::article[1]");
+  const wholeRegion = regionFor(wholeQuote);
+  const wholeRegionId = await wholeRegion.getAttribute("data-region-id");
+  const fixedWholeRegion = canvasBlocks.locator(`[data-region-id="${wholeRegionId}"]`);
+  await preview(wholeQuote).press("Enter");
+  await fixedWholeRegion.locator(".cms-rich-editor [contenteditable=true]").waitFor();
+  const insertState = await insertVisibility(canvas);
+  assert(insertState.length > 1);
+  assert.equal(
+    insertState.filter((button) => button.visible).length,
+    1,
+    "Only the focused leaf block exposes an insertion marker on touch screens",
+  );
+  assert(
+    insertState.every((button) => button.width >= 44 && button.height >= 44),
+    "Quieter insertion markers retain 44px tap areas",
+  );
+  assert(
+    insertState.filter((button) => !button.visible).every((button) => !button.interactive),
+    "Hidden insertion controls do not intercept scrolling or text taps",
+  );
+  const insertion = fixedWholeRegion.locator(":scope > .cms-insert-after");
+  await insertion.click();
+  await canvas.getByRole("dialog", { name: "ブロックを挿入", exact: true }).waitFor();
+  await canvas.getByRole("button", { name: "挿入メニューを閉じる", exact: true }).click();
+  assert.equal((await savedDraft(canvas)).source, canvasSource);
+  await canvas.screenshot({ path: resolve(out, "quiet-insertion-390px.png"), fullPage: true });
+
+  const freshReview = fixedWholeRegion.getByRole("button", { name: "指摘を追加", exact: true });
+  await freshReview.click();
+  const canvasReview = canvas.getByRole("region", { name: "本文の添削", exact: true });
+  const composer = canvasReview.locator(".review-composer").first();
+  await composer.getByLabel("指摘", { exact: true }).waitFor();
+  assert.equal(await composer.locator(".selected-quote").innerText(), wholeQuote);
+  assert.match(await composer.innerText(), /ブロック全体/u);
+  assert.notEqual(await canvas.evaluate(() => document.activeElement?.tagName), "TEXTAREA");
+  const wholeInstruction = "ブロック全体の具体例を補ってください。";
+  const wholeInput = composer.getByLabel("指摘", { exact: true });
+  await wholeInput.pressSequentially(wholeInstruction);
+  assert.equal(await wholeInput.inputValue(), wholeInstruction);
+  assert.equal(await wholeInput.evaluate((input) => input === document.activeElement), true);
+  await composer.getByRole("button", { name: "指摘を追加", exact: true }).click();
+  const firstReviewDraft = await savedDraft(canvas, { source: canvasSource, annotationCount: 1 });
+  assert.equal(firstReviewDraft.annotations[0].instruction, wholeInstruction);
+  assert.equal(firstReviewDraft.annotations[0].anchor.quote, wholeQuote);
+  assert.equal(firstReviewDraft.annotations[0].status, "open");
+  await closePanel(canvas);
+  await canvas.waitForFunction(() => document.activeElement?.matches(".cms-review-create"));
+
+  const selectionRegionId = await regionFor(selectionParagraph).getAttribute("data-region-id");
+  const selectionRegion = canvasBlocks.locator(`[data-region-id="${selectionRegionId}"]`);
+  await preview(selectionParagraph).press("Enter");
+  const richText = selectionRegion.locator(".cms-rich-editor [contenteditable=true]").first();
+  await richText.waitFor();
+  await richText.press("ControlOrMeta+Home");
+  await canvas.keyboard.down("Shift");
+  for (const _ of selectedQuote) await canvas.keyboard.press("ArrowRight");
+  await canvas.keyboard.up("Shift");
+  await canvas.waitForFunction((quote) => getSelection()?.toString() === quote, selectedQuote);
+  await selectionRegion.getByRole("button", { name: "指摘を追加", exact: true }).click();
+  await composer.getByLabel("指摘", { exact: true }).waitFor();
+  assert.equal(await composer.locator(".selected-quote").innerText(), selectedQuote);
+  assert.match(await composer.innerText(), /選択した文章/u);
+  const rangeInstruction = "この言い回しを具体的にしてください。";
+  await composer.getByLabel("指摘", { exact: true }).fill(rangeInstruction);
+  await closePanel(canvas);
+  await selectionRegion.getByRole("button", { name: "指摘を追加", exact: true }).click();
+  assert.equal(await composer.getByLabel("指摘", { exact: true }).inputValue(), rangeInstruction);
+  assert.equal(await composer.locator(".selected-quote").innerText(), selectedQuote);
+  await canvas.setViewportSize({ width: 320, height: 740 });
+  await assertNoOverflow(canvas, "fresh review at 320px");
+  await canvas.screenshot({
+    path: resolve(out, "fresh-review-selection-320px.png"),
+    fullPage: true,
+  });
+  await composer.getByRole("button", { name: "指摘を追加", exact: true }).click();
+  const secondReviewDraft = await savedDraft(canvas, { source: canvasSource, annotationCount: 2 });
+  assert.deepEqual(secondReviewDraft.annotations[0], firstReviewDraft.annotations[0]);
+  const rangeReview = secondReviewDraft.annotations.find(
+    (comment) => comment.instruction === rangeInstruction,
+  );
+  assert.equal(rangeReview.anchor.quote, selectedQuote);
+  assert.notEqual(rangeReview.id, firstReviewDraft.annotations[0].id);
+  await closePanel(canvas);
+
+  const resumedPreview = preview(selectionParagraph);
+  if (await resumedPreview.isVisible()) await resumedPreview.press("Enter");
+  await richText.waitFor();
+  await richText.focus();
+  await richText.press("ControlOrMeta+Home");
+  await canvas.keyboard.down("Shift");
+  for (const _ of selectedQuote) await canvas.keyboard.press("ArrowRight");
+  await canvas.keyboard.up("Shift");
+  await canvas.waitForFunction((quote) => getSelection()?.toString() === quote, selectedQuote);
+  await richText.press("ArrowRight");
+  await canvas.waitForFunction(() => getSelection()?.isCollapsed);
+  await panel(canvas, "添削を開く", canvasReview);
+  await composer.getByLabel("指摘", { exact: true }).waitFor();
+  assert.equal(
+    await composer.locator(".selected-quote").innerText(),
+    selectionParagraph,
+    "The original review dock uses the whole block after a text selection is collapsed",
+  );
+  assert.match(await composer.innerText(), /ブロック全体/u);
+  await composer.getByLabel("指摘", { exact: true }).fill("段落全体の説明を確認します。");
+  assert.equal(
+    await composer.getByRole("button", { name: "指摘を追加", exact: true }).isEnabled(),
+    true,
+    "An ordinary caret leaves the original review path usable",
+  );
+  await composer.getByLabel("指摘", { exact: true }).fill("");
+  await closePanel(canvas);
+  assert.deepEqual(
+    (await savedDraft(canvas, { source: canvasSource, annotationCount: 2 })).annotations,
+    secondReviewDraft.annotations,
+  );
+
+  const firstPreview = canvasBlocks.locator(".cms-preview-target").first();
+  await firstPreview.focus();
+  await canvas.keyboard.press("Tab");
+  await canvas.waitForFunction(() => document.activeElement?.matches(".cms-insert-after"));
+  assert(
+    (await insertVisibility(canvas)).some((button) => button.focused && button.visible),
+    "An insertion control becomes visible when reached with Tab",
+  );
+  await canvas.keyboard.press("Enter");
+  await canvas.getByRole("dialog", { name: "ブロックを挿入", exact: true }).waitFor();
+  await canvas.getByRole("button", { name: "挿入メニューを閉じる", exact: true }).click();
+  await canvasBlocks.locator(":scope > .cms-append-block").click();
+  await canvas.getByRole("dialog", { name: "ブロックを挿入", exact: true }).waitFor();
+  await canvas.getByRole("button", { name: "挿入メニューを閉じる", exact: true }).click();
+  assert.equal((await savedDraft(canvas)).source, canvasSource);
+  await canvas.reload();
+  await ensureEditing(canvas);
+  assert.deepEqual(
+    (await savedDraft(canvas, { annotationCount: 2 })).annotations,
+    secondReviewDraft.annotations,
+  );
+  checks.push(
+    "unmarked nested blocks and exact selected text create new persisted reviews without changing source or previous decisions",
+    "collapsing a selection restores whole-block review through the original dock without retaining a stale quote",
+    "touch insertion is limited to the focused leaf while keyboard, empty and end insertion remain available with 44px targets",
+  );
+  await canvasContext.close();
+  failurePage = page;
 
   begin("IndexedDB version 2 upgrades without losing draft media or history");
   const migrationContext = await browser.newContext({

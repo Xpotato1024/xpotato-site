@@ -332,22 +332,27 @@
   left: 50%;
   transform: translateX(-50%);
   opacity: 0;
+  pointer-events: none;
   z-index: 2;
-  color: var(--cms-block-accent);
+  color: var(--text-muted);
 }
 .cms-insert-after::before {
   content: "";
   position: absolute;
-  inset: 6px;
-  border: 1px solid var(--border-divider);
-  border-radius: var(--cms-control-radius);
-  background: var(--surface-control);
+  inset: 10px;
+  background: var(--surface);
   z-index: -1;
 }
-.cms-editor-region:hover > .cms-insert-after,
-.cms-editor-region[data-active] > .cms-insert-after,
+.cms-editor-region:focus-within:not(:has(.cms-editor-region:focus-within)) > .cms-insert-after,
 .cms-insert-after:focus-visible {
   opacity: 1;
+  pointer-events: auto;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cms-editor-region:hover:not(:has(.cms-editor-region:hover)) > .cms-insert-after {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 .cms-append-block {
   margin-top: 1rem;
@@ -868,9 +873,6 @@
   .cms-module-callout {
     padding: 0.4rem 0.5rem;
   }
-  .cms-insert-after {
-    opacity: 1;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .cms-editor-region {
@@ -890,6 +892,10 @@
   width: var(--cms-icon-size);
   height: var(--cms-icon-size);
   flex-shrink: 0;
+}
+.cms-insert-after svg {
+  width: 18px;
+  height: 18px;
 }
 .cms-region-menu {
   position: absolute;

@@ -24,9 +24,14 @@ export function ReviewComposer({
       }}
     >
       {selection?.quote ? (
-        <blockquote className="selected-quote" aria-label="添削の対象">
-          {selection.quote.length > 180 ? selection.quote.slice(0, 180) + "…" : selection.quote}
-        </blockquote>
+        <div className="review-target">
+          <p className="muted small">
+            {selection.quote === selection.blockSource ? "ブロック全体" : "選択した文章"}
+          </p>
+          <blockquote className="selected-quote" aria-label="添削の対象">
+            {selection.quote.length > 180 ? selection.quote.slice(0, 180) + "…" : selection.quote}
+          </blockquote>
+        </div>
       ) : (
         <p className="muted small">本文の範囲、またはブロックを選択して指摘を付けます。</p>
       )}

@@ -6,7 +6,12 @@ import {
   validateReviewComments,
   type ReviewComment,
 } from "@xpotato/editor-core/annotations";
-import { followUpReviewComment, reviewCommentSelection } from "./review-actions.js";
+import { sourceSelection } from "@xpotato/editor-core/blocks";
+import {
+  blockReviewSelection,
+  followUpReviewComment,
+  reviewCommentSelection,
+} from "./review-actions.js";
 
 const body = "前の文。\n\n結果は正しい。\n\n次の文。";
 const quote = "結果は正しい。";
@@ -31,6 +36,48 @@ const original: ReviewComment = {
 };
 
 describe("contextual review actions", () => {
+  it("keeps a selected sentence inside a nested block when its toolbar opens a new review", () => {
+    const source = "<Group>\n\n## 確認\n\n前の文。結果は正しい。次の文。\n\n</Group>";
+    const block = "前の文。結果は正しい。次の文。";
+    const start = source.indexOf(block);
+    const selected = sourceSelection(block, quote, start);
+    const target = blockReviewSelection(block, start, selected);
+    expect(target).toEqual(selected);
+    expect(target.quote).toBe(quote);
+    expect(locateAnchor(source, anchorSelection(source, target))).toEqual({
+      start: source.indexOf(quote),
+      end: source.indexOf(quote) + quote.length,
+    });
+  });
+
+  it("uses the current whole block when the prior selection belongs elsewhere or has collapsed", () => {
+    const block = "新しい本文。";
+    const start = 30;
+    const previous = sourceSelection(block, "本文", start);
+    for (const selected of [
+      null,
+      { ...previous, quote: "" },
+      { ...previous, blockStart: 10 },
+      { ...previous, blockSource: "変更前の本文。" },
+    ]) {
+      expect(blockReviewSelection(block, start, selected)).toEqual({
+        quote: block,
+        start,
+        end: start + block.length,
+        blockStart: start,
+        blockEnd: start + block.length,
+        blockSource: block,
+      });
+    }
+  });
+
+  it("does not silently expand an ambiguous text selection to the whole block", () => {
+    const block = "同じ文。同じ文。";
+    const target = blockReviewSelection(block, 0, sourceSelection(block, "同じ文。", 0));
+    expect(target.quote).toBe("同じ文。");
+    expect(() => anchorSelection(block, target)).toThrow("選択位置を特定できません");
+  });
+
   it("adds a new correction on the applied text without changing the prior proposal or body", () => {
     const applied = applyReviewProposal(body, original);
     const before = JSON.stringify(applied);

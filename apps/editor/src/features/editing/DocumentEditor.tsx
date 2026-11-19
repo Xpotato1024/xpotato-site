@@ -26,6 +26,7 @@ interface Props {
   reviewActive: boolean;
   activeCommentId: string | null;
   onReviewSelect: (id: string, trigger: HTMLButtonElement) => void;
+  onReviewCreate: (selection: SourceSelection, trigger: HTMLButtonElement) => void;
   reveal: (LocatedAnchor & { token: number }) | null;
   onError: (message: string) => void;
 }
@@ -46,6 +47,7 @@ export function DocumentEditor({
   reviewActive,
   activeCommentId,
   onReviewSelect,
+  onReviewCreate,
   reveal,
   onError,
 }: Props) {
@@ -230,6 +232,7 @@ export function DocumentEditor({
                     annotations={draft.annotations ?? []}
                     activeCommentId={activeCommentId}
                     onReviewSelect={onReviewSelect}
+                    onReviewCreate={onReviewCreate}
                     media={media.map((item) => ({
                       id: item.assetId,
                       label: item.alt || item.assetId,

@@ -300,7 +300,7 @@ export default function RichTextBlock({
   }, []);
   const selection = () => {
     const value = window.getSelection();
-    if (value?.anchorNode && root.current?.contains(value.anchorNode) && value.toString().trim())
+    if (value?.anchorNode && root.current?.contains(value.anchorNode))
       onSelection(value.toString());
   };
   return (

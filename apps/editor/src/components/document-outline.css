@@ -1,0 +1,62 @@
+.document-outline ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.document-outline .outline-children {
+  margin-inline-start: 1.15rem;
+  padding-inline-start: 0.3rem;
+  border-inline-start: 1px solid var(--border-divider);
+}
+.document-outline .outline-children[data-depth="4"] {
+  margin-inline-start: 0;
+  padding-inline-start: 0;
+  border-inline-start: 0;
+}
+.document-outline .outline-row {
+  display: grid;
+  grid-template-columns: var(--cms-icon-size) minmax(0, 1fr);
+  justify-content: stretch;
+  justify-items: start;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--control-min-size);
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem;
+  border-color: transparent;
+  background: transparent;
+  text-align: left;
+}
+.outline-row > svg {
+  color: var(--text-muted);
+}
+.outline-text {
+  display: flex;
+  min-width: 0;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.outline-kind {
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  line-height: 1.35;
+}
+.outline-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  font-weight: 400;
+}
+.document-outline li[data-kind="Group"] > .outline-row .outline-title,
+.document-outline li[data-kind="heading"] > .outline-row .outline-title {
+  font-weight: 600;
+}
+.document-outline li[data-kind="Group"] > .outline-row {
+  background: var(--cms-surface-subtle);
+}

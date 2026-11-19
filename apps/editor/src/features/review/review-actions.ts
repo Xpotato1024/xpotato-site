@@ -4,6 +4,30 @@ import {
   type SourceSelection,
 } from "@xpotato/editor-core/annotations";
 import { locateReviewComment } from "./review-marks.js";
+import type { BlockSelection } from "@xpotato/editor-core/blocks";
+
+export function blockReviewSelection(
+  source: string,
+  start: number,
+  selected: BlockSelection | null,
+): BlockSelection {
+  if (
+    selected?.quote.trim() &&
+    selected.blockStart === start &&
+    selected.blockEnd === start + source.length &&
+    selected.blockSource === source
+  ) {
+    return selected;
+  }
+  return {
+    quote: source,
+    start,
+    end: start + source.length,
+    blockStart: start,
+    blockEnd: start + source.length,
+    blockSource: source,
+  };
+}
 
 export function reviewCommentSelection(
   body: string,

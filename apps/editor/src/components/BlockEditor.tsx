@@ -28,7 +28,8 @@ import { RegionContent, describeRegion, hasNestedEditor } from "./blocks/RegionC
 import { useBlockReorder } from "./blocks/useBlockReorder.js";
 import { BlockIcon } from "./blocks/BlockIcon.js";
 import { BlockActions } from "./blocks/BlockActions.js";
-import { ReviewIndicator } from "../features/review/ReviewIndicator.js";
+import { ReviewIndicator, ReviewStatusIcon } from "../features/review/ReviewIndicator.js";
+import { blockReviewSelection } from "../features/review/review-actions.js";
 import {
   locateReviewMarks,
   reviewMarkersForRegion,
@@ -49,6 +50,7 @@ export interface BlockEditorProps {
   annotations?: readonly ReviewComment[] | undefined;
   activeCommentId?: string | null | undefined;
   onReviewSelect?: ((id: string, trigger: HTMLButtonElement) => void) | undefined;
+  onReviewCreate?: ((selection: BlockSelection, trigger: HTMLButtonElement) => void) | undefined;
   /** Children reuse root document locations instead of re-anchoring against a partial body. */
   reviewMarks?: readonly LocatedReviewMark[] | undefined;
   /** Nested semantic modules share absolute offsets with the outer document. */
@@ -67,6 +69,7 @@ export function BlockEditor({
   annotations,
   activeCommentId,
   onReviewSelect,
+  onReviewCreate,
   reviewMarks,
   baseOffset = 0,
   parentModule,
@@ -109,6 +112,7 @@ export function BlockEditor({
   const paletteTrigger = useRef<HTMLButtonElement | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const [composing, setComposing] = useState(false);
+  const selectedText = useRef<BlockSelection | null>(null);
   const list = useRef<HTMLDivElement>(null);
   const callbacks = useRef({ onChange, onActiveBlock });
   callbacks.current = { onChange, onActiveBlock };
@@ -145,7 +149,7 @@ export function BlockEditor({
     const region = model.regions[index];
     if (
       region &&
-      !document.activeElement?.closest(".cms-review-indicator") &&
+      !document.activeElement?.closest(".cms-review-indicator, .cms-review-create") &&
       document.activeElement?.closest("[data-region-id]")?.getAttribute("data-region-id") ===
         region.id
     ) {
@@ -264,7 +268,7 @@ export function BlockEditor({
     const region = current.current.regions[index];
     if (!region) return;
     const offset = baseOffset + regionRange(current.current, index).start;
-    onSelection?.(
+    const selection =
       start !== undefined && end !== undefined
         ? {
             quote,
@@ -274,8 +278,27 @@ export function BlockEditor({
             start: offset + start,
             end: offset + end,
           }
-        : sourceSelection(region.source, quote, offset),
-    );
+        : sourceSelection(region.source, quote, offset);
+    selectedText.current = selection;
+    if (quote.trim()) setActive(region.id);
+    onSelection?.(blockReviewSelection(region.source, offset, selection));
+  };
+  const preserveReviewSelection = (index: number, trigger: HTMLButtonElement) => {
+    const selected = window.getSelection();
+    const region = trigger.closest("[data-region-id]");
+    const anchor = selected?.anchorNode?.parentElement;
+    if (
+      selected?.anchorNode &&
+      selected.focusNode &&
+      selected.toString().trim() &&
+      anchor?.closest(".cms-preview-target, .cms-rich-editor") &&
+      region?.contains(selected.anchorNode) &&
+      region.contains(selected.focusNode) &&
+      anchor.closest("[data-region-id]") === region &&
+      selected.focusNode.parentElement?.closest("[data-region-id]") === region
+    ) {
+      selectionFor(index, selected.toString());
+    }
   };
   return (
     <section
@@ -390,15 +413,19 @@ export function BlockEditor({
                   event.target instanceof Element &&
                   event.target.closest("[data-region-id]") === event.currentTarget
                 ) {
+                  const reviewAction = event.target.closest(
+                    ".cms-review-indicator, .cms-review-create",
+                  );
                   if (
+                    !reviewAction &&
                     event.target.closest(".cms-region-toolbar")?.parentElement ===
-                    event.currentTarget
+                      event.currentTarget
                   ) {
                     // A reused region ID must not remount a rich editor that steals menu focus.
                     setEditing(null);
                     setInitialCaret(undefined);
                   }
-                  if (!event.target.closest(".cms-review-indicator")) {
+                  if (!reviewAction) {
                     callbacks.current.onActiveBlock?.({
                       start: offset,
                       end: baseOffset + range.end,
@@ -449,6 +476,31 @@ export function BlockEditor({
                   activeCommentId={activeCommentId}
                   onSelect={onReviewSelect}
                 />
+                {onReviewCreate && (
+                  <button
+                    type="button"
+                    className="cms-review-create"
+                    aria-label="指摘を追加"
+                    title="指摘を追加"
+                    aria-controls="workspace-panel"
+                    disabled={composing}
+                    onPointerDown={(event) => {
+                      if (event.button !== 0) return;
+                      preserveReviewSelection(index, event.currentTarget);
+                      // Moving focus first would collapse a touch or rich-text selection.
+                      event.preventDefault();
+                    }}
+                    onClick={(event) => {
+                      preserveReviewSelection(index, event.currentTarget);
+                      onReviewCreate(
+                        blockReviewSelection(region.source, offset, selectedText.current),
+                        event.currentTarget,
+                      );
+                    }}
+                  >
+                    <ReviewStatusIcon />
+                  </button>
+                )}
                 <BlockActions
                   first={index === 0}
                   last={index === model.regions.length - 1}
@@ -492,6 +544,7 @@ export function BlockEditor({
                 onError={onError}
                 onSelection={(quote, start, end) => selectionFor(index, quote, start, end)}
                 onActivate={(caret) => {
+                  selectedText.current = null;
                   setInitialCaret(caret);
                   setActive(region.id);
                   setEditing(region.id);
@@ -519,6 +572,7 @@ export function BlockEditor({
                     reviewMarks={marks}
                     activeCommentId={activeCommentId}
                     onReviewSelect={onReviewSelect}
+                    onReviewCreate={onReviewCreate}
                   />
                 )}
               />
