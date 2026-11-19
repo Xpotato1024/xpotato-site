@@ -385,6 +385,12 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await goHome(page);
   await page.getByRole("button", { name: "操作サンプルを開く", exact: true }).click();
+  // Sample creation is asynchronous; do not resume the previous draft while it opens.
+  await page.locator(".editor-header:not(.workspace-header)").waitFor({ state: "visible" });
+  await page.waitForFunction(
+    () =>
+      document.querySelector(".title-label textarea")?.value === "操作サンプル：記事の構成と添削",
+  );
   await showBlocks(page);
   const sample = await savedDraft(page);
   assert.notEqual(sample.id, originalDraft.id);
