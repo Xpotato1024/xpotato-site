@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { collectionFromPath } from "@xpotato/editor-core/draft";
+import { WorkspaceIcon } from "./WorkspaceIcon.js";
 import type { SeriesNavigation } from "@xpotato/portable-content/series";
 import type { LocalDraft } from "../data/storage.js";
 import type { EditorSeriesPreview, PreviewMedia } from "../preview.js";
@@ -13,9 +14,9 @@ export interface SitePreviewProps {
   editorSeries?: EditorSeriesPreview;
 }
 const devices = [
-  { id: "desktop", label: "PC", width: 1440 },
-  { id: "tablet", label: "タブレット", width: 834 },
-  { id: "phone", label: "スマートフォン", width: 390 },
+  { id: "desktop", label: "PC", icon: "desktop", width: 1440 },
+  { id: "tablet", label: "タブレット", icon: "tablet", width: 834 },
+  { id: "phone", label: "スマートフォン", icon: "phone", width: 390 },
 ] as const;
 const emptyMedia: readonly PreviewMedia[] = [];
 const emptySeries: readonly SeriesNavigation[] = [];
@@ -33,11 +34,30 @@ export function SitePreview({
   const [frameUrl, setFrameUrl] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const preview = useRef<HTMLElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const disconnect = useRef<() => void>(() => {});
   const width = devices.find((item) => item.id === device)!.width;
   const scale = zoom === "fit" ? Math.min(1, available / width) : 1;
+
+  useEffect(() => {
+    const element = preview.current;
+    const parentToolbar = element
+      ?.closest(".document-workbench")
+      ?.querySelector<HTMLElement>(".workbench-toolbar");
+    if (!element || !parentToolbar) return;
+    const update = () => {
+      element.style.setProperty(
+        "--cms-preview-toolbar-offset",
+        `${parentToolbar.getBoundingClientRect().height}px`,
+      );
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(parentToolbar);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const element = viewport.current;
@@ -111,7 +131,7 @@ export function SitePreview({
   }
 
   return (
-    <section className="cms-site-preview" aria-label="サイトのプレビュー">
+    <section ref={preview} className="cms-site-preview" aria-label="サイトのプレビュー">
       <div className="cms-site-preview-toolbar">
         <div className="cms-preview-devices" role="group" aria-label="プレビューの画面サイズ">
           {devices.map((item) => (
@@ -119,10 +139,12 @@ export function SitePreview({
               key={item.id}
               type="button"
               aria-pressed={device === item.id}
+              aria-label={`${item.label}（${item.width}px）`}
+              title={`${item.label}（${item.width}px）`}
               onClick={() => setDevice(item.id)}
             >
-              {item.label}
-              <small>{item.width}px</small>
+              <WorkspaceIcon name={item.icon} />
+              <small aria-hidden="true">{item.width}px</small>
             </button>
           ))}
         </div>

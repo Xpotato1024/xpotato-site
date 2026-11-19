@@ -12,6 +12,9 @@
   padding: 0.75rem;
   background: var(--surface-control);
   border-bottom: 1px solid var(--border-divider);
+  position: sticky;
+  top: var(--cms-preview-toolbar-offset, 0px);
+  z-index: 14;
 }
 .cms-preview-devices {
   display: flex;
@@ -39,6 +42,11 @@
   border-color: var(--cms-accent-border);
   background: var(--cms-accent-soft);
   color: var(--accent);
+}
+.cms-preview-devices svg {
+  width: var(--cms-icon-size);
+  height: var(--cms-icon-size);
+  flex: none;
 }
 .cms-preview-devices small {
   font: 0.65rem var(--font-mono);

@@ -333,6 +333,7 @@ try {
     "editor-links-smoke.mjs",
     "editor-comparison-smoke.mjs",
     "editor-chart-preview-smoke.mjs",
+    "editor-preview-toolbar-smoke.mjs",
   ]) {
     const smoke = promisify(execFile)(process.execPath, [resolve(root, "ops/qa", suite)], {
       cwd: root,
