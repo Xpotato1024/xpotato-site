@@ -389,7 +389,8 @@ try {
   await showBlocks(page);
   beginPhase("narrow table controls stay within the table scroll area");
   await page.setViewportSize({ width: 320, height: 740 });
-  await blocks.getByRole("button", { name: "表を編集", exact: true }).press("Enter");
+  const tablePreview = blocks.getByRole("button", { name: "表を編集", exact: true });
+  if (await tablePreview.isVisible()) await tablePreview.press("Enter");
   const addColumn = blocks.getByRole("button", { name: "列を追加", exact: true });
   await addColumn.waitFor();
   const tableOverflow = await addColumn.evaluate((button) => {
