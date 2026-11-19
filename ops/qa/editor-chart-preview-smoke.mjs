@@ -23,6 +23,7 @@ const visibleFrame = () => page.locator(".cms-preview-frame").contentFrame();
 try {
   const executablePath = [
     process.env.CHROME_PATH,
+    "/usr/bin/google-chrome",
     "/usr/bin/chromium",
     chromium.executablePath(),
   ].find((value) => value && existsSync(value));
