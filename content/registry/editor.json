@@ -1417,6 +1417,7 @@
     ]
   },
   "modules": [
+    "Group",
     "BarChart",
     "Figure",
     "Gallery",
@@ -1432,6 +1433,12 @@
     "ArticleEndnote"
   ],
   "moduleSchemas": {
+    "Group": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
     "BarChart": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1777,5 +1784,5 @@
       "status": "active"
     }
   ],
-  "contractHash": "52a5dc5abb8ab0d5fb2eb09dc945eed026bc551fba56abdd9d69ed92936aea6c"
+  "contractHash": "b900d6d19a5d03177848676234a7bb4d82868006cd19b439b880b413e35a5598"
 }

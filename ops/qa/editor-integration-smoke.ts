@@ -157,6 +157,12 @@ try {
     documents = await git.repository.documents(first);
   assert.equal(documents.length, 1);
   const file = documents[0]!.path;
+  const firstSaved = await git.repository.read(first, file);
+  assert.match(
+    firstSaved.source,
+    /人間が執筆した最初の文章。/u,
+    "The first Git save must preserve source entered immediately before switching modes",
+  );
   await page.getByRole("button", { name: "Draft PRを開く", exact: true }).click();
   await page.locator(".pr-link").waitFor();
   await audit(page, "desktop editor saved Draft PR");
@@ -238,9 +244,10 @@ try {
   );
   await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
   await page.locator(".conflict-panel").waitFor();
-  assert.equal(await title.inputValue(), "手元に残す未同期の変更");
   assert.match(await page.locator(".conflict-panel").innerText(), /AIが同じPR/u);
   assert.equal(git.refs.get(branch), ai.commit);
+  await closePanel(page);
+  assert.equal(await title.inputValue(), "手元に残す未同期の変更");
   const second = await browser.newContext({
       viewport: { width: 390, height: 844 },
       locale: "ja-JP",
@@ -249,7 +256,10 @@ try {
   mobile.on("pageerror", capturePageError);
   await mobile.goto(server.origin + "/editor/");
   await mobile.getByRole("textbox", { name: "タイトル", exact: true }).waitFor();
-  await mobile.getByRole("button", { name: "下書き一覧を開く", exact: true }).click();
+  await mobile
+    .locator(".editor-header")
+    .getByRole("button", { name: "原稿一覧", exact: true })
+    .click();
   await mobile.locator(".repository-panel").getByLabel("読み込み元").selectOption(branch);
   await mobile.getByRole("button", { name: "一覧を取得", exact: true }).click();
   await mobile

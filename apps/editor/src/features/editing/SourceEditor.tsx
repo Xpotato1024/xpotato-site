@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { EditorState } from "@codemirror/state";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { Annotation, EditorState, Transaction } from "@codemirror/state";
 import {
   EditorView,
   keymap,
@@ -34,12 +34,13 @@ const colors = HighlightStyle.define([
   { tag: [tags.number, tags.bool], color: "#a24c35" },
   { tag: tags.monospace, color: "#965341" },
 ]);
+const externalSourceUpdate = Annotation.define<boolean>();
 export function SourceEditor(props: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const callbacks = useRef(props);
   callbacks.current = props;
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!host.current) return;
     const shadow = host.current.shadowRoot ?? host.current.attachShadow({ mode: "open" });
     const mount = document.createElement("div");
@@ -84,8 +85,17 @@ export function SourceEditor(props: Props) {
             },
           }),
           EditorView.updateListener.of((update) => {
-            if (update.docChanged) callbacks.current.onChange(update.state.doc.toString());
-            if (update.selectionSet || update.docChanged) {
+            const localTransactions = update.transactions.filter(
+              (transaction) => !transaction.annotation(externalSourceUpdate),
+            );
+            if (localTransactions.some((transaction) => transaction.docChanged)) {
+              callbacks.current.onChange(update.state.doc.toString());
+            }
+            if (
+              localTransactions.some(
+                (transaction) => transaction.selection || transaction.docChanged,
+              )
+            ) {
               const range = update.state.selection.main;
               if (!range.empty)
                 callbacks.current.onSelection?.({
@@ -140,7 +150,7 @@ export function SourceEditor(props: Props) {
       mount.remove();
     };
   }, []);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const editor = view.current;
     if (!editor || editor.state.doc.toString() === props.value) return;
     const previous = editor.state.doc.toString();
@@ -152,7 +162,11 @@ export function SourceEditor(props: Props) {
       end--;
       nextEnd--;
     }
-    editor.dispatch({ changes: { from, to: end, insert: props.value.slice(from, nextEnd) } });
+    // 親からの反映を入力として戻すと、遅れた同期で新しい本文を上書きし得る。
+    editor.dispatch({
+      changes: { from, to: end, insert: props.value.slice(from, nextEnd) },
+      annotations: [externalSourceUpdate.of(true), Transaction.addToHistory.of(false)],
+    });
   }, [props.value]);
   useEffect(() => {
     const editor = view.current;

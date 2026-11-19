@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   blockTemplates,
@@ -10,6 +10,9 @@ import {
   insertRegion,
   deleteRegion,
   sourceSelection,
+  groupRegions,
+  ungroupRegion,
+  headingRegionRange,
   type BlockDocument,
   type BlockSelection,
 } from "@xpotato/editor-core/blocks";
@@ -22,6 +25,8 @@ import {
 import type { EditorMedia, EditorTool } from "./blocks/ModuleBlock.js";
 import { RegionContent, describeRegion } from "./blocks/RegionContent.js";
 import { useBlockReorder } from "./blocks/useBlockReorder.js";
+import { BlockIcon } from "./blocks/BlockIcon.js";
+import { BlockActions } from "./blocks/BlockActions.js";
 import "./blocks/block-editor.css";
 export interface BlockEditorProps {
   body: string;
@@ -75,6 +80,8 @@ export function BlockEditor({
   const [initialCaret, setInitialCaret] = useState<number | undefined>();
   const [sourceRegions, setSourceRegions] = useState<Set<string>>(() => new Set());
   const [paletteAfter, setPaletteAfter] = useState<number | null>(null);
+  const [paletteKeyboard, setPaletteKeyboard] = useState(false);
+  const [groupSelection, setGroupSelection] = useState<{ from: string; to: string } | null>(null);
   const [paletteMobile, setPaletteMobile] = useState(
     () => window.matchMedia("(max-width: 800px)").matches,
   );
@@ -95,17 +102,20 @@ export function BlockEditor({
   }, [paletteAfter]);
   const closePalette = () => {
     setPaletteAfter(null);
-    paletteTrigger.current?.focus({ preventScroll: true });
+    requestAnimationFrame(() => paletteTrigger.current?.focus({ preventScroll: true }));
   };
-  const openPalette = (index: number, trigger: HTMLButtonElement) => {
+  const openPalette = (index: number, trigger: HTMLButtonElement, keyboard: boolean) => {
+    setPaletteKeyboard(keyboard);
     paletteTrigger.current = trigger;
     // Determine layout before the search is mounted; an initial inline frame scrolls iOS.
     setPaletteMobile(window.matchMedia("(max-width: 800px)").matches);
     setPaletteAfter(index);
   };
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (body !== lastBody.current) {
       lastBody.current = body;
+      setEditing(null);
+      setInitialCaret(undefined);
       setModel((previous) => createBlockDocument(body, previous));
     }
   }, [body]);
@@ -152,11 +162,53 @@ export function BlockEditor({
     setModel(next);
     callbacks.current.onChange(source);
   };
+  const selectResult = (next: BlockDocument, index: number, message: string) => {
+    commit(next);
+    setGroupSelection(null);
+    const id = next.regions[index]?.id;
+    setActive(id ?? null);
+    setEditing(null);
+    setAnnouncement(message);
+    requestAnimationFrame(() =>
+      list.current
+        ?.querySelector<HTMLButtonElement>(
+          ':scope > [data-region-id="' + id + '"] > .cms-region-toolbar .cms-drag-handle',
+        )
+        ?.focus({ preventScroll: true }),
+    );
+  };
+  const group = (from: number, to: number) => {
+    try {
+      selectResult(
+        groupRegions(current.current, from, to),
+        from,
+        to - from + 1 + "ブロックをまとめました。",
+      );
+    } catch {
+      onError("まとめる範囲をもう一度選択してください。本文は変更していません。");
+    }
+  };
+  const ungroup = (index: number) => {
+    try {
+      selectResult(ungroupRegion(current.current, index), index, "グループを解除しました。");
+    } catch {
+      onError("このグループを解除できません。MDXを確認してください。");
+    }
+  };
+  const groupStart = groupSelection
+    ? model.regions.findIndex((region) => region.id === groupSelection.from)
+    : -1;
+  const groupEnd = groupSelection
+    ? model.regions.findIndex((region) => region.id === groupSelection.to)
+    : -1;
+  const selectionFrom = Math.min(groupStart, groupEnd);
+  const selectionTo = Math.max(groupStart, groupEnd);
   const move = (from: number, to: number) => {
     if (composing) return;
     const next = reorderRegion(current.current, from, to);
     if (next !== current.current) {
       commit(next);
+      setGroupSelection(null);
       setAnnouncement(to + 1 + "番目に移動しました。");
     }
   };
@@ -216,23 +268,22 @@ export function BlockEditor({
       <div className="cms-sr-only" aria-live="polite" role="status">
         {announcement}
       </div>
-      {!parentModule && (
-        <div className="cms-block-topbar">
-          <span>{model.regions.length} ブロック</span>
+      {groupSelection && (
+        <div className="cms-group-selection-bar" role="group" aria-label="まとめる範囲">
+          <span>末尾のブロックを選択</span>
           <button
             type="button"
-            disabled={composing}
-            onClick={(event) =>
-              openPalette(
-                active
-                  ? model.regions.findIndex((region) => region.id === active)
-                  : model.regions.length - 1,
-                event.currentTarget,
-              )
-            }
-            aria-expanded={paletteAfter !== null}
+            disabled={selectionFrom < 0 || composing}
+            onClick={() => group(selectionFrom, selectionTo)}
           >
-            ＋ 挿入
+            {selectionTo - selectionFrom + 1}件をまとめる
+          </button>
+          <button
+            type="button"
+            aria-label="グループ化をキャンセル"
+            onClick={() => setGroupSelection(null)}
+          >
+            <BlockIcon name="close" />
           </button>
         </div>
       )}
@@ -240,7 +291,13 @@ export function BlockEditor({
         (paletteMobile ? (
           createPortal(
             <div className="cms-insert-overlay">
-              <BlockPalette allowed={allowed} onInsert={insert} onClose={closePalette} modal />
+              <BlockPalette
+                allowed={allowed}
+                onInsert={insert}
+                onClose={closePalette}
+                modal
+                focusSearch={paletteKeyboard}
+              />
             </div>,
             document.body,
           )
@@ -259,11 +316,24 @@ export function BlockEditor({
           const range = regionRange(model, index);
           const offset = baseOffset + range.start;
           const raw = sourceRegions.has(region.id);
+          const groupSelected = Boolean(
+            groupSelection && index >= selectionFrom && index <= selectionTo,
+          );
+          const canGroup =
+            !model.parseError &&
+            allowed.includes("Group") &&
+            info.module?.name !== "ArticleEndnote";
+          const headingRange =
+            selected && canGroup && info.node?.type === "heading"
+              ? headingRegionRange(model, index)
+              : null;
           return (
             <article
               key={region.id}
               data-region-id={region.id}
               data-active={selected || undefined}
+              data-group={info.module?.name === "Group" || undefined}
+              data-group-selected={groupSelected || undefined}
               data-dragging={(drag?.active && drag.from === index) || undefined}
               data-drop-target={
                 (drag?.active && drag.to === index && drag.to !== drag.from) || undefined
@@ -274,6 +344,14 @@ export function BlockEditor({
                   event.target instanceof Element &&
                   event.target.closest("[data-region-id]") === event.currentTarget
                 ) {
+                  if (
+                    event.target.closest(".cms-region-toolbar")?.parentElement ===
+                    event.currentTarget
+                  ) {
+                    // A reused region ID must not remount a rich editor that steals menu focus.
+                    setEditing(null);
+                    setInitialCaret(undefined);
+                  }
                   callbacks.current.onActiveBlock?.({
                     start: offset,
                     end: baseOffset + range.end,
@@ -288,6 +366,20 @@ export function BlockEditor({
               }}
             >
               <div className="cms-region-toolbar">
+                {groupSelection && (
+                  <button
+                    type="button"
+                    className="cms-group-select"
+                    aria-label={index + 1 + "番目まで選択: " + info.label}
+                    aria-pressed={groupSelected}
+                    disabled={!canGroup}
+                    onClick={() =>
+                      setGroupSelection((current) => current && { ...current, to: region.id })
+                    }
+                  >
+                    {groupSelected && <BlockIcon name="check" />}
+                  </button>
+                )}
                 <button
                   type="button"
                   className="cms-drag-handle"
@@ -301,69 +393,41 @@ export function BlockEditor({
                   onPointerCancel={() => finishDrag(true)}
                   onKeyDown={(event) => dragKeys(event, index)}
                 >
-                  ⠿
+                  <BlockIcon name="grip" />
                 </button>
                 <span>{info.label}</span>
-                <div className="cms-region-actions">
-                  <button
-                    type="button"
-                    aria-label="上へ移動"
-                    title="上へ移動"
-                    disabled={index === 0 || composing}
-                    onClick={() => move(index, index - 1)}
-                  >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="下へ移動"
-                    title="下へ移動"
-                    disabled={index === model.regions.length - 1 || composing}
-                    onClick={() => move(index, index + 1)}
-                  >
-                    ↓
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="ブロックを複製"
-                    title="複製"
-                    disabled={composing}
-                    onClick={() => {
-                      commit(insertRegion(current.current, region.source, index));
-                      setAnnouncement("複製しました。");
-                    }}
-                  >
-                    ⧉
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="MDXで編集"
-                    title="MDXで編集"
-                    aria-pressed={raw}
-                    disabled={composing}
-                    onClick={() => {
-                      const next = new Set(sourceRegions);
-                      if (raw) next.delete(region.id);
-                      else next.add(region.id);
-                      setSourceRegions(next);
-                    }}
-                  >
-                    {"{}"}
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="ブロックを削除"
-                    title="削除"
-                    disabled={composing}
-                    onClick={() => {
-                      commit(deleteRegion(current.current, index));
-                      if (selected) setActive(null);
-                      setAnnouncement("ブロックを削除しました。元に戻す操作で復元できます。");
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
+                <BlockActions
+                  first={index === 0}
+                  last={index === model.regions.length - 1}
+                  disabled={composing}
+                  raw={raw}
+                  onMove={(direction) => move(index, index + direction)}
+                  onDuplicate={() => {
+                    commit(insertRegion(current.current, region.source, index));
+                    setAnnouncement("複製しました。");
+                  }}
+                  onSource={() => {
+                    const next = new Set(sourceRegions);
+                    if (raw) next.delete(region.id);
+                    else next.add(region.id);
+                    setSourceRegions(next);
+                  }}
+                  onDelete={() => {
+                    commit(deleteRegion(current.current, index));
+                    if (selected) setActive(null);
+                    setGroupSelection(null);
+                    setAnnouncement("ブロックを削除しました。元に戻す操作で復元できます。");
+                  }}
+                  onGroup={
+                    canGroup
+                      ? () => setGroupSelection({ from: region.id, to: region.id })
+                      : undefined
+                  }
+                  onGroupHeading={
+                    headingRange ? () => group(headingRange.from, headingRange.to) : undefined
+                  }
+                  onUngroup={info.module?.name === "Group" ? () => ungroup(index) : undefined}
+                />
               </div>
               <RegionContent
                 source={region.source}
@@ -396,15 +460,17 @@ export function BlockEditor({
                   />
                 )}
               />
-              <button
-                type="button"
-                className="cms-insert-after"
-                aria-label={info.label + "の後に挿入"}
-                disabled={composing}
-                onClick={(event) => openPalette(index, event.currentTarget)}
-              >
-                ＋
-              </button>
+              {index < model.regions.length - 1 && (
+                <button
+                  type="button"
+                  className="cms-insert-after"
+                  aria-label={info.label + "の後に挿入"}
+                  disabled={composing}
+                  onClick={(event) => openPalette(index, event.currentTarget, event.detail === 0)}
+                >
+                  <BlockIcon name="plus" />
+                </button>
+              )}
             </article>
           );
         })}
@@ -412,7 +478,10 @@ export function BlockEditor({
       {!model.regions.length && (
         <div className="cms-empty-blocks">
           <p>{parentModule ? "ブロックを追加" : "ここから書き始めましょう。"}</p>
-          <button type="button" onClick={(event) => openPalette(-1, event.currentTarget)}>
+          <button
+            type="button"
+            onClick={(event) => openPalette(-1, event.currentTarget, event.detail === 0)}
+          >
             ＋{" "}
             {parentModule === "Gallery"
               ? "画像"
@@ -430,7 +499,9 @@ export function BlockEditor({
           type="button"
           className="cms-append-block"
           disabled={composing}
-          onClick={() => setPaletteAfter(model.regions.length - 1)}
+          onClick={(event) =>
+            openPalette(model.regions.length - 1, event.currentTarget, event.detail === 0)
+          }
         >
           ＋ {parentModule === "Gallery" ? "画像" : parentModule === "Steps" ? "手順" : "ブロック"}
         </button>

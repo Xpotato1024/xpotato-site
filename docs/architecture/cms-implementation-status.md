@@ -30,6 +30,8 @@ CodeMirrorはCMS内の編集テーマをCSPに沿って適用するためopen Sh
 
 ## 目的と実装境界
 
+2026-11-19の追加レビューでは、執筆と原稿・連載・記事情報・履歴・保存確認を画面単位に分け、モバイルの常設ツールを構成・画像・添削へ整理した。見出し・本文・画像を明示的な`<Group>`でまとめ、全体移動・子の編集・解除を行える。公開Groupは子だけを描画し、既存記事を自動変換しない。[CMS編集画面の契約](../contracts/cms-workbench-contract.md)と[ADR-0085](../design/adr/0085-writing-workspace-and-explicit-groups.md)に記録し、対象commitの検証とSites反映はPRで区別する。
+
 通常記事は公開GitHubの作業ブランチとDraft PRで人間・AIが引き継ぐ。本文の正本はMarkdown/MDX。画像は端末内の編集キャッシュと、本人認証された専用Draft R2へ保存する。CMSの操作に公開A/B/Cの削除権限を与えない。
 
 - `content/`: 記事、メモ、制作物、ツール紹介、固定ページとregistry。URLとContentIdは変更しない。

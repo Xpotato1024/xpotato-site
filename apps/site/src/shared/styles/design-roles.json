@@ -416,6 +416,7 @@
         "apps/site/src/shared/blocks/Comparison/Comparison.astro",
         "apps/site/src/shared/blocks/DiagnosticItem/DiagnosticItem.astro",
         "apps/site/src/shared/blocks/DiagnosticList/DiagnosticList.astro",
+        "apps/site/src/shared/blocks/Group/Group.astro",
         "apps/site/src/shared/blocks/LinkCard/LinkCard.astro",
         "apps/site/src/shared/blocks/Step/Step.astro",
         "apps/site/src/shared/blocks/Steps/Steps.astro"

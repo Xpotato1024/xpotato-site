@@ -12,6 +12,26 @@ canonical_for:
 
 通常Markdownで足りない意味構造だけをapproved moduleにする。article authoringはR2 URL、React source path、Tailwind utilityを直接所有しない。
 
+## Group（構成をまとめる単位）
+
+見出し・本文・画像などを一つの編集単位として動かす場合は、属性を持たない`Group`で囲む。入れ子のGroupも扱う。保存形式はportable MDXのままで、別のブロックJSONや見出しから推測した所属を正本にしない。
+
+```mdx
+<Group>
+
+## 見出し
+
+本文。
+
+<Figure asset="example" alt="図の内容" />
+
+</Group>
+```
+
+公開rendererと即時プレビューは子だけを出力する。枠・余白・見出し・追加DOM・クライアントJSを作らず、既存のCSS、先頭段落、見出し・目次の順序を維持する。Groupはブロック専用で、GalleryのFigure限定、StepsのStep限定、DiagnosticListのDiagnosticItem限定を迂回できない。ArticleEndnoteのトップレベル制約も維持する。
+
+CMSの明示的な範囲選択で連続した兄弟ブロックをまとめる。見出しから作る補助操作は、次の同位・上位見出し直前までを候補とし、実行時だけGroupを保存する。解除時には子の原文を再生成せず取り出し、Groupの構文上の境界改行のみを除く。
+
 ## Plain image
 
 ```md

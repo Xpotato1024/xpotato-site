@@ -211,6 +211,8 @@ export async function previewDocument(
     const s = (key: string, fallback = "") =>
       typeof p[key] === "string" ? (p[key] as string) : fallback;
     switch (name) {
+      case "Group":
+        return children(node);
       case "Figure": {
         const item = media.get(s("asset"));
         const caption = s("caption", item?.caption),

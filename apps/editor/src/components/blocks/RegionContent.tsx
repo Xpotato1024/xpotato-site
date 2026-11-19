@@ -122,6 +122,7 @@ export function RegionContent({
     );
   if (info.module) {
     const container = [
+      "Group",
       "Gallery",
       "Callout",
       "Steps",

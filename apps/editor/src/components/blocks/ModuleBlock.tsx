@@ -78,6 +78,7 @@ const choices: Record<string, string> = {
   important: "重要",
 };
 const names: Record<string, string> = {
+  Group: "グループ",
   Figure: "画像・図",
   Gallery: "ギャラリー",
   Callout: "補足・注意",
@@ -390,6 +391,7 @@ export function ModuleBlock({
   if (!module) return null;
   const value = (name: string) => String(module.props[name] ?? "");
   const container = [
+    "Group",
     "Gallery",
     "Callout",
     "Steps",
@@ -405,6 +407,9 @@ export function ModuleBlock({
         onChange(updateModuleChildren(source, body)),
       )
     : null;
+  if (module.name === "Group") {
+    return <div className="cms-module cms-module-group">{children}</div>;
+  }
   const rowData = module.name === "BarChart" ? readRows(value("rows")) : null;
   const image =
     module.name === "Figure" ? media.find((item) => item.id === value("asset")) : undefined;

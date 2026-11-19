@@ -146,3 +146,5 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR-0077: ツールリリース元とSite CIの検証責務](0077-tool-release-validation-ownership.md) — Proposed。製品matrixを配布元へ置き、Siteは固定成果物とホスト接続を検査する。
 
 - [ADR-0078: 一貫制作の2入口と静的技術ビジュアル](0078-content-production-and-static-technical-visuals.md) — 実装候補。本文・公開権限・本番配信は変更しない。
+
+- [ADR-0085: 執筆画面の分離と明示的なブロックグループ](0085-writing-workspace-and-explicit-groups.md) — 実装候補。モバイルの操作配置、MDXに残すグループ、透過的な公開描画。

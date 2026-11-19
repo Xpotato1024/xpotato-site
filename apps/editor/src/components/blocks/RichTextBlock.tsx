@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MDXEditor,
   defaultSvgIcons,
@@ -32,6 +32,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { INDENT_CONTENT_COMMAND, OUTDENT_CONTENT_COMMAND } from "lexical";
 import "@mdxeditor/editor/style.css";
 import { CodeFields } from "./CodeBlock.js";
+import { BlockIcon } from "./BlockIcon.js";
 
 function EmbeddedCodeEditor({ code, language, meta, focusEmitter }: CodeBlockEditorProps) {
   const input = useRef<HTMLTextAreaElement>(null);
@@ -86,7 +87,7 @@ function IndentButtons() {
         onPointerDown={(event) => event.preventDefault()}
         onClick={() => editor?.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined)}
       >
-        ⇤
+        <BlockIcon name="outdent" />
       </button>
       <button
         type="button"
@@ -96,9 +97,45 @@ function IndentButtons() {
         onPointerDown={(event) => event.preventDefault()}
         onClick={() => editor?.dispatchCommand(INDENT_CONTENT_COMMAND, undefined)}
       >
-        ⇥
+        <BlockIcon name="indent" />
       </button>
     </>
+  );
+}
+function RichToolbar({ inlineOnly }: { inlineOnly: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="cms-rich-toolbar">
+      <div className="cms-rich-toolbar-main">
+        {!inlineOnly && <BlockTypeSelect />}
+        <BoldItalicUnderlineToggles options={["Bold", "Italic"]} />
+        <CreateLink />
+        <button
+          type="button"
+          className="cms-more-format"
+          aria-label="その他の書式"
+          title="その他の書式"
+          aria-expanded={expanded}
+          onPointerDown={(event) => event.preventDefault()}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          <BlockIcon name="more" />
+        </button>
+      </div>
+      {expanded && (
+        <div className="cms-rich-toolbar-extra" role="group" aria-label="その他の書式">
+          <StrikeThroughSupSubToggles options={["Strikethrough"]} />
+          <CodeToggle />
+          {!inlineOnly && (
+            <>
+              <ListsToggle />
+              <IndentButtons />
+              <InsertTable />
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 const translations: Record<string, string> = {
@@ -238,22 +275,7 @@ export default function RichTextBlock({
       }),
       ...(inlineOnly ? [] : [markdownShortcutPlugin()]),
       toolbarPlugin({
-        toolbarContents: () => (
-          <>
-            {!inlineOnly && <BlockTypeSelect />}
-            <BoldItalicUnderlineToggles options={["Bold", "Italic"]} />
-            <StrikeThroughSupSubToggles options={["Strikethrough"]} />
-            <CodeToggle />
-            <CreateLink />
-            {!inlineOnly && (
-              <>
-                <ListsToggle />
-                <IndentButtons />
-                <InsertTable />
-              </>
-            )}
-          </>
-        ),
+        toolbarContents: () => <RichToolbar inlineOnly={inlineOnly} />,
       }),
     ],
     [inlineOnly],

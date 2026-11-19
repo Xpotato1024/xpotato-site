@@ -136,12 +136,12 @@ h3 {
   overflow: hidden;
 }
 .editor-header {
-  min-height: 58px;
+  min-height: 50px;
   flex: none;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 0 1.25rem;
+  gap: 0.5rem;
+  padding: 0 0.85rem;
   border-bottom: 1px solid var(--border-divider);
   background: #fff;
   z-index: 20;
@@ -152,6 +152,32 @@ h3 {
   background: transparent;
   gap: 0.7rem;
 }
+.editor-header svg,
+.workbench-toolbar svg,
+.inspector-header svg,
+.article-menu svg,
+.series-membership-link svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+.mobile-library-label,
+.save-state-compact {
+  display: none;
+}
+.save-state-button {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  min-height: 44px;
+  padding: 0.2rem 0.4rem;
+}
+.workspace-menu-button {
+  width: 44px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
 .editor-brand {
   color: var(--text-primary);
   font-family: var(--font-english-display);
@@ -160,13 +186,6 @@ h3 {
 }
 .brand-mark {
   color: var(--accent);
-}
-.editor-wordmark {
-  font-size: 0.7rem;
-  color: var(--accent);
-  background: #f0eaf6;
-  border-radius: 4px;
-  padding: 0.15rem 0.45rem;
 }
 .save-state {
   margin-left: auto;
@@ -186,10 +205,6 @@ h3 {
 .status-dot.online {
   background: #3e7b61;
 }
-.workflow-button {
-  font-size: 0.8rem;
-  min-height: 36px;
-}
 .editor-workspace {
   display: grid;
   grid-template-columns: 62px minmax(0, 1fr);
@@ -201,6 +216,78 @@ h3 {
 .editor-workspace.has-panel {
   grid-template-columns: 62px minmax(0, 1fr) 350px;
   grid-template-areas: "rail canvas inspector";
+}
+.editor-workspace.has-page {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "inspector";
+}
+.workspace-page .inspector-body {
+  width: min(100%, 1000px);
+  margin-inline: auto;
+  padding: 1.5rem;
+}
+.workspace-page .inspector-header button {
+  width: auto;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+.workspace-page .inspector-header button svg {
+  order: -1;
+}
+.management-navigation {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.4rem;
+  border-bottom: 1px solid var(--border-divider);
+  padding-bottom: 0.7rem;
+}
+.management-navigation button {
+  border-color: transparent;
+  background: transparent;
+}
+.management-navigation button[aria-current="page"] {
+  color: var(--accent);
+  background: #f0eaf6;
+}
+.article-menu {
+  display: grid;
+  gap: 0.5rem;
+}
+.article-menu button {
+  justify-content: flex-start;
+  gap: 0.75rem;
+  min-height: 48px;
+  border-color: transparent;
+}
+.series-membership-link {
+  margin-bottom: 1rem;
+}
+.document-outline ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.document-outline li[data-depth="1"] {
+  padding-left: 0.65rem;
+}
+.document-outline li[data-depth="2"] {
+  padding-left: 1.3rem;
+}
+.document-outline li[data-depth="3"] {
+  padding-left: 1.95rem;
+}
+.document-outline button {
+  display: grid;
+  justify-items: start;
+  text-align: left;
+  width: 100%;
+  margin-bottom: 0.25rem;
+  border-color: transparent;
+  overflow-wrap: anywhere;
+}
+.outline-kind {
+  font-size: 0.65rem;
+  color: var(--text-muted);
 }
 .workspace-rail {
   grid-area: rail;
@@ -939,24 +1026,31 @@ h3 {
 }
 @media (max-width: 800px) {
   .editor-header {
-    min-height: 54px;
+    min-height: 44px;
     padding: 0 0.7rem;
     gap: 0.5rem;
   }
   .editor-brand {
-    font-size: 1.4rem;
-  }
-  .editor-wordmark {
     display: none;
+  }
+  .mobile-library-label {
+    display: inline;
+    font-size: 0.85rem;
+  }
+  .save-state-full {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .save-state-compact {
+    display: inline;
   }
   .save-state {
     font-size: 0.65rem;
     gap: 0.3rem;
-  }
-  .workflow-button {
-    font-size: 0.7rem;
-    padding: 0.3rem 0.5rem;
-    min-height: 40px;
   }
   .editor-workspace {
     grid-template-columns: minmax(0, 1fr);
@@ -965,8 +1059,18 @@ h3 {
   }
   .editor-workspace.has-panel {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) minmax(0, 46%) auto;
-    grid-template-areas: "canvas" "inspector" "rail";
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "inspector" "rail";
+  }
+  .editor-workspace.has-panel .editing-main {
+    display: none;
+  }
+  .editor-workspace.has-page {
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "inspector";
+  }
+  .workspace-page .inspector-body {
+    padding: 1rem;
   }
   .workspace-rail {
     flex-direction: row;
@@ -981,8 +1085,8 @@ h3 {
     flex: 1;
     width: auto;
     min-width: 0;
-    min-height: 54px;
-    padding: 0.3rem 0;
+    min-height: 48px;
+    padding: 0.15rem 0;
     border-radius: 5px;
   }
   .workspace-rail span {
@@ -1005,12 +1109,12 @@ h3 {
     padding: 0.8rem 1rem 1rem;
   }
   .workbench-toolbar {
-    min-height: 56px;
-    padding: 0.3rem 0.5rem;
+    min-height: 48px;
+    padding: 0.1rem 0.4rem;
     gap: 0.2rem;
   }
   .history-buttons button {
-    width: 28px;
+    width: 44px;
     min-height: 44px;
     font-size: 1.15rem;
   }
@@ -1018,17 +1122,17 @@ h3 {
     display: none;
   }
   .view-buttons button {
-    width: 36px;
+    width: 44px;
     min-height: 44px;
     font-size: 1.1rem;
   }
   .editor-tabs button {
-    min-height: 36px;
+    min-height: 40px;
     padding: 0.2rem 0.6rem;
     font-size: 0.85rem;
   }
   .writing-pane {
-    padding: 1.5rem 0.9rem 4rem;
+    padding: 1rem 0.7rem 3rem;
   }
   .document-heading {
     margin-bottom: 1.2rem;
@@ -1067,7 +1171,7 @@ h3 {
     line-height: 1.3;
   }
   .history-buttons button:last-child {
-    display: none;
+    display: inline-flex;
   }
   .editor-tabs button {
     padding-inline: 0.45rem;

@@ -127,6 +127,27 @@ export const validatePortableMdx = (source: string): readonly string[] => {
       const element = node as MdxJsxElementNode & {
         children?: readonly { type?: string; value?: string; name?: string | null }[];
       };
+      if (element.name === "Group") {
+        const parentName = (parent as { name?: string } | undefined)?.name;
+        if (element.type !== "mdxJsxFlowElement") {
+          errors.push("Group must be a flow block");
+        }
+        if (
+          parentName &&
+          [
+            "Gallery",
+            "Steps",
+            "DiagnosticList",
+            "ArticleEndnote",
+            "Figure",
+            "LinkCard",
+            "Demo",
+            "BarChart",
+          ].includes(parentName)
+        ) {
+          errors.push(`Group is not a direct child of ${parentName}`);
+        }
+      }
       if (
         element.name === "BarChart" &&
         element.children?.some((child) => child.type !== "text" || child.value?.trim())

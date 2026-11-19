@@ -17,6 +17,9 @@ import {
   moveBlockTo,
   moduleInsertionOffset,
   blockTemplates,
+  groupRegions,
+  ungroupRegion,
+  headingRegionRange,
 } from "./blocks.js";
 import { validatePortableMdx } from "@xpotato/portable-content";
 
@@ -100,6 +103,75 @@ describe("source-preserving editing regions", () => {
       }
     }
     expect(count).toBeGreaterThan(20);
+  });
+});
+
+describe("explicit content groups", () => {
+  const body =
+    '\r\n前。\r\n\r\n## 節\r\n\r\n本文  **強調**。\r\n\r\n\r\n<Figure asset="one" alt="写真" />\r\n\r\n## 次の節\r\n\r\n後。\r\n';
+  it("wraps a heading, text and photo without changing authored bytes and unwraps reversibly", () => {
+    const original = createBlockDocument(body);
+    const grouped = groupRegions(original, 1, 3);
+    expect(grouped.regions).toHaveLength(original.regions.length - 2);
+    expect(grouped.regions[0]).toBe(original.regions[0]);
+    expect(grouped.regions[2]).toBe(original.regions[4]);
+    expect(readModuleSource(grouped.regions[1]!.source)?.children).toContain(
+      body.slice(regionRange(original, 1).start, regionRange(original, 3).end),
+    );
+    expect(writeBlockDocument(grouped).replaceAll("\r\n", "")).not.toContain("\n");
+    expect(validatePortableMdx(writeBlockDocument(grouped))).toEqual([]);
+    expect(writeBlockDocument(ungroupRegion(grouped, 1))).toBe(body);
+  });
+
+  it("moves and nests complete groups, preserving child source and unknown modules", () => {
+    const unknown = '<FutureModule untouched="yes">\n\n将来の本文。\n\n</FutureModule>';
+    const original = createBlockDocument("## 見出し\n\n" + unknown + "\n\n末尾。");
+    const grouped = groupRegions(original, 0, 1);
+    const moved = reorderRegion(grouped, 0, 1);
+    expect(moved.regions[1]!.source).toContain(unknown);
+    const nested = groupRegions(moved, 0, 1);
+    expect(nested.regions[0]!.source.match(/<Group>/gu)).toHaveLength(2);
+    const unwrapped = ungroupRegion(nested, 0);
+    expect(writeBlockDocument(unwrapped)).toBe(writeBlockDocument(moved));
+    expect(writeBlockDocument(ungroupRegion(grouped, 0))).toBe(writeBlockDocument(original));
+  });
+
+  it("suggests only the requested heading section including subheadings and photos", () => {
+    const source =
+      '## 節\n\n本文\n\n### 小見出し\n\n<Figure asset="one" alt="図" />\n\n## 次\n\n続き';
+    const document = createBlockDocument(source);
+    expect(headingRegionRange(document, 0)).toEqual({ from: 0, to: 3 });
+    expect(headingRegionRange(document, 2)).toEqual({ from: 2, to: 3 });
+    expect(headingRegionRange(document, 4)).toEqual({ from: 4, to: 5 });
+    expect(headingRegionRange(document, 1)).toBeNull();
+    expect(headingRegionRange(document, -1)).toBeNull();
+    expect(writeBlockDocument(document)).toBe(source);
+    expect(
+      headingRegionRange(createBlockDocument("## 節\n\n本文\n\n" + blockTemplates.Group), 0),
+    ).toEqual({ from: 0, to: 1 });
+    const editing = updateRegion(document, document.regions[1]!.id, '<Incomplete attr="');
+    expect(headingRegionRange(editing, 0)).toBeNull();
+  });
+
+  it("retains top-level endnotes and rejects invalid ranges or non-group unwrapping", () => {
+    const document = createBlockDocument(
+      "## 結び\n\n本文\n\n<ArticleEndnote>\n\n補足。\n\n</ArticleEndnote>",
+    );
+    expect(headingRegionRange(document, 0)).toEqual({ from: 0, to: 1 });
+    expect(() => groupRegions(document, 0, 2)).toThrow("GROUP_TOP_LEVEL_CONTENT");
+    for (const [from, to] of [
+      [-1, 1],
+      [2, 1],
+      [0, 9],
+      [0.5, 1],
+    ]) {
+      expect(() => groupRegions(document, from!, to!)).toThrow("GROUP_RANGE_INVALID");
+    }
+    expect(() => ungroupRegion(document, 0)).toThrow("GROUP_NOT_FOUND");
+    expect(() => groupRegions(createBlockDocument('<Group unfinished="'), 0, 0)).toThrow(
+      "GROUP_RANGE_INVALID",
+    );
+    expect(writeBlockDocument(ungroupRegion(createBlockDocument("<Group />"), 0))).toBe("");
   });
 });
 

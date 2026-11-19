@@ -5,6 +5,7 @@ import type { LocalDraft } from "../../data/storage.js";
 import { BlockEditor } from "../../components/BlockEditor.js";
 import { SitePreview, type PreviewMedia } from "../../components/SitePreview.js";
 import type { EditorSeriesPreview } from "../../preview.js";
+import { WorkspaceIcon } from "../../components/WorkspaceIcon.js";
 const SourceEditor = lazy(() =>
   import("./SourceEditor.js").then((module) => ({ default: module.SourceEditor })),
 );
@@ -22,7 +23,7 @@ interface Props {
   onMetadata: (fields: Partial<DraftMetadata>) => void;
   onSelection: (selection: SourceSelection) => void;
   onActiveBlock: (block: { start: number; end: number; source: string; index: number }) => void;
-  onReview: () => void;
+  reviewActive: boolean;
   reveal: (LocatedAnchor & { token: number }) | null;
   onError: (message: string) => void;
 }
@@ -40,17 +41,17 @@ export function DocumentEditor({
   onMetadata,
   onSelection,
   onActiveBlock,
-  onReview,
+  reviewActive,
   reveal,
   onError,
 }: Props) {
-  const [mode, setMode] = useState<"write" | "review" | "preview">("write");
+  const [mode, setMode] = useState<"write" | "preview">("write");
   const [source, setSource] = useState(false);
   const [sourceOpened, setSourceOpened] = useState(false);
   const [split, setSplit] = useState(false);
   useEffect(() => {
-    if (reveal) setMode("review");
-  }, [reveal]);
+    if (reveal || reviewActive) setMode("write");
+  }, [reveal, reviewActive]);
   return (
     <div className={"document-workbench" + (split ? " is-split" : "")}>
       <div className="workbench-toolbar">
@@ -62,7 +63,7 @@ export function DocumentEditor({
             disabled={!canUndo}
             onClick={onUndo}
           >
-            ↶
+            <WorkspaceIcon name="undo" />
           </button>
           <button
             type="button"
@@ -71,11 +72,11 @@ export function DocumentEditor({
             disabled={!canRedo}
             onClick={onRedo}
           >
-            ↷
+            <WorkspaceIcon name="redo" />
           </button>
         </div>
         <div className="editor-tabs" role="tablist" aria-label="作業モード">
-          {(["write", "review", "preview"] as const).map((tab) => (
+          {(["write", "preview"] as const).map((tab) => (
             <button
               type="button"
               role="tab"
@@ -83,10 +84,9 @@ export function DocumentEditor({
               key={tab}
               onClick={() => {
                 setMode(tab);
-                if (tab === "review") onReview();
               }}
             >
-              {tab === "write" ? "執筆" : tab === "review" ? "添削" : "プレビュー"}
+              {tab === "write" ? "執筆" : "プレビュー"}
             </button>
           ))}
         </div>
@@ -99,7 +99,7 @@ export function DocumentEditor({
             aria-label="編集とプレビューを並べる"
             onClick={() => setSplit(!split)}
           >
-            ◫
+            <WorkspaceIcon name="split" />
           </button>
           <button
             type="button"
@@ -144,7 +144,7 @@ export function DocumentEditor({
               />
             </label>
           </div>
-          <div className="document-editor" data-review-mode={mode === "review"}>
+          <div className="document-editor" data-review-mode={reviewActive}>
             {parsed ? (
               <>
                 <div hidden={source}>

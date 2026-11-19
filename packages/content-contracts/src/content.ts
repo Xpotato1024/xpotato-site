@@ -499,6 +499,7 @@ export const siteConfigSchema = z
 export const contentModuleRecordSchema = z
   .object({
     id: z.enum([
+      "Group",
       "Figure",
       "Gallery",
       "Callout",
@@ -519,6 +520,7 @@ export const contentModuleRecordSchema = z
   })
   .strict();
 
+export const groupModulePropsSchema = z.object({}).strict();
 export const figureModulePropsSchema = z
   .object({
     asset: stableIdSchema,
@@ -639,6 +641,7 @@ export const barChartModulePropsSchema = z
   });
 
 export const semanticContentModulePropsSchemas = Object.freeze({
+  Group: groupModulePropsSchema,
   BarChart: barChartModulePropsSchema,
   Figure: figureModulePropsSchema,
   Gallery: galleryModulePropsSchema,

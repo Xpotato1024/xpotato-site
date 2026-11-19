@@ -2,6 +2,7 @@ import { contentModuleRecordSchema } from "@xpotato/content-contracts";
 
 export const contentModuleRegistry = Object.freeze(
   [
+    "Group",
     "Figure",
     "Gallery",
     "Callout",
@@ -21,6 +22,7 @@ export const contentModuleRegistry = Object.freeze(
       status: "active",
       allowedCollections: ["blog", "notes", "projects", "tools", "pages"],
       allowsChildren: [
+        "Group",
         "Gallery",
         "Steps",
         "Step",

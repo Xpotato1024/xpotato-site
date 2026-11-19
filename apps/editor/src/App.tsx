@@ -12,6 +12,8 @@ import { ConnectionStatus } from "./components/ConnectionStatus.js";
 import { AstroReview } from "./components/AstroReview.js";
 import { MediaPanel } from "./components/MediaPanel.js";
 import { EditorHeader } from "./components/EditorHeader.js";
+import { WorkspaceIcon } from "./components/WorkspaceIcon.js";
+import { DocumentOutline } from "./components/DocumentOutline.js";
 import { DraftSidebar } from "./components/DraftSidebar.js";
 import { EditorActions } from "./components/EditorActions.js";
 import { MetadataPanel } from "./components/MetadataPanel.js";
@@ -30,8 +32,29 @@ import { errorLabel } from "./shared/messages.js";
 import { useEditorEnvironment } from "./shared/useEditorEnvironment.js";
 import type { EditorSeriesPreview } from "./preview.js";
 
-type Panel = "library" | "metadata" | "media" | "series" | "review" | "history" | "workflow";
+type Panel =
+  | "library"
+  | "metadata"
+  | "media"
+  | "series"
+  | "review"
+  | "history"
+  | "workflow"
+  | "outline"
+  | "menu";
 const panels: { id: Panel; label: string; title: string; path: string }[] = [
+  {
+    id: "outline",
+    label: "構成",
+    title: "記事構成を開く",
+    path: "M8 5h13 M8 12h13 M8 19h13 M3 5h.01 M3 12h.01 M3 19h.01",
+  },
+  {
+    id: "menu",
+    label: "記事メニュー",
+    title: "記事メニューを開く",
+    path: "M5 12h.01 M12 12h.01 M19 12h.01",
+  },
   {
     id: "library",
     label: "原稿",
@@ -70,6 +93,9 @@ const panels: { id: Panel; label: string; title: string; path: string }[] = [
     path: "M4 3h13l3 3v15H4z M8 3v6h8V3 M8 21v-8h8v8",
   },
 ];
+const writingTools: Panel[] = ["outline", "media", "review"];
+const pagePanels: Panel[] = ["library", "series", "metadata", "history", "workflow"];
+const articleMenu: Panel[] = ["metadata", "history", "workflow"];
 export default function App() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -154,7 +180,15 @@ export default function App() {
   );
   function closePanel() {
     setPanel(null);
-    panelTrigger.current?.focus({ preventScroll: true });
+    const trigger = panelTrigger.current;
+    window.requestAnimationFrame(() => {
+      if (trigger?.isConnected && trigger.getClientRects().length)
+        trigger.focus({ preventScroll: true });
+      else
+        document
+          .querySelector<HTMLButtonElement>(".workspace-menu-button")
+          ?.focus({ preventScroll: true });
+    });
   }
   async function act(operation: () => Promise<void>) {
     setBusy(true);
@@ -245,6 +279,7 @@ export default function App() {
           "\n\n" +
           parsed.body.slice(at).trimStart(),
       );
+      if (window.matchMedia("(max-width: 800px)").matches) setPanel(null);
     } catch {
       setError("画像を挿入できませんでした。画像の情報と本文のMDXを確認してください。");
     }
@@ -259,6 +294,7 @@ export default function App() {
           items.map((item) => "  " + moduleSource("Figure", item)).join("\n") +
           "\n</Gallery>\n",
       );
+      if (window.matchMedia("(max-width: 800px)").matches) setPanel(null);
     } catch {
       setError("ギャラリーを挿入できませんでした。画像の情報と本文のMDXを確認してください。");
     }
@@ -272,14 +308,17 @@ export default function App() {
   const isSynced = Boolean(
     draft.syncedCommit && draft.syncedSource === draft.source && !draft.pendingRegistryChanges,
   );
+  const isPage = panel !== null && pagePanels.includes(panel);
+  const PanelElement = isPage ? "main" : "aside";
   return (
     <div className="editor-app">
       <EditorHeader
         online={environment.online}
         localStatus={workspace.localStatus}
-        auth={git.auth}
-        onToggleNavigation={() => setPanel(panel === "library" ? null : "library")}
+        menuOpen={panel === "menu"}
+        onToggleNavigation={() => setPanel("library")}
         onWorkflow={() => setPanel("workflow")}
+        onMenu={() => setPanel(panel === "menu" ? null : "menu")}
       />
       {(error || notice || environment.updateReady) && (
         <div className="workspace-messages">
@@ -312,37 +351,42 @@ export default function App() {
           )}
         </div>
       )}
-      <div className={"editor-workspace" + (panel ? " has-panel" : "")} aria-busy={busy}>
-        <nav className="workspace-rail" aria-label="編集ツール">
-          {panels.map((item) => (
-            <button
-              type="button"
-              key={item.id}
-              aria-label={item.title}
-              title={item.title}
-              aria-pressed={panel === item.id}
-              aria-controls={panel ? "workspace-panel" : undefined}
-              onClick={(event) => {
-                panelTrigger.current = event.currentTarget;
-                setPanel(panel === item.id ? null : item.id);
-              }}
-            >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+      <div
+        className={"editor-workspace" + (panel ? " has-panel" : "") + (isPage ? " has-page" : "")}
+        aria-busy={busy}
+      >
+        <nav className="workspace-rail" aria-label="編集ツール" hidden={isPage}>
+          {panels
+            .filter((item) => writingTools.includes(item.id))
+            .map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                aria-label={item.title}
+                title={item.title}
+                aria-pressed={panel === item.id}
+                aria-controls={panel ? "workspace-panel" : undefined}
+                onClick={(event) => {
+                  panelTrigger.current = event.currentTarget;
+                  setPanel(panel === item.id ? null : item.id);
+                }}
               >
-                <path d={item.path} />
-              </svg>
-              <span>{item.label}</span>
-            </button>
-          ))}
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d={item.path} />
+                </svg>
+                <span>{item.label}</span>
+              </button>
+            ))}
         </nav>
-        <main className="editing-main">
+        <main className="editing-main" hidden={isPage}>
           <DocumentEditor
             key={draft.id}
             draft={draft}
@@ -358,14 +402,14 @@ export default function App() {
             onMetadata={(fields) => workspace.edit(fields)}
             onSelection={setSelection}
             onActiveBlock={selectBlock}
-            onReview={() => setPanel("review")}
+            reviewActive={panel === "review"}
             reveal={reveal}
             onError={setError}
           />
         </main>
         {panel && (
-          <aside
-            className={"workspace-inspector panel-" + panel}
+          <PanelElement
+            className={"workspace-inspector panel-" + panel + (isPage ? " workspace-page" : "")}
             id="workspace-panel"
             aria-label={panels.find((item) => item.id === panel)?.label}
             onKeyDown={(event) => {
@@ -390,14 +434,70 @@ export default function App() {
                     review: "添削",
                     history: "履歴",
                     workflow: "保存と確認",
+                    outline: "記事構成",
+                    menu: "記事メニュー",
                   }[panel]
                 }
               </h2>
               <button type="button" aria-label="パネルを閉じる" onClick={closePanel}>
-                ×
+                {isPage && <span>執筆に戻る</span>}
+                <WorkspaceIcon name={isPage ? "back" : "close"} />
               </button>
             </div>
             <div className="inspector-body">
+              {(panel === "library" || panel === "series") && (
+                <nav className="management-navigation" aria-label="原稿の管理">
+                  <button
+                    type="button"
+                    aria-current={panel === "library" ? "page" : undefined}
+                    onClick={() => setPanel("library")}
+                  >
+                    原稿一覧
+                  </button>
+                  <button
+                    type="button"
+                    aria-current={panel === "series" ? "page" : undefined}
+                    aria-label="連載を開く"
+                    onClick={() => setPanel("series")}
+                  >
+                    連載・コース
+                  </button>
+                </nav>
+              )}
+              {panel === "menu" && (
+                <nav className="article-menu" aria-label="記事の操作">
+                  {panels
+                    .filter((item) => articleMenu.includes(item.id))
+                    .map((item) => (
+                      <button
+                        type="button"
+                        key={item.id}
+                        aria-label={item.title}
+                        onClick={() => setPanel(item.id)}
+                      >
+                        <WorkspaceIcon name={item.id as "metadata" | "history" | "workflow"} />
+                        {item.id === "workflow"
+                          ? "保存と確認"
+                          : item.id === "metadata"
+                            ? "記事情報"
+                            : item.label}
+                      </button>
+                    ))}
+                  <button type="button" onClick={() => setPanel("library")}>
+                    <WorkspaceIcon name="library" />
+                    原稿一覧
+                  </button>
+                </nav>
+              )}
+              {panel === "outline" && parsed && (
+                <DocumentOutline
+                  body={parsed.body}
+                  onLocate={(start, end) => {
+                    setReveal({ start, end, token: Date.now() });
+                    closePanel();
+                  }}
+                />
+              )}
               {panel === "library" && (
                 <DraftSidebar
                   busy={busy}
@@ -422,16 +522,29 @@ export default function App() {
                 />
               )}
               {panel === "metadata" && (
-                <MetadataPanel
-                  key={draft.id}
-                  draft={draft}
-                  parsed={parsed}
-                  taxonomy={git.taxonomy}
-                  onMetadata={(fields) => workspace.edit(fields)}
-                  onDraft={(fields) => workspace.setDraft((current) => ({ ...current, ...fields }))}
-                  onRegistryChange={changeRegistry}
-                  onError={setError}
-                />
+                <>
+                  <button
+                    type="button"
+                    className="series-membership-link"
+                    aria-label="連載を開く"
+                    onClick={() => setPanel("series")}
+                  >
+                    <WorkspaceIcon name="series" />
+                    連載への所属と読む順序
+                  </button>
+                  <MetadataPanel
+                    key={draft.id}
+                    draft={draft}
+                    parsed={parsed}
+                    taxonomy={git.taxonomy}
+                    onMetadata={(fields) => workspace.edit(fields)}
+                    onDraft={(fields) =>
+                      workspace.setDraft((current) => ({ ...current, ...fields }))
+                    }
+                    onRegistryChange={changeRegistry}
+                    onError={setError}
+                  />
+                </>
               )}
               {panel === "series" && parsed && (
                 <SeriesPanel
@@ -451,7 +564,10 @@ export default function App() {
                   authenticated={git.auth.authenticated}
                   onChange={reviewChanged}
                   onDraft={workspace.setDraft}
-                  onLocate={(location) => setReveal({ ...location, token: Date.now() })}
+                  onLocate={(location) => {
+                    setReveal({ ...location, token: Date.now() });
+                    if (window.matchMedia("(max-width: 800px)").matches) closePanel();
+                  }}
                   onError={setError}
                 />
               )}
@@ -564,7 +680,7 @@ export default function App() {
                 </>
               )}
             </div>
-          </aside>
+          </PanelElement>
         )}
       </div>
       <footer className="workspace-status">

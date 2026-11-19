@@ -190,6 +190,18 @@ export function updateModuleChildren(source: string, children: string): string {
 
 /** Direct child choices shared by insertion UI and external insertion actions. */
 export const moduleChildKinds: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  Group: Object.freeze([
+    "paragraph",
+    "heading",
+    "list",
+    "orderedList",
+    "quote",
+    "divider",
+    "table",
+    "code",
+    "math",
+    ...moduleNames.filter((name) => !["Step", "DiagnosticItem", "ArticleEndnote"].includes(name)),
+  ]),
   Gallery: Object.freeze(["Figure"]),
   Steps: Object.freeze(["Step"]),
   DiagnosticList: Object.freeze(["DiagnosticItem"]),
@@ -348,6 +360,101 @@ export function deleteRegion(document: BlockDocument, index: number): BlockDocum
   separators.splice(Math.max(0, index - 1), 1);
   return { ...document, regions, separators };
 }
+
+/** Group an explicit contiguous sibling range, preserving each region's authored bytes. */
+export function groupRegions(document: BlockDocument, from: number, to: number): BlockDocument {
+  if (
+    document.parseError ||
+    !Number.isInteger(from) ||
+    !Number.isInteger(to) ||
+    from < 0 ||
+    to < from ||
+    to >= document.regions.length
+  ) {
+    throw Error("GROUP_RANGE_INVALID");
+  }
+  const selected = document.regions.slice(from, to + 1);
+  if (selected.some((region) => containsModule(region.source, "ArticleEndnote"))) {
+    throw Error("GROUP_TOP_LEVEL_CONTENT");
+  }
+  const source = selected
+    .map(
+      (region, index) =>
+        (index ? (document.separators[from + index - 1] ?? "\n\n") : "") + region.source,
+    )
+    .join("");
+  const newline = writeBlockDocument(document).includes("\r\n") ? "\r\n" : "\n";
+  const grouped = "<Group>" + newline.repeat(2) + source + newline.repeat(2) + "</Group>";
+  if (!readModuleSource(grouped)) {
+    throw Error("GROUP_SOURCE_UNSUPPORTED");
+  }
+  const regions = [...document.regions];
+  regions.splice(from, to - from + 1, { id: regionId(), source: grouped });
+  const separators = [...document.separators];
+  separators.splice(from, to - from);
+  return { ...document, regions, separators };
+}
+
+function containsModule(source: string, name: string): boolean {
+  const visit = (node: BlockNode): boolean =>
+    (node.type === "mdxJsxFlowElement" && node.name === name) ||
+    (node.children?.some(visit) ?? false);
+  return visit(blockTree(source));
+}
+
+/** Unwrap only the container; child Markdown/MDX is never serialized from an AST. */
+export function ungroupRegion(document: BlockDocument, index: number): BlockDocument {
+  const region = document.regions[index];
+  const module = region && readModuleSource(region.source);
+  if (document.parseError || !module || module.name !== "Group") {
+    throw Error("GROUP_NOT_FOUND");
+  }
+  // These boundary line breaks separate a flow tag from Markdown; interior spacing remains intact.
+  const children = (module.children ?? "")
+    .replace(/^(?:\r?\n){2}/u, "")
+    .replace(/(?:\r?\n){2}$/u, "");
+  const source = writeBlockDocument(document);
+  const range = regionRange(document, index);
+  return createBlockDocument(
+    source.slice(0, range.start) + children + source.slice(range.end),
+    document,
+  );
+}
+
+/** Suggest a section only on request; a heading never creates an implicit persistent group. */
+export function headingRegionRange(
+  document: BlockDocument,
+  index: number,
+): { from: number; to: number } | null {
+  if (document.parseError || !document.regions[index]) return null;
+  let trees: BlockNode[];
+  try {
+    trees = document.regions.map((region) => blockTree(region.source));
+  } catch {
+    return null;
+  }
+  const first = trees[index]!.children ?? [];
+  const depth = first[0]?.type === "heading" ? first[0].depth : undefined;
+  if (
+    depth === undefined ||
+    first.slice(1).some((node) => node.type === "heading" && (node.depth ?? 6) <= depth) ||
+    containsModule(document.regions[index]!.source, "ArticleEndnote")
+  )
+    return null;
+  let to = index;
+  for (let next = index + 1; next < document.regions.length; next++) {
+    const source = document.regions[next]!.source;
+    const nodes = trees[next]!.children ?? [];
+    if (
+      readModuleSource(source)?.name === "Group" ||
+      containsModule(source, "ArticleEndnote") ||
+      nodes.some((node) => node.type === "heading" && (node.depth ?? 6) <= depth)
+    )
+      break;
+    to = next;
+  }
+  return { from: index, to };
+}
 export interface BlockSelection {
   quote: string;
   blockStart: number;
@@ -368,6 +475,7 @@ export function sourceSelection(source: string, quote: string, offset: number): 
   };
 }
 export const blockTemplates = Object.freeze({
+  Group: "<Group>\n\n## 見出し\n\n本文を入力してください。\n\n</Group>",
   paragraph: "本文を入力してください。",
   heading: "## 見出し",
   list: "- 項目1\n- 項目2",

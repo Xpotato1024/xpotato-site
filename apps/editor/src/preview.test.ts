@@ -57,6 +57,19 @@ const editorSeries = (): EditorSeriesPreview => ({
 });
 
 describe("site-style safe draft preview", () => {
+  it("renders nested groups transparently with the same headings, lead and child order", async () => {
+    const body =
+      "導入。\n\n## 重複する見出し\n\n本文。\n\n### 小見出し\n\n**強調**と[リンク](https://example.com)。\n\n## 重複する見出し\n\n後。";
+    const plain = await previewDocument(draft(body));
+    const grouped = await previewDocument(
+      draft(
+        "<Group>\n\n導入。\n\n<Group>\n\n## 重複する見出し\n\n本文。\n\n### 小見出し\n\n**強調**と[リンク](https://example.com)。\n\n</Group>\n\n## 重複する見出し\n\n後。\n\n</Group>",
+      ),
+    );
+    expect(grouped.html).toBe(plain.html);
+    expect(grouped.warnings).toEqual([]);
+  });
+
   it("previews the local series order with drafts, adjacent entries, and a disabled index link", async () => {
     const input = editorSeries();
     const result = await previewDocument(draft("本文"), { editorSeries: input });

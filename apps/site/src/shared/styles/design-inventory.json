@@ -1502,6 +1502,14 @@
     "conditions": [],
     "script": []
   },
+  "apps/site/src/shared/blocks/Group/Group.astro": {
+    "elements": {
+      "slot": 1
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
   "apps/site/src/shared/blocks/LinkCard/LinkCard.astro": {
     "elements": {
       "a": 1,

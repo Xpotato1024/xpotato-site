@@ -6,6 +6,7 @@ import Demo from "../../features/tools/components/Demo.astro";
 import Details from "../blocks/Details/Details.astro";
 import Figure from "../blocks/Figure/Figure.astro";
 import Gallery from "../blocks/Gallery/Gallery.astro";
+import Group from "../blocks/Group/Group.astro";
 import LinkCard from "../blocks/LinkCard/LinkCard.astro";
 import Steps from "../blocks/Steps/Steps.astro";
 import Step from "../blocks/Step/Step.astro";
@@ -23,6 +24,7 @@ export const contentComponents = {
   Details,
   Figure,
   Gallery,
+  Group,
   LinkCard,
   Steps,
   Step,

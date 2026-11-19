@@ -11,6 +11,7 @@ import {
   showBlocks,
   savedDraft,
   closePanel,
+  panel,
 } from "./editor-browser-helpers.mjs";
 const root = resolve("."),
   out = resolve(".local/cms-validation/browser");
@@ -94,6 +95,12 @@ try {
   const initial =
     "## 見出しの位置\n\n本文の __強調__ と [参照](https://example.com)。\n\n別の段落。\n";
   await writeBody(page, initial);
+  await showBlocks(page);
+  assert.equal(
+    await readBody(page),
+    initial,
+    "Switching immediately after source replacement preserves every entered line",
+  );
   const before = (await savedDraft(page)).source;
   assert.equal(await readBody(page), initial);
   assert.doesNotMatch(
@@ -167,6 +174,99 @@ try {
     (await readBody(page)).startsWith("## 見出しの位置"),
     "Pointer drop reorders the article itself",
   );
+  beginPhase("heading group preserves body and image while moving");
+  const groupedSection =
+    '## 章A\n\n本文の __表記を保持__。\n\n<Figure asset="group-image" alt="章Aの写真" />\n\n### 小見出し\n\n章Aの続き。';
+  const groupFixture = "導入。\n\n" + groupedSection + "\n\n## 章B\n\n章Bの本文。\n";
+  await writeBody(page, groupFixture);
+  await showBlocks(page);
+  const headingRegion = regions.nth(1);
+  await headingRegion
+    .locator(":scope > .cms-region-toolbar")
+    .getByRole("button", { name: "ブロックの操作", exact: true })
+    .click();
+  await headingRegion.getByRole("button", { name: "見出しと本文をまとめる", exact: true }).click();
+  const grouped = await readBody(page);
+  assert(grouped.includes(groupedSection), "Grouping preserves all child source and separators");
+  assert.match(grouped, /<Group>\n/u);
+  assert(
+    grouped.indexOf("</Group>") < grouped.indexOf("## 章B"),
+    "The next peer heading is outside the group",
+  );
+  await showBlocks(page);
+  const group = blocks.locator(":scope > .cms-block-list > .cms-editor-region[data-group]");
+  assert.equal(await group.count(), 1);
+  assert.equal(await group.locator(".cms-module-figure").count(), 1);
+  assert.equal(await regions.count(), 4, "Five section blocks form one moving unit");
+  const groupGrip = group
+    .locator(":scope > .cms-region-toolbar")
+    .getByRole("button", { name: "グループを移動", exact: true });
+  await groupGrip.focus();
+  await groupGrip.press("Space");
+  await groupGrip.press("ArrowDown");
+  await groupGrip.press("ArrowDown");
+  await groupGrip.press("Enter");
+  const keyboardMovedGroup = await readBody(page);
+  assert(keyboardMovedGroup.indexOf("章Bの本文。") < keyboardMovedGroup.indexOf("<Group>"));
+  assert(
+    keyboardMovedGroup.includes(groupedSection),
+    "Moving a group retains its heading, text, image and subsection together",
+  );
+  await showBlocks(page);
+  await page.locator(".editing-main").evaluate((element) => {
+    element.scrollTop = 0;
+  });
+  await groupGrip.scrollIntoViewIfNeeded();
+  const groupHandleRect = await groupGrip.boundingBox();
+  const groupDestination = await regions.first().boundingBox();
+  assert(groupHandleRect && groupDestination);
+  await page.mouse.move(
+    groupHandleRect.x + groupHandleRect.width / 2,
+    groupHandleRect.y + groupHandleRect.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(groupDestination.x + 60, groupDestination.y + groupDestination.height / 2, {
+    steps: 12,
+  });
+  await page.mouse.up();
+  const movedGroup = await readBody(page);
+  assert(
+    movedGroup.startsWith("<Group>"),
+    "Pointer drag moves the outer group rather than one nested child",
+  );
+  assert(movedGroup.includes(groupedSection));
+  assert(movedGroup.indexOf("</Group>") < movedGroup.indexOf("導入。"));
+  const groupedSaved = (await savedDraft(page)).source;
+  beginPhase("group reload, ungroup and undo");
+  await page.reload();
+  await title.waitFor();
+  assert.equal(
+    (await savedDraft(page)).source,
+    groupedSaved,
+    "The group survives persistence and reload",
+  );
+  assert.equal(await readBody(page), movedGroup);
+  await showBlocks(page);
+  await group
+    .locator(":scope > .cms-region-toolbar")
+    .getByRole("button", { name: "ブロックの操作", exact: true })
+    .click();
+  await group.getByRole("button", { name: "グループを解除", exact: true }).click();
+  const ungrouped = await readBody(page);
+  assert(!ungrouped.includes("<Group>"));
+  assert(
+    ungrouped.includes(groupedSection),
+    "Ungrouping retains every child at the group's position",
+  );
+  assert(ungrouped.indexOf("## 章A") < ungrouped.indexOf("導入。"));
+  await page.getByRole("button", { name: "元に戻す", exact: true }).click();
+  assert.equal(
+    await readBody(page),
+    movedGroup,
+    "Undo restores the group and its exact child source",
+  );
+  await page.getByRole("button", { name: "やり直す", exact: true }).click();
+  assert.equal(await readBody(page), ungrouped, "Redo removes only the group boundary again");
   beginPhase("Gallery parent and child settings");
   const childSource =
     '  <Figure asset="first" alt="子の説明" caption="子の注釈" />\n  <Figure asset="second" alt="2枚目" />';
@@ -266,14 +366,14 @@ try {
   assert.match(await readBody(page), /```python\nconst value/u);
   beginPhase("searchable quote insertion");
   await showBlocks(page);
-  await blocks.getByRole("button", { name: "＋ 挿入", exact: true }).click();
+  await blocks.locator(":scope > .cms-append-block").click();
   const palette = page.getByRole("dialog", { name: "ブロックを挿入", exact: true });
   await palette.getByRole("searchbox", { name: "ブロックを検索", exact: true }).fill("引用");
   await palette.getByRole("button", { name: /引用/u }).click();
   assert.match(await readBody(page), /> 引用文/u, "Searchable palette inserts a structural quote");
   beginPhase("table cells and row insertion");
   await showBlocks(page);
-  await blocks.getByRole("button", { name: "＋ 挿入", exact: true }).click();
+  await blocks.locator(":scope > .cms-append-block").click();
   const tablePalette = page.getByRole("dialog", { name: "ブロックを挿入", exact: true });
   await tablePalette.getByRole("button", { name: "表 行と列で比較", exact: true }).click();
   const cell = blocks.getByRole("textbox", { name: "表の2行1列", exact: true });
@@ -308,60 +408,149 @@ try {
     "Mobile source wraps within the viewport",
   );
   assert.equal(geometry.whitespace, "pre-wrap");
-  const persisted = (await savedDraft(page)).source;
+  let persisted = (await savedDraft(page)).source;
   await page.screenshot({ path: resolve(out, "editor-mobile.png"), fullPage: true });
+  beginPhase("mobile writing tools and separate management screens");
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    await sourceEditor(page);
+    assert.deepEqual(
+      (await page.locator(".workspace-rail button").allTextContents()).map((label) => label.trim()),
+      ["構成", "画像", "添削"],
+      "The writing dock contains only tools used with the current body",
+    );
+    assert(await page.getByRole("button", { name: "元に戻す", exact: true }).isVisible());
+    assert(await page.getByRole("button", { name: "やり直す", exact: true }).isVisible());
+    await page.locator(".editing-main").evaluate((element) => {
+      element.scrollTop = Math.min(120, element.scrollHeight - element.clientHeight);
+    });
+    const beforeNavigationScroll = await page
+      .locator(".editing-main")
+      .evaluate((element) => element.scrollTop);
+    await panel(page, "原稿一覧", page.locator(".panel-library"));
+    assert(!(await page.locator(".editing-main").isVisible()));
+    const libraryBox = await page.locator(".panel-library").boundingBox();
+    assert(
+      libraryBox && libraryBox.width >= width - 2,
+      "Draft management uses the full mobile width",
+    );
+    await page.getByRole("button", { name: "連載を開く", exact: true }).click();
+    await page.locator(".panel-series").waitFor();
+    assert(
+      !(await page.locator(".editing-main").isVisible()),
+      "Series management does not split the writing canvas",
+    );
+    await closePanel(page);
+    assert.equal(
+      await page.locator(".editing-main").evaluate((element) => element.scrollTop),
+      beforeNavigationScroll,
+      "Returning from management retains the writing scroll position",
+    );
+    assert.equal(await readBody(page), longBody, "Management navigation retains the unsaved body");
+    await panel(page, "記事情報を開く", page.locator(".panel-metadata"));
+    assert(!(await page.locator(".editing-main").isVisible()));
+    await closePanel(page);
+    await panel(page, "履歴を開く", page.locator(".panel-history"));
+    assert(!(await page.locator(".editing-main").isVisible()));
+    await closePanel(page);
+    await panel(page, "保存と確認を開く", page.locator(".panel-workflow"));
+    assert(!(await page.locator(".editing-main").isVisible()));
+    await closePanel(page);
+    assert.equal(await readBody(page), longBody);
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+  }
   beginPhase("mobile insertion with software keyboard viewport");
-  await showBlocks(page);
-  await page.locator(".editing-main").evaluate((element) => {
-    element.scrollTop = 0;
-  });
-  const beforePaletteScroll = await page
-    .locator(".editing-main")
-    .evaluate((element) => element.scrollTop);
-  await blocks.getByRole("button", { name: "＋ 挿入", exact: true }).click();
-  const mobilePalette = page.getByRole("dialog", { name: "ブロックを挿入", exact: true });
-  const search = mobilePalette.getByRole("searchbox", { name: "ブロックを検索" });
-  await search.waitFor();
-  assert.equal(await mobilePalette.getAttribute("aria-modal"), "true");
-  assert.equal(await page.locator(".cms-insert-overlay").count(), 1);
-  assert.equal(await search.evaluate((element) => element === document.activeElement), true);
-  assert.equal(
-    await page.locator(".editing-main").evaluate((element) => element.scrollTop),
-    beforePaletteScroll,
-    "Focusing insertion search must not scroll the underlying document",
-  );
-  const keyboardGeometry = await page.evaluate(async () => {
-    const viewport = window.visualViewport;
-    if (!viewport) throw Error("VisualViewport required for keyboard regression test");
-    Object.defineProperty(viewport, "height", { value: 375, configurable: true });
-    Object.defineProperty(viewport, "offsetTop", { value: 24, configurable: true });
-    viewport.dispatchEvent(new Event("resize"));
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    const overlay = document.querySelector(".cms-insert-overlay");
-    const list = overlay?.querySelector(".cms-palette-scroll");
-    const app = document.querySelector(".editor-app");
-    const result = {
-      overlayTop: overlay?.getBoundingClientRect().top,
-      overlayHeight: overlay?.getBoundingClientRect().height,
-      appTop: app?.getBoundingClientRect().top,
-      appHeight: app?.getBoundingClientRect().height,
-      listHeight: list?.getBoundingClientRect().height,
-    };
-    delete viewport.height;
-    delete viewport.offsetTop;
-    viewport.dispatchEvent(new Event("resize"));
-    return result;
-  });
-  assert(Math.abs(keyboardGeometry.overlayTop - 24) <= 1);
-  assert(Math.abs(keyboardGeometry.overlayHeight - 375) <= 1);
-  assert(Math.abs(keyboardGeometry.appTop - 24) <= 1);
-  assert(Math.abs(keyboardGeometry.appHeight - 375) <= 1);
-  assert(keyboardGeometry.listHeight > 100, "Suggestions remain usable above the keyboard");
-  await search.fill("引用");
-  await mobilePalette.getByRole("button", { name: /引用/u }).waitFor();
-  await mobilePalette.getByRole("button", { name: "挿入メニューを閉じる" }).click();
-  assert.equal(await page.locator(".cms-insert-overlay").count(), 0);
-  assert.equal((await savedDraft(page)).source, persisted);
+  for (const size of [
+    { width: 390, height: 844, keyboard: 375, offset: 24 },
+    { width: 320, height: 700, keyboard: 280, offset: 20 },
+  ]) {
+    await page.setViewportSize({ width: size.width, height: size.height });
+    await showBlocks(page);
+    assert.equal(await blocks.locator(":scope > .cms-block-topbar").count(), 0);
+    const append = blocks.locator(":scope > .cms-append-block");
+    await append.scrollIntoViewIfNeeded();
+    const beforePaletteScroll = await page
+      .locator(".editing-main")
+      .evaluate((element) => element.scrollTop);
+    await append.click();
+    const mobilePalette = page.getByRole("dialog", { name: "ブロックを挿入", exact: true });
+    const search = mobilePalette.getByRole("searchbox", { name: "ブロックを検索" });
+    await search.waitFor();
+    assert.equal(await mobilePalette.getAttribute("aria-modal"), "true");
+    assert.equal(await page.locator(".cms-insert-overlay").count(), 1);
+    assert.equal(
+      await search.evaluate((element) => element === document.activeElement),
+      false,
+      "Pointer opening shows the choices without opening the search keyboard",
+    );
+    assert.equal(
+      await mobilePalette.locator(".cms-palette-visual svg").count(),
+      await mobilePalette.locator(".cms-palette-choice").count(),
+      "Every block choice uses the same SVG icon system",
+    );
+    await search.click();
+    assert.equal(await search.evaluate((element) => element === document.activeElement), true);
+    assert.equal(
+      await page.locator(".editing-main").evaluate((element) => element.scrollTop),
+      beforePaletteScroll,
+      "Opening and focusing search must not scroll the underlying document",
+    );
+    const keyboardGeometry = await page.evaluate(async ({ keyboard, offset }) => {
+      const viewport = window.visualViewport;
+      if (!viewport) throw Error("VisualViewport required for keyboard regression test");
+      Object.defineProperty(viewport, "height", { value: keyboard, configurable: true });
+      Object.defineProperty(viewport, "offsetTop", { value: offset, configurable: true });
+      viewport.dispatchEvent(new Event("resize"));
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const overlay = document.querySelector(".cms-insert-overlay");
+      const list = overlay?.querySelector(".cms-palette-scroll");
+      const app = document.querySelector(".editor-app");
+      return {
+        overlayTop: overlay?.getBoundingClientRect().top,
+        overlayHeight: overlay?.getBoundingClientRect().height,
+        appTop: app?.getBoundingClientRect().top,
+        appHeight: app?.getBoundingClientRect().height,
+        listHeight: list?.getBoundingClientRect().height,
+      };
+    }, size);
+    assert(Math.abs(keyboardGeometry.overlayTop - size.offset) <= 1);
+    assert(Math.abs(keyboardGeometry.overlayHeight - size.keyboard) <= 1);
+    assert(Math.abs(keyboardGeometry.appTop - size.offset) <= 1);
+    assert(Math.abs(keyboardGeometry.appHeight - size.keyboard) <= 1);
+    assert(keyboardGeometry.listHeight > 100, "Suggestions remain usable above the keyboard");
+    await search.fill("引用");
+    const quoteChoice = mobilePalette.getByRole("button", { name: /引用/u });
+    await quoteChoice.waitFor();
+    if (size.width === 390) {
+      await mobilePalette.getByRole("button", { name: "挿入メニューを閉じる" }).click();
+    } else {
+      await quoteChoice.click();
+    }
+    assert.equal(await page.locator(".cms-insert-overlay").count(), 0);
+    await page.evaluate(async () => {
+      const viewport = window.visualViewport;
+      delete viewport.height;
+      delete viewport.offsetTop;
+      viewport.dispatchEvent(new Event("resize"));
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    if (size.width === 390) {
+      assert.equal(
+        (await savedDraft(page)).source,
+        persisted,
+        "Cancelling insertion preserves the full draft",
+      );
+    } else {
+      const insertedBody = await readBody(page);
+      assert(
+        insertedBody.includes(longBody.trimEnd()),
+        "Selecting a block preserves the existing long body",
+      );
+      assert.match(insertedBody, /> 引用文/u);
+      persisted = (await savedDraft(page)).source;
+    }
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+  }
   beginPhase("IndexedDB reopening");
   await page.reload();
   await title.waitFor();
@@ -404,6 +593,8 @@ try {
           "source-preserving rich focus",
           "caret and inline selection",
           "pointer and keyboard article reorder",
+          "heading/body/image grouping with pointer and keyboard movement",
+          "group persistence, ungroup, undo and redo",
           "parent/child module props",
           "optional boolean props",
           "TeX and code language",
@@ -411,6 +602,8 @@ try {
           "searchable visual insertion",
           "body-only highlighted MDX",
           "390px wrapping",
+          "320px and 390px writing and management navigation",
+          "mobile browse-first insertion and simulated software keyboard viewport",
           "IndexedDB reopen",
           "offline shell",
           "no private API cached",
