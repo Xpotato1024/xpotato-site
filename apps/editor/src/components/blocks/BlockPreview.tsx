@@ -1,5 +1,11 @@
-import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { blockTree, type BlockNode } from "@xpotato/editor-core/blocks";
+import {
+  primaryReviewMark,
+  reviewStateLabel,
+  splitReviewText,
+  type LocatedReviewMark,
+} from "../../features/review/review-marks.js";
 
 export function MathPreview({ value }: { value: string }) {
   const [result, setResult] = useState({ html: "", error: "", loading: true });
@@ -81,13 +87,70 @@ export function canEditRich(source: string): boolean {
     return false;
   }
 }
-function renderNode(node: BlockNode, index: number): ReactNode {
-  const children = node.children?.map(renderNode);
+interface PreviewReview {
+  source: string;
+  marks: readonly LocatedReviewMark[];
+  activeCommentId: string | null | undefined;
+}
+
+function markedText(
+  text: string,
+  marks: readonly LocatedReviewMark[],
+  review: PreviewReview,
+  key: number,
+): ReactNode {
+  const primary = primaryReviewMark(marks);
+  if (!primary) return text;
+  return (
+    <mark
+      key={key}
+      className="cms-review-mark"
+      data-review-state={primary.state}
+      data-review-id={marks.map((mark) => mark.id).join(" ")}
+      data-review-active={marks.some((mark) => mark.id === review.activeCommentId) || undefined}
+      title={marks.map((mark) => reviewStateLabel(mark.state)).join("・")}
+    >
+      {text}
+    </mark>
+  );
+}
+
+function renderText(node: BlockNode, index: number, review: PreviewReview): ReactNode {
+  const text = node.value ?? "";
+  const start = node.position?.start.offset;
+  const end = node.position?.end.offset;
+  if (!review.marks.length || start === undefined || end === undefined) return text;
+  const raw = review.source.slice(start, end);
+  let textStart: number | undefined = raw === text ? start : undefined;
+  if (node.type === "inlineCode") {
+    const ticks = raw.match(/^`+/u)?.[0].length ?? 0;
+    if (ticks && raw.slice(ticks, -ticks) === text) textStart = start + ticks;
+  }
+  // Escapes/entities can change display length. Mark a fully covered leaf only, never guess offsets.
+  if (textStart === undefined)
+    return markedText(
+      text,
+      review.marks.filter((mark) => mark.start <= start && mark.end >= end),
+      review,
+      index,
+    );
+  return (
+    <Fragment key={index}>
+      {splitReviewText(text, textStart, review.marks).map((segment, segmentIndex) =>
+        markedText(segment.text, segment.marks, review, segmentIndex),
+      )}
+    </Fragment>
+  );
+}
+
+function renderNode(node: BlockNode, index: number, review: PreviewReview): ReactNode {
+  const render = (child: BlockNode, childIndex: number) => renderNode(child, childIndex, review);
+  const children = node.children?.map(render);
   switch (node.type) {
     case "root":
       return <Fragment key={index}>{children}</Fragment>;
     case "text":
-      return node.value;
+      return renderText(node, index, review);
     case "paragraph":
       return <p key={index}>{children}</p>;
     case "heading": {
@@ -113,7 +176,7 @@ function renderNode(node: BlockNode, index: number): ReactNode {
     case "delete":
       return <del key={index}>{children}</del>;
     case "inlineCode":
-      return <code key={index}>{node.value}</code>;
+      return <code key={index}>{renderText(node, index, review)}</code>;
     case "link":
       return (
         <a key={index} title={node.title ?? node.url}>
@@ -161,7 +224,7 @@ function renderNode(node: BlockNode, index: number): ReactNode {
               <tr>
                 {node.children?.[0]?.children?.map((cell, i) => (
                   <th key={i} style={{ textAlign: node.align?.[i] ?? "left" }}>
-                    {cell.children?.map(renderNode)}
+                    {cell.children?.map(render)}
                   </th>
                 ))}
               </tr>
@@ -171,7 +234,7 @@ function renderNode(node: BlockNode, index: number): ReactNode {
                 <tr key={i}>
                   {row.children?.map((cell, j) => (
                     <td key={j} style={{ textAlign: node.align?.[j] ?? "left" }}>
-                      {cell.children?.map(renderNode)}
+                      {cell.children?.map(render)}
                     </td>
                   ))}
                 </tr>
@@ -184,7 +247,15 @@ function renderNode(node: BlockNode, index: number): ReactNode {
       return <code key={index}>{node.value ?? ""}</code>;
   }
 }
-export function BlockPreview({ source }: { source: string }) {
+export function BlockPreview({
+  source,
+  reviewMarks = [],
+  activeCommentId,
+}: {
+  source: string;
+  reviewMarks?: readonly LocatedReviewMark[] | undefined;
+  activeCommentId?: string | null | undefined;
+}) {
   const tree = useMemo(() => {
     try {
       return blockTree(source);
@@ -194,7 +265,11 @@ export function BlockPreview({ source }: { source: string }) {
   }, [source]);
   return (
     <div className="cms-prose cms-block-preview">
-      {tree ? renderNode(tree, 0) : <pre>{source}</pre>}
+      {tree ? (
+        renderNode(tree, 0, { source, marks: reviewMarks, activeCommentId })
+      ) : (
+        <pre>{source}</pre>
+      )}
     </div>
   );
 }

@@ -1,13 +1,52 @@
 /** Exercise the visible editing surface; do not reach into React or CodeMirror state. */
+export async function goHome(page) {
+  const heading = page.getByRole("heading", { name: "どこから始めますか", exact: true });
+  if (await heading.isVisible()) return;
+  await closePanel(page);
+  const fromEditor = page
+    .locator(".editor-header")
+    .getByRole("button", { name: "ホームに戻る", exact: true });
+  if (await fromEditor.isVisible()) await fromEditor.click();
+  else
+    await page
+      .getByRole("navigation", { name: "CMSの管理", exact: true })
+      .getByRole("button", { name: "ホーム", exact: true })
+      .click();
+  await heading.waitFor({ state: "visible" });
+}
+
+/** Opening the CMS must not create a draft; editing tests explicitly start or resume one. */
+export async function ensureEditing(page) {
+  await page
+    .locator(
+      ".editor-header:not(.workspace-header):visible, .workspace-home:visible, .start-workspace:visible, .registry-workspace:visible",
+    )
+    .first()
+    .waitFor({ state: "visible" });
+  if (await page.locator(".editor-header:not(.workspace-header)").isVisible()) return;
+  await goHome(page);
+  const resume = page.locator(".resume-draft");
+  if (await resume.isVisible()) await resume.click();
+  else {
+    await page
+      .locator(".entry-cards")
+      .getByRole("button", { name: /^新規作成/u })
+      .click();
+    await page.getByRole("heading", { name: "新規作成", exact: true }).waitFor();
+    await page.getByRole("radio", { name: "この端末", exact: true }).check();
+    await page.getByRole("button", { name: "作成して編集", exact: true }).click();
+  }
+  await page.locator(".editor-header:not(.workspace-header)").waitFor({ state: "visible" });
+}
+
 async function writingSurface(page) {
+  await ensureEditing(page);
   if (!(await page.locator(".editing-main").isVisible())) await closePanel(page);
-  const write = page.getByRole("tab", { name: "執筆", exact: true });
-  if ((await write.getAttribute("aria-selected")) !== "true") await write.click();
 }
 export async function sourceEditor(page) {
   await writingSurface(page);
-  const toggle = page.getByRole("button", { name: "MDX本文を表示", exact: true });
-  if ((await toggle.getAttribute("aria-pressed")) !== "true") await toggle.click();
+  const mode = page.getByRole("tab", { name: "MDX", exact: true });
+  if ((await mode.getAttribute("aria-selected")) !== "true") await mode.click();
   const editor = page.getByRole("textbox", { name: "MDX本文", exact: true });
   await editor.waitFor({ state: "visible" });
   return editor;
@@ -28,8 +67,8 @@ export async function writeBody(page, body) {
 }
 export async function showBlocks(page) {
   await writingSurface(page);
-  const toggle = page.getByRole("button", { name: "MDX本文を表示", exact: true });
-  if ((await toggle.getAttribute("aria-pressed")) === "true") await toggle.click();
+  const mode = page.getByRole("tab", { name: "ブロックエディタ", exact: true });
+  if ((await mode.getAttribute("aria-selected")) !== "true") await mode.click();
   await page
     .getByRole("region", { name: "本文のブロック編集", exact: true })
     .waitFor({ state: "visible" });
@@ -37,21 +76,24 @@ export async function showBlocks(page) {
 export async function panel(page, label, content) {
   if (await content.isVisible()) return;
   if (label === "下書き一覧を開く" || label === "原稿一覧") {
+    await goHome(page);
     await page
-      .locator(".editor-header")
-      .getByRole("button", { name: "原稿一覧", exact: true })
+      .locator(".entry-cards")
+      .getByRole("button", { name: /^下書きの続き/u })
       .click();
   } else if (label === "連載を開く") {
+    await goHome(page);
     await page
-      .locator(".editor-header")
-      .getByRole("button", { name: "原稿一覧", exact: true })
+      .getByRole("navigation", { name: "CMSの管理", exact: true })
+      .getByRole("button", { name: "連載", exact: true })
       .click();
-    await page.getByRole("button", { name: label, exact: true }).click();
   } else if (label === "記事情報を開く" || label === "履歴を開く") {
+    await ensureEditing(page);
     await closePanel(page);
     await page.getByRole("button", { name: "記事メニューを開く", exact: true }).click();
     await page.getByRole("button", { name: label, exact: true }).click();
   } else {
+    await ensureEditing(page);
     const trigger = page.getByRole("button", { name: label, exact: true }).first();
     if (!(await trigger.isVisible())) await closePanel(page);
     await trigger.click();

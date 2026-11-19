@@ -15,7 +15,7 @@ const id = "11111111-1111-4111-8111-111111111111",
 const encode = (value: string) => Buffer.from(value).toString("base64");
 function fixture() {
   const calls: GitRequest[] = [],
-    state = { head: a, race: false };
+    state = { head: a, race: false, prDraft: null as boolean | null };
   const source = createDraft("記事", "software", id);
   const api: GitTransport = async <T>(req: GitRequest) => {
     calls.push(req);
@@ -46,7 +46,11 @@ function fixture() {
       if (state.race) throw new GitError("GIT_CONFLICT", 422);
       state.head = c;
       value = { object: { sha: c } };
-    } else if (req.path.startsWith("/pulls?")) value = [];
+    } else if (req.path.startsWith("/pulls?"))
+      value =
+        state.prDraft === null
+          ? []
+          : [{ number: 9, html_url: "https://github.com/test/repo/pull/9", draft: state.prDraft }];
     else if (req.path === "/pulls")
       value = { number: 9, html_url: "https://github.com/test/repo/pull/9", draft: true };
     else throw Error("UNEXPECTED " + req.path);
@@ -164,5 +168,45 @@ describe("Git updates are snapshot-bound and do not publish", () => {
       expect.objectContaining({ draft: true }),
     );
     expect(f.calls.some((c) => /merge|deploy|dispatch/u.test(c.path))).toBe(false);
+  });
+  it("opens a management Draft PR without an invented article identity", async () => {
+    const f = fixture();
+    const result = await f.repository.registryPullRequest({
+      branch: "content/organization",
+      base: "main",
+    });
+    expect(result).toMatchObject({ number: 9, draft: true });
+    const input = f.calls.find((call) => call.path === "/pulls")!.body as {
+      draft: boolean;
+      title: string;
+      body: string;
+    };
+    expect(input.draft).toBe(true);
+    expect(input.title).toBe("分類・タグ・連載を更新");
+    expect(input.body).not.toMatch(/ContentId|Content-Id/);
+    expect(f.calls.some((call) => /merge|deploy|dispatch/u.test(call.path))).toBe(false);
+  });
+  it("reuses an existing Draft PR without changing an existing ready-for-review PR", async () => {
+    const f = fixture();
+    f.state.prDraft = true;
+    expect(
+      await f.repository.registryPullRequest({ branch: "content/organization", base: "main" }),
+    ).toMatchObject({ number: 9, draft: true });
+    expect(f.calls.every((call) => call.method === "GET")).toBe(true);
+    f.state.prDraft = false;
+    await expect(
+      f.repository.registryPullRequest({ branch: "content/organization", base: "main" }),
+    ).rejects.toMatchObject({ code: "PR_NOT_DRAFT", status: 409 });
+    expect(f.calls.every((call) => call.method === "GET")).toBe(true);
+  });
+  it("refuses protected management heads and identical PR base/head", async () => {
+    const f = fixture();
+    await expect(f.repository.registryPullRequest({ branch: "main", base: "dev" })).rejects.toThrow(
+      "PROTECTED_BRANCH",
+    );
+    await expect(
+      f.repository.registryPullRequest({ branch: "content/a", base: "content/a" }),
+    ).rejects.toThrow("PR_BASE_INVALID");
+    expect(f.calls).toEqual([]);
   });
 });

@@ -43,6 +43,21 @@ export async function handleGitRoute({
   if (route === "/save" && request.method === "POST") {
     return json(await repository.save(await body<Parameters<GitRepository["save"]>[0]>(request)));
   }
+  if (route === "/registry/save" && request.method === "POST") {
+    return json(
+      await repository.saveRegistry(
+        await body<Parameters<GitRepository["saveRegistry"]>[0]>(request),
+      ),
+    );
+  }
+  if (route === "/registry/pull-request" && request.method === "POST") {
+    return json(
+      await repository.registryPullRequest(
+        await body<Parameters<GitRepository["registryPullRequest"]>[0]>(request),
+      ),
+      201,
+    );
+  }
   if (route === "/pull-request" && request.method === "POST") {
     return json(
       await repository.pullRequest(

@@ -49,6 +49,8 @@ export async function editorContentIndex(root = repositoryRoot) {
         path: "content/" + directory + "/" + file.name,
         title: data.title,
         collection: collection as ContentCollection,
+        draft: data.draft === true,
+        education: Boolean(data.education),
       });
     }
   }

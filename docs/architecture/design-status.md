@@ -1,8 +1,9 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-11-18
+last_verified: 2026-11-19
 ---
+
 # 現在の設計・実装状態
 
 ## 採用済みコード
@@ -23,6 +24,10 @@ last_verified: 2026-11-18
 - **連載:** [ADR-0083](../design/adr/0083-managed-series-reading-order.md)に従い、ContentIdの順序付きregistryから前後リンク・全体目次・教育一覧を静的に生成します。未公開の所属・件数を公開せず、初期registryは空にしています。
 
 契約は[CMS編集画面](../contracts/cms-workbench-contract.md)と[連載・学習コース](../contracts/series-contract.md)、リッチ編集・必要時の読込・CMS専用runtime予算の判断は[ADR-0084](../design/adr/0084-source-preserving-rich-cms-editor.md)が所有します。ローカル検証、対象buildでのブラウザー試験、GitHub CI、実サービス接続は[CMS実装状態](cms-implementation-status.md)で分けます。
+
+2026-11-19の追加実装では、ホームから新規・改稿・下書きを選び、編集前にブランチの選択・作成を行います。分類・タグと連載は原稿を開かずに管理し、専用の端末状態と認証registry APIで保存します。ブロック・プレビュー・MDXは同階層のモードへ揃え、モバイル入力ではviewportとcaretの両方を扱います。構成のグループ表示、添削範囲と状態の表示、任意の操作サンプルも含みます。
+
+グループの保存モデルは[ADR-0085](../design/adr/0085-writing-workspace-and-explicit-groups.md)、今回の作業順と管理の独立は[ADR-0086](../design/adr/0086-cms-workflow-and-independent-registries.md)に提案状態で記録しています。この追加に対する実ブラウザー・CI・実機の受入れ、main取り込み、Sites更新、本番配信は別々に確認し、文書更新だけで完了扱いにしません。
 
 ## 実環境との区別
 

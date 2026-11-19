@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-11-18
+last_verified: 2026-11-19
 canonical_for:
   - 連載と学習コースの所属・順序
   - 公開連載目次と前後ナビゲーションの導出
@@ -20,16 +20,18 @@ canonical_for:
 
 registryは`schemaVersion: 1`と`series`配列を持つ。各連載は以下を設定する。
 
-| フィールド | 意味 |
-|---|---|
-| `id` | 連載の安定ID。小文字英数とハイフン。変更せず使い続ける。 |
-| `slug` | `/series/<slug>/`の公開パス。registry内で一意。 |
-| `title` / `description` | 目次に表示する名前と説明。 |
-| `kind` | `series`（連載）、`course`（学習コース）。 |
-| `status` | `ongoing`（連載中）、`completed`（完結）、`paused`（休止中）。 |
-| `entries` | `{ contentId, label? }`の順序付き配列。`contentId`はUUIDv4。`label`は目次や前後移動用の任意の短い見出し。 |
+| フィールド              | 意味                                                                                                      |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| `id`                    | 連載の安定ID。小文字英数とハイフン。変更せず使い続ける。                                                  |
+| `slug`                  | `/series/<slug>/`の公開パス。registry内で一意。                                                           |
+| `title` / `description` | 目次に表示する名前と説明。                                                                                |
+| `kind`                  | `series`（連載）、`course`（学習コース）。                                                                |
+| `status`                | `ongoing`（連載中）、`completed`（完結）、`paused`（休止中）。                                            |
+| `entries`               | `{ contentId, label? }`の順序付き配列。`contentId`はUUIDv4。`label`は目次や前後移動用の任意の短い見出し。 |
 
 同じ記事を複数の連載に含められる。一つの連載内での重複は禁止する。連載ID・slugの重複も禁止する。未作成のContentId参照は保存時の検査・repository検証・buildで失敗させ、単に一覧から消さない。
+
+`entries: []`の連載も作成できる。CMSの連載管理は原稿を開かずに利用し、記事なしのregistry保存で名前・説明・状態を先に整えられる。端末状態と認証APIの保存境界は[CMS編集画面の契約](cms-workbench-contract.md)に従う。存在しない記事IDを予定枠として登録することは許可しない。
 
 記事のfrontmatterに連載所属、番号、前後URLを重複保存しない。順序変更は一つのregistry変更で完了し、後から追加した古いメモも任意の位置に置ける。カテゴリ・分野・目的タグは読む順序を決めない。
 

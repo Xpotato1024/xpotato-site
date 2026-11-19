@@ -7,7 +7,7 @@ import {
 import type { EditorContentRecord } from "@xpotato/editor-core/registry";
 
 export interface SeriesPanelProps {
-  contentId: string;
+  contentId?: string;
   registry: SeriesRegistry;
   documents: readonly Pick<EditorContentRecord, "contentId" | "title" | "collection">[];
   onChange: (registry: SeriesRegistry) => void;
@@ -30,11 +30,13 @@ const statusLabels = { ongoing: "連載中", completed: "完結", paused: "休�
 function SeriesForm({
   initial,
   creating,
+  addCurrentArticle,
   onSave,
   onCancel,
 }: {
   initial: SeriesRecord;
   creating: boolean;
+  addCurrentArticle: boolean;
   onSave: (series: SeriesRecord) => void;
   onCancel: () => void;
 }) {
@@ -107,7 +109,9 @@ function SeriesForm({
         </label>
       )}
       <div className="button-row">
-        <button type="submit">{creating ? "作成してこの記事を追加" : "更新"}</button>
+        <button type="submit">
+          {creating ? (addCurrentArticle ? "作成してこの記事を追加" : "連載を作成") : "更新"}
+        </button>
         <button type="button" onClick={onCancel}>
           キャンセル
         </button>
@@ -217,10 +221,11 @@ export function SeriesPanel({
           key={form.value.id}
           initial={form.value}
           creating={form.creating}
+          addCurrentArticle={Boolean(contentId)}
           onCancel={() => setForm(null)}
           onSave={(value) => {
             const next = form.creating
-              ? { ...value, entries: [{ contentId }] }
+              ? { ...value, entries: contentId ? [{ contentId }] : [] }
               : {
                   ...value,
                   entries:
@@ -249,7 +254,7 @@ export function SeriesPanel({
             </button>
           </div>
           <p className="small muted">{statusLabels[selected.status]}</p>
-          {!selected.entries.some((entry) => entry.contentId === contentId) && (
+          {contentId && !selected.entries.some((entry) => entry.contentId === contentId) && (
             <button
               type="button"
               onClick={() =>
@@ -272,6 +277,7 @@ export function SeriesPanel({
                 <label className="series-entry-label">
                   <span className="sr-only">{index + 1}番目の表示名</span>
                   <input
+                    key={selected.id + ":" + entry.contentId}
                     placeholder="表示名（任意）"
                     defaultValue={entry.label ?? ""}
                     maxLength={120}
@@ -323,8 +329,9 @@ export function SeriesPanel({
               </li>
             ))}
           </ol>
+          {!selected.entries.length && <p className="small muted">記事はあとから追加できます。</p>}
           <details className="series-add-article">
-            <summary>ほかの記事を追加</summary>
+            <summary>{contentId ? "ほかの記事を追加" : "記事を追加"}</summary>
             <label>
               記事名で検索
               <input

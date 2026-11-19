@@ -50,12 +50,73 @@ export interface DraftRevision {
   annotations?: ReviewComment[] | undefined;
   pendingRegistryChanges?: EditorRegistryChanges | undefined;
 }
+
+export type LocalDraftBranchBinding = Partial<
+  Pick<
+    LocalDraft,
+    | "workingBranch"
+    | "sourceBranch"
+    | "baseCommit"
+    | "baseSource"
+    | "registrySnapshot"
+    | "pendingRegistryChanges"
+  >
+>;
+
+/** A branch copy owns new local and private-media identities, but the same article ContentId. */
+export function createLocalDraftBranchCopy(
+  original: LocalDraft,
+  binding: LocalDraftBranchBinding,
+  media: readonly LocalMedia[],
+): { draft: LocalDraft; media: LocalMedia[] } {
+  if (!binding.workingBranch || !binding.sourceBranch || !binding.baseCommit) {
+    throw Error("BRANCH_COPY_TARGET_REQUIRED");
+  }
+  if (media.some((item) => item.draftId !== original.id)) {
+    throw Error("DRAFT_MEDIA_IDENTITY_MISMATCH");
+  }
+  const {
+    remoteDraftId: _remoteDraftId,
+    remoteRevision: _remoteRevision,
+    reviewRevision: _reviewRevision,
+    syncedCommit: _syncedCommit,
+    syncedSource: _syncedSource,
+    baseSource: _baseSource,
+    registrySnapshot: _registrySnapshot,
+    pendingRegistryChanges: _pendingRegistryChanges,
+    ...local
+  } = structuredClone(original);
+  const target = structuredClone(binding);
+  const draft: LocalDraft = {
+    ...local,
+    id: crypto.randomUUID(),
+    savedAt: new Date().toISOString(),
+    workingBranch: binding.workingBranch,
+    sourceBranch: binding.sourceBranch,
+    baseCommit: binding.baseCommit,
+    ...(target.baseSource !== undefined ? { baseSource: target.baseSource } : {}),
+    ...(target.registrySnapshot ? { registrySnapshot: target.registrySnapshot } : {}),
+    ...(target.pendingRegistryChanges
+      ? { pendingRegistryChanges: target.pendingRegistryChanges }
+      : {}),
+  };
+  return {
+    draft,
+    media: media.map((item) => {
+      const { remoteId: _remoteId, ...image } = structuredClone(item);
+      return { ...image, id: crypto.randomUUID(), draftId: draft.id };
+    }),
+  };
+}
+
 const dbName = "xpotato-editor-v1";
 export async function database(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(dbName, 2);
+    const request = indexedDB.open(dbName, 3);
     request.onupgradeneeded = () => {
       const db = request.result;
+      if (!db.objectStoreNames.contains("workspace"))
+        db.createObjectStore("workspace", { keyPath: "id" });
       if (!db.objectStoreNames.contains("drafts"))
         db.createObjectStore("drafts", { keyPath: "id" });
       if (!db.objectStoreNames.contains("media")) {
@@ -104,6 +165,10 @@ export const saveLocalDraft = (draft: LocalDraft): Promise<IDBValidKey> => {
   return next;
 };
 export const localDrafts = () => transact<LocalDraft[]>("drafts", "readonly", (s) => s.getAll());
+export const readWorkspaceRecord = <T>(id: string) =>
+  transact<T | undefined>("workspace", "readonly", (s) => s.get(id));
+export const writeWorkspaceRecord = <T extends { id: string }>(value: T) =>
+  transact("workspace", "readwrite", (s) => s.put(value));
 export const deleteLocalDraft = (id: string) =>
   transact("drafts", "readwrite", (s) => s.delete(id));
 export const saveLocalMedia = (media: LocalMedia) =>
@@ -175,6 +240,59 @@ export function updateLocalDraft(
         tx.onabort = tx.onerror = () => {
           db.close();
           reject(tx.error ?? Error("LOCAL_SAVE_FAILED"));
+        };
+      });
+    });
+  saveQueue = next;
+  return next;
+}
+
+/** Commit the new draft and all local images together; leave the original branch untouched. */
+export function cloneLocalDraftForBranch(
+  draft: LocalDraft,
+  binding: LocalDraftBranchBinding,
+): Promise<LocalDraft> {
+  const original = structuredClone(draft);
+  const target = structuredClone(binding);
+  const next = saveQueue
+    .catch(() => {})
+    .then(async () => {
+      const db = await database();
+      return new Promise<LocalDraft>((resolve, reject) => {
+        let tx: IDBTransaction;
+        try {
+          tx = db.transaction(["drafts", "media"], "readwrite");
+        } catch (error) {
+          db.close();
+          reject(error);
+          return;
+        }
+        let copied: LocalDraft;
+        let failure: unknown;
+        tx.oncomplete = () => {
+          db.close();
+          resolve(copied);
+        };
+        tx.onabort = () => {
+          db.close();
+          reject(failure ?? tx.error ?? Error("LOCAL_SAVE_FAILED"));
+        };
+        const images = tx.objectStore("media");
+        const read = images.index("draftId").getAll(original.id);
+        read.onsuccess = () => {
+          try {
+            const result = createLocalDraftBranchCopy(
+              original,
+              target,
+              read.result as LocalMedia[],
+            );
+            copied = result.draft;
+            tx.objectStore("drafts").add(copied);
+            for (const item of result.media) images.add(item);
+          } catch (error) {
+            failure = error;
+            tx.abort();
+          }
         };
       });
     });

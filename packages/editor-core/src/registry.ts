@@ -46,6 +46,9 @@ export interface EditorContentRecord {
   path: string;
   title: string;
   collection: ContentCollection;
+  /** Older branch indexes omit this field; omission never proves publication. */
+  draft?: boolean;
+  education?: boolean;
 }
 export interface EditorContentIndex {
   schemaVersion: 1;
@@ -224,6 +227,55 @@ export function rebaseSeriesChanges(
   if (!result.success) throw Error("SERIES_CONFLICT");
   return { ...changes, series: result.data, seriesBase: remote };
 }
+/** Recognize an already saved definition without treating a matching ID alone as a successful save. */
+export function reconcileRegistryChanges(
+  snapshot: TaxonomySnapshot,
+  changes?: EditorRegistryChanges,
+): EditorRegistryChanges | undefined {
+  if (!changes) {
+    return undefined;
+  }
+  const valid = parseRegistryChanges(changes);
+  const terms = snapshot.terms ? taxonomyRegistrySchema.parse(snapshot.terms) : undefined;
+  const emptyTerms = {
+    schemaVersion: 1,
+    blogCategories: [],
+    noteSubjects: [],
+    toolCategories: [],
+    tags: [],
+  } as const;
+  const taxonomy = valid.taxonomy?.filter((addition) => {
+    const existing = terms?.[addition.namespace].find((entry) => entry.id === addition.id);
+    if (!existing) {
+      return true;
+    }
+    const expected = applyTaxonomyAdditions(taxonomyRegistrySchema.parse(emptyTerms), [addition])[
+      addition.namespace
+    ][0];
+    return JSON.stringify(existing) !== JSON.stringify(expected);
+  });
+  let pending: EditorRegistryChanges = {
+    ...(taxonomy?.length ? { taxonomy } : {}),
+    ...(valid.series ? { series: valid.series } : {}),
+    ...(valid.seriesBase ? { seriesBase: valid.seriesBase } : {}),
+  };
+  if (pending.series) {
+    pending = rebaseSeriesChanges(
+      pending,
+      snapshot.seriesRegistry ?? { schemaVersion: 1, series: [] },
+    );
+    if (sameSeries(pending.series, pending.seriesBase)) {
+      const { series: _series, seriesBase: _base, ...rest } = pending;
+      pending = rest;
+    }
+  }
+  if (!pending.taxonomy?.length && !pending.series) {
+    return undefined;
+  }
+  previewRegistryChanges(snapshot, pending);
+  return pending;
+}
+
 /** A submitted operation is removed only if its current local value still matches. */
 export function remainingRegistryChanges(
   current?: EditorRegistryChanges,
@@ -268,7 +320,7 @@ export function parseEditorContentIndex(value: unknown): EditorContentIndex {
     pages: "pages",
   };
   const documents = index.documents.map((raw): EditorContentRecord => {
-    const item = record(raw, ["contentId", "path", "title", "collection"]);
+    const item = record(raw, ["contentId", "path", "title", "collection", "draft", "education"]);
     const contentId = contentIdSchema.parse(item.contentId),
       collection = contentCollectionSchema.parse(item.collection);
     if (
@@ -279,11 +331,23 @@ export function parseEditorContentIndex(value: unknown): EditorContentIndex {
     )
       throw Error("EDITOR_CONTENT_INDEX_INVALID");
     const title = text(item.title, 1000)!;
+    for (const field of ["draft", "education"] as const) {
+      if (item[field] !== undefined && typeof item[field] !== "boolean") {
+        throw Error("EDITOR_CONTENT_INDEX_INVALID");
+      }
+    }
     if (seenIds.has(contentId) || seenPaths.has(item.path))
       throw Error("EDITOR_CONTENT_INDEX_DUPLICATE");
     seenIds.add(contentId);
     seenPaths.add(item.path);
-    return { contentId, path: item.path, title, collection };
+    return {
+      contentId,
+      path: item.path,
+      title,
+      collection,
+      ...(item.draft === undefined ? {} : { draft: item.draft as boolean }),
+      ...(item.education === undefined ? {} : { education: item.education as boolean }),
+    };
   });
   return { schemaVersion: 1, documents };
 }

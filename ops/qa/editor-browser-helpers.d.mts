@@ -1,4 +1,6 @@
 import type { Locator, Page } from "playwright";
+export function ensureEditing(page: Page): Promise<void>;
+export function goHome(page: Page): Promise<void>;
 export function sourceEditor(page: Page): Promise<Locator>;
 export function readBody(page: Page): Promise<string>;
 export function writeBody(page: Page, body: string): Promise<Locator>;

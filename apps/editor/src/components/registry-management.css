@@ -1,0 +1,85 @@
+.taxonomy-manager {
+  min-width: 0;
+}
+.taxonomy-manager-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: end;
+}
+.taxonomy-manager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block: 0.8rem;
+}
+.taxonomy-create {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border-divider);
+  border-radius: 8px;
+  background: var(--surface-control);
+}
+.taxonomy-create fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+.taxonomy-create details > label {
+  margin-block: 0.6rem;
+}
+.taxonomy-create [role="alert"] {
+  margin: 0;
+  color: var(--text-primary);
+}
+.taxonomy-records {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  align-items: start;
+  gap: 0.6rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.7rem 0 1rem;
+}
+.taxonomy-record {
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--border-divider);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+.taxonomy-record-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.3rem 0.7rem;
+  margin-bottom: 0.3rem;
+}
+.taxonomy-record-heading strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.taxonomy-record-heading span {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.taxonomy-record p {
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+.taxonomy-record small {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+@media (max-width: 599px) {
+  .taxonomy-manager-tools {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3rem;
+  }
+}

@@ -138,6 +138,16 @@ try {
     page = await context.newPage();
   page.on("pageerror", capturePageError);
   await page.goto(server.origin + "/editor/");
+  await page.getByRole("heading", { name: "どこから始めますか", exact: true }).waitFor();
+  await page
+    .locator(".entry-cards")
+    .getByRole("button", { name: /^新規作成/u })
+    .click();
+  await page.getByRole("radio", { name: "新しいブランチ", exact: true }).check();
+  await page
+    .getByRole("textbox", { name: "作業ブランチ名", exact: true })
+    .fill("content/browser-integration");
+  await page.getByRole("button", { name: "作成して編集", exact: true }).click();
   const title = page.getByRole("textbox", { name: "タイトル", exact: true });
   await title.waitFor();
   await title.fill("Git引継ぎと私有画像の統合テスト");
@@ -255,23 +265,26 @@ try {
     mobile = await second.newPage();
   mobile.on("pageerror", capturePageError);
   await mobile.goto(server.origin + "/editor/");
-  await mobile.getByRole("textbox", { name: "タイトル", exact: true }).waitFor();
+  await mobile.getByRole("heading", { name: "どこから始めますか", exact: true }).waitFor();
   await mobile
-    .locator(".editor-header")
-    .getByRole("button", { name: "原稿一覧", exact: true })
+    .locator(".entry-cards")
+    .getByRole("button", { name: /^下書きの続き/u })
     .click();
   await mobile.locator(".repository-panel").getByLabel("読み込み元").selectOption(branch);
   await mobile.getByRole("button", { name: "一覧を取得", exact: true }).click();
   await mobile
     .locator(".repository-documents")
-    .getByRole("button", { name: "Git引継ぎと私有画像の統合テスト", exact: true })
+    .getByRole("button", { name: /^Git引継ぎと私有画像の統合テスト/u })
     .click();
+  await mobile.getByRole("radio", { name: "既存のブランチ", exact: true }).check();
+  await mobile.getByRole("combobox", { name: "作業ブランチ", exact: true }).selectOption(branch);
+  await mobile.getByRole("button", { name: "編集を始める", exact: true }).click();
   await mobile.waitForFunction(
     () =>
       (document.querySelector(".title-label textarea") as HTMLTextAreaElement | null)?.value ===
       "Git引継ぎと私有画像の統合テスト",
   );
-  await mobile.getByRole("region", { name: "原稿一覧", exact: true }).waitFor({ state: "hidden" });
+  await mobile.locator(".start-workspace").waitFor({ state: "hidden" });
   await panel(mobile, "画像を開く", mobile.getByRole("region", { name: "画像とGIF", exact: true }));
   await mobile.locator(".media-card").filter({ hasText: "非公開R2に同期済み" }).waitFor();
   await mobile.locator(".media-card img").first().scrollIntoViewIfNeeded();
@@ -313,19 +326,21 @@ try {
   assert.deepEqual(failures, []);
   await second.close();
   await context.close();
-  const blockSmoke = promisify(execFile)(
-    process.execPath,
-    [resolve(root, "ops/qa/editor-browser-smoke.mjs")],
-    {
+  for (const suite of [
+    "editor-browser-smoke.mjs",
+    "editor-workspace-smoke.mjs",
+    "editor-keyboard-smoke.mjs",
+  ]) {
+    const smoke = promisify(execFile)(process.execPath, [resolve(root, "ops/qa", suite)], {
       cwd: root,
       env: process.env,
       timeout: 120000,
       maxBuffer: 1024 * 1024,
-    },
-  );
-  blockSmoke.child.stdout?.pipe(process.stdout, { end: false });
-  blockSmoke.child.stderr?.pipe(process.stderr, { end: false });
-  await blockSmoke;
+    });
+    smoke.child.stdout?.pipe(process.stdout, { end: false });
+    smoke.child.stderr?.pipe(process.stderr, { end: false });
+    await smoke;
+  }
   const reviewOutput = resolve(".local/editor-review", "ci-" + Date.now() + "-" + process.pid);
   const reviewBuild = await promisify(execFile)(
     process.execPath,
@@ -355,6 +370,8 @@ try {
   const report = {
     astroReviewVerified: true,
     offlineShellVerified: true,
+    workspaceWorkflowVerified: true,
+    keyboardViewportVerified: true,
     mode: "real-chromium-with-synthetic-GitHub-and-R2",
     result: "pass",
     tests: [
@@ -364,6 +381,8 @@ try {
       "AI revision on the same branch",
       "stale human save preserves local data and rejects overwrite",
       "second mobile context restores MDX and private image",
+      "independent registries, explicit article entry, review visibility and IndexedDB upgrade",
+      "focused inputs and carets stay above simulated mobile keyboard viewports",
       "no runtime errors or horizontal overflow",
       "no public storage writes",
     ],

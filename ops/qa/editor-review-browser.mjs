@@ -6,7 +6,13 @@ import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import { chromium } from "playwright";
 import { editorStaticServer } from "./editor-static-server.mjs";
-import { readBody, writeBody, panel, closePanel } from "./editor-browser-helpers.mjs";
+import {
+  readBody,
+  writeBody,
+  panel,
+  closePanel,
+  ensureEditing,
+} from "./editor-browser-helpers.mjs";
 const root = resolve("."),
   require = createRequire(join(root, "apps/editor/package.json")),
   { zipSync, strToU8 } = require("fflate");
@@ -97,8 +103,10 @@ try {
     if (message.text().startsWith("CSP_VIOLATION:")) violations.push(message.text());
   });
   await page.goto(server.origin + "/editor/");
-  await page.getByRole("textbox", { name: "タイトル", exact: true }).waitFor();
-  await page.locator(".save-state").filter({ hasText: "保存済み" }).waitFor();
+  await page.getByRole("heading", { name: "どこから始めますか", exact: true }).waitFor();
+  await page.waitForFunction(async () =>
+    (await indexedDB.databases()).some((database) => database.name === "xpotato-editor-v1"),
+  );
   const input = {
     id: "33333333-3333-4333-8333-333333333333",
     source,
@@ -150,6 +158,7 @@ try {
     { draft: input, assetId, hash, bytes: [...png] },
   );
   await page.reload();
+  await ensureEditing(page);
   await panel(
     page,
     "保存と確認を開く",

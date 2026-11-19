@@ -12,6 +12,8 @@ import {
   savedDraft,
   closePanel,
   panel,
+  ensureEditing,
+  goHome,
 } from "./editor-browser-helpers.mjs";
 const root = resolve("."),
   out = resolve(".local/cms-validation/browser");
@@ -89,6 +91,7 @@ try {
   });
   beginPhase("body-only highlighted MDX");
   await page.goto(server.origin + "/editor/");
+  await ensureEditing(page);
   const title = page.getByRole("textbox", { name: "タイトル", exact: true });
   await title.waitFor();
   await title.fill("CMS 動作確認（合成データ）");
@@ -427,20 +430,24 @@ try {
     const beforeNavigationScroll = await page
       .locator(".editing-main")
       .evaluate((element) => element.scrollTop);
-    await panel(page, "原稿一覧", page.locator(".panel-library"));
+    await panel(page, "原稿一覧", page.getByRole("heading", { name: "下書きの続き", exact: true }));
     assert(!(await page.locator(".editing-main").isVisible()));
-    const libraryBox = await page.locator(".panel-library").boundingBox();
+    const libraryBox = await page.locator(".start-workspace").boundingBox();
     assert(
-      libraryBox && libraryBox.width >= width - 2,
-      "Draft management uses the full mobile width",
+      libraryBox && libraryBox.width >= width - 48,
+      "Draft management uses the mobile page rather than a side panel",
     );
-    await page.getByRole("button", { name: "連載を開く", exact: true }).click();
-    await page.locator(".panel-series").waitFor();
+    await page
+      .getByRole("navigation", { name: "CMSの管理", exact: true })
+      .getByRole("button", { name: "連載", exact: true })
+      .click();
+    await page.getByRole("heading", { name: "連載・コース", exact: true }).waitFor();
     assert(
       !(await page.locator(".editing-main").isVisible()),
       "Series management does not split the writing canvas",
     );
-    await closePanel(page);
+    await goHome(page);
+    await ensureEditing(page);
     assert.equal(
       await page.locator(".editing-main").evaluate((element) => element.scrollTop),
       beforeNavigationScroll,

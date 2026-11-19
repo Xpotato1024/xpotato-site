@@ -22,13 +22,13 @@ export function EditorHeader({
         type="button"
         className="brand-button"
         onClick={onToggleNavigation}
-        aria-label="原稿一覧"
+        aria-label="ホームに戻る"
       >
         <WorkspaceIcon name="back" />
         <span className="editor-brand">
           <span className="brand-mark">X</span>potato
         </span>
-        <span className="mobile-library-label">原稿</span>
+        <span className="mobile-library-label">ホーム</span>
       </button>
       <button
         type="button"

@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-10-04
+last_verified: 2026-11-19
 canonical_for:
   - ADR lifecycle index
   - frozen ADR adoption state
@@ -148,3 +148,5 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR-0078: 一貫制作の2入口と静的技術ビジュアル](0078-content-production-and-static-technical-visuals.md) — 実装候補。本文・公開権限・本番配信は変更しない。
 
 - [ADR-0085: 執筆画面の分離と明示的なブロックグループ](0085-writing-workspace-and-explicit-groups.md) — 実装候補。モバイルの操作配置、MDXに残すグループ、透過的な公開描画。
+
+- [ADR-0086: CMSの作業開始と記事に依存しない管理](0086-cms-workflow-and-independent-registries.md) — 実装候補。新規・改稿・下書きの入口、編集前のブランチ選択、原稿なしの分類・連載管理、caretの可視化と安全な添削表示。

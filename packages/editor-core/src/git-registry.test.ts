@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { taxonomyRegistrySchema } from "@xpotato/content-contracts/content";
-import { createDraft, draftPath, updateDraft } from "./draft.js";
+import { createDraft, createDraftForCollection, draftPath, updateDraft } from "./draft.js";
 import {
   GitError,
   GitRepository,
   editorManifestPath,
+  type GitRegistrySaveInput,
   type GitRequest,
   type GitTransport,
 } from "./git.js";
@@ -36,7 +37,18 @@ const taxonomy = taxonomyRegistrySchema.parse({
       status: "active",
     },
   ],
-  noteSubjects: [],
+  noteSubjects: [
+    {
+      id: "everyday",
+      label: "日常",
+      description: "日常のメモ",
+      slug: "everyday",
+      aliases: [],
+      archive: true,
+      indexable: false,
+      status: "active",
+    },
+  ],
   toolCategories: [],
   tags: [],
 });
@@ -141,6 +153,22 @@ const changes: EditorRegistryChanges = {
 };
 
 describe("atomic source and editorial registry writes", () => {
+  it("preserves educational notes in the authenticated index when saving their source", async () => {
+    const f = fixture();
+    const source = createDraftForCollection({
+      collection: "notes",
+      subject: "everyday",
+      education: true,
+      id,
+    });
+    const saved = await f.repository.save({ ...f.input, path: draftPath(id, "notes"), source });
+    expect(saved.manifest.contentIndex?.find((entry) => entry.contentId === id)).toMatchObject({
+      collection: "notes",
+      draft: true,
+      education: true,
+    });
+    expect(f.files.get(draftPath(id, "notes"))).toBe(source);
+  });
   it("commits the draft, new taxonomy, derived manifest, authenticated index, and series together", async () => {
     const f = fixture();
     const source = updateDraft(f.input.source, { tags: ["course"] });
@@ -149,6 +177,7 @@ describe("atomic source and editorial registry writes", () => {
     expect(result.manifest.tags).toContain("course");
     expect(result.manifest.seriesRegistry).toEqual(changes.series);
     expect(result.manifest.contentIndex).toHaveLength(2);
+    expect(result.manifest.contentIndex?.find((entry) => entry.contentId === id)?.draft).toBe(true);
     expect(f.files.get(draftPath(id))).toBe(source);
     const tree = f.calls.find((call) => call.path === "/git/trees")!.body as {
       tree: { path: string }[];
@@ -265,5 +294,126 @@ describe("atomic source and editorial registry writes", () => {
     expect(result.seriesRegistry).toEqual({ schemaVersion: 1, series: [] });
     expect(JSON.parse(f.files.get(editorManifestPath)!).contentIndex).toBeUndefined();
     expect(f.calls.every((call) => call.method === "GET")).toBe(true);
+  });
+});
+
+describe("standalone taxonomy and series management", () => {
+  const standaloneChanges: EditorRegistryChanges = {
+    ...changes,
+    series: {
+      schemaVersion: 1,
+      series: [{ ...changes.series!.series[0]!, entries: [{ contentId: existingId }] }],
+    },
+  };
+  const input = (registryChanges = standaloneChanges): GitRegistrySaveInput => ({
+    branch: "content/site-organization",
+    expectedHead: head,
+    registryChanges,
+  });
+
+  it("saves taxonomy and reading order atomically without creating or changing an article", async () => {
+    const f = fixture();
+    const sourceBefore = f.files.get(draftPath(existingId));
+    const indexBefore = f.files.get(editorContentIndexPath);
+    const result = await f.repository.saveRegistry(input());
+    expect(result).toMatchObject({ branch: input().branch, commit: nextHead });
+    expect(result.manifest.tags).toContain("course");
+    expect(result.manifest.seriesRegistry).toEqual(standaloneChanges.series);
+    expect(f.files.get(draftPath(existingId))).toBe(sourceBefore);
+    expect(f.files.get(editorContentIndexPath)).toBe(indexBefore);
+    expect(f.files.has(draftPath(id))).toBe(false);
+    const tree = f.calls.find((call) => call.path === "/git/trees")!.body as {
+      tree: { path: string }[];
+    };
+    expect(tree.tree.map((entry) => entry.path).sort()).toEqual(
+      [taxonomyRegistryPath, editorManifestPath, seriesRegistryPath].sort(),
+    );
+    const commit = f.calls.find((call) => call.path === "/git/commits")!.body as {
+      parents: string[];
+      message: string;
+    };
+    expect(commit.parents).toEqual([head]);
+    expect(commit.message).toContain("Editor-Scope: registries");
+    expect(commit.message).not.toContain("Content-Id:");
+    expect(f.calls.at(-1)?.body).toEqual({ sha: nextHead, force: false });
+    expect(JSON.parse(f.files.get(editorManifestPath)!).contentIndex).toBeUndefined();
+  });
+
+  it("allows an empty new series before any article belongs to it", async () => {
+    const f = fixture();
+    f.files.set(editorContentIndexPath, json({ schemaVersion: 1, documents: [] }));
+    const result = await f.repository.saveRegistry(
+      input({
+        seriesBase: { schemaVersion: 1, series: [] },
+        series: {
+          schemaVersion: 1,
+          series: [{ ...changes.series!.series[0]!, entries: [] }],
+        },
+      }),
+    );
+    expect(result.manifest.seriesRegistry?.series[0]?.entries).toEqual([]);
+    expect(f.files.has(draftPath(id))).toBe(false);
+  });
+
+  it.each(["main", "dev", "feature/registry", "content/../main"])(
+    "refuses registry writes to %s before accessing Git",
+    async (branch) => {
+      const f = fixture();
+      await expect(f.repository.saveRegistry({ ...input(), branch })).rejects.toThrow();
+      expect(f.calls).toEqual([]);
+    },
+  );
+
+  it("rejects a branch that advanced before saving without creating objects", async () => {
+    const f = fixture();
+    f.state.head = nextHead;
+    await expect(f.repository.saveRegistry(input())).rejects.toMatchObject({
+      code: "GIT_CONFLICT",
+      status: 409,
+    });
+    expect(f.calls.every((call) => call.method === "GET")).toBe(true);
+  });
+
+  it("rejects a race at ref update without partially changing either registry", async () => {
+    const f = fixture();
+    const before = new Map(f.files);
+    f.state.race = true;
+    await expect(f.repository.saveRegistry(input())).rejects.toThrow("GIT_CONFLICT");
+    expect(f.files).toEqual(before);
+    expect(f.state.head).toBe(head);
+    expect(f.calls.at(-1)?.body).toEqual({ sha: nextHead, force: false });
+  });
+
+  it("rejects unobserved series replacement and references to an article that only exists locally", async () => {
+    const f = fixture();
+    await expect(f.repository.saveRegistry(input(changes))).rejects.toThrow(
+      "SERIES_REFERENCE_INVALID",
+    );
+    f.files.set(seriesRegistryPath, json(standaloneChanges.series));
+    await expect(
+      f.repository.saveRegistry(
+        input({
+          seriesBase: { schemaVersion: 1, series: [] },
+          series: { schemaVersion: 1, series: [] },
+        }),
+      ),
+    ).rejects.toMatchObject({ code: "SERIES_CONFLICT", status: 409 });
+    expect(f.calls.every((call) => call.method === "GET")).toBe(true);
+  });
+
+  it("refuses empty operations and arbitrary file writes", async () => {
+    for (const value of [
+      input({}),
+      input({ taxonomy: [] }),
+      { ...input(), path: ".github/workflows/deploy.yml", source: "attack" },
+      {
+        ...input(),
+        registryChanges: { files: [{ path: "content/pages/a.mdx", source: "attack" }] },
+      },
+    ]) {
+      const f = fixture();
+      await expect(f.repository.saveRegistry(value as GitRegistrySaveInput)).rejects.toThrow();
+      expect(f.calls.every((call) => call.method === "GET")).toBe(true);
+    }
   });
 });

@@ -1,0 +1,91 @@
+:where(.cms-review-indicator, .cms-review-mark, .review-card)[data-review-state="open"] {
+  --review-ink: #805417;
+  --review-fill: #fff0c9;
+  --review-line: #b88120;
+}
+:where(.cms-review-indicator, .cms-review-mark, .review-card)[data-review-state="proposal"] {
+  --review-ink: #67428a;
+  --review-fill: #eee2f8;
+  --review-line: #8a5eab;
+}
+:where(.cms-review-indicator, .cms-review-mark, .review-card)[data-review-state="resolved"],
+:where(.cms-review-indicator, .cms-review-mark, .review-card)[data-review-state="applied"] {
+  --review-ink: #27614b;
+  --review-fill: #e4f2e9;
+  --review-line: #49866b;
+}
+:where(.cms-review-indicator, .cms-review-mark, .review-card)[data-review-state="rejected"] {
+  --review-ink: #655f6d;
+  --review-fill: #eeebf0;
+  --review-line: #8b8295;
+}
+.cms-block-editor .cms-region-toolbar button.cms-review-indicator {
+  width: auto;
+  min-width: 44px;
+  min-height: 44px;
+  height: auto;
+  padding: 0.25rem 0.4rem;
+  gap: 0.25rem;
+  color: var(--review-ink);
+  background: var(--review-fill);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+.cms-review-indicator svg,
+.review-card-status svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+.cms-block-editor .cms-region-toolbar button.cms-review-indicator[aria-pressed="true"] {
+  color: var(--review-ink);
+  background: var(--review-fill);
+  box-shadow: inset 0 0 0 1.5px var(--review-line);
+}
+.cms-review-mark {
+  color: inherit;
+  background: var(--review-fill);
+  border-bottom: 2px solid var(--review-line);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.cms-review-mark[data-review-active="true"] {
+  outline: 1px solid var(--review-line);
+  outline-offset: 2px;
+}
+.review-card {
+  scroll-margin-block: 0.75rem;
+}
+.review-card[data-review-selected="true"] {
+  border-radius: 0.35rem;
+  box-shadow: inset 3px 0 var(--review-line);
+  padding-inline: 0.7rem;
+  background: color-mix(in srgb, var(--review-fill) 40%, transparent);
+}
+.review-card-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--review-ink);
+}
+.proposal-diff .diff-before {
+  background: #fbefee;
+  border-inline-start: 3px solid #b2564d;
+}
+.proposal-diff .diff-after {
+  background: #edf7f1;
+  border-inline-start: 3px solid #408264;
+}
+.proposal-diff pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.proposal-diff del {
+  color: #8b3832;
+  text-decoration-color: #b2564d;
+}
+.proposal-diff ins {
+  color: #245e44;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}

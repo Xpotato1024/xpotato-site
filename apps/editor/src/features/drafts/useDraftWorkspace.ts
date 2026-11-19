@@ -23,6 +23,8 @@ const sameContent = (a: LocalDraft, b: LocalDraft) =>
 
 export function useDraftWorkspace(onError: (message: string) => void) {
   const [hydrated, setHydrated] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
+  const activeDraft = useRef(false);
   const [draft, setDraftState] = useState<LocalDraft>(() => createLocalDraft());
   const [saved, setSaved] = useState<LocalDraft[]>([]);
   const [localStatus, setLocalStatus] = useState("保存準備中");
@@ -60,7 +62,11 @@ export function useDraftWorkspace(onError: (message: string) => void) {
         entries.sort((a, b) => b.savedAt.localeCompare(a.savedAt));
         setSaved(entries);
         const opened = entries.find((entry) => !entry.archived);
-        if (opened) setDraft(opened);
+        if (opened) {
+          activeDraft.current = true;
+          setHasDraft(true);
+          setDraft(opened);
+        }
         setHydrated(true);
       })
       .catch(() => {
@@ -75,7 +81,7 @@ export function useDraftWorkspace(onError: (message: string) => void) {
   }, [onError, setDraft]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !hasDraft) return;
     let active = true;
     setLocalStatus("保存中…");
     const timer = setTimeout(() => {
@@ -103,10 +109,10 @@ export function useDraftWorkspace(onError: (message: string) => void) {
       active = false;
       clearTimeout(timer);
     };
-  }, [draft, hydrated, onError]);
+  }, [draft, hydrated, hasDraft, onError]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !hasDraft) return;
     const flush = () => {
       void saveLocalDraft({ ...current.current, savedAt: new Date().toISOString() }).catch(() =>
         onError("端末への保存に失敗しました。"),
@@ -121,40 +127,49 @@ export function useDraftWorkspace(onError: (message: string) => void) {
       window.removeEventListener("pagehide", flush);
       document.removeEventListener("visibilitychange", hidden);
     };
-  }, [hydrated, onError]);
+  }, [hydrated, hasDraft, onError]);
 
   async function persist(label = "編集を保存") {
+    if (!activeDraft.current) return;
     const snapshot = { ...current.current, savedAt: new Date().toISOString() };
     await saveLocalDraft(snapshot);
     await saveRevision(snapshot, label);
   }
   async function openLocal(next: LocalDraft) {
-    if (next.id === current.current.id) return;
+    if (activeDraft.current && next.id === current.current.id) return;
     const leaving = current.current.id;
     while (current.current.id === leaving) {
       const before = current.current;
       await persist();
       const latest = (await localDrafts()).find((entry) => entry.id === next.id);
       if (current.current !== before) continue;
+      activeDraft.current = true;
+      setHasDraft(true);
       setDraft(latest ?? next);
       return;
     }
   }
+  async function refreshSaved() {
+    setSaved((await localDrafts()).sort((a, b) => b.savedAt.localeCompare(a.savedAt)));
+  }
   async function createNew(
     snapshot?: { branch: string; commit: string } | null,
     collection: ContentCollection = "blog",
-    options?: { education?: boolean },
+    options?: { education?: boolean; workingBranch?: string; sourceBranch?: string },
   ) {
     const next = createLocalDraft(collection, options);
     if (snapshot) {
-      next.sourceBranch = snapshot.branch;
+      next.sourceBranch = options?.sourceBranch ?? snapshot.branch;
       next.baseCommit = snapshot.commit;
+      next.workingBranch = options?.workingBranch ?? "";
     }
     const leaving = current.current.id;
     while (current.current.id === leaving) {
       const before = current.current;
       await persist();
       if (current.current !== before) continue;
+      activeDraft.current = true;
+      setHasDraft(true);
       setDraft(next);
       return;
     }
@@ -197,6 +212,7 @@ export function useDraftWorkspace(onError: (message: string) => void) {
   }
   return {
     hydrated,
+    hasDraft,
     draft,
     saved,
     localStatus,
@@ -204,6 +220,7 @@ export function useDraftWorkspace(onError: (message: string) => void) {
     parsed,
     setDraft,
     persist,
+    refreshSaved,
     openLocal,
     createNew,
     edit,

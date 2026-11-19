@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { DraftMetadata, ParsedDraft } from "@xpotato/editor-core/draft";
 import type { SourceSelection, LocatedAnchor } from "@xpotato/editor-core/annotations";
 import type { LocalDraft } from "../../data/storage.js";
@@ -24,6 +24,8 @@ interface Props {
   onSelection: (selection: SourceSelection) => void;
   onActiveBlock: (block: { start: number; end: number; source: string; index: number }) => void;
   reviewActive: boolean;
+  activeCommentId: string | null;
+  onReviewSelect: (id: string) => void;
   reveal: (LocatedAnchor & { token: number }) | null;
   onError: (message: string) => void;
 }
@@ -42,18 +44,54 @@ export function DocumentEditor({
   onSelection,
   onActiveBlock,
   reviewActive,
+  activeCommentId,
+  onReviewSelect,
   reveal,
   onError,
 }: Props) {
-  const [mode, setMode] = useState<"write" | "preview">("write");
-  const [source, setSource] = useState(false);
+  const [mode, setMode] = useState<"blocks" | "preview" | "mdx">("blocks");
+  const [editingMode, setEditingMode] = useState<"blocks" | "mdx">("blocks");
+  const source = (mode === "preview" ? editingMode : mode) === "mdx";
   const [sourceOpened, setSourceOpened] = useState(false);
   const [split, setSplit] = useState(false);
+  const [desktop, setDesktop] = useState(() => window.matchMedia("(min-width: 801px)").matches);
+  const titleInput = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    if (reveal || reviewActive) setMode("write");
+    const query = window.matchMedia("(min-width: 801px)");
+    const update = () => setDesktop(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  const effectiveSplit = split && desktop;
+  useLayoutEffect(() => {
+    const input = titleInput.current;
+    if (!input) return;
+    const resize = () => {
+      if (!input.getClientRects().length) return;
+      input.style.height = "auto";
+      input.style.height = input.scrollHeight + "px";
+    };
+    resize();
+    let width = input.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (width !== input.clientWidth) {
+        width = input.clientWidth;
+        resize();
+      }
+    });
+    observer.observe(input);
+    return () => observer.disconnect();
+  }, [parsed?.data.title, mode]);
+  useEffect(() => {
+    if (reviewActive) {
+      setMode("blocks");
+      setEditingMode("blocks");
+    } else if (reveal && mode === "preview") {
+      setMode(editingMode);
+    }
   }, [reveal, reviewActive]);
   return (
-    <div className={"document-workbench" + (split ? " is-split" : "")}>
+    <div className={"document-workbench" + (effectiveSplit ? " is-split" : "")}>
       <div className="workbench-toolbar">
         <div className="history-buttons">
           <button
@@ -75,18 +113,55 @@ export function DocumentEditor({
             <WorkspaceIcon name="redo" />
           </button>
         </div>
-        <div className="editor-tabs" role="tablist" aria-label="作業モード">
-          {(["write", "preview"] as const).map((tab) => (
+        <div
+          className="editor-tabs"
+          role="tablist"
+          aria-label="編集モード"
+          onKeyDown={(event) => {
+            const tabs = Array.from(
+              event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+            );
+            const at = tabs.indexOf(document.activeElement as HTMLButtonElement);
+            const next =
+              event.key === "ArrowRight"
+                ? (at + 1) % tabs.length
+                : event.key === "ArrowLeft"
+                  ? (at + tabs.length - 1) % tabs.length
+                  : event.key === "Home"
+                    ? 0
+                    : event.key === "End"
+                      ? tabs.length - 1
+                      : -1;
+            if (next >= 0) {
+              event.preventDefault();
+              tabs[next]?.focus();
+              tabs[next]?.click();
+            }
+          }}
+        >
+          {(
+            [
+              { id: "blocks", label: "ブロック", name: "ブロックエディタ", icon: "blocks" },
+              { id: "preview", label: "プレビュー", name: "プレビュー", icon: "preview" },
+              { id: "mdx", label: "MDX", name: "MDX", icon: "code" },
+            ] as const
+          ).map((tab) => (
             <button
               type="button"
               role="tab"
-              aria-selected={tab === mode}
-              key={tab}
+              aria-label={tab.name}
+              aria-selected={tab.id === mode}
+              tabIndex={tab.id === mode ? 0 : -1}
+              aria-controls={tab.id === "preview" ? "preview-pane" : "writing-pane"}
+              key={tab.id}
               onClick={() => {
-                setMode(tab);
+                setMode(tab.id);
+                if (tab.id !== "preview") setEditingMode(tab.id);
+                if (tab.id === "mdx") setSourceOpened(true);
               }}
             >
-              {tab === "write" ? "執筆" : "プレビュー"}
+              <WorkspaceIcon name={tab.icon} />
+              <span>{tab.label}</span>
             </button>
           ))}
         </div>
@@ -101,23 +176,20 @@ export function DocumentEditor({
           >
             <WorkspaceIcon name="split" />
           </button>
-          <button
-            type="button"
-            aria-pressed={source}
-            aria-label="MDX本文を表示"
-            title="MDX本文"
-            onClick={() => {
-              setSourceOpened(true);
-              setSource(!source);
-              if (mode === "preview") setMode("write");
-            }}
-          >
-            {"{ }"}
-          </button>
         </div>
       </div>
-      <div className={"document-panes" + (mode === "preview" && !split ? " preview-only" : "")}>
-        <div className="writing-pane" hidden={mode === "preview" && !split}>
+      <div
+        className={
+          "document-panes" + (mode === "preview" && !effectiveSplit ? " preview-only" : "")
+        }
+      >
+        <div
+          id="writing-pane"
+          role="tabpanel"
+          aria-label={source ? "MDX" : "ブロックエディタ"}
+          className="writing-pane"
+          hidden={mode === "preview" && !effectiveSplit}
+        >
           <div className="document-heading">
             <span className="document-kind">
               {parsed?.data.education
@@ -136,7 +208,8 @@ export function DocumentEditor({
             <label className="title-label">
               <span className="sr-only">タイトル</span>
               <textarea
-                rows={2}
+                rows={1}
+                ref={titleInput}
                 placeholder="タイトル"
                 value={parsed?.data.title ?? ""}
                 disabled={!parsed}
@@ -154,6 +227,9 @@ export function DocumentEditor({
                     onError={onError}
                     onSelection={onSelection}
                     onActiveBlock={onActiveBlock}
+                    annotations={draft.annotations ?? []}
+                    activeCommentId={activeCommentId}
+                    onReviewSelect={onReviewSelect}
                     media={media.map((item) => ({
                       id: item.assetId,
                       label: item.alt || item.assetId,
@@ -193,8 +269,8 @@ export function DocumentEditor({
             )}
           </div>
         </div>
-        {(mode === "preview" || split) && (
-          <div className="preview-column">
+        {(mode === "preview" || effectiveSplit) && (
+          <div id="preview-pane" role="tabpanel" aria-label="プレビュー" className="preview-column">
             <SitePreview draft={draft} media={media} editorSeries={editorSeries} />
           </div>
         )}

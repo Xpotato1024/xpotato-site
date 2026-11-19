@@ -5,6 +5,7 @@ import {
   parseEditorContentIndex,
   parseRegistryChanges,
   previewRegistryChanges,
+  reconcileRegistryChanges,
   remainingRegistryChanges,
   rebaseSeriesChanges,
   taxonomySnapshotFields,
@@ -125,9 +126,59 @@ describe("scoped editorial registry changes", () => {
       ),
     ).toEqual({ series: changed, seriesBase: original });
   });
+  it("recognizes fully identical saved definitions while preserving additions not saved yet", () => {
+    const terms = applyTaxonomyAdditions(registry, [purpose]);
+    const snapshot = { contractVersion: 1 as const, modules: [], ...taxonomySnapshotFields(terms) };
+    const newer: TaxonomyAddition = { ...purpose, id: "practice", label: "練習", aliases: [] };
+    expect(reconcileRegistryChanges(snapshot, { taxonomy: [purpose] })).toBeUndefined();
+    expect(reconcileRegistryChanges(snapshot, { taxonomy: [purpose, newer] })).toEqual({
+      taxonomy: [newer],
+    });
+    expect(reconcileRegistryChanges(snapshot, { taxonomy: [] })).toBeUndefined();
+  });
+  it("does not discard same-ID or same-name additions whose complete definition differs", () => {
+    const terms = applyTaxonomyAdditions(registry, [purpose]);
+    const snapshot = { contractVersion: 1 as const, modules: [], ...taxonomySnapshotFields(terms) };
+    for (const addition of [
+      { ...purpose, description: "異なる説明" },
+      { ...purpose, aliases: ["別の呼称"] },
+      { ...purpose, kind: "technology" as const },
+      { ...purpose, id: "another-id" },
+    ]) {
+      const pending = { taxonomy: [addition] };
+      expect(() => reconcileRegistryChanges(snapshot, pending)).toThrow("TAXONOMY_");
+      expect(pending.taxonomy).toEqual([addition]);
+    }
+    const changedFlags = structuredClone(terms);
+    changedFlags.tags.at(-1)!.indexable = true;
+    expect(() =>
+      reconcileRegistryChanges(
+        { ...snapshot, ...taxonomySnapshotFields(changedFlags) },
+        { taxonomy: [purpose] },
+      ),
+    ).toThrow("TAXONOMY_ID_EXISTS");
+  });
 });
 
 describe("authenticated content index", () => {
+  it("keeps old branch status unknown and validates explicit draft and education metadata", () => {
+    const entry = {
+      contentId: id,
+      path: "content/articles/first.mdx",
+      title: "原稿",
+      collection: "blog",
+    };
+    const parse = (value: unknown) =>
+      parseEditorContentIndex({ schemaVersion: 1, documents: [value] }).documents[0];
+    expect(parse(entry)?.draft).toBeUndefined();
+    expect(parse({ ...entry, draft: false, education: true })).toMatchObject({
+      draft: false,
+      education: true,
+    });
+    expect(parse({ ...entry, draft: true })?.draft).toBe(true);
+    expect(() => parse({ ...entry, draft: "false" })).toThrow("EDITOR_CONTENT_INDEX_INVALID");
+    expect(() => parse({ ...entry, education: 1 })).toThrow("EDITOR_CONTENT_INDEX_INVALID");
+  });
   it("updates the current title without creating a second identity or changing another source", () => {
     const first = {
       contentId: id,

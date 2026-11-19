@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: development
-last_verified: 2026-11-18
+last_verified: 2026-11-19
 ---
 
 # CMS基盤実装の状態
@@ -12,21 +12,56 @@ last_verified: 2026-11-18
 
 以下は`3e0d12a890aba8370e880ffc6b586490bc9a4af3`を基準にした`feat/cms-workbench-series-20261118`のコードである。この記録自体はmainへのmergeや実サイトへの反映を示さない。採用状態は対応PR・commit、公開状態は[現行配信状態](../operations/current-deployment-status.md)で確認する。
 
-| 項目 | 機能ブランチにある実装 | 区別する範囲 |
-| --- | --- | --- |
-| 投稿先・記事情報 | 記事、メモ、教育記事、固定ページ、ツール、プロダクトの新規作成。目的・技術・話題タグの検索、分類とタグの追加、教育メタデータ。 | 教育は記事・メモの属性。既存原稿を別collectionへ移すUIは追加していない。 |
-| 本文編集 | 元のMDXを保持する領域編集、文字装飾・リンク・引用・リスト・表、入れ子の部品、本文内ハンドルでの移動。 | 未知構文は原文を保持してソース編集へ切り替える。全MDXをリッチエディタで再生成しない。 |
-| MDX・コード・数式 | 本文だけのCodeMirror、色分けと折り返し、コードの言語指定、公開側と合わせた`math` fenceのMathML表示。 | 全体ソースはfrontmatterを読めない場合の修復用。通常コード中のTeXを勝手に数式化しない。 |
-| 添削 | 原稿上の引用・文脈・ブロックによる位置指定、指摘管理、修正案JSON、位置を再確認して部分適用。私有APIにreview revisionの比較更新。 | AI provider・Article Jobの自動起動は未接続。公開MDXへ私有の指摘を混ぜない。 |
-| 履歴 | source・添削・registry変更の元に戻す／やり直す、端末の直近40件、復元前の保存、バックアップ取込時の別下書き作成。 | 履歴は媒体ファイルやGit headを巻き戻さない。端末保存をGit保存・公開承認と区別する。 |
-| 即時プレビュー | 実サイトのCSS・フォントを共有し、PC・タブレット・スマートフォン幅と表示倍率を切り替える。端末画像と安全なsemantic module描画。 | ASTによる即時表示。正規Astroの固定commitレビューは別経路。Demo等の実行・未対応部品を完全再現したとはしない。 |
-| 連載 | 中央registry、CMSでの作成・所属・順序、サイトの前後リンク・目次・教育一覧。本文・registry・内容索引を同じGit commitで保存。 | 実registryは空。既存記事を自動登録せず、未公開・hold・noindexの項目を公開目次へ出さない。 |
+| 項目              | 機能ブランチにある実装                                                                                                           | 区別する範囲                                                                                                 |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 投稿先・記事情報  | 記事、メモ、教育記事、固定ページ、ツール、プロダクトの新規作成。目的・技術・話題タグの検索、分類とタグの追加、教育メタデータ。   | 教育は記事・メモの属性。既存原稿を別collectionへ移すUIは追加していない。                                     |
+| 本文編集          | 元のMDXを保持する領域編集、文字装飾・リンク・引用・リスト・表、入れ子の部品、本文内ハンドルでの移動。                            | 未知構文は原文を保持してソース編集へ切り替える。全MDXをリッチエディタで再生成しない。                        |
+| MDX・コード・数式 | 本文だけのCodeMirror、色分けと折り返し、コードの言語指定、公開側と合わせた`math` fenceのMathML表示。                             | 全体ソースはfrontmatterを読めない場合の修復用。通常コード中のTeXを勝手に数式化しない。                       |
+| 添削              | 原稿上の引用・文脈・ブロックによる位置指定、指摘管理、修正案JSON、位置を再確認して部分適用。私有APIにreview revisionの比較更新。 | AI provider・Article Jobの自動起動は未接続。公開MDXへ私有の指摘を混ぜない。                                  |
+| 履歴              | source・添削・registry変更の元に戻す／やり直す、端末の直近40件、復元前の保存、バックアップ取込時の別下書き作成。                 | 履歴は媒体ファイルやGit headを巻き戻さない。端末保存をGit保存・公開承認と区別する。                          |
+| 即時プレビュー    | 実サイトのCSS・フォントを共有し、PC・タブレット・スマートフォン幅と表示倍率を切り替える。端末画像と安全なsemantic module描画。   | ASTによる即時表示。正規Astroの固定commitレビューは別経路。Demo等の実行・未対応部品を完全再現したとはしない。 |
+| 連載              | 中央registry、CMSでの作成・所属・順序、サイトの前後リンク・目次・教育一覧。本文・registry・内容索引を同じGit commitで保存。      | 実registryは空。既存記事を自動登録せず、未公開・hold・noindexの項目を公開目次へ出さない。                    |
 
 実装の責務と保存境界は[CMS編集画面の契約](../contracts/cms-workbench-contract.md)、順序と公開導出は[連載契約](../contracts/series-contract.md)、採用理由は[ADR-0083](../design/adr/0083-managed-series-reading-order.md)・[ADR-0084](../design/adr/0084-source-preserving-rich-cms-editor.md)を参照する。
 
 本文の保持、部分置換、添削の位置、APIの競合拒否、未公開情報を除く連載、プレビューの非実行、追加フォントの遅延cacheに対する回帰試験を追加した。ローカル試験・production editor buildの記録はこのブランチの検証結果であり、以下に残す以前のブラウザー受入れや、未完了の外部接続を代替しない。新しい画面のIME・フォーカス・ドラッグ・モバイル表示の実行結果は、実際に試した対象buildとともに記録する。
 
 CodeMirrorはCMS内の編集テーマをCSPに沿って適用するためopen ShadowRootを使う。Issue #218で延期している公開サイトのツール表示の隔離は別の課題であり、今回完了した扱いにしない。
+
+## 2026-11-19 作業の入口と管理の独立
+
+今回の追加はホームから作業を選ぶ構成であり、編集画面を開く前に投稿先・原稿・作業ブランチを決める。[ADR-0086](../design/adr/0086-cms-workflow-and-independent-registries.md)はこの機能ブランチの判断候補を記録する。以前の受入れ結果を今回の変更へ転用しない。
+
+| 項目             | 今回の実装範囲                                                                                                | 検証・運用上の境界                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 作業の入口       | 新規作成、既存記事の改稿、下書きの続き。端末/Git原稿の検索と種別絞り込み、添削から開く選択。                  | ホームだけでは空原稿を保存しない。旧目録の欠落した公開状態は本文を読む前に確定しない。                       |
+| 作業場所         | 編集前に新しい`content/*`、既存の`content/*`、この端末を選ぶ。固定commitから分岐する。                        | 改稿は同じContentIdの下書きとして開く。ブランチ作成と記事公開は別。                                          |
+| 分類・連載の管理 | 記事に依存しない検索・追加、空の連載、読む順序、管理用Git保存・Draft PR。                                     | IndexedDB version 3の`workspace` storeへ独立保存。認証APIは許可操作・head・基準registry・参照先を検査する。  |
+| 編集の表示       | ブロック・プレビュー・MDXを同階層のSVGタブへ統一。構成にはグループ番号と直下ブロック数。                      | 表示番号や選択状態を記事MDXへ保存しない。                                                                    |
+| モバイル入力     | viewport変更後もcaretを確認し、入れ子のスクロール・固定バーを考慮する。キーボード表示中は下部メニューを隠す。 | フォーカス・selection・IME本文を変更しない。実iPhoneのキーボードは未受入れ。                                 |
+| 添削の見え方     | 非編集中の本文に位置を照合した印、状態ラベル、提案の変更前/後。任意の操作サンプル。                           | 編集中のDOMやMDXに差分装飾を混ぜない。サンプルは模擬の端末データであり、AI呼出しや実記事の監査結果ではない。 |
+
+### 実装を探す入口
+
+| 責務                         | ファイル                                                                                                                                                                                                    |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ホーム・原稿選択・管理の画面 | `apps/editor/src/features/workspace/WorkspaceHome.tsx`、`StartWorkspace.tsx`、`RegistryWorkspace.tsx`、`navigation.ts`、`workspace.css`。                                                                   |
+| 管理状態・端末保存           | `features/workspace/useRegistryWorkspace.ts`・`registryState.ts`、`data/storage.ts`。記事の状態は`features/drafts/useDraftWorkspace.ts`。別ブランチ用の独立コピーと媒体の同時保存も`storage.ts`が所有する。 |
+| 分類・連載の操作             | `components/TaxonomyManager.tsx`、`SeriesPanel.tsx`、`registry-management.css`。                                                                                                                            |
+| ブランチ準備・registry API   | `features/git/useGitWorkspace.ts`、`data/api.ts`、`apps/editor-api/src/routes/git.ts`、`packages/editor-core/src/git.ts`・`registry.ts`。                                                                   |
+| モード・構成                 | `features/editing/DocumentEditor.tsx`、`components/DocumentOutline.tsx`・`document-outline.ts`。                                                                                                            |
+| viewport・caret              | `shared/useEditorViewport.ts`、`shared/editorFocus.ts`、`features/editing/SourceEditor.tsx`。環境hookから一度だけ接続する。                                                                                 |
+| 添削表示・サンプル           | `features/review/review-marks.ts`・`ReviewIndicator.tsx`・`review-marks.css`、`components/blocks/BlockPreview.tsx`、`features/workspace/sampleDraft.ts`。                                                   |
+
+先頭が`features/`・`components/`・`data/`・`shared/`のパスは`apps/editor/src/`からの相対位置である。公開サイトの構造を扱う`ops/design/inventory.mjs`へCMSだけのDOMを混ぜない。
+
+### 今回の検証状態
+
+`editorFocus.test.ts`はcaretの移動量・キーボード検出、`sampleDraft.test.ts`は独立ID・副作用なし・本文/画像/添削の整合、`storage.test.ts`は別ブランチ用コピーの本文保持・同期ID剥離・元データの独立をローカルで確認した。`useGitWorkspace.test.ts`は依存を模擬し、Gitから端末だけへ開く場合と新ブランチへの引継ぎで、画像・添削をコピーして旧私有IDを引き継がないことを確認した。グループ目次、添削表示、記事なしのregistry保存、派生目録にもそれぞれの回帰試験を追加している。全体の型検査・ビルド・統合試験の結果は、最終的な対象commitの結果で判定する。
+
+2026-11-19にLLM-01のNode 24.22.1とEdgeでproduction editor buildを検証した。`editor-workspace-smoke.mjs`は3種類の入口、独立した管理、目的タグの原稿への引継ぎ、320pxの3モード、添削サンプル、IndexedDB v2からv3への原稿・媒体・履歴保持を確認した。`editor-keyboard-smoke.mjs`は320px/390pxでvisualViewportを模擬し、入れ子の本文、CodeMirror、通常フォームの計14ケースでcaretの可視性と保存済み全文・selectionの保持を確認した。既存`editor-browser-smoke.mjs`もrich/block/source、グループと画像の移動、数式・コード、mobile、offlineを通過した。
+
+模擬イベントの成功を実iPhone・実IMEの受入れとして扱わない。最終commitの統合試験・GitHub CIとSitesへの反映は、対応PRに対象commit・versionとともに記録する。公開Siteの接続設定・実機受入れは引き続き別の確認項目である。
 
 ## 目的と実装境界
 

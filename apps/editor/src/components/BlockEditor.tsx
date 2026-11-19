@@ -23,11 +23,19 @@ import {
   type BlockKind,
 } from "./blocks/BlockPalette.js";
 import type { EditorMedia, EditorTool } from "./blocks/ModuleBlock.js";
-import { RegionContent, describeRegion } from "./blocks/RegionContent.js";
+import type { ReviewComment } from "@xpotato/editor-core/annotations";
+import { RegionContent, describeRegion, hasNestedEditor } from "./blocks/RegionContent.js";
 import { useBlockReorder } from "./blocks/useBlockReorder.js";
 import { BlockIcon } from "./blocks/BlockIcon.js";
 import { BlockActions } from "./blocks/BlockActions.js";
+import { ReviewIndicator } from "../features/review/ReviewIndicator.js";
+import {
+  locateReviewMarks,
+  reviewMarkersForRegion,
+  type LocatedReviewMark,
+} from "../features/review/review-marks.js";
 import "./blocks/block-editor.css";
+import "../features/review/review-marks.css";
 export interface BlockEditorProps {
   body: string;
   onChange: (value: string) => void;
@@ -38,6 +46,11 @@ export interface BlockEditorProps {
   revealSelection?: { start: number; end: number; token: number } | undefined;
   media?: EditorMedia[] | undefined;
   tools?: EditorTool[] | undefined;
+  annotations?: readonly ReviewComment[] | undefined;
+  activeCommentId?: string | null | undefined;
+  onReviewSelect?: ((id: string) => void) | undefined;
+  /** Children reuse root document locations instead of re-anchoring against a partial body. */
+  reviewMarks?: readonly LocatedReviewMark[] | undefined;
   /** Nested semantic modules share absolute offsets with the outer document. */
   baseOffset?: number;
   parentModule?: string;
@@ -51,9 +64,17 @@ export function BlockEditor({
   revealSelection,
   media = [],
   tools = [],
+  annotations,
+  activeCommentId,
+  onReviewSelect,
+  reviewMarks,
   baseOffset = 0,
   parentModule,
 }: BlockEditorProps) {
+  const marks = useMemo(
+    () => reviewMarks ?? locateReviewMarks(body, annotations ?? []),
+    [body, annotations, reviewMarks],
+  );
   const [model, setModel] = useState(() => createBlockDocument(body));
   const descriptionCache = useRef(
     new Map<string, { source: string; info: ReturnType<typeof describeRegion> }>(),
@@ -316,6 +337,30 @@ export function BlockEditor({
           const range = regionRange(model, index);
           const offset = baseOffset + range.start;
           const raw = sourceRegions.has(region.id);
+          const nested =
+            !raw &&
+            !model.parseError &&
+            parentModule !== "ArticleEndnote" &&
+            info.module &&
+            hasNestedEditor(info.module.name);
+          const regionMarks = marks.filter(
+            (mark) => mark.start < offset + region.source.length && mark.end > offset,
+          );
+          // A comment gets one badge at its smallest rendered region, never both group and child.
+          const childRanges = nested
+            ? (info.node?.children ?? []).flatMap((child) => {
+                const start = child.position?.start.offset;
+                const end = child.position?.end.offset;
+                return start !== undefined && end !== undefined
+                  ? [{ start: offset + start, end: offset + end }]
+                  : [];
+              })
+            : [];
+          const ownedMarks = reviewMarkersForRegion(
+            regionMarks,
+            { start: offset, end: offset + region.source.length },
+            childRanges,
+          );
           const groupSelected = Boolean(
             groupSelection && index >= selectionFrom && index <= selectionTo,
           );
@@ -396,6 +441,11 @@ export function BlockEditor({
                   <BlockIcon name="grip" />
                 </button>
                 <span>{info.label}</span>
+                <ReviewIndicator
+                  marks={ownedMarks}
+                  activeCommentId={activeCommentId}
+                  onSelect={onReviewSelect}
+                />
                 <BlockActions
                   first={index === 0}
                   last={index === model.regions.length - 1}
@@ -445,6 +495,12 @@ export function BlockEditor({
                 }}
                 media={media}
                 tools={tools}
+                reviewMarks={regionMarks.map((mark) => ({
+                  ...mark,
+                  start: mark.start - offset,
+                  end: mark.end - offset,
+                }))}
+                activeCommentId={activeCommentId}
                 childrenEditor={(children, childOffset, parent, onChildChange) => (
                   <BlockEditor
                     body={children}
@@ -457,6 +513,9 @@ export function BlockEditor({
                     parentModule={parent}
                     media={media}
                     tools={tools}
+                    reviewMarks={marks}
+                    activeCommentId={activeCommentId}
+                    onReviewSelect={onReviewSelect}
                   />
                 )}
               />

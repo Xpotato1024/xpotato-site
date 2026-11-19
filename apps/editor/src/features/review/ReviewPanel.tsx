@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   anchorSelection,
   applyReviewProposal,
   importReviewProposals,
-  locateAnchor,
   validateReviewComments,
   type ReviewComment,
   type SourceSelection,
@@ -14,6 +13,9 @@ import type { LocalDraft } from "../../data/storage.js";
 import { request, query } from "../../data/api.js";
 import { findMediaSnapshot, type RemoteDraft } from "../../data/media-sync.js";
 import { download } from "../../shared/download.js";
+import { locateReviewComment, reviewMarkState, reviewStateLabel } from "./review-marks.js";
+import { ReviewStatusIcon } from "./ReviewIndicator.js";
+import "./review-marks.css";
 
 interface Props {
   draft: LocalDraft;
@@ -23,6 +25,8 @@ interface Props {
   onDraft: (update: (draft: LocalDraft) => LocalDraft) => void;
   onLocate: (location: LocatedAnchor) => void;
   onError: (message: string) => void;
+  selectedCommentId?: string | null | undefined;
+  onSelect?: ((id: string) => void) | undefined;
 }
 export function ReviewPanel({
   draft,
@@ -32,13 +36,36 @@ export function ReviewPanel({
   onDraft,
   onLocate,
   onError,
+  selectedCommentId,
+  onSelect,
 }: Props) {
+  const canSync = authenticated && Boolean(draft.workingBranch && draft.baseCommit);
+  const syncUnavailableMessage = authenticated
+    ? "同期するには、下書きの開始画面で作業ブランチを選んでください。"
+    : "同期するには、GitHubに接続してください。";
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState(false);
   const [showClosed, setShowClosed] = useState(false);
   const [notice, setNotice] = useState("");
   const { data, body } = parseDraft(draft.source);
   const comments = draft.annotations ?? [];
+  const cards = useRef(new Map<string, HTMLElement>());
+  const focusedComment = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectedCommentId) {
+      focusedComment.current = null;
+      return;
+    }
+    if (focusedComment.current === selectedCommentId) return;
+    const selected = cards.current.get(selectedCommentId);
+    if (!selected) return;
+    const frame = requestAnimationFrame(() => {
+      selected.scrollIntoView({ block: "nearest" });
+      selected.focus({ preventScroll: true });
+      focusedComment.current = selectedCommentId;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selectedCommentId, comments, showClosed]);
   function act(action: () => void) {
     try {
       action();
@@ -58,9 +85,14 @@ export function ReviewPanel({
       status: "open",
     };
     onChange([...comments, next]);
+    onSelect?.(next.id);
     setInstruction("");
   }
   async function load() {
+    if (!canSync) {
+      onError(syncUnavailableMessage);
+      return;
+    }
     setBusy(true);
     try {
       const remote = await findMediaSnapshot(draft);
@@ -95,10 +127,12 @@ export function ReviewPanel({
     }
   }
   async function sync() {
+    if (!canSync) {
+      onError(syncUnavailableMessage);
+      return;
+    }
     setBusy(true);
     try {
-      if (!draft.workingBranch || !draft.baseCommit)
-        throw Error("先に原稿をGitへ保存してください。");
       const remote = await request<RemoteDraft>("/drafts", {
         method: "POST",
         body: {
@@ -261,27 +295,38 @@ export function ReviewPanel({
       </label>
       <div className="review-list">
         {comments
-          .filter((c) => showClosed || c.status === "open")
+          .filter((c) => showClosed || c.status === "open" || c.id === selectedCommentId)
           .map((c) => {
-            const location = locateAnchor(body, c.anchor);
+            const location = locateReviewComment(body, c);
+            const state = reviewMarkState(c);
             return (
-              <article className="review-card" key={c.id}>
+              <article
+                className="review-card"
+                key={c.id}
+                ref={(element) => {
+                  if (element) cards.current.set(c.id, element);
+                  else cards.current.delete(c.id);
+                }}
+                tabIndex={-1}
+                data-review-state={state}
+                data-review-selected={c.id === selectedCommentId || undefined}
+                aria-label={reviewStateLabel(state)}
+              >
                 <div className="review-card-heading">
-                  <span>
-                    {c.status === "applied"
-                      ? "反映済み"
-                      : c.status === "resolved"
-                        ? "解決済み"
-                        : c.status === "rejected"
-                          ? "見送り"
-                          : location
-                            ? "未解決"
-                            : "対象を確認"}
+                  <span className="review-card-status">
+                    <ReviewStatusIcon
+                      complete={c.status === "resolved" || c.status === "applied"}
+                    />
+                    {c.status === "open" && !location ? "対象を確認" : reviewStateLabel(state)}
                   </span>
                   <button
                     type="button"
                     disabled={!location}
-                    onClick={() => location && onLocate(location)}
+                    onClick={() => {
+                      if (!location) return;
+                      onSelect?.(c.id);
+                      onLocate(location);
+                    }}
                   >
                     対象へ
                   </button>
@@ -319,11 +364,15 @@ export function ReviewPanel({
                   <div className="proposal-diff">
                     <div className="diff-before">
                       <span>変更前</span>
-                      <pre>{c.proposal.expected}</pre>
+                      <pre>
+                        <del>{c.proposal.expected}</del>
+                      </pre>
                     </div>
                     <div className="diff-after">
                       <span>修正案</span>
-                      <pre>{c.proposal.replacement || "（削除）"}</pre>
+                      <pre>
+                        {c.proposal.replacement ? <ins>{c.proposal.replacement}</ins> : "（削除）"}
+                      </pre>
                     </div>
                     {c.proposal.reason && <p className="small">{c.proposal.reason}</p>}
                   </div>
@@ -401,13 +450,14 @@ export function ReviewPanel({
           })}
       </div>
       <div className="panel-toolbar">
-        <button type="button" disabled={!authenticated || busy} onClick={() => void sync()}>
+        <button type="button" disabled={!canSync || busy} onClick={() => void sync()}>
           添削を同期
         </button>
-        <button type="button" disabled={!authenticated || busy} onClick={() => void load()}>
+        <button type="button" disabled={!canSync || busy} onClick={() => void load()}>
           取得
         </button>
       </div>
+      {authenticated && !canSync && <p className="muted small">{syncUnavailableMessage}</p>}
       {notice && (
         <p className="small" role="status">
           {notice}

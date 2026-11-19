@@ -48,9 +48,26 @@ describe("public editor contract and authenticated article index", () => {
           path: "content/notes/example.mdx",
           title: "PRIVATE_DRAFT_TITLE_9172",
           collection: "notes",
+          draft: true,
+          education: false,
         },
       ]);
       await expect(generateEditorManifest(true, root)).resolves.toBeUndefined();
+      await writeFile(file, updateDraft(source, { draft: false }));
+      expect((await editorContentIndex(root)).documents[0]!.draft).toBe(false);
+      await writeFile(
+        file,
+        createDraftForCollection({
+          collection: "notes",
+          education: true,
+          id: parseDraft(source).data.id,
+        }),
+      );
+      expect((await editorContentIndex(root)).documents[0]).toMatchObject({
+        collection: "notes",
+        education: true,
+        draft: true,
+      });
       await writeFile(file, updateDraft(source, { title: "Changed title" }));
       await expect(generateEditorManifest(true, root)).rejects.toThrow("EDITOR_MANIFEST_STALE");
       await generateEditorManifest(false, root);

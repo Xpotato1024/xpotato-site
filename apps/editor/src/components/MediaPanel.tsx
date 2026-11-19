@@ -47,6 +47,10 @@ export function MediaPanel({
   onDraft,
   onError,
 }: Props) {
+  const canSync = authenticated && Boolean(draft.workingBranch && draft.baseCommit);
+  const syncUnavailableMessage = authenticated
+    ? "同期するには、下書きの開始画面で作業ブランチを選んでください。"
+    : "同期するには、GitHubに接続してください。";
   const [selected, setSelected] = useState<string[]>([]);
   const altInputs = useRef(new Map<string, HTMLInputElement>());
   const captionInputs = useRef(new Map<string, HTMLTextAreaElement>());
@@ -146,10 +150,12 @@ export function MediaPanel({
     }
   }
   async function sync(media: LocalMedia) {
+    if (!canSync) {
+      onError(syncUnavailableMessage);
+      return;
+    }
     setBusy(true);
     try {
-      if (!draft.workingBranch || !draft.baseCommit)
-        throw Error("先に編集ブランチを作成して、記事をGitへ保存してください。");
       const remote = await request<{ id: string; revision: number }>("/drafts", {
         method: "POST",
         body: {
@@ -192,6 +198,10 @@ export function MediaPanel({
     }
   }
   async function restoreRemote() {
+    if (!canSync) {
+      onError(syncUnavailableMessage);
+      return;
+    }
     setBusy(true);
     try {
       const remote = await findMediaSnapshot(draft);
@@ -214,6 +224,10 @@ export function MediaPanel({
     }
   }
   async function restoreRejected(id: string) {
+    if (!canSync) {
+      onError(syncUnavailableMessage);
+      return;
+    }
     setBusy(true);
     try {
       const remote = await findMediaSnapshot(draft);
@@ -235,7 +249,7 @@ export function MediaPanel({
     }
   }
   async function remove(media: LocalMedia) {
-    if (media.remoteId) {
+    if (media.remoteId && canSync) {
       try {
         const snapshot = await request<{ draft: { revision: number } }>(
           "/draft?id=" + encodeURIComponent(draft.remoteDraftId ?? draft.id),
@@ -256,7 +270,7 @@ export function MediaPanel({
     }
     await deleteLocalMedia(media.id);
     await reload();
-    if (authenticated) setRemoteSnapshot(await findMediaSnapshot(draft));
+    if (canSync) setRemoteSnapshot(await findMediaSnapshot(draft));
   }
   return (
     <section className="media-panel" aria-label="画像とGIF">
@@ -265,9 +279,10 @@ export function MediaPanel({
         <span>{items.length}点</span>
       </div>
       <p className="muted">画像は先に端末内で処理します。同期先は非公開の下書き領域です。</p>
-      <button type="button" disabled={!authenticated || busy} onClick={() => void restoreRemote()}>
+      <button type="button" disabled={!canSync || busy} onClick={() => void restoreRemote()}>
         別の端末で同期した画像を取得
       </button>
+      {authenticated && !canSync && <p className="muted small">{syncUnavailableMessage}</p>}
       <label>
         画像の用途
         <select value={kind} onChange={(event) => setKind(event.target.value as MediaKind)}>
@@ -397,7 +412,7 @@ export function MediaPanel({
             )}
             <button
               type="button"
-              disabled={!authenticated || busy || Boolean(media.remoteId)}
+              disabled={!canSync || busy || Boolean(media.remoteId)}
               onClick={() => void sync(media)}
             >
               画像を同期
@@ -416,7 +431,11 @@ export function MediaPanel({
             .map((item) => (
               <p key={item.id}>
                 {item.assetId}{" "}
-                <button type="button" disabled={busy} onClick={() => void restoreRejected(item.id)}>
+                <button
+                  type="button"
+                  disabled={!canSync || busy}
+                  onClick={() => void restoreRejected(item.id)}
+                >
                   復元
                 </button>
               </p>

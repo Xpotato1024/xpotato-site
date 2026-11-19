@@ -4,7 +4,22 @@ import { BlockPreview, canEditRich } from "./BlockPreview.js";
 import { blockChoices } from "./BlockPalette.js";
 import { CodeBlock } from "./CodeBlock.js";
 import { ModuleBlock, type EditorMedia, type EditorTool } from "./ModuleBlock.js";
+import type { LocatedReviewMark } from "../../features/review/review-marks.js";
 const RichTextBlock = lazy(() => import("./RichTextBlock.js"));
+const containerModules = new Set([
+  "Group",
+  "Gallery",
+  "Callout",
+  "Steps",
+  "Step",
+  "Comparison",
+  "Details",
+  "DiagnosticList",
+  "ArticleEndnote",
+]);
+export function hasNestedEditor(moduleName: string): boolean {
+  return containerModules.has(moduleName);
+}
 const blockLabels: Record<string, string> = {
   paragraph: "段落",
   heading: "見出し",
@@ -63,6 +78,8 @@ export function RegionContent({
   media,
   tools,
   inlineOnly,
+  reviewMarks,
+  activeCommentId,
 }: {
   source: string;
   editing: boolean;
@@ -81,6 +98,8 @@ export function RegionContent({
   media: EditorMedia[];
   tools: EditorTool[];
   inlineOnly: boolean;
+  reviewMarks?: readonly LocatedReviewMark[] | undefined;
+  activeCommentId?: string | null | undefined;
 }) {
   const info = useMemo(() => describeRegion(source), [source]);
   const [richError, setRichError] = useState("");
@@ -121,17 +140,7 @@ export function RegionContent({
       </>
     );
   if (info.module) {
-    const container = [
-      "Group",
-      "Gallery",
-      "Callout",
-      "Steps",
-      "Step",
-      "Comparison",
-      "Details",
-      "DiagnosticList",
-      "ArticleEndnote",
-    ].includes(info.module.name);
+    const container = hasNestedEditor(info.module.name);
     if (!container && info.module.children?.trim()) return textInput();
     return (
       <ModuleBlock
@@ -186,7 +195,7 @@ export function RegionContent({
         }
       }}
     >
-      <BlockPreview source={source} />
+      <BlockPreview source={source} reviewMarks={reviewMarks} activeCommentId={activeCommentId} />
     </div>
   );
 }

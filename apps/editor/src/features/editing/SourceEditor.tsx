@@ -14,6 +14,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { HighlightStyle, syntaxHighlighting, bracketMatching } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import type { SourceSelection } from "@xpotato/editor-core/annotations";
+import { editorCaretEvent, registerEditorCaret } from "../../shared/editorFocus.js";
 
 interface Props {
   value: string;
@@ -85,6 +86,11 @@ export function SourceEditor(props: Props) {
             },
           }),
           EditorView.updateListener.of((update) => {
+            if (update.selectionSet || update.docChanged || update.focusChanged) {
+              update.view.contentDOM.dispatchEvent(
+                new Event(editorCaretEvent, { bubbles: true, composed: true }),
+              );
+            }
             const localTransactions = update.transactions.filter(
               (transaction) => !transaction.annotation(externalSourceUpdate),
             );
@@ -144,7 +150,11 @@ export function SourceEditor(props: Props) {
       }),
     });
     view.current = editor;
+    const unregisterCaret = registerEditorCaret(editor.contentDOM, () =>
+      editor.coordsAtPos(editor.state.selection.main.head),
+    );
     return () => {
+      unregisterCaret();
       view.current = null;
       editor.destroy();
       mount.remove();
