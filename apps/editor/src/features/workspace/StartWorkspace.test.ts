@@ -37,6 +37,7 @@ function html(withIndex: boolean) {
       busy: false,
       onNew: async () => {},
       onLocal: async () => {},
+      onDeleteLocal: async () => {},
       onRemote: async () => {},
       onImport: async () => {
         throw Error("not used");

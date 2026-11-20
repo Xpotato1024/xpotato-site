@@ -127,6 +127,26 @@ export default function App() {
     null,
   );
   const panelTrigger = useRef<HTMLButtonElement | null>(null);
+  const disconnectWorkspaceScreen = useRef<() => void>(() => {});
+  const attachWorkspaceScreen = useCallback((screen: HTMLElement | null) => {
+    disconnectWorkspaceScreen.current();
+    disconnectWorkspaceScreen.current = () => {};
+    if (!screen) return;
+    const update = () => {
+      const short = screen.scrollHeight <= screen.clientHeight + 1;
+      screen.dataset.scrollable = short ? "false" : "true";
+      if (short) screen.scrollTop = 0;
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(screen);
+    for (const child of screen.children) observer.observe(child);
+    window.visualViewport?.addEventListener("resize", update);
+    update();
+    disconnectWorkspaceScreen.current = () => {
+      observer.disconnect();
+      window.visualViewport?.removeEventListener("resize", update);
+    };
+  }, []);
   const workspace = useDraftWorkspace(setError);
   const git = useGitWorkspace(workspace, setError, setNotice);
   const registry = useRegistryWorkspace(setError, setNotice);
@@ -136,6 +156,7 @@ export default function App() {
   useEffect(() => {
     if (page === "edit") setEditorVisited(true);
   }, [page]);
+
   const { draft, parsed } = workspace;
   const [reviewComposerDraft, changeReviewComposer] = useReviewComposerDrafts(draft.id);
   const media = usePreviewMedia(draft.id);
@@ -475,7 +496,12 @@ export default function App() {
       {page !== "edit" && (
         <>
           <WorkspaceNavigation page={page} navigate={navigation.navigate} />
-          <main className="workspace-screen" aria-busy={busy} key={page}>
+          <main
+            ref={attachWorkspaceScreen}
+            className="workspace-screen"
+            aria-busy={busy}
+            key={page}
+          >
             {page === "home" && (
               <WorkspaceHome
                 navigate={navigation.navigate}
@@ -494,6 +520,7 @@ export default function App() {
                 busy={busy}
                 onNew={newDocument}
                 onLocal={openLocalDocument}
+                onDeleteLocal={(draft) => workspace.removeFromDevice(draft.id)}
                 onRemote={openRemoteDocument}
                 onImport={importFile}
                 run={(operation) => void act(operation)}

@@ -3,6 +3,7 @@ import { updateDraft, type DraftMetadata } from "@xpotato/editor-core/draft";
 import type { ContentCollection } from "@xpotato/content-contracts";
 import {
   localDrafts,
+  deleteLocalDraft,
   saveLocalDraft,
   saveRevision,
   type DraftRevision,
@@ -87,7 +88,7 @@ export function useDraftWorkspace(onError: (message: string) => void) {
     const timer = setTimeout(() => {
       void (async () => {
         const latest = current.current;
-        if (latest.id !== draft.id) return;
+        if (!activeDraft.current || latest.id !== draft.id) return;
         await saveLocalDraft({ ...latest, savedAt: new Date().toISOString() });
         if (Date.now() - revisionAt.current > 30000) {
           await saveRevision(latest, "自動保存");
@@ -114,6 +115,7 @@ export function useDraftWorkspace(onError: (message: string) => void) {
   useEffect(() => {
     if (!hydrated || !hasDraft) return;
     const flush = () => {
+      if (!activeDraft.current) return;
       void saveLocalDraft({ ...current.current, savedAt: new Date().toISOString() }).catch(() =>
         onError("端末への保存に失敗しました。"),
       );
@@ -151,6 +153,26 @@ export function useDraftWorkspace(onError: (message: string) => void) {
   }
   async function refreshSaved() {
     setSaved((await localDrafts()).sort((a, b) => b.savedAt.localeCompare(a.savedAt)));
+  }
+  async function removeFromDevice(id: string) {
+    const isCurrent = activeDraft.current && current.current.id === id;
+    const previous = current.current;
+    if (isCurrent) {
+      activeDraft.current = false;
+      setHasDraft(false);
+      setDraft(createLocalDraft());
+    }
+    try {
+      await deleteLocalDraft(id);
+      await refreshSaved();
+    } catch (error) {
+      if (isCurrent) {
+        activeDraft.current = true;
+        setHasDraft(true);
+        setDraft(previous);
+      }
+      throw error;
+    }
   }
   async function createNew(
     snapshot?: { branch: string; commit: string } | null,
@@ -221,6 +243,7 @@ export function useDraftWorkspace(onError: (message: string) => void) {
     setDraft,
     persist,
     refreshSaved,
+    removeFromDevice,
     openLocal,
     createNew,
     edit,

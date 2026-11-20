@@ -6,6 +6,35 @@ import { WorkspaceIcon } from "../../components/WorkspaceIcon.js";
 import { parseLocalDraft, type DraftKind } from "../drafts/model.js";
 import type { BranchPlan, GitWorkspace } from "../git/useGitWorkspace.js";
 
+export const catalogPageSize = 6;
+function CatalogPagination({
+  label,
+  page,
+  total,
+  onPage,
+}: {
+  label: string;
+  page: number;
+  total: number;
+  onPage: (page: number) => void;
+}) {
+  const count = Math.ceil(total / catalogPageSize);
+  if (count <= 1) return null;
+  return (
+    <nav className="catalog-pagination" aria-label={label + "のページ送り"}>
+      <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)}>
+        前へ
+      </button>
+      <span aria-live="polite">
+        {(page - 1) * catalogPageSize + 1}〜{Math.min(page * catalogPageSize, total)} / {total}件 （
+        {page}/{count}ページ）
+      </span>
+      <button type="button" disabled={page >= count} onClick={() => onPage(page + 1)}>
+        次へ
+      </button>
+    </nav>
+  );
+}
 export const draftKinds: { id: DraftKind; label: string; description: string }[] = [
   { id: "blog", label: "記事", description: "解説・記録・比較" },
   { id: "notes", label: "メモ", description: "考えや短い記録" },
@@ -139,6 +168,7 @@ interface Props {
   busy: boolean;
   onNew: (kind: DraftKind, plan: BranchPlan) => Promise<void>;
   onLocal: (draft: LocalDraft, plan: BranchPlan, review: boolean) => Promise<void>;
+  onDeleteLocal: (draft: LocalDraft) => Promise<void>;
   onRemote: (
     path: string,
     plan: BranchPlan,
@@ -156,6 +186,7 @@ export function StartWorkspace({
   busy,
   onNew,
   onLocal,
+  onDeleteLocal,
   onRemote,
   onImport,
   run,
@@ -164,6 +195,8 @@ export function StartWorkspace({
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<DraftKind | "">("");
   const [archive, setArchive] = useState(false);
+  const [localPage, setLocalPage] = useState(1);
+  const [remotePage, setRemotePage] = useState(1);
   const [selected, setSelected] = useState<
     { local: LocalDraft } | { path: string; title: string } | null
   >(null);
@@ -205,6 +238,23 @@ export function StartWorkspace({
             : metadata?.education !== true && metadata?.collection === filter))
       );
     });
+  const localPageCount = Math.max(1, Math.ceil(local.length / catalogPageSize));
+  const remotePageCount = Math.max(1, Math.ceil(remote.length / catalogPageSize));
+  const visibleLocalPage = Math.min(localPage, localPageCount);
+  const visibleRemotePage = Math.min(remotePage, remotePageCount);
+  const localPageItems = local.slice(
+    (visibleLocalPage - 1) * catalogPageSize,
+    visibleLocalPage * catalogPageSize,
+  );
+  const remotePageItems = remote.slice(
+    (visibleRemotePage - 1) * catalogPageSize,
+    visibleRemotePage * catalogPageSize,
+  );
+  function changePage(source: "local" | "remote", next: number) {
+    if (source === "local") setLocalPage(next);
+    else setRemotePage(next);
+    setSelected(null);
+  }
   function selectLocal(item: LocalDraft) {
     setSelected({ local: item });
     setPlan(initialBranchPlan(git.auth.authenticated, item));
@@ -294,13 +344,23 @@ export function StartWorkspace({
                   type="search"
                   placeholder="原稿を検索"
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setLocalPage(1);
+                    setRemotePage(1);
+                    setSelected(null);
+                  }}
                 />
               </label>
               <select
                 aria-label="種別で絞り込む"
                 value={filter}
-                onChange={(event) => setFilter(event.target.value as DraftKind | "")}
+                onChange={(event) => {
+                  setFilter(event.target.value as DraftKind | "");
+                  setLocalPage(1);
+                  setRemotePage(1);
+                  setSelected(null);
+                }}
               >
                 <option value="">すべての種別</option>
                 {draftKinds.map((item) => (
@@ -313,14 +373,22 @@ export function StartWorkspace({
             {intent === "drafts" && (
               <section aria-label="この端末の下書き">
                 <div className="catalog-section-heading">
-                  <h2>この端末</h2>
-                  <button type="button" aria-pressed={archive} onClick={() => setArchive(!archive)}>
+                  <h2>この端末（{local.length}件）</h2>
+                  <button
+                    type="button"
+                    aria-pressed={archive}
+                    onClick={() => {
+                      setArchive(!archive);
+                      setLocalPage(1);
+                      setSelected(null);
+                    }}
+                  >
                     アーカイブ
                   </button>
                 </div>
                 <div className="draft-list">
-                  {local.map((item) => (
-                    <div className="draft-choice" key={item.id}>
+                  {localPageItems.map((item) => (
+                    <div className="draft-choice draft-choice-local" key={item.id}>
                       <button
                         type="button"
                         aria-pressed={Boolean(
@@ -337,6 +405,28 @@ export function StartWorkspace({
                           {new Date(item.savedAt).toLocaleDateString("ja-JP")}
                         </span>
                       </button>
+                      <button
+                        type="button"
+                        className="draft-delete"
+                        aria-label={`この端末の下書き「${parseLocalDraft(item.source)?.data.title ?? "無題"}」を削除`}
+                        onClick={() => {
+                          const title = parseLocalDraft(item.source)?.data.title ?? "無題";
+                          if (
+                            !window.confirm(
+                              `「${title}」をこの端末から削除しますか？\n保存した画像・編集履歴も削除され、元に戻せません。GitHubとR2のデータは削除しません。`,
+                            )
+                          )
+                            return;
+                          run(async () => {
+                            await onDeleteLocal(item);
+                            if (selected && "local" in selected && selected.local.id === item.id) {
+                              setSelected(null);
+                            }
+                          });
+                        }}
+                      >
+                        削除
+                      </button>
                       {selected &&
                         "local" in selected &&
                         selected.local.id === item.id &&
@@ -345,10 +435,18 @@ export function StartWorkspace({
                   ))}
                   {!local.length && <p className="muted small">該当する下書きはありません。</p>}
                 </div>
+                <CatalogPagination
+                  label="この端末"
+                  page={visibleLocalPage}
+                  total={local.length}
+                  onPage={(next) => changePage("local", next)}
+                />
               </section>
             )}
             <section className="repository-panel" aria-label="Gitの原稿">
-              <h2>Gitの原稿</h2>
+              <h2>
+                Gitの原稿（{git.snapshot?.branch === git.sourceBranch ? remote.length : 0}件）
+              </h2>
               <div className="repository-source">
                 <label>
                   読み込み元
@@ -356,6 +454,7 @@ export function StartWorkspace({
                     value={git.sourceBranch}
                     onChange={(event) => {
                       git.setSourceBranch(event.target.value);
+                      setRemotePage(1);
                       setSelected(null);
                     }}
                   >
@@ -370,6 +469,7 @@ export function StartWorkspace({
                   onClick={() =>
                     run(async () => {
                       await git.readBranch();
+                      setRemotePage(1);
                       setSelected(null);
                     })
                   }
@@ -389,7 +489,7 @@ export function StartWorkspace({
                       記事タイトル索引を取得できていません。最新の一覧を再取得してください。
                     </p>
                   )}
-                  {remote.map((item) => (
+                  {remotePageItems.map((item) => (
                     <div className="draft-choice" key={item.path}>
                       <button
                         type="button"
@@ -433,6 +533,14 @@ export function StartWorkspace({
                   ))}
                   {!remote.length && <p className="small muted">該当する原稿はありません。</p>}
                 </div>
+              )}
+              {git.snapshot?.branch === git.sourceBranch && (
+                <CatalogPagination
+                  label="Gitの原稿"
+                  page={visibleRemotePage}
+                  total={remote.length}
+                  onPage={(next) => changePage("remote", next)}
+                />
               )}
             </section>
             {intent === "drafts" && (

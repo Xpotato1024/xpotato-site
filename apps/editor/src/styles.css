@@ -13,9 +13,17 @@
 * {
   box-sizing: border-box;
 }
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overscroll-behavior: none;
+}
+html,
 body {
-  margin: 0;
   overflow: hidden;
+  margin: 0;
 }
 a {
   color: var(--accent);
@@ -55,6 +63,8 @@ h3 {
   inset-inline: 0;
   top: var(--editor-viewport-offset-top, 0px);
   height: var(--editor-viewport-height, 100dvh);
+  background: var(--surface);
+  overscroll-behavior: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -501,7 +511,7 @@ h3 {
   gap: 0.35rem;
 }
 .draft-list > button,
-.draft-list > .draft-choice > button,
+.draft-list > .draft-choice > button:not(.draft-delete),
 .history-list button {
   align-items: flex-start;
   flex-direction: column;
@@ -518,13 +528,13 @@ h3 {
   border-color: var(--cms-accent-border);
 }
 .draft-list > button strong,
-.draft-list > .draft-choice > button strong,
+.draft-list > .draft-choice > button:not(.draft-delete) strong,
 .history-list strong {
   font-size: 0.88rem;
   font-weight: 500;
 }
 .draft-list > button span,
-.draft-list > .draft-choice > button span,
+.draft-list > .draft-choice > button:not(.draft-delete) span,
 .history-list span {
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -545,7 +555,7 @@ h3 {
   margin-top: 0.6rem;
 }
 .repository-documents > button,
-.repository-documents > .draft-choice > button {
+.repository-documents > .draft-choice > button:not(.draft-delete) {
   text-align: left;
   justify-content: flex-start;
   border-color: transparent;
