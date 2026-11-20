@@ -21,7 +21,7 @@ test("missing guards and additional credential jobs cannot bypass production aut
 test("normal CI owns the real deployment-policy check without synthetic wait jobs", () => {
   const policy = ci.split("  offline-policy:")[1].split("  scope:")[0];
   assert.match(ci, /^  pull_request:/m);
-  assert.match(policy, /runs-on: ubuntu-latest/);
+  assert.match(policy, /runs-on: ubuntu-24\.04/);
   assert.match(policy, /persist-credentials: false/);
   assert.match(policy, /run: node --test ops\/deployment\/environment-approval.test.mjs/);
   assert.doesNotMatch(
