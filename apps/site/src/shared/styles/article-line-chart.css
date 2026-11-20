@@ -87,8 +87,8 @@
   }
   :is(.prose, .cms-chart-preview) .article-line-chart__fit-result dl& {
     display: grid;
-    grid-template-columns: minmax(7rem, 1fr) minmax(0, 2fr);
-    gap: 0.4rem 1rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem 1rem;
     font-size: 0.875rem;
   }
   :is(.prose, .cms-chart-preview) .article-line-chart__fit-result dt& {
@@ -98,6 +98,35 @@
     margin: 0;
     min-width: 0;
     font-variant-numeric: tabular-nums;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__fit-title& {
+    margin-bottom: 0.5rem;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__math-lines& {
+    min-width: 0;
+    display: grid;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__math-line& {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-block: 0.2rem;
+    color: var(--text-primary);
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__math-line math& {
+    font-size: 1.2em;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__metrics& {
+    margin: 0;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__diagnostics& {
+    margin-top: 0.75rem;
+  }
+  :is(.prose, .cms-chart-preview) .article-line-chart__diagnostics summary& {
+    cursor: pointer;
   }
   :is(.prose, .cms-chart-preview) .article-line-chart__fit-result code& {
     white-space: normal;
@@ -154,6 +183,14 @@
   :not(:where([data-bt], [data-bt] *)) {
     :is(.prose, .cms-chart-preview) .article-line-chart& {
       break-inside: avoid;
+    }
+  }
+}
+
+@media (min-width: 42rem) {
+  :not(:where([data-bt], [data-bt] *)) {
+    :is(.prose, .cms-chart-preview) .article-line-chart__fit-result dl& {
+      grid-template-columns: minmax(7rem, 1fr) minmax(0, 2fr);
     }
   }
 }

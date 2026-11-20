@@ -50,6 +50,7 @@ const labels: Record<string, string> = {
   gap: "画像の間隔",
   fit: "画像の収め方",
   kind: "種類",
+  analysisDisplay: "近似式・計算情報の表示",
   summary: "開閉ラベル",
   open: "初めから開く",
   module: "ツール",
@@ -96,6 +97,9 @@ const choices: Record<string, string> = {
   line: "折れ線",
   scatter: "散布図",
   analysis: "実験・近似曲線",
+  concise: "簡潔（TeX数式・R²・RMSE）",
+  detailed: "詳細（計算座標・係数も確認）",
+  hidden: "非表示（グラフとデータ表だけ）",
 };
 const names: Record<string, string> = {
   Group: "グループ",

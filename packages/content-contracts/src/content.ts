@@ -764,6 +764,7 @@ export const lineChartModulePropsSchema = z
     xLabel: z.string().trim().min(1).max(60),
     yLabel: z.string().trim().min(1).max(60),
     kind: z.enum(["line", "scatter", "analysis"]).optional(),
+    analysisDisplay: z.enum(["concise", "detailed", "hidden"]).optional(),
     series: z.string().min(1).max(240000),
     xMin: chartAxisNumberSchema.optional(),
     xMax: chartAxisNumberSchema.optional(),

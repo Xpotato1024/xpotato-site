@@ -4,6 +4,7 @@ import {
 } from "@xpotato/content-contracts/content";
 import { fitChartSeries, type ChartFitResult } from "./chart-regression.js";
 import { buildChartFormula } from "./chart-formula.js";
+import { fitChartTex, formulaChartTex, renderChartMath } from "./chart-math.js";
 
 const escape = (value: string) =>
   value.replace(
@@ -264,34 +265,63 @@ export function prepareLineChart(input: unknown) {
   return { props, data, fits, formulas, plot };
 }
 
-function formulaDetails(label: string, formula: ReturnType<typeof buildChartFormula>): string {
+function mathLines(lines: string[]): string {
+  return `<div class="article-line-chart__math-lines">${lines
+    .map((line) => `<div class="article-line-chart__math-line">${renderChartMath(line)}</div>`)
+    .join("")}</div>`;
+}
+
+function formulaDetails(
+  label: string,
+  formula: ReturnType<typeof buildChartFormula>,
+  detailed: boolean,
+): string {
   return `<section class="article-line-chart__fit-result article-line-chart__formula-result">
-    <p><strong>${escape(label)}：理論式</strong></p>
-    <dl>
-      <dt>理論式</dt><dd><code>y = ${escape(formula.expression)}</code></dd>
-      <dt>計算するXの範囲</dt><dd>${formula.domain[0]} ～ ${formula.domain[1]}</dd>
-      <dt>描画点数</dt><dd>${formula.sampleCount}点（理論式から計算）</dd>
-    </dl><p>${escape(formula.note)}</p>
-    <p>点数や計算の桁数には限りがあるため、ごく細かな変化や、大きな数同士を引いた小さな差は正確に描けないことがあります。</p>
+    <p class="article-line-chart__fit-title"><strong>${escape(label)}：理論式</strong></p>
+    ${mathLines([formulaChartTex(formula.expression)])}
+    ${detailed
+      ? `<details class="article-line-chart__diagnostics"><summary class="disclosure-summary">計算の詳細</summary>
+          <dl>
+            <dt>計算するXの範囲</dt><dd>${formula.domain[0]} ～ ${formula.domain[1]}</dd>
+            <dt>描画点数</dt><dd>${formula.sampleCount}点（理論式から計算）</dd>
+          </dl>
+          <p>${escape(formula.note)}</p>
+          <p>有限個の点と通常の数値精度を使って描画しています。</p>
+        </details>`
+      : ""}
   </section>`;
 }
 
-function fitDetails(label: string, fit: ChartFitResult): string {
+function fitDetails(label: string, fit: ChartFitResult, detailed: boolean): string {
+  const tex = fitChartTex(fit);
   const normalization = fit.normalization
-    ? `<dt>計算座標</dt><dd>z = ${fit.normalization.transform === "log" ? `ln(x / ${fit.normalization.offset})` : `(x − ${fit.normalization.offset < 0 ? `(${fit.normalization.offset})` : fit.normalization.offset})`} / ${fit.normalization.scale}</dd>`
+    ? `<dt>計算座標</dt><dd>${fit.normalization.transform === "log"
+      ? `z = ln(x / ${fit.normalization.offset}) / ${fit.normalization.scale}`
+      : `z = (x − ${fit.normalization.offset}) / ${fit.normalization.scale}`}</dd>`
     : "";
   const coefficients = fit.coefficients
     ? `<dt>計算に使った係数（丸めなし）</dt><dd><code>${escape(JSON.stringify(fit.coefficients))}</code></dd>`
     : "";
+  const metrics = fit.method !== "loess"
+    ? `<dl class="article-line-chart__metrics">
+          <dt>R²</dt><dd>${fit.rSquared === null ? "算出できません（Yが一定）" : statistic(fit.rSquared)}</dd>
+          <dt>RMSE</dt><dd>${statistic(fit.rmse)}（Yと同じ単位）</dd>
+        </dl>`
+    : "<p class=\"article-line-chart__loess-note\">局所的な平滑化です。単一の近似式はありません。</p>";
   return `<section class="article-line-chart__fit-result">
-    <p><strong>${escape(label)}：${escape(fit.label)}</strong></p>
-    <dl>
-      ${fit.equation ? `<dt>近似式（表示桁数を丸めています）</dt><dd><code>${escape(fit.equation)}</code></dd>` : ""}
-      ${normalization}${coefficients}
-      <dt>使用した点数</dt><dd>${fit.sampleCount}点（この系列の全測定点）</dd>
-      <dt>計算・表示のX範囲</dt><dd>${fit.domain[0]} ～ ${fit.domain[1]}（外挿なし）</dd>
-      ${fit.method !== "loess" ? `<dt>R²（元のYで算出）</dt><dd>${fit.rSquared === null ? "算出できません（Yが一定）" : statistic(fit.rSquared)}</dd><dt>RMSE（Yと同じ単位）</dt><dd>${statistic(fit.rmse)}</dd>` : ""}
-    </dl><p>${escape(fit.note)}</p>
+    <p class="article-line-chart__fit-title"><strong>${escape(label)}：${escape(fit.label)}</strong></p>
+    ${tex.length ? mathLines(tex) : ""}
+    ${metrics}
+    ${detailed
+      ? `<details class="article-line-chart__diagnostics"><summary class="disclosure-summary">計算の詳細</summary>
+          <dl>
+            ${normalization}${coefficients}
+            <dt>使用した点数</dt><dd>${fit.sampleCount}点（この系列の全測定点）</dd>
+            <dt>計算・表示のX範囲</dt><dd>${fit.domain[0]} ～ ${fit.domain[1]}（外挿なし）</dd>
+          </dl>
+          <p>${tex.length ? "数式の表示係数は丸めています。計算には丸め前の値を使用しています。" : ""}${escape(fit.note)}</p>
+        </details>`
+      : ""}
   </section>`;
 }
 
@@ -363,15 +393,18 @@ export function renderLineChart(input: unknown): string {
       ),
     )
     .join("");
-  const details = data
-    .map((item, index) =>
-      formulas[index]
-        ? formulaDetails(item.label, formulas[index])
-        : fits[index]
-          ? fitDetails(item.label, fits[index])
-          : "",
-    )
-    .join("");
+  const analysisDisplay = props.analysisDisplay ?? "concise";
+  const details = analysisDisplay === "hidden"
+    ? ""
+    : data
+        .map((item, index) =>
+          formulas[index]
+            ? formulaDetails(item.label, formulas[index], analysisDisplay === "detailed")
+            : fits[index]
+              ? fitDetails(item.label, fits[index], analysisDisplay === "detailed")
+              : "",
+        )
+        .join("");
   const hasFormula = formulas.some(Boolean);
   const detailsLabel = hasFormula
     ? fits.some(Boolean)
