@@ -425,7 +425,8 @@
         "apps/site/src/shared/blocks/LineChart/LineChart.astro",
         "apps/site/src/shared/styles/article-comparison.css",
         "apps/site/src/shared/styles/article-line-chart.css",
-        "packages/portable-content/src/charts.ts"
+        "packages/portable-content/src/charts.ts",
+        "packages/portable-content/src/chart-math.ts"
       ],
       "exceptions": [
         "editorial-heading"

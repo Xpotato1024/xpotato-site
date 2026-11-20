@@ -1,7 +1,7 @@
 import { useId, useMemo, type Ref } from "react";
 import { blockTree } from "@xpotato/editor-core/blocks";
 import { MathPreview } from "./BlockPreview.js";
-import { readMathMeta, writeMathMeta } from "./math.js";
+import { readMathMeta, writeMathMeta } from "./math-meta.js";
 export interface CodeFieldsProps {
   code: string;
   language: string;

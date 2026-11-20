@@ -276,6 +276,9 @@ try {
   assert.match(await result.innerText(), /R²/u);
   assert((await result.locator("math").count()) >= 2, "Fit and normalization use MathML");
   assert.equal(await result.locator("code").count(), 0, "Raw coefficients are hidden by default");
+  await page.setViewportSize({ width: 390, height: 900 });
+  await result.screenshot({ path: resolve(out, "math-analysis-concise-390.png") });
+  await page.setViewportSize({ width: 1365, height: 1000 });
   const fittedBody = await readBody(page);
   await page.reload();
   await ensureEditing(page);
@@ -298,6 +301,11 @@ try {
   await chart.getByText("近似式・計算条件を見る", { exact: true }).click();
   await chart.getByText("計算の詳細", { exact: true }).click();
   assert((await chart.locator(".article-line-chart__diagnostics code").count()) > 0);
+  await page.setViewportSize({ width: 390, height: 900 });
+  await chart.locator(".article-line-chart__fit-result").screenshot({
+    path: resolve(out, "math-analysis-detailed-390.png"),
+  });
+  await page.setViewportSize({ width: 1365, height: 1000 });
   await visibility.selectOption("hidden");
   const hidden = await apply();
   assert.equal(await chart.locator(".article-line-chart__analysis").count(), 0);

@@ -1,4 +1,3 @@
-import { renderLineChart } from "@xpotato/portable-content/charts";
 import { safeMathMarkup } from "./components/blocks/math.js";
 import { collectionFromPath, parseDraft } from "@xpotato/editor-core/draft";
 import type { EditorContentRecord } from "@xpotato/editor-core/registry";
@@ -124,6 +123,13 @@ export async function previewDocument(
 ): Promise<PreviewDocument> {
   const { data, body } = parseDraft(source);
   const tree = blockTree(body) as Node;
+  // Only load chart rendering (including TeX) when this draft uses a chart.
+  const hasLineChart = (node: Node): boolean =>
+    node.name === "LineChart" ||
+    Boolean(node.children?.some((child) => hasLineChart(child as Node)));
+  const renderLineChart = hasLineChart(tree)
+    ? (await import("@xpotato/portable-content/charts")).renderLineChart
+    : null;
   const warnings = new Set<string>();
   const css: string[] = [];
   const media = new Map((options.media ?? []).map((item) => [item.assetId, item]));
@@ -295,7 +301,9 @@ export async function previewDocument(
         return `<figure class="article-bar-chart"><figcaption class="article-bar-chart__title">${escape(s("title"))}</figcaption><p class="article-bar-chart__scale">${escape(s("unit"))} · 0–${format(max)}</p><dl class="article-bar-chart__rows">${rows.map((row, index) => `<div class="article-bar-chart__row"><dt>${escape(row.label)}</dt><dd><span class="article-bar-chart__value">${format(row.value)}<span class="article-bar-chart__unit"> ${escape(s("unit"))}</span></span><span class="article-bar-chart__track" aria-hidden="true"><span class="article-bar-chart__bar article-bar-chart__bar--${row.tone ?? "accent"} ${chartId}-${index}"></span></span>${row.note ? `<span class="article-bar-chart__note">${escape(row.note)}</span>` : ""}</dd></div>`).join("")}</dl><div class="article-bar-chart__axis" aria-hidden="true"><span>0</span><span>${format(max / 2)}</span><span>${format(max)}</span></div></figure>`;
       }
       case "LineChart":
-        return renderLineChart(props);
+        return renderLineChart
+          ? renderLineChart(props)
+          : placeholder("グラフ", "グラフの読み込みに失敗しました。");
       case "Demo":
         warnings.add(`「${s("title", s("module"))}」は正規レイアウトで動作を確認してください。`);
         return placeholder(

@@ -119,7 +119,10 @@
   :is(.prose, .cms-chart-preview) .article-line-chart__math-line math& {
     font-size: 1.2em;
   }
-  :is(.prose, .cms-chart-preview) .article-line-chart__metrics& {
+  :is(.prose, .cms-chart-preview) .article-line-chart__fit-result .article-line-chart__metrics& {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.2rem 0.75rem;
     margin: 0;
   }
   :is(.prose, .cms-chart-preview) .article-line-chart__diagnostics& {
@@ -129,8 +132,12 @@
     cursor: pointer;
   }
   :is(.prose, .cms-chart-preview) .article-line-chart__fit-result code& {
-    white-space: normal;
-    overflow-wrap: anywhere;
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: pre;
+    overflow-wrap: normal;
   }
   :is(.prose, .cms-chart-preview) .article-line-chart__axis-note& {
     font-size: 0.875rem;

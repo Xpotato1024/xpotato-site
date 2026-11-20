@@ -1,9 +1,19 @@
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { semanticContentModuleJsonSchemas } from "@xpotato/content-contracts/content";
-import { renderLineChart } from "@xpotato/portable-content/charts";
 import { ChartSeriesEditor } from "./ChartSeriesEditor.js";
 import { ChartAxisSettings, chartAxisFields } from "./ChartAxisSettings.js";
-import { LineChartPreview } from "./LineChartPreview.js";
+const LineChartPreview = lazy(async () => {
+  const { LineChartPreview } = await import("./LineChartPreview.js");
+  return { default: LineChartPreview };
+});
 import { BlockIcon } from "./BlockIcon.js";
 import {
   readModuleSource,
@@ -13,6 +23,10 @@ import {
   flowChildKinds,
   blockTree,
 } from "@xpotato/editor-core/blocks";
+const LazyLineChartPreview = lazy(() =>
+  import("./LineChartPreview.js").then(({ LineChartPreview }) => ({ default: LineChartPreview })),
+);
+
 export interface EditorMedia {
   id: string;
   label?: string;
@@ -252,7 +266,7 @@ function ModuleFields({
     (module.name === "LineChart" && (name === "kind" || name === "analysisDisplay"));
   const update = (name: string, value: string | boolean) =>
     setValues((current) => ({ ...current, [name]: value }));
-  const apply = () => {
+  const apply = async () => {
     const prepared = Object.fromEntries(
       Object.entries(values).filter(([key, value]) => value !== "" || requiredFields.includes(key)),
     );
@@ -262,6 +276,7 @@ function ModuleFields({
         return;
       }
       if (module.name === "LineChart") {
+        const { renderLineChart } = await import("@xpotato/portable-content/charts");
         renderLineChart(prepared);
       }
       onApply(updateModuleProps(source, prepared));
@@ -543,7 +558,11 @@ export function ModuleBlock({
           {value("caption") && <figcaption>{value("caption")}</figcaption>}
         </figure>
       )}
-      {module.name === "LineChart" && <LineChartPreview props={module.props} />}
+      {module.name === "LineChart" && (
+        <Suspense fallback={<p className="cms-chart-help">グラフを読み込み中…</p>}>
+          <LineChartPreview props={module.props} />
+        </Suspense>
+      )}
       {module.name === "BarChart" && (
         <div className="cms-bar-chart">
           {rowData?.map((row, index) => (

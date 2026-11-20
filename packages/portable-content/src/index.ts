@@ -3,7 +3,7 @@ import remarkMdx from "remark-mdx";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
-import { prepareLineChart } from "./charts.js";
+import { prepareLineChart } from "./charts-core.js";
 
 const portableMdxProcessor = unified().use(remarkParse).use(remarkMdx);
 const approvedModuleNames = new Set(Object.keys(semanticContentModulePropsSchemas));
