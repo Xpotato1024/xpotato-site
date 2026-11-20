@@ -1,16 +1,22 @@
 ---
-interface Props {
-  leftLabel: string;
-  rightLabel: string;
-  children?: unknown;
-}
-const { leftLabel, rightLabel } = Astro.props;
+import { comparisonModulePropsSchema } from "@xpotato/content-contracts/content";
+const { leftLabel, rightLabel } = comparisonModulePropsSchema.parse(Astro.props);
+const legacy = Boolean(leftLabel && rightLabel);
 ---
 
-<section aria-label="比較" data-left-label={leftLabel} data-right-label={rightLabel}>
-  <header>
-    <span>{leftLabel}</span>
-    <span>{rightLabel}</span>
-  </header>
-  <slot />
+<section
+  class="article-comparison"
+  aria-label="条件比較"
+  data-left-label={leftLabel}
+  data-right-label={rightLabel}
+>
+  {legacy && (
+    <header class="article-comparison__legacy-labels">
+      <span>{leftLabel}</span>
+      <span>{rightLabel}</span>
+    </header>
+  )}
+  <div class={legacy ? "article-comparison__legacy-body" : "article-comparison__cases"}>
+    <slot />
+  </div>
 </section>

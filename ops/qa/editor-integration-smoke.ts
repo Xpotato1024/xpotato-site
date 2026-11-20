@@ -7,6 +7,7 @@ import axe from "axe-core";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 import { editorStaticServer } from "./editor-static-server.mjs";
+import { writeBody, readBody, showBlocks, panel, closePanel } from "./editor-browser-helpers.mjs";
 import { EditorGitHubFixture } from "./fixtures/editor-github.js";
 import { MemoryBucket } from "../../apps/editor-api/src/test-bucket.js";
 import { DraftStore } from "../../apps/editor-api/src/state.js";
@@ -68,6 +69,10 @@ let browser;
 const failures: string[] = [],
   audits: { name: string; violations: { id: string; impact: string | null; nodes: number }[] }[] =
     [];
+function capturePageError(error: Error) {
+  failures.push(error.message);
+  console.error("Editor pageerror:", error.stack ?? error.message);
+}
 async function audit(page: import("playwright").Page, name: string) {
   await page.evaluate(axe.source);
   const result = await page.evaluate(
@@ -81,6 +86,27 @@ async function audit(page: import("playwright").Page, name: string) {
     impact: v.impact ?? null,
     nodes: v.nodes.length,
   }));
+  const blocking = result.violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical",
+  );
+  if (blocking.length)
+    console.error(
+      JSON.stringify({
+        audit: name,
+        violations: blocking.map((v) => ({
+          id: v.id,
+          nodes: v.nodes.map((node) => ({
+            target: node.target,
+            html: node.html,
+            failureSummary: node.failureSummary,
+            checks: [...node.any, ...node.all, ...node.none].map((check) => ({
+              id: check.id,
+              data: check.data,
+            })),
+          })),
+        })),
+      }),
+    );
   assert.deepEqual(
     violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
     [],
@@ -92,6 +118,7 @@ try {
   const executable = [
     process.env.CHROME_PATH,
     "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
     chromium.executablePath(),
   ].find((value) => value && existsSync(value));
   browser = await chromium.launch({
@@ -109,13 +136,28 @@ try {
       locale: "ja-JP",
     }),
     page = await context.newPage();
-  page.on("pageerror", (error) => failures.push(error.message));
+  page.on("pageerror", capturePageError);
   await page.goto(server.origin + "/editor/");
-  const title = page.getByRole("textbox", { name: "記事タイトル", exact: true });
+  await page.getByRole("heading", { name: "原稿", level: 1, exact: true }).waitFor();
+  await page
+    .locator(".entry-cards")
+    .getByRole("button", { name: /^新規作成/u })
+    .click();
+  await page.getByRole("radio", { name: "新しいブランチ", exact: true }).check();
+  await page
+    .getByRole("textbox", { name: "作業ブランチ名", exact: true })
+    .fill("content/browser-integration");
+  await page.getByRole("button", { name: "作成して編集", exact: true }).click();
+  const title = page.getByRole("textbox", { name: "タイトル", exact: true });
   await title.waitFor();
   await title.fill("Git引継ぎと私有画像の統合テスト");
-  await page.getByRole("button", { name: "追加", exact: true }).click();
-  await page.getByRole("textbox", { name: "段落を編集" }).fill("人間が執筆した最初の文章。");
+  await writeBody(page, "人間が執筆した最初の文章。\n");
+  await showBlocks(page);
+  await panel(
+    page,
+    "保存と確認を開く",
+    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+  );
   await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
   await page.locator(".message").filter({ hasText: "Gitへ保存しました" }).waitFor();
   const branch = [...git.refs.keys()].find((name) => name.startsWith("content/"))!;
@@ -125,6 +167,12 @@ try {
     documents = await git.repository.documents(first);
   assert.equal(documents.length, 1);
   const file = documents[0]!.path;
+  const firstSaved = await git.repository.read(first, file);
+  assert.match(
+    firstSaved.source,
+    /人間が執筆した最初の文章。/u,
+    "The first Git save must preserve source entered immediately before switching modes",
+  );
   await page.getByRole("button", { name: "Draft PRを開く", exact: true }).click();
   await page.locator(".pr-link").waitFor();
   await audit(page, "desktop editor saved Draft PR");
@@ -135,29 +183,60 @@ try {
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWOoCJj2HwAFAAJeoZPDtAAAAABJRU5ErkJggg==",
     "base64",
   );
+  await panel(page, "画像を開く", page.getByRole("region", { name: "画像とGIF", exact: true }));
   await page
     .locator("input[type=file][multiple]")
     .setInputFiles({ name: "synthetic.png", mimeType: "image/png", buffer: png });
   await page.locator(".media-card").waitFor();
+  const beforeInsertion = await readBody(page);
+  await showBlocks(page);
+  const alt = page.getByRole("textbox", { name: "代替テキスト", exact: true });
   await page.getByRole("button", { name: "本文に挿入", exact: true }).click();
+  await page.getByRole("alert").filter({ hasText: "代替テキストを入力してから" }).waitFor();
+  assert(await alt.evaluate((input) => input === document.activeElement));
+  assert.deepEqual(failures, []);
+  assert.equal(await readBody(page), beforeInsertion);
+  await showBlocks(page);
+  const altText = "統合検証用の合成画像";
+  await alt.fill(altText);
+  // The click itself blurs the input: insertion must not wait for IndexedDB reload.
+  await page.getByRole("button", { name: "本文に挿入", exact: true }).click();
+  assert.match(await readBody(page), /<Figure\b[^>]*alt="統合検証用の合成画像"/u);
+  await showBlocks(page);
   await page.getByRole("button", { name: "画像を同期", exact: true }).click();
   await page.locator(".media-card").filter({ hasText: "非公開R2に同期済み" }).waitFor();
+  await closePanel(page);
+  await panel(page, "画像を開く", page.getByRole("region", { name: "画像とGIF", exact: true }));
+  assert.equal(await alt.inputValue(), altText, "Media sync must preserve the entered alt text");
   const state = (await new DraftStore(bucket).read()).state;
   assert.equal(Object.keys(state.assets).length, 1);
   const media = Object.values(state.assets)[0]!;
   assert.equal(state.usedBytes, media.bytes);
   assert.equal(bucket.deletions.length, 0);
+  await panel(
+    page,
+    "保存と確認を開く",
+    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+  );
+  const savedResponse = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/editor-api/save" &&
+      response.request().method() === "POST",
+  );
   await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
-  await page.waitForFunction(() =>
-    document.querySelector(".save-state")?.textContent?.includes("保存済み"),
-  );
-  await page.waitForFunction(() =>
-    document.querySelector(".message")?.textContent?.includes("Gitへ保存しました"),
-  );
+  const response = await savedResponse;
+  assert(response.ok(), "The new Git save must succeed");
+  const savedCommit = (await response.json()).commit as string;
+  await page
+    .locator(".message")
+    .filter({ hasText: "Gitへ保存しました。 " + savedCommit.slice(0, 8) })
+    .waitFor();
   const humanHead = await git.repository.snapshot(branch),
     human = await git.repository.read(humanHead, file);
+  assert.equal(humanHead.commit, savedCommit);
+  assert.notEqual(humanHead.commit, first.commit);
   assert.match(human.source, /人間が執筆/u);
-  assert.match(human.source, /<Figure asset=/u);
+  assert.match(human.source, /<Figure\b[^>]*alt="統合検証用の合成画像"/u);
   const aiSource = human.source + "\nAIが同じPRに追記した検証メモ。\n";
   const ai = await git.repository.save({
     branch,
@@ -166,38 +245,55 @@ try {
     source: aiSource,
     producer: "ai",
   });
+  await closePanel(page);
   await title.fill("手元に残す未同期の変更");
+  await panel(
+    page,
+    "保存と確認を開く",
+    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+  );
   await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
   await page.locator(".conflict-panel").waitFor();
-  assert.equal(await title.inputValue(), "手元に残す未同期の変更");
-  assert.match(await page.locator(".conflict-panel textarea").inputValue(), /AIが同じPR/u);
+  assert.match(await page.locator(".conflict-panel").innerText(), /AIが同じPR/u);
   assert.equal(git.refs.get(branch), ai.commit);
+  await closePanel(page);
+  assert.equal(await title.inputValue(), "手元に残す未同期の変更");
   const second = await browser.newContext({
       viewport: { width: 390, height: 844 },
       locale: "ja-JP",
     }),
     mobile = await second.newPage();
-  mobile.on("pageerror", (error) => failures.push(error.message));
+  mobile.on("pageerror", capturePageError);
   await mobile.goto(server.origin + "/editor/");
-  await mobile.getByRole("textbox", { name: "記事タイトル", exact: true }).waitFor();
-  await mobile.getByRole("button", { name: "下書き一覧を開く", exact: true }).click();
-  await mobile.getByLabel("読み込み元ブランチ").selectOption(branch);
-  await mobile.getByRole("button", { name: "ブランチを読み込む", exact: true }).click();
+  await mobile.getByRole("heading", { name: "原稿", level: 1, exact: true }).waitFor();
   await mobile
-    .getByRole("button", { name: file.replace(/^content\//u, ""), exact: true })
-    .waitFor();
-  await mobile.getByRole("button", { name: file.replace(/^content\//u, ""), exact: true }).click();
+    .locator(".entry-cards")
+    .getByRole("button", { name: /^下書きの続き/u })
+    .click();
+  await mobile.locator(".repository-panel").getByLabel("読み込み元").selectOption(branch);
+  await mobile.getByRole("button", { name: "一覧を取得", exact: true }).click();
+  await mobile
+    .locator(".repository-documents")
+    .getByRole("button", { name: /^Git引継ぎと私有画像の統合テスト/u })
+    .click();
+  await mobile.getByRole("radio", { name: "既存のブランチ", exact: true }).check();
+  await mobile.getByRole("combobox", { name: "作業ブランチ", exact: true }).selectOption(branch);
+  await mobile.getByRole("button", { name: "編集を始める", exact: true }).click();
+  await mobile.waitForFunction(
+    () =>
+      (document.querySelector(".title-label textarea") as HTMLTextAreaElement | null)?.value ===
+      "Git引継ぎと私有画像の統合テスト",
+  );
+  await mobile.locator(".start-workspace").waitFor({ state: "hidden" });
+  await panel(mobile, "画像を開く", mobile.getByRole("region", { name: "画像とGIF", exact: true }));
   await mobile.locator(".media-card").filter({ hasText: "非公開R2に同期済み" }).waitFor();
   await mobile.locator(".media-card img").first().scrollIntoViewIfNeeded();
   await mobile.waitForFunction(() => {
     const image = document.querySelector(".media-card img") as HTMLImageElement | null;
     return Boolean(image?.complete && image.naturalWidth > 0);
   });
-  await mobile.getByRole("tab", { name: "MDXソース", exact: true }).click();
-  assert.match(
-    await mobile.getByRole("textbox", { name: "MDXソース", exact: true }).inputValue(),
-    /AIが同じPRに追記/u,
-  );
+  await closePanel(mobile);
+  assert.match(await readBody(mobile), /AIが同じPRに追記/u);
   assert(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   await audit(mobile, "mobile editor restored private media");
   await mobile.screenshot({ path: resolve(output, "mobile-synthetic-draft.png"), fullPage: true });
@@ -230,12 +326,25 @@ try {
   assert.deepEqual(failures, []);
   await second.close();
   await context.close();
-  await promisify(execFile)(process.execPath, [resolve(root, "ops/qa/editor-browser-smoke.mjs")], {
-    cwd: root,
-    env: process.env,
-    timeout: 30000,
-    maxBuffer: 1024 * 1024,
-  });
+  for (const suite of [
+    "editor-browser-smoke.mjs",
+    "editor-workspace-smoke.mjs",
+    "editor-keyboard-smoke.mjs",
+    "editor-links-smoke.mjs",
+    "editor-comparison-smoke.mjs",
+    "editor-chart-preview-smoke.mjs",
+    "editor-preview-toolbar-smoke.mjs",
+  ]) {
+    const smoke = promisify(execFile)(process.execPath, [resolve(root, "ops/qa", suite)], {
+      cwd: root,
+      env: process.env,
+      timeout: 120000,
+      maxBuffer: 1024 * 1024,
+    });
+    smoke.child.stdout?.pipe(process.stdout, { end: false });
+    smoke.child.stderr?.pipe(process.stderr, { end: false });
+    await smoke;
+  }
   const reviewOutput = resolve(".local/editor-review", "ci-" + Date.now() + "-" + process.pid);
   const reviewBuild = await promisify(execFile)(
     process.execPath,
@@ -265,6 +374,8 @@ try {
   const report = {
     astroReviewVerified: true,
     offlineShellVerified: true,
+    workspaceWorkflowVerified: true,
+    keyboardViewportVerified: true,
     mode: "real-chromium-with-synthetic-GitHub-and-R2",
     result: "pass",
     tests: [
@@ -274,6 +385,8 @@ try {
       "AI revision on the same branch",
       "stale human save preserves local data and rejects overwrite",
       "second mobile context restores MDX and private image",
+      "independent registries, explicit article entry, review visibility and IndexedDB upgrade",
+      "focused inputs and carets stay above simulated mobile keyboard viewports",
       "no runtime errors or horizontal overflow",
       "no public storage writes",
     ],

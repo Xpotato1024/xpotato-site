@@ -90,7 +90,8 @@ export async function verifyHomeMenuTransition({ evaluate, until, navigate }) {
           glass.delay === 0 &&
           fade.delay === 0 &&
           Math.abs(glass.duration - fade.duration) < 0.001,
-        "Glass and panel share duration, including CSS reversal shortening",
+        "Glass and panel share duration, including CSS reversal shortening: " +
+          JSON.stringify({ mode, openingTime, start, animations }),
       );
       assert.ok(fade.duration > 0 && fade.duration <= 200);
       if (!interrupted) assert.equal(fade.duration, 200);

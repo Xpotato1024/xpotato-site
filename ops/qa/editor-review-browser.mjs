@@ -6,6 +6,13 @@ import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import { chromium } from "playwright";
 import { editorStaticServer } from "./editor-static-server.mjs";
+import {
+  readBody,
+  writeBody,
+  panel,
+  closePanel,
+  ensureEditing,
+} from "./editor-browser-helpers.mjs";
 const root = resolve("."),
   require = createRequire(join(root, "apps/editor/package.json")),
   { zipSync, strToU8 } = require("fflate");
@@ -62,6 +69,7 @@ try {
   const executable = [
     process.env.CHROME_PATH,
     "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
     chromium.executablePath(),
   ].find((value) => value && existsSync(value));
   browser = await chromium.launch({
@@ -95,8 +103,10 @@ try {
     if (message.text().startsWith("CSP_VIOLATION:")) violations.push(message.text());
   });
   await page.goto(server.origin + "/editor/");
-  await page.getByRole("textbox", { name: "記事タイトル", exact: true }).waitFor();
-  await page.locator(".save-state").filter({ hasText: "保存済み" }).waitFor();
+  await page.getByRole("heading", { name: "原稿", level: 1, exact: true }).waitFor();
+  await page.waitForFunction(async () =>
+    (await indexedDB.databases()).some((database) => database.name === "xpotato-editor-v1"),
+  );
   const input = {
     id: "33333333-3333-4333-8333-333333333333",
     source,
@@ -119,7 +129,7 @@ try {
   await page.evaluate(
     async ({ draft, assetId, hash, bytes }) => {
       const db = await new Promise((resolve, reject) => {
-        const request = indexedDB.open("xpotato-editor-v1", 1);
+        const request = indexedDB.open("xpotato-editor-v1");
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
@@ -148,6 +158,12 @@ try {
     { draft: input, assetId, hash, bytes: [...png] },
   );
   await page.reload();
+  await ensureEditing(page);
+  await panel(
+    page,
+    "保存と確認を開く",
+    page.getByRole("button", { name: "Astroレビューを取得", exact: true }),
+  );
   await page.getByRole("button", { name: "Astroレビューを取得", exact: true }).click();
   const iframe = page.locator('iframe[title="Astro正規レイアウト（表示専用）"]');
   await iframe.waitFor();
@@ -201,10 +217,15 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   await page.screenshot({ path: join(out, "mobile.png"), fullPage: true });
-  await page.getByRole("tab", { name: "MDXソース" }).click();
-  const textarea = page.getByRole("textbox", { name: "MDXソース", exact: true });
-  await textarea.fill(
-    (await textarea.inputValue()) + "\n下書きを更新したため旧レビューは失効します。\n",
+  await closePanel(page);
+  await writeBody(
+    page,
+    (await readBody(page)) + "\n下書きを更新したため旧レビューは失効します。\n",
+  );
+  await panel(
+    page,
+    "保存と確認を開く",
+    page.getByRole("button", { name: "Astroレビューを取得", exact: true }),
   );
   await iframe.waitFor({ state: "detached" });
   assert.equal(

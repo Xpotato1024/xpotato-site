@@ -12,6 +12,26 @@ canonical_for:
 
 通常Markdownで足りない意味構造だけをapproved moduleにする。article authoringはR2 URL、React source path、Tailwind utilityを直接所有しない。
 
+## Group（構成をまとめる単位）
+
+見出し・本文・画像などを一つの編集単位として動かす場合は、属性を持たない`Group`で囲む。入れ子のGroupも扱う。保存形式はportable MDXのままで、別のブロックJSONや見出しから推測した所属を正本にしない。
+
+```mdx
+<Group>
+
+## 見出し
+
+本文。
+
+<Figure asset="example" alt="図の内容" />
+
+</Group>
+```
+
+公開rendererと即時プレビューは子だけを出力する。枠・余白・見出し・追加DOM・クライアントJSを作らず、既存のCSS、先頭段落、見出し・目次の順序を維持する。Groupはブロック専用で、GalleryのFigure限定、StepsのStep限定、DiagnosticListのDiagnosticItem限定を迂回できない。ArticleEndnoteのトップレベル制約も維持する。
+
+CMSの明示的な範囲選択で連続した兄弟ブロックをまとめる。見出しから作る補助操作は、次の同位・上位見出し直前までを候補とし、実行時だけGroupを保存する。解除時には子の原文を再生成せず取り出し、Groupの構文上の境界改行のみを除く。
+
 ## Plain image
 
 ```md
@@ -122,17 +142,62 @@ DiagnosticItemはDiagnosticList直下、DiagnosticListには1件以上を配置�
 属性は文字列リテラルのみで、JSX props式/生HTML/記事ごとのスタイル指定は禁止。
 Site側はDefinition Listで症状、確認内容、任意の見直す候補と理由を一貫表示する。未提供の理由ラベルは出さない。アイコンはaria-hidden、意味は文字で伝える。checkに設定名だけを並べず、何を観察するかを書く。DiagnosticListにはDiagnosticItem以外の本文・moduleを直置きしない。
 
-## Comparison
+## Comparison / ComparisonCase
+
+比較する条件ごとに名前と子ブロックを持たせる。通常のMarkdown表で足りる比較は表を優先する。
+
+```mdx
+<Comparison>
+  <ComparisonCase label="条件A">
+
+本文と画像など。
+
+  </ComparisonCase>
+  <ComparisonCase label="条件B">
+
+本文と画像など。
+
+  </ComparisonCase>
+  <ComparisonCase label="条件C">
+
+本文と画像など。
+
+  </ComparisonCase>
+</Comparison>
+```
+
+`ComparisonCase`は`Comparison`直下に2件以上置く。各条件内は通常の本文・画像・グループ等を編集でき、条件全体の順序を変えられる。サイトと即時プレビューは同じCSSで条件をカード状に並べ、狭幅では1列にする。比較対象数を表示列数に合わせて2件へ切り詰めない。
+
+従来の`leftLabel`と`rightLabel`を持つComparisonは互換形式として残す。2つのラベルと共通本文を保持し、本文のどの部分がどちらの条件に属するかを推測しない。新しい条件形式との混在は拒否する。
+
+## LineChart（折れ線・散布図・近似曲線・理論式）
+
+CMSで系列・数値を編集する静的グラフ。公開ページにグラフ用JavaScriptやVega runtimeを追加しない。
 
 ```ts
-interface ComparisonProps {
-  leftLabel: string;
-  rightLabel: string;
-  children: MDXContent;
+interface LineChartProps {
+  title: string;
+  description?: string;
+  xLabel: string; // 単位を含む
+  yLabel: string; // 単位を含む
+  kind?: "line" | "scatter" | "analysis"; // 省略時line
+  series: string; // 下記の系列配列のJSON
+  xMin?: string; // 横軸の最小値。未指定は自動
+  xMax?: string; // 横軸の最大値。未指定は自動
+  yMin?: string; // 縦軸の最小値。未指定は自動
+  yMax?: string; // 縦軸の最大値。未指定は自動
+  xPadding?: string; // 横軸の自動端の余白率（%、既定5）
+  yPadding?: string; // 縦軸の自動端の余白率（%、既定5）
 }
 ```
 
-child APIはrepresentative fixtureで固定する。
+系列は点列の`{label,points:[{x,y}],role?,fit?}`と、理論式の`{label,role:"formula",formula:{expression,xMin,xMax,samples?}}`を合計1〜6件持てる。点列の`role`は`observed`（既定）または`curve`。`fit`で近似方法を指定し、`analysis`では測定点に近似曲線を重ねる。理論式は測定値なしでも作成でき、式と計算範囲から描画点を再生成する。元の点列・式・設定をMDXへ保持し、理論式の計算値を測定値として扱わない。
+
+軸の6属性は数値文字列で指定する。各端の固定値を優先し、自動の端へだけ余白率を適用する。表示範囲を狭くしても元データや近似対象は変えない。数値・点数・式の文法・近似方法・軸の上限と失敗時の扱い、CSV取り込みは[CMS編集画面の実験グラフ契約](cms-workbench-contract.md#実験グラフcsv取り込み)を正とする。
+
+共有portable rendererをCMSの編集画面、即時プレビュー、Astroが使用する。系列は色だけでなく形と線種でも区別する。狭幅で文字を潰さないよう図の領域だけを横スクロールでき、表でも値を確認できる。任意コード・外部データURL・自動取得は扱わない。
+
+既存の[Vega-Lite/Mermaid制作CLI](../operations/technical-visuals.md)は別の図版制作経路である。LineChartが任意のVega仕様やMermaid全形式への対応を意味するものではない。判断の理由は[ADR-0087](../design/adr/0087-cms-comparison-and-static-charts.md)、[ADR-0088](../design/adr/0088-experimental-charts-and-csv.md)、[ADR-0089](../design/adr/0089-chart-formulas-and-axis-ranges.md)。
 
 ## LinkCard
 

@@ -1,3 +1,4 @@
+import type { ReviewComment } from "@xpotato/editor-core/annotations";
 import { request, query, fetchPrivateMedia } from "./api.js";
 import { localMedia, saveLocalMedia, type LocalDraft, type LocalMedia } from "./storage.js";
 import { hashBlob } from "../media/optimize.js";
@@ -14,6 +15,7 @@ export interface RemoteDraft {
   assets: Record<string, string>;
   holdUntil?: string;
   reviewUntil?: string;
+  review?: { revision: number; comments: ReviewComment[] };
 }
 export interface RemoteAsset {
   id: string;

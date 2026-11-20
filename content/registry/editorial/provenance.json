@@ -377,9 +377,7 @@
                 "propositionSummary": "同一条件の実UI比較で216〜256bitの5入力は各2回ともrusqsieveより高速。192bitではrusqsieveが高速。",
                 "propositionSha256": "e9944a51f1c33a4294b89df8ba5056cc536632d6a76c25170749d526faa331f6",
                 "interpretation": "direct_observation",
-                "sourceIds": [
-                  "prime-ui-benchmark-20261110"
-                ],
+                "sourceIds": ["prime-ui-benchmark-20261110"],
                 "freshnessChecked": true
               }
             ],
@@ -471,9 +469,10 @@
         "contentId": "4cb30149-f686-4eac-8f63-638d0ababd0f",
         "origin": "manual",
         "content": {
-          "mdxSha256": "1eddab702e127cf68a4f103b52da334b7e46ea0785d6f6807d168920af6dd773",
-          "frontmatterSha256": "5560461ecefee00628b5fb0c611dc5f97d6a3cd026af35a95dcc5735c723f0aa",
-          "route": "/education/"
+          "mdxSha256": "5808149af33f75781dfc0d10ee78ba9723b69807fab66a99dc203ea223d7280e",
+          "frontmatterSha256": "054f6a63a28b73ac7c52bc50415461d51527c000bd208e69c240d5ef2fd75836",
+          "route": "/education/",
+          "updateDiffSha256": "1a37ec56b6bee530a3ed8f41def8df984a2c8de226cf64ee2e212e1d311d62c3"
         },
         "sourceRefs": [
           {
@@ -481,10 +480,24 @@
             "sourceId": "editorial-fixed-pages-scope",
             "sourceRecordSha256": "f8fdfd6437a58c89813c3ea8b8ffadf392dd2b053006d5ce90f9fa6146903b52",
             "publicDescription": "固定ページを現状に合わせ、公開制作物への導線とツールの説明を整える編集範囲。新たな個人情報は追加しない。"
+          },
+          {
+            "kind": "user_supplied",
+            "sourceId": "cms-series-education-directory-request-20261118",
+            "sourceRecordSha256": "d1eac8edb0cb157954bf00f7408fbf625fdb160e3b898f7f6bd12b426f3d8b4c",
+            "artifactSha256": "6995aa161ac4f1e2c2ae44c14f44d6faa0f28e470412c84c7da809942d49c005",
+            "publicDescription": "CMSとサイトの連載・教育記事対応を実装する依頼に伴う固定ページ改稿。この会話内でAIが教育資料ページの案内文を更新し、公開資料の件数を固定せず、分野別資料と学習コースへの入口を説明する。"
           }
         ],
         "materialClaims": [],
-        "exportedAt": "2026-10-05T07:54:16.805Z"
+        "exportedAt": "2026-11-18T14:51:13.326Z",
+        "aiRuns": [
+          {
+            "role": "reviser",
+            "externalApiUsed": false,
+            "externalDisclosureModeSummary": "none"
+          }
+        ]
       }
     }
   ]

@@ -569,9 +569,9 @@ test("evidence filename is new and exclusive; an existing result is never overwr
 });
 test("budgets remain the existing shared policy; oversized plans stop before network IO", async (t) => {
   assert.deepEqual(publicReadbackPolicy, {
-    maxTargets: 512,
+    maxTargets: 768,
     maxTargetBytes: 67108864,
-    maxReads: 1029,
+    maxReads: 1541,
     maxObservedBytes: 144703488,
     phaseMs: 120000,
     requestMs: 10000,

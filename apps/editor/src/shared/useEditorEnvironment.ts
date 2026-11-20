@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { registerEditorWorker } from "../pwa.js";
+import { useEditorViewport } from "./useEditorViewport.js";
 
 export function useEditorEnvironment() {
+  useEditorViewport();
   const [online, setOnline] = useState(navigator.onLine);
   const [updateReady, setUpdateReady] = useState(false);
 

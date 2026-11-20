@@ -1,9 +1,9 @@
 import {
   blogSourceFrontmatterSchema,
-  noteFrontmatterSchema,
-  pageFrontmatterSchema,
-  projectFrontmatterSchema,
-  toolFrontmatterSchema,
+  noteSourceFrontmatterSchema,
+  pageSourceFrontmatterSchema,
+  projectSourceFrontmatterSchema,
+  toolSourceFrontmatterSchema,
 } from "@xpotato/content-contracts";
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
@@ -45,7 +45,7 @@ const blogSchema = blogSourceFrontmatterSchema.superRefine((value, context) => {
     });
   knownTags(value, context);
 });
-const noteSchema = noteFrontmatterSchema.superRefine((value, context) => {
+const noteSchema = noteSourceFrontmatterSchema.superRefine((value, context) => {
   if (!noteSubjects.has(value.subject))
     context.addIssue({
       code: "custom",
@@ -54,7 +54,7 @@ const noteSchema = noteFrontmatterSchema.superRefine((value, context) => {
     });
   knownTags(value, context);
 });
-const projectSchema = projectFrontmatterSchema.superRefine((value, context) => {
+const projectSchema = projectSourceFrontmatterSchema.superRefine((value, context) => {
   knownTags(value, context);
   value.stack?.forEach((tag, index) => {
     if (!technologyTags.has(tag)) {
@@ -66,7 +66,7 @@ const projectSchema = projectFrontmatterSchema.superRefine((value, context) => {
     }
   });
 });
-const toolSchema = toolFrontmatterSchema.superRefine((value, context) => {
+const toolSchema = toolSourceFrontmatterSchema.superRefine((value, context) => {
   if (!toolCategories.has(value.category))
     context.addIssue({
       code: "custom",
@@ -95,6 +95,6 @@ export const collections = {
   }),
   pages: defineCollection({
     loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/pages" }),
-    schema: pageFrontmatterSchema,
+    schema: pageSourceFrontmatterSchema,
   }),
 };

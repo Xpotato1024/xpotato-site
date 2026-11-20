@@ -20,7 +20,8 @@
         "apps/site/src/features/tools/components/PrimeOffline.astro",
         "apps/site/src/features/tools/components/ToolReleaseNotice.astro",
         "apps/site/src/features/discovery/components/BlogArchiveNavigation.astro",
-        "apps/site/src/features/pages/components/ContactIssuePicker.astro"
+        "apps/site/src/features/pages/components/ContactIssuePicker.astro",
+        "packages/portable-content/src/charts.ts"
       ],
       "comparison": [
         "fontFamily",
@@ -403,6 +404,8 @@
       "tokens": [],
       "sources": [
         "apps/site/src/shared/styles/article-modules.css",
+        "apps/site/src/shared/styles/article-diagnostics.css",
+        "apps/site/src/shared/styles/article-gallery.css",
         "apps/site/src/shared/styles/article-bar-chart.css",
         "apps/site/src/shared/styles/article-motion.css",
         "apps/site/public/scripts/article-motion.js",
@@ -414,9 +417,16 @@
         "apps/site/src/shared/blocks/Comparison/Comparison.astro",
         "apps/site/src/shared/blocks/DiagnosticItem/DiagnosticItem.astro",
         "apps/site/src/shared/blocks/DiagnosticList/DiagnosticList.astro",
+        "apps/site/src/shared/blocks/Group/Group.astro",
         "apps/site/src/shared/blocks/LinkCard/LinkCard.astro",
         "apps/site/src/shared/blocks/Step/Step.astro",
-        "apps/site/src/shared/blocks/Steps/Steps.astro"
+        "apps/site/src/shared/blocks/Steps/Steps.astro",
+        "apps/site/src/shared/blocks/Comparison/ComparisonCase.astro",
+        "apps/site/src/shared/blocks/LineChart/LineChart.astro",
+        "apps/site/src/shared/styles/article-comparison.css",
+        "apps/site/src/shared/styles/article-line-chart.css",
+        "packages/portable-content/src/charts.ts",
+        "packages/portable-content/src/chart-math.ts"
       ],
       "exceptions": [
         "editorial-heading"
@@ -425,7 +435,11 @@
         "checks": [
           "apps/site/src/shared/styles/design-roles.test.ts",
           "apps/site/src/shared/styles/design-inventory.test.ts",
-          "ops/qa/design-role-interaction.mjs"
+          "ops/qa/design-role-interaction.mjs",
+          "apps/site/src/shared/blocks/content-module-rendering.test.ts",
+          "apps/editor/src/content-module-coverage.test.ts",
+          "ops/qa/editor-comparison-smoke.mjs",
+          "ops/qa/editor-chart-preview-smoke.mjs"
         ],
         "kind": "source-contract-plus-representative-route",
         "limitation": "すべての未使用module/variantの実表示を網羅するものではない。変更するvariantは専用fixtureまたは利用routeで検証する。"
@@ -825,6 +839,50 @@
           "apps/site/src/shared/styles/design-roles.test.ts",
           "ops/qa/home-style-contract.test.ts",
           "ops/qa/home-design-webkit.mjs"
+        ]
+      }
+    },
+    {
+      "id": "series-reading-order",
+      "owner": "content-discovery",
+      "tokens": [
+        "--text-muted",
+        "--accent",
+        "--border-divider",
+        "--control-min-size",
+        "--surface-control",
+        "--font-body",
+        "--font-meta"
+      ],
+      "sources": [
+        "apps/site/src/features/education/components/EducationDirectory.astro",
+        "apps/site/src/features/series/components/SeriesCard.astro",
+        "apps/site/src/features/series/components/SeriesNavigation.astro",
+        "apps/site/src/features/series/styles/series.css",
+        "apps/site/src/features/series/styles/series-navigation.css",
+        "apps/site/src/pages/series/[slug].astro",
+        "apps/site/src/pages/series/index.astro"
+      ],
+      "exceptions": [],
+      "coverage": {
+        "routes": [
+          "/series/",
+          "/education/"
+        ],
+        "states": [
+          "empty",
+          "published",
+          "single-entry",
+          "ongoing",
+          "completed",
+          "mobile",
+          "keyboard-focus",
+          "no-javascript"
+        ],
+        "checks": [
+          "apps/site/src/shared/styles/design-roles.test.ts",
+          "apps/site/src/shared/styles/design-inventory.test.ts",
+          "packages/portable-content/src/series.test.ts"
         ]
       }
     }

@@ -19,11 +19,19 @@ import PageShare from "../content/PageShare.astro";
 import TableOfContents from "../../features/articles/components/TableOfContents.astro";
 import { splitArticleLead } from "../../features/articles/model/article-lead.js";
 import articleModulesCssHref from "../styles/article-modules.css?url";
+import articleDiagnosticsCssHref from "../styles/article-diagnostics.css?url&no-inline";
+import articleGalleryCssHref from "../styles/article-gallery.css?url&no-inline";
 import articleBarChartCssHref from "../styles/article-bar-chart.css?url&no-inline";
+import articleLineChartCssHref from "../styles/article-line-chart.css?url&no-inline";
+import articleComparisonCssHref from "../styles/article-comparison.css?url&no-inline";
 import articleMotionCssHref from "../styles/article-motion.css?url&no-inline";
 import articleCssHref from "../styles/article-structure.css?url";
 import ToolBreadcrumbs from "../../features/tools/components/ToolBreadcrumbs.astro";
 import { derivePageShare } from "../lib/page-share.js";
+import { seriesForContent } from "@xpotato/portable-content/series";
+import { getPublicSeries } from "../../features/series/model/live-series.js";
+import SeriesNavigation from "../../features/series/components/SeriesNavigation.astro";
+import seriesCssHref from "../../features/series/styles/series-navigation.css?url&no-inline";
 
 interface Props {
   editorReview?: import("@xpotato/editor-core/review").EditorReviewContext;
@@ -87,9 +95,13 @@ const articleParts =
   collection === "blog" ? splitArticleLead(bodyHtml) : { lead: "", body: bodyHtml };
 const hasCodeBlocks = bodyHtml.includes("data-code-block");
 const hasAnimatedMedia = bodyHtml.includes("data-article-motion");
+const hasDiagnostics = /class="[^"\n]*\barticle-diagnostics\b/u.test(bodyHtml);
+const hasGallery = /class="[^"\n]*\barticle-gallery\b/u.test(bodyHtml);
 const hasBarChart = /class="[^"\n]*\barticle-bar-chart\b/u.test(bodyHtml);
+const hasLineChart = /class="[^"\n]*\barticle-line-chart\b/u.test(bodyHtml);
+const hasComparison = /class="[^"\n]*\barticle-comparison\b/u.test(bodyHtml);
 const hasArticleModules =
-  /class="[^"\n]*\barticle-(?:figure|callout|steps|diagnostics|diagrams|compact-figure|endnote)\b/u.test(
+  /class="[^"\n]*\barticle-(?:figure|callout|steps|diagnostics|diagrams|gallery|compact-figure|endnote|link-card)\b/u.test(
     bodyHtml,
   );
 const metadata = deriveContentSeo({
@@ -131,6 +143,10 @@ const share = derivePageShare({
   noindex: metadata.noindex,
   preview: privateCandidate || publication?.preview === true,
 });
+const seriesNavigation =
+  privateCandidate || publication?.draft || publication?.preview || metadata.noindex
+    ? []
+    : seriesForContent(id, await getPublicSeries());
 ---
 
 <BaseLayout
@@ -138,10 +154,15 @@ const share = derivePageShare({
     collection === "tools" && id === "bca48f98-c89a-457f-84d8-168f941fe469" && !privateCandidate
   }
   pageCssHrefs={[
+    ...(hasDiagnostics ? [articleDiagnosticsCssHref] : []),
+    ...(hasGallery ? [articleGalleryCssHref] : []),
     ...(hasBarChart ? [articleBarChartCssHref] : []),
+    ...(hasLineChart ? [articleLineChartCssHref] : []),
+    ...(hasComparison ? [articleComparisonCssHref] : []),
     ...(hasCodeBlocks ? [codeCssHref] : []),
     ...(hasAnimatedMedia ? [articleMotionCssHref] : []),
     ...(hasMediaCredits ? [mediaCreditCssHref] : []),
+    ...(seriesNavigation.length > 0 ? [seriesCssHref] : []),
   ]}
   articleCssHref={articleCssHref}
   articleModulesCssHref={hasArticleModules ? articleModulesCssHref : undefined}
@@ -192,6 +213,14 @@ const share = derivePageShare({
         <h1>{title}</h1>
         <p class="content-description">{description}</p>
         <slot name="metadata" />
+        {seriesNavigation.map(({ series, current }) => (
+          <p class="series-location" data-search-exclude="true">
+            <a href={series.route}>{series.title}</a>
+            <span>
+              第{current.ordinal}回 / 公開{series.entries.length}回
+            </span>
+          </p>
+        ))}
       </div>
       {privateCandidate && (
         <aside class="candidate-preview-notice" data-search-exclude="true">
@@ -210,6 +239,9 @@ const share = derivePageShare({
       {hero && mediaContext && <MediaHero asset={hero.assetId} contentId={id} />}
       <TableOfContents headings={headings} />
       <div class="prose article-body" set:html={articleParts.body} />
+      {seriesNavigation.map((navigation) => (
+        <SeriesNavigation navigation={navigation} />
+      ))}
       {share && <PageShare share={share} />}
       <a
         class="back-link"

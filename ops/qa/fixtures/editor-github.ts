@@ -32,7 +32,20 @@ export class EditorGitHubFixture {
   readonly repository: GitRepository;
   private sequence = 0;
   constructor(readonly manifest: unknown) {
-    const tree = this.tree({});
+    const bundled = manifest as { terms?: unknown };
+    const files: Record<string, string> = {
+      "content/registry/editor.json": this.blob(JSON.stringify(manifest)),
+    };
+    if (bundled.terms) {
+      files["content/registry/taxonomy/terms.json"] = this.blob(JSON.stringify(bundled.terms));
+      files["content/registry/editor-content-index.json"] = this.blob(
+        JSON.stringify({ schemaVersion: 1, documents: [] }),
+      );
+      files["content/registry/series/series.json"] = this.blob(
+        JSON.stringify({ schemaVersion: 1, series: [] }),
+      );
+    }
+    const tree = this.tree(files);
     const commit = this.commit(tree.sha, [], "synthetic initial");
     this.refs.set("main", commit.sha);
     this.repository = new GitRepository(this.request, "fixture/editor");
@@ -88,16 +101,10 @@ export class EditorGitHubFixture {
         ref = url.searchParams.get("ref") ?? "",
         commit = this.commits.get(ref);
       if (!commit) throw new GitError("GIT_NOT_FOUND", 404);
-      let source: string, sha: string;
-      if (file === "content/registry/editor.json") {
-        source = JSON.stringify(this.manifest);
-        sha = this.hash(source);
-      } else {
-        const entry = this.trees.get(commit.tree.sha)?.tree.find((e) => e.path === file);
-        if (!entry) throw new GitError("GIT_NOT_FOUND", 404);
-        sha = entry.sha;
+      const entry = this.trees.get(commit.tree.sha)?.tree.find((e) => e.path === file);
+      if (!entry) throw new GitError("GIT_NOT_FOUND", 404);
+      const sha = entry.sha,
         source = this.blobs.get(sha)!;
-      }
       result = {
         type: "file",
         encoding: "base64",

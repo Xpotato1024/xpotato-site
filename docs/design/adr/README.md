@@ -1,13 +1,18 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-10-04
+last_verified: 2026-11-19
 canonical_for:
   - ADR lifecycle index
   - frozen ADR adoption state
 ---
 
 # Architecture Decision Records
+
+- [ADR-0087: CMSから編集する比較条件と静的グラフ](0087-cms-comparison-and-static-charts.md) — Proposed。条件ごとの子本文、数値データを保持する静的グラフ、共通描画。
+
+- [ADR-0084: 原文を保持するリッチ編集とCMS専用runtime予算](0084-source-preserving-rich-cms-editor.md) — Accepted 2026-11-18。MDXの部分編集、Lexical／CodeMirror、初期と全graphの独立した予算。
+- [ADR-0083: ContentIdで管理する連載と学習順序](0083-managed-series-reading-order.md) — Accepted 2026-11-18。中央registry、公開目次・前後リンク、非公開項目の除外を実装する判断。本番deployの完了記録ではない。
 
 - [ADR-0071: 問い合わせ・解析・コメントの分離](0071-optional-site-services.md)は実装候補。provider設定・有効化・production受入れは別。
 
@@ -143,3 +148,11 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR-0077: ツールリリース元とSite CIの検証責務](0077-tool-release-validation-ownership.md) — Proposed。製品matrixを配布元へ置き、Siteは固定成果物とホスト接続を検査する。
 
 - [ADR-0078: 一貫制作の2入口と静的技術ビジュアル](0078-content-production-and-static-technical-visuals.md) — 実装候補。本文・公開権限・本番配信は変更しない。
+
+- [ADR-0085: 執筆画面の分離と明示的なブロックグループ](0085-writing-workspace-and-explicit-groups.md) — 実装候補。モバイルの操作配置、MDXに残すグループ、透過的な公開描画。
+
+- [ADR-0086: CMSの作業開始と記事に依存しない管理](0086-cms-workflow-and-independent-registries.md) — 実装候補。新規・改稿・下書きの入口、編集前のブランチ選択、原稿なしの分類・連載管理、caretの可視化と安全な添削表示。
+
+- [ADR-0088: 実験グラフの近似曲線とCSV取り込み](0088-experimental-charts-and-csv.md) — 実装候補。測定値と推定の分離、限定した近似方法、計算済み曲線、列を確認して取り込むCSVと共有静的描画。
+
+- [ADR-0089: 理論式からの曲線と軸の範囲・余白](0089-chart-formulas-and-axis-ranges.md) — 実装候補。編集できる理論式、限定した計算、軸ごとの自動余白・固定端とデータを保持する表示範囲。

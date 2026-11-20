@@ -1,3 +1,4 @@
+import type { ReviewComment } from "@xpotato/editor-core/annotations";
 import { APIError, type ObjectBucket } from "./types.js";
 import { mediaPolicy, type MediaKind } from "@xpotato/editor-core/policy";
 export interface DraftRecord {
@@ -14,6 +15,7 @@ export interface DraftRecord {
   holdUntil?: string;
   deleteAfter?: string;
   publishedVerified?: boolean;
+  review?: { revision: number; comments: ReviewComment[] };
 }
 export interface AssetRecord {
   id: string;

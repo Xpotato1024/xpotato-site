@@ -3,6 +3,7 @@ import remarkMdx from "remark-mdx";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
+import { prepareLineChart } from "./charts-core.js";
 
 const portableMdxProcessor = unified().use(remarkParse).use(remarkMdx);
 const approvedModuleNames = new Set(Object.keys(semanticContentModulePropsSchemas));
@@ -103,6 +104,14 @@ const validateApprovedModule = (node: MdxJsxElementNode, errors: string[]): void
   if (!result.success) {
     const issues = result.error.issues.map((issue) => issue.path.join(".") || "props").join(", ");
     errors.push(`${node.name}: props do not match the approved schema (${issues})`);
+  } else if (node.name === "LineChart") {
+    try {
+      prepareLineChart(result.data);
+    } catch (error) {
+      errors.push(
+        `LineChart: ${error instanceof Error ? error.message : "近似を計算できません。"}`,
+      );
+    }
   }
 };
 
@@ -127,11 +136,61 @@ export const validatePortableMdx = (source: string): readonly string[] => {
       const element = node as MdxJsxElementNode & {
         children?: readonly { type?: string; value?: string; name?: string | null }[];
       };
+      if (element.name === "Group") {
+        const parentName = (parent as { name?: string } | undefined)?.name;
+        if (element.type !== "mdxJsxFlowElement") {
+          errors.push("Group must be a flow block");
+        }
+        if (
+          parentName &&
+          [
+            "Gallery",
+            "Steps",
+            "DiagnosticList",
+            "ArticleEndnote",
+            "Figure",
+            "LinkCard",
+            "Demo",
+            "BarChart",
+            "LineChart",
+          ].includes(parentName)
+        ) {
+          errors.push(`Group is not a direct child of ${parentName}`);
+        }
+      }
       if (
-        element.name === "BarChart" &&
+        (element.name === "BarChart" || element.name === "LineChart") &&
         element.children?.some((child) => child.type !== "text" || child.value?.trim())
       ) {
-        errors.push("BarChart does not accept children");
+        errors.push(element.name + " does not accept children");
+      }
+      if (
+        element.name === "ComparisonCase" &&
+        (parent as { name?: string } | undefined)?.name !== "Comparison"
+      ) {
+        errors.push("ComparisonCase must be inside Comparison");
+      }
+      if (element.name === "Comparison") {
+        const items =
+          element.children?.filter((child) => child.type !== "text" || child.value?.trim()) ?? [];
+        const cases = items.filter((item) => item.name === "ComparisonCase");
+        if (cases.length) {
+          if (cases.length < 2 || cases.length !== items.length)
+            errors.push("Comparison requires at least two ComparisonCase children only");
+          if (
+            element.attributes.some(
+              (attr) =>
+                (attr as MdxJsxAttribute).name === "leftLabel" ||
+                (attr as MdxJsxAttribute).name === "rightLabel",
+            )
+          )
+            errors.push("Comparison case labels belong to ComparisonCase children");
+        } else if (
+          !element.attributes.some((attr) => (attr as MdxJsxAttribute).name === "leftLabel") ||
+          !element.attributes.some((attr) => (attr as MdxJsxAttribute).name === "rightLabel")
+        ) {
+          errors.push("Comparison requires cases or the legacy two labels");
+        }
       }
       if (element.name === "ArticleEndnote") validateEndnote(node as EndnoteNode, parent, errors);
       if (

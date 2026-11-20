@@ -25,6 +25,11 @@ The durable content-authoring decision is ADR-0027: portable Markdown/MDX + mana
 - `content-module-contract.md`
 - `interactive-module-registry-contract.md`
 - `content-discovery-contract.md`
+- [連載・学習コース](series-contract.md)
+
+## CMS editing
+
+- [CMS編集画面](cms-workbench-contract.md) — 作業の入口と原稿に依存しない分類・連載管理、本文と記事情報、入力・添削・履歴、共有CSSプレビューと正式レビューの境界。
 
 ## Article Job / evidence / approval / provenance
 

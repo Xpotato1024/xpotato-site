@@ -6,6 +6,7 @@ import { homeCarouselBudget } from "../../packages/site-validators/src/delivery/
 import { contactIssuesBudget } from "../../packages/site-validators/src/delivery/contact-issues-runtime.ts";
 import { readRegisteredToolRoutes } from "../../packages/site-validators/src/browser-tools/tool-runtime-policy.ts";
 import { measureRouteRuntime } from "../../packages/site-validators/src/delivery/route-runtime.ts";
+import { measureEditorInitialRuntime } from "./editor-initial-runtime.ts";
 import assert from "node:assert/strict";
 import { readFile, readdir, realpath } from "node:fs/promises";
 import { resolve, join, sep, relative } from "node:path";
@@ -222,6 +223,10 @@ for (const path of htmlPaths.sort()) {
   const htmlBytes = { raw: Buffer.byteLength(html), gzip: gzipSync(html).length },
     cssBytes = total(cssAssets),
     jsBytes = size(routeAssets);
+  const editorInitialAssets =
+    kind === "editor" ? await measureEditorInitialRuntime(dist, html, runtime.assets) : [];
+  if (kind === "editor")
+    check(route + " initial JS", size(editorInitialAssets), budget.editorInitialJs);
   check(route + " HTML", htmlBytes, budget.html);
   check(route + " CSS", cssBytes, budget.routeCss);
   check(
@@ -251,6 +256,17 @@ for (const path of htmlPaths.sort()) {
     cssAssets: cssAssets.map(({ path, raw, gzip }) => ({ path, raw, gzip })),
     js: allJsBytes,
     routeSpecificJs: jsBytes,
+    ...(kind === "editor"
+      ? {
+          editorInitialJs: size(editorInitialAssets),
+          editorInitialAssets,
+          editorDeferredJs: size(
+            runtime.assets.filter(
+              (asset) => !editorInitialAssets.some((initial) => initial.path === asset.path),
+            ),
+          ),
+        }
+      : {}),
     sharedMenuJs: menuBytes,
     ...(shareAssets.length ? { pageShareJs: shareBytes } : {}),
     ...(motionAssets.length ? { articleMotionJs: size(motionAssets) } : {}),

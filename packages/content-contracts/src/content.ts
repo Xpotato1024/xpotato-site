@@ -98,6 +98,27 @@ const withDateOrder = <T extends z.ZodType>(schema: T) =>
         });
     });
 
+export const educationSchema = z
+  .object({
+    subject: z.string().trim().min(1),
+    audience: z.string().trim().min(1).optional(),
+    prerequisites: z.string().trim().min(1).optional(),
+    goals: z.array(z.string().trim().min(1)).optional(),
+  })
+  .strict();
+export const educationDraftSchema = educationSchema.extend({ subject: z.string() });
+export type EducationMetadata = z.infer<typeof educationSchema>;
+
+const draftDatedFrontmatterShape = {
+  ...datedFrontmatterShape,
+  description: z.string(),
+  pubDate: isoDateSchema.optional(),
+};
+const draftPublicationShape = { ...publicationShape, draft: z.literal(true) };
+const cardDisplaySchema = z
+  .object({ lines: z.array(z.string().min(1)).min(1).max(4).optional() })
+  .strict();
+
 export const blogFrontmatterSchema = withDateOrder(
   z
     .object({
@@ -106,10 +127,8 @@ export const blogFrontmatterSchema = withDateOrder(
       tags: uniqueStableIdArraySchema,
       ...publicationShape,
       featured: z.boolean().optional(),
-      cardDisplay: z
-        .object({ lines: z.array(z.string().min(1)).min(1).max(4).optional() })
-        .strict()
-        .optional(),
+      cardDisplay: cardDisplaySchema.optional(),
+      education: educationSchema.optional(),
     })
     .strict()
     .superRefine((value, context) => {
@@ -130,18 +149,13 @@ export const blogFrontmatterSchema = withDateOrder(
 export const blogDraftFrontmatterSchema = withDateOrder(
   z
     .object({
-      ...datedFrontmatterShape,
-      description: z.string(),
-      pubDate: isoDateSchema.optional(),
+      ...draftDatedFrontmatterShape,
       category: stableIdSchema,
       tags: uniqueStableIdArraySchema,
-      ...publicationShape,
-      draft: z.literal(true),
+      ...draftPublicationShape,
       featured: z.boolean().optional(),
-      cardDisplay: z
-        .object({ lines: z.array(z.string().min(1)).min(1).max(4).optional() })
-        .strict()
-        .optional(),
+      cardDisplay: cardDisplaySchema.optional(),
+      education: educationDraftSchema.optional(),
     })
     .strict(),
 );
@@ -151,79 +165,141 @@ export const blogSourceFrontmatterSchema = z.union([
 ]);
 export type BlogSourceFrontmatter = z.infer<typeof blogSourceFrontmatterSchema>;
 
+const noteFrontmatterShape = {
+  subject: stableIdSchema,
+  tags: uniqueStableIdArraySchema,
+};
 export const noteFrontmatterSchema = withDateOrder(
   z
     .object({
       ...datedFrontmatterShape,
-      subject: stableIdSchema,
-      tags: uniqueStableIdArraySchema,
+      ...noteFrontmatterShape,
       ...publicationShape,
+      education: educationSchema.optional(),
     })
     .strict(),
 );
-
-export const projectFrontmatterSchema = withDateOrder(
+export const noteDraftFrontmatterSchema = withDateOrder(
   z
     .object({
-      ...datedFrontmatterShape,
-      startedDate: isoDateSchema.optional(),
-      completedDate: isoDateSchema.optional(),
-      status: z.enum(["planned", "active", "paused", "completed", "archived"]),
-      tags: uniqueStableIdArraySchema,
-      stack: z.array(stableIdSchema).optional(),
-      featured: z.boolean().optional(),
-      featuredOrder: z.number().int().nonnegative().optional(),
-      links: z
-        .object({
-          repository: httpsUrlSchema.optional(),
-          demo: httpsUrlSchema.optional(),
-          documentation: httpsUrlSchema.optional(),
-        })
-        .strict()
-        .optional(),
-      sourceAvailability: z.enum(["public", "private", "mixed", "not_applicable"]).optional(),
-      ...publicationShape,
+      ...draftDatedFrontmatterShape,
+      ...noteFrontmatterShape,
+      ...draftPublicationShape,
+      education: educationDraftSchema.optional(),
+    })
+    .strict(),
+);
+export const noteSourceFrontmatterSchema = z.union([
+  noteFrontmatterSchema,
+  noteDraftFrontmatterSchema,
+]);
+export type NoteSourceFrontmatter = z.infer<typeof noteSourceFrontmatterSchema>;
+
+const projectFrontmatterShape = {
+  startedDate: isoDateSchema.optional(),
+  completedDate: isoDateSchema.optional(),
+  status: z.enum(["planned", "active", "paused", "completed", "archived"]),
+  tags: uniqueStableIdArraySchema,
+  stack: uniqueStableIdArraySchema.optional(),
+  featured: z.boolean().optional(),
+  featuredOrder: z.number().int().nonnegative().optional(),
+  links: z
+    .object({
+      repository: httpsUrlSchema.optional(),
+      demo: httpsUrlSchema.optional(),
+      documentation: httpsUrlSchema.optional(),
     })
     .strict()
-    .superRefine((value, context) => {
-      if (value.featuredOrder !== undefined && value.featured !== true) {
-        context.addIssue({
-          code: "custom",
-          message: "featuredOrder requires featured=true",
-          path: ["featuredOrder"],
-        });
-      }
-      if (value.startedDate && value.completedDate && value.startedDate > value.completedDate) {
-        context.addIssue({
-          code: "custom",
-          message: "completedDate must not precede startedDate",
-          path: ["completedDate"],
-        });
-      }
-    }),
+    .optional(),
+  sourceAvailability: z.enum(["public", "private", "mixed", "not_applicable"]).optional(),
+};
+const withProjectOrder = <T extends z.ZodType>(schema: T) =>
+  schema.superRefine((input, context) => {
+    const value = input as {
+      featuredOrder?: number;
+      featured?: boolean;
+      startedDate?: string;
+      completedDate?: string;
+    };
+    if (value.featuredOrder !== undefined && value.featured !== true) {
+      context.addIssue({
+        code: "custom",
+        message: "featuredOrder requires featured=true",
+        path: ["featuredOrder"],
+      });
+    }
+    if (value.startedDate && value.completedDate && value.startedDate > value.completedDate) {
+      context.addIssue({
+        code: "custom",
+        message: "completedDate must not precede startedDate",
+        path: ["completedDate"],
+      });
+    }
+  });
+export const projectFrontmatterSchema = withDateOrder(
+  withProjectOrder(
+    z
+      .object({ ...datedFrontmatterShape, ...projectFrontmatterShape, ...publicationShape })
+      .strict(),
+  ),
 );
+export const projectDraftFrontmatterSchema = withDateOrder(
+  withProjectOrder(
+    z
+      .object({
+        ...draftDatedFrontmatterShape,
+        ...projectFrontmatterShape,
+        ...draftPublicationShape,
+      })
+      .strict(),
+  ),
+);
+export const projectSourceFrontmatterSchema = z.union([
+  projectFrontmatterSchema,
+  projectDraftFrontmatterSchema,
+]);
+export type ProjectSourceFrontmatter = z.infer<typeof projectSourceFrontmatterSchema>;
 
+const toolFrontmatterShape = {
+  category: stableIdSchema,
+  tags: uniqueStableIdArraySchema,
+  featured: z.boolean().optional(),
+};
 export const toolFrontmatterSchema = withDateOrder(
+  z.object({ ...datedFrontmatterShape, ...toolFrontmatterShape, ...publicationShape }).strict(),
+);
+export const toolDraftFrontmatterSchema = withDateOrder(
   z
-    .object({
-      ...datedFrontmatterShape,
-      category: stableIdSchema,
-      tags: uniqueStableIdArraySchema,
-      featured: z.boolean().optional(),
-      ...publicationShape,
-    })
+    .object({ ...draftDatedFrontmatterShape, ...toolFrontmatterShape, ...draftPublicationShape })
     .strict(),
 );
+export const toolSourceFrontmatterSchema = z.union([
+  toolFrontmatterSchema,
+  toolDraftFrontmatterSchema,
+]);
+export type ToolSourceFrontmatter = z.infer<typeof toolSourceFrontmatterSchema>;
 
+const pageFrontmatterShape = {
+  id: contentIdSchema,
+  title: z.string().min(1),
+  description: z.string().min(1),
+  updatedDate: isoDateSchema.optional(),
+};
 export const pageFrontmatterSchema = z
+  .object({ ...pageFrontmatterShape, ...publicationShape })
+  .strict();
+export const pageDraftFrontmatterSchema = z
   .object({
-    id: contentIdSchema,
-    title: z.string().min(1),
-    description: z.string().min(1),
-    updatedDate: isoDateSchema.optional(),
-    ...publicationShape,
+    ...pageFrontmatterShape,
+    description: z.string(),
+    ...draftPublicationShape,
   })
   .strict();
+export const pageSourceFrontmatterSchema = z.union([
+  pageFrontmatterSchema,
+  pageDraftFrontmatterSchema,
+]);
+export type PageSourceFrontmatter = z.infer<typeof pageSourceFrontmatterSchema>;
 
 const taxonomyStatusSchema = z.enum(["active", "retired"]);
 const taxonomyBaseShape = {
@@ -423,12 +499,15 @@ export const siteConfigSchema = z
 export const contentModuleRecordSchema = z
   .object({
     id: z.enum([
+      "Group",
       "Figure",
       "Gallery",
       "Callout",
       "Steps",
       "Step",
       "Comparison",
+      "ComparisonCase",
+      "LineChart",
       "LinkCard",
       "Details",
       "Demo",
@@ -443,6 +522,7 @@ export const contentModuleRecordSchema = z
   })
   .strict();
 
+export const groupModulePropsSchema = z.object({}).strict();
 export const figureModulePropsSchema = z
   .object({
     asset: stableIdSchema,
@@ -460,6 +540,11 @@ export const galleryModulePropsSchema = z
     label: z.string().min(1).optional(),
     width: z.enum(["content", "wide"]).optional(),
     layout: z.enum(["images", "diagrams"]).optional(),
+    columns: z.enum(["1", "2", "3", "4"]).optional(),
+    tabletColumns: z.enum(["1", "2", "3", "4"]).optional(),
+    mobileColumns: z.enum(["1", "2", "3", "4"]).optional(),
+    gap: z.enum(["none", "small", "medium", "large"]).optional(),
+    fit: z.enum(["contain", "cover"]).optional(),
   })
   .strict();
 export const calloutModulePropsSchema = z
@@ -492,8 +577,16 @@ export const stepsModulePropsSchema = z.object({}).strict();
 export const stepModulePropsSchema = z
   .object({ title: z.string().min(1), result: z.string().min(1).optional() })
   .strict();
+/** Original two-label Comparison remains valid; new cases own their labels. */
 export const comparisonModulePropsSchema = z
-  .object({ leftLabel: z.string().min(1), rightLabel: z.string().min(1) })
+  .object({
+    leftLabel: z.string().min(1).optional(),
+    rightLabel: z.string().min(1).optional(),
+  })
+  .strict()
+  .refine((value) => Boolean(value.leftLabel) === Boolean(value.rightLabel));
+export const comparisonCaseModulePropsSchema = z
+  .object({ label: z.string().trim().min(1).max(120) })
   .strict();
 export const linkCardModulePropsSchema = z
   .object({
@@ -557,14 +650,196 @@ export const barChartModulePropsSchema = z
     }
   });
 
+export const chartFitSchema = z.discriminatedUnion("method", [
+  z.object({ method: z.literal("linear") }).strict(),
+  z.object({ method: z.literal("quad") }).strict(),
+  z.object({ method: z.literal("poly"), degree: z.literal(3).optional() }).strict(),
+  z.object({ method: z.literal("exp") }).strict(),
+  z.object({ method: z.literal("log") }).strict(),
+  z.object({ method: z.literal("pow") }).strict(),
+  z
+    .object({ method: z.literal("loess"), bandwidth: z.number().finite().gt(0).max(1).optional() })
+    .strict(),
+]);
+
+export const chartPointSeriesSchema = z
+  .object({
+    label: z.string().trim().min(1).max(100),
+    role: z.enum(["observed", "curve"]).optional(),
+    fit: chartFitSchema.optional(),
+    points: z
+      .array(
+        z
+          .object({
+            x: z.number().finite().min(-1e12).max(1e12),
+            y: z.number().finite().min(-1e12).max(1e12),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(500),
+  })
+  .strict()
+  .superRefine((series, context) => {
+    const issue = (message: string) => context.addIssue({ code: "custom", message });
+    if (series.role === "curve") {
+      if (series.fit) issue("計算済み曲線には近似を追加できません。測定値の系列を選んでください。");
+      if (
+        series.points.length < 2 ||
+        series.points.some((point, index) => index > 0 && point.x <= series.points[index - 1]!.x)
+      )
+        issue("計算済み曲線は2点以上必要です。Xを小さい順に並べ、重複を除いてください。");
+    }
+    if (!series.fit) return;
+    const { method } = series.fit;
+    const required = method === "poly" ? 4 : method === "quad" || method === "loess" ? 3 : 2;
+    const unique = new Set(series.points.map((point) => point.x)).size;
+    if (unique < required) issue(`この近似には異なるXの値が${required}種類以上必要です。`);
+    if (method === "loess" && unique !== series.points.length)
+      issue("LOESSはXが重複した測定点に対応していません。別の近似方法を選んでください。");
+    const invalid = series.points.findIndex(
+      (point) =>
+        ((method === "log" || method === "pow") && point.x <= 0) ||
+        ((method === "exp" || method === "pow") && point.y <= 0),
+    );
+    if (invalid >= 0)
+      issue(
+        `${invalid + 1}点目を確認してください。${method === "pow" ? "べき乗近似はXとY" : method === "log" ? "対数近似はX" : "指数近似はY"}が0より大きい値を必要とします。`,
+      );
+  });
+
+export const chartFormulaSchema = z
+  .object({
+    expression: z.string().trim().min(1).max(500),
+    xMin: z.number().finite().min(-1e12).max(1e12),
+    xMax: z.number().finite().min(-1e12).max(1e12),
+    samples: z.number().int().min(21).max(1001).optional(),
+  })
+  .strict()
+  .refine((value) => value.xMin < value.xMax, {
+    message: "理論式のXの最小値は、最大値より小さくしてください。",
+    path: ["xMin"],
+  });
+
+export const chartFormulaSeriesSchema = z
+  .object({
+    label: z.string().trim().min(1).max(100),
+    role: z.literal("formula"),
+    formula: chartFormulaSchema,
+  })
+  .strict();
+
+export const lineChartSeriesSchema = z
+  .array(z.union([chartPointSeriesSchema, chartFormulaSeriesSchema]))
+  .min(1)
+  .max(6);
+export type LineChartSeries = z.infer<typeof lineChartSeriesSchema>;
+
+const chartAxisNumberSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(80)
+  .regex(/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/u)
+  .refine(
+    (value) => {
+      const number = Number(value);
+      return (
+        Number.isFinite(number) &&
+        Math.abs(number) <= 1e12 &&
+        !(number === 0 && /[1-9]/u.test(value.split(/[eE]/u)[0]!))
+      );
+    },
+    { message: "軸の値は、絶対値が1兆以下の数値で指定してください。" },
+  );
+const chartAxisPaddingSchema = chartAxisNumberSchema.refine(
+  (value) => Number(value) >= 0 && Number(value) <= 100,
+  { message: "軸の余白は0〜100%で指定してください。" },
+);
+
+export const lineChartModulePropsSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120),
+    description: z.string().trim().min(1).max(1000).optional(),
+    xLabel: z.string().trim().min(1).max(60),
+    yLabel: z.string().trim().min(1).max(60),
+    kind: z.enum(["line", "scatter", "analysis"]).optional(),
+    analysisDisplay: z.enum(["concise", "detailed", "hidden"]).optional(),
+    series: z.string().min(1).max(240000),
+    xMin: chartAxisNumberSchema.optional(),
+    xMax: chartAxisNumberSchema.optional(),
+    yMin: chartAxisNumberSchema.optional(),
+    yMax: chartAxisNumberSchema.optional(),
+    xPadding: chartAxisPaddingSchema.optional(),
+    yPadding: chartAxisPaddingSchema.optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    for (const axis of ["x", "y"] as const) {
+      const min = value[`${axis}Min`];
+      const max = value[`${axis}Max`];
+      if (min !== undefined && max !== undefined && Number(min) >= Number(max)) {
+        context.addIssue({
+          code: "custom",
+          path: [`${axis}Min`],
+          message: `${axis === "x" ? "横軸" : "縦軸"}の最小値は、最大値より小さくしてください。`,
+        });
+      }
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(value.series);
+    } catch {
+      context.addIssue({
+        code: "custom",
+        path: ["series"],
+        message: "系列のデータをJSONで指定してください。",
+      });
+      return;
+    }
+    const series = lineChartSeriesSchema.safeParse(parsed);
+    if (!series.success) {
+      context.addIssue({
+        code: "custom",
+        path: ["series"],
+        message: series.error.issues.some((issue) => issue.code === "custom")
+          ? series.error.issues
+              .filter((issue) => issue.code === "custom")
+              .map((issue) => `系列${Number(issue.path[0]) + 1}: ${issue.message}`)
+              .join(" ")
+          : "系列の名前と数値、理論式の設定を確認してください。6系列まで、測定値は各500点まで、数値の絶対値は1兆以下です。",
+      });
+      return;
+    }
+    if (
+      (value.kind ?? "line") === "line" &&
+      series.data.some(
+        (item) =>
+          item.role !== "formula" &&
+          !item.fit &&
+          (item.points.length < 2 ||
+            item.points.some((point, index) => index > 0 && point.x <= item.points[index - 1]!.x)),
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["series"],
+        message: "折れ線は各系列に2点以上必要です。Xの値を小さい順に並べ、重複を除いてください。",
+      });
+    }
+  });
+
 export const semanticContentModulePropsSchemas = Object.freeze({
+  Group: groupModulePropsSchema,
   BarChart: barChartModulePropsSchema,
+  LineChart: lineChartModulePropsSchema,
   Figure: figureModulePropsSchema,
   Gallery: galleryModulePropsSchema,
   Callout: calloutModulePropsSchema,
   Steps: stepsModulePropsSchema,
   Step: stepModulePropsSchema,
   Comparison: comparisonModulePropsSchema,
+  ComparisonCase: comparisonCaseModulePropsSchema,
   LinkCard: linkCardModulePropsSchema,
   Details: detailsModulePropsSchema,
   Demo: demoModulePropsSchema,

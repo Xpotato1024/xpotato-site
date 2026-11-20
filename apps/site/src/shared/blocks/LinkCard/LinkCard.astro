@@ -12,6 +12,7 @@ const { href, title, description, label, external = false } = Astro.props;
 ---
 
 <a
+  class="article-link-card"
   href={currentArticleHref(href, siteConfig.site.canonicalOrigin)}
   target={external ? "_blank" : undefined}
   rel={external ? "noopener noreferrer" : undefined}

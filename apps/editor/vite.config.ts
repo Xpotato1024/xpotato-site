@@ -6,6 +6,18 @@ import { fileURLToPath } from "node:url";
 import { loadDesignTokens } from "@xpotato/design-system/theme";
 import { buildEditorPwa } from "../../ops/build/editor-pwa.mjs";
 const root = fileURLToPath(new URL("../../", import.meta.url));
+const [coreFonts, previewFonts] = await Promise.all([
+  readFile(resolve(root, "packages/design-system/src/fonts-core.css"), "utf8"),
+  readFile(resolve(root, "packages/design-system/src/fonts.css"), "utf8"),
+]);
+const fontNames = (css: string) =>
+  new Set([...css.matchAll(/\/fonts\/([a-zA-Z0-9_.-]+\.woff2)/gu)].map((match) => match[1]!));
+const coreFontNames = fontNames(coreFonts);
+const allFontNames = new Set([...coreFontNames, ...fontNames(previewFonts)]);
+const lazyFontPaths = [...allFontNames]
+  .filter((name) => !coreFontNames.has(name))
+  .map((name) => "/editor/fonts/" + name);
+let written = false;
 export default defineConfig({
   base: "/editor/",
   plugins: [
@@ -13,17 +25,39 @@ export default defineConfig({
       name: "editor-shared-design-assets",
       enforce: "pre",
       async transform(source, id) {
-        if (id.replaceAll("\\", "/").split("?")[0]!.endsWith("/apps/editor/src/styles.css")) {
-          const fonts = await readFile(
-            resolve(root, "packages/design-system/src/fonts-core.css"),
-            "utf8",
-          );
+        const path = id.replaceAll("\\", "/").split("?")[0]!;
+        if (path.endsWith("/katex/dist/katex.min.css")) {
+          // Supported browsers use woff2; legacy alternatives must not inflate the offline shell.
+          return source.replace(/src:[^;}]+/gu, (declaration) => {
+            const woff2 = /url\([^)]*\.woff2[^)]*\)\s*format\(["']?woff2["']?\)/u.exec(declaration);
+            return woff2 ? "src:" + woff2[0] : declaration;
+          });
+        }
+        if (path.endsWith("/apps/editor/src/styles.css")) {
           return source.replace(
             '@import \"../../../packages/design-system/src/fonts-core.css\";',
-            fonts.replaceAll("/fonts/", "/editor/fonts/"),
+            coreFonts.replaceAll("/fonts/", "/editor/fonts/"),
+          );
+        }
+        if (path.endsWith("/apps/editor/src/preview-frame.css")) {
+          return source.replace(
+            '@import "../../../packages/design-system/src/fonts.css";',
+            previewFonts.replaceAll("/fonts/", "/editor/fonts/"),
           );
         }
         return undefined;
+      },
+      configureServer(server) {
+        server.middlewares.use((request, response, next) => {
+          const match = /^\/editor\/fonts\/([a-zA-Z0-9_.-]+\.woff2)$/u.exec(request.url ?? "");
+          if (!match || !allFontNames.has(match[1]!)) return next();
+          void readFile(resolve(root, "apps/site/public/fonts", match[1]!))
+            .then((bytes) => {
+              response.setHeader("Content-Type", "font/woff2");
+              response.end(bytes);
+            })
+            .catch(next);
+        });
       },
       async transformIndexHtml(html) {
         const tokens = await loadDesignTokens();
@@ -62,23 +96,19 @@ export default defineConfig({
             tokens.resolve("--on-accent") +
             '" stroke-width="8"/></svg>',
         });
-        const fonts = await readFile(
-          resolve(root, "packages/design-system/src/fonts-core.css"),
-          "utf8",
-        );
-        const names = new Set(
-          [...fonts.matchAll(/\/fonts\/([a-zA-Z0-9_.-]+\.woff2)/gu)].map((match) => match[1]!),
-        );
-        for (const name of names)
+        for (const name of allFontNames)
           this.emitFile({
             type: "asset",
             fileName: "fonts/" + name,
             source: await readFile(resolve(root, "apps/site/public/fonts", name)),
           });
       },
+      writeBundle() {
+        written = true;
+      },
       async closeBundle() {
-        if (process.env.NODE_ENV === "production")
-          await buildEditorPwa(resolve(root, "apps/editor/dist"));
+        if (written && process.env.NODE_ENV === "production")
+          await buildEditorPwa(resolve(root, "apps/editor/dist"), { lazyFontPaths });
       },
     },
     tailwindcss(),
@@ -95,13 +125,25 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       output: {
+        assetFileNames(asset) {
+          return asset.names.some((name) => /\.woff2$/u.test(name))
+            ? "fonts/[name]-[hash][extname]"
+            : "assets/[name]-[hash][extname]";
+        },
         manualChunks(id) {
+          const path = id.replaceAll("\\", "/");
+          if (path.includes("vite/preload-helper") || path.includes("commonjsHelpers"))
+            return "runtime";
+          if (/\/node_modules\/(?:react|react-dom|scheduler)\//u.test(path)) return "react";
+          if (/\/node_modules\/(?:@mdxeditor\/|@lexical\/|lexical\/|@radix-ui\/)/u.test(path))
+            return "rich-editor";
+          if (/\/node_modules\/(?:@codemirror\/|@lezer\/)/u.test(path)) return "source-editor";
+          if (/\/node_modules\/katex\//u.test(path)) return "math";
           if (
             id.includes("node_modules") &&
             /remark|rehype|micromark|mdast|hast|unified|unist/u.test(id)
           )
             return "markdown";
-          if (id.includes("node_modules") && /react|scheduler/u.test(id)) return "react";
           return undefined;
         },
       },

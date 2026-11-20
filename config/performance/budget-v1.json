@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "basis": "Measured PR 65 public output and safe synthetic code fixture, 2026-10-05; conditional page sharing bounded separately on 2026-10-24; editor-only graph measured at 866490 raw bytes on 2026-11-17; raw and Node gzip per resource, not field timing",
+  "basis": "Measured PR 65 public output and safe synthetic code fixture, 2026-10-05; conditional page sharing bounded separately on 2026-10-24; editor-only graph measured at 866490 raw bytes on 2026-11-17; raw and Node gzip per resource, not field timing; rich CMS editor measured 2867269 raw / 920422 gzip full graph and 974310 raw / 298791 gzip initial graph on 2026-11-18; ADR-0084 preserves the previous editor cap as an additional initial-load gate",
   "html": { "raw": 200000, "gzip": 50000 },
   "routeCss": { "raw": 100000, "gzip": 32000 },
   "routeJs": {
@@ -8,11 +8,12 @@
     "code": { "raw": 6000, "gzip": 2500 },
     "search": { "raw": 30000, "gzip": 10000 },
     "tool": { "raw": 220000, "gzip": 70000 },
-    "editor": { "raw": 1000000, "gzip": 320000 }
+    "editor": { "raw": 3400000, "gzip": 1100000 }
   },
+  "editorInitialJs": { "raw": 1000000, "gzip": 320000 },
   "boundedToolJs": { "raw": 6000000, "gzip": 2700000 },
   "sharedMenuJs": { "path": "/scripts/mobile-menu.js", "raw": 3400, "gzip": 1250 },
   "pageShareJs": { "path": "/scripts/page-share.js", "raw": 4096, "gzip": 1800 },
   "searchIndex": { "raw": 100000, "gzip": 30000 },
-  "invariants": ["Bounded dependency-free mobile-menu.js is shared; conditional page-share.js requires matching public article/tool markup, canonical URL and reviewed source; route-specific static JS remains zero", "No third-party stylesheet or executable script", "Known image dimensions", "Hero never lazy", "Non-hero content images lazy", "Conditional copy script only with static fenced code", "Hashed fonts/CSS/JS immutable; HTML and unversioned data revalidate", "Only exact reviewed asynchronous Tool releases may use boundedToolJs; other Tool budgets remain unchanged"]
+  "invariants": ["Bounded dependency-free mobile-menu.js is shared; conditional page-share.js requires matching public article/tool markup, canonical URL and reviewed source; route-specific static JS remains zero", "No third-party stylesheet or executable script", "Known image dimensions", "Hero never lazy", "Non-hero content images lazy", "Conditional copy script only with static fenced code", "Hashed fonts/CSS/JS immutable; HTML and unversioned data revalidate", "Only exact reviewed asynchronous Tool releases may use boundedToolJs; other Tool budgets remain unchanged", "Editor full graph includes dynamic imports; initial graph separately counts script roots, modulepreloads and static imports/exports. Rich editing, source editing, math and site preview must stay deferred from the initial shell. Public route limits are unchanged (ADR-0084)."]
 }

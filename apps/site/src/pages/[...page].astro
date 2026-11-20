@@ -6,6 +6,7 @@ import ContentLayout from "../shared/layouts/ContentLayout.astro";
 import { selectPublishedCatalog } from "@xpotato/portable-content/catalog";
 import { getLiveContentCatalog } from "../features/discovery/model/live-catalog.js";
 import ContactDetails from "../features/pages/components/ContactDetails.astro";
+import EducationDirectory from "../features/education/components/EducationDirectory.astro";
 
 export async function getStaticPaths() {
   const catalog = await getLiveContentCatalog();
@@ -33,4 +34,5 @@ const { Content, headings } = await render(entry);
 >
   <Content components={contentComponents} />
   {entry.id === "contact" && <ContactDetails />}
+  {entry.id === "education" && <EducationDirectory />}
 </ContentLayout>

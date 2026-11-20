@@ -1,0 +1,23 @@
+---
+import type { PublicSeries } from "@xpotato/portable-content/series";
+import { seriesKindLabel, seriesStatusLabel } from "../model/labels.js";
+
+interface Props {
+  series: PublicSeries;
+}
+const { series } = Astro.props;
+---
+
+<article class="series-card">
+  <p class="series-meta">
+    {seriesKindLabel(series.kind)} · {seriesStatusLabel(series.status)} · 公開
+    {series.entries.length}回
+  </p>
+  <h2>
+    <a href={series.route}>{series.title}</a>
+  </h2>
+  {series.description && <p>{series.description}</p>}
+  <a class="series-all-link" href={series.route}>
+    目次を見る →
+  </a>
+</article>

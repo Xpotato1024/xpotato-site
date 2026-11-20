@@ -521,11 +521,11 @@ test("public redirects and byte mismatch fail without writes", async () => {
 test("readback plans enforce target, aggregate bytes and per-object budgets before execution", () => {
   const row = (path, bytes = 1) => ({ path, bytes, sha256: "a".repeat(64) });
   assert.equal(
-    assertPublicTargetPlan(Array.from({ length: 512 }, (_, i) => row("/" + i))).targets,
-    512,
+    assertPublicTargetPlan(Array.from({ length: 768 }, (_, i) => row("/" + i))).targets,
+    768,
   );
   assert.throws(
-    () => assertPublicTargetPlan(Array.from({ length: 513 }, (_, i) => row("/" + i))),
+    () => assertPublicTargetPlan(Array.from({ length: 769 }, (_, i) => row("/" + i))),
     /PUBLIC_TARGET_BUDGET/,
   );
   const limit = Array.from({ length: 32 }, (_, i) => row("/" + i, 2097152));
@@ -542,10 +542,10 @@ test("readback plans enforce target, aggregate bytes and per-object budgets befo
     [row("/x", 2097153)],
   ])
     assert.throws(() => assertPublicTargetPlan(rows));
-  assert.equal(publicReadbackPolicy.maxReads, 1029);
+  assert.equal(publicReadbackPolicy.maxReads, 1541);
   assert.equal(publicReadbackPolicy.phaseMs, 120000);
 });
-test("maximum planned 512 targets use 517 reads; invalid plan dispatches no fetch", async () => {
+test("maximum planned 768 targets use 773 reads; invalid plan dispatches no fetch", async () => {
   let calls = 0;
   const body = "approved";
   const r = createPublicReadback({
@@ -556,7 +556,7 @@ test("maximum planned 512 targets use 517 reads; invalid plan dispatches no fetc
       });
     },
   });
-  const targets = Array.from({ length: 512 }, (_, i) => ({
+  const targets = Array.from({ length: 768 }, (_, i) => ({
     path: "/test-" + i,
     bytes: 8,
     sha256: hashBytes(body),
@@ -568,9 +568,9 @@ test("maximum planned 512 targets use 517 reads; invalid plan dispatches no fetc
   assert.equal(calls, 0);
   await r.before(image);
   await r.published({ targets }, image);
-  assert.equal(calls, 517);
+  assert.equal(calls, 773);
 });
-test("lifetime 1029 cap and complete-plan reservation prevent further dispatch", async () => {
+test("lifetime 1541 cap and complete-plan reservation prevent further dispatch", async () => {
   let calls = 0;
   const body = "approved";
   const r = createPublicReadback({
@@ -581,16 +581,18 @@ test("lifetime 1029 cap and complete-plan reservation prevent further dispatch",
       });
     },
   });
-  for (let i = 0; i < 342; i++) await r.before(image);
+  for (let i = 0; i < 512; i++) await r.before(image);
   await r.published({ targets: [{ path: "/", bytes: 8, sha256: hashBytes(body) }] }, image);
-  assert.equal(calls, 1029);
+  assert.equal(calls, 1539);
   await assert.rejects(
     () => r.published({ targets: [{ path: "/", bytes: 8, sha256: hashBytes(body) }] }, image),
     /PUBLIC_READ_BUDGET/,
   );
-  assert.equal(calls, 1029);
+  assert.equal(calls, 1539);
   await assert.rejects(() => r.before(image), /PUBLIC_READ_BUDGET/);
-  assert.equal(calls, 1029);
+  assert.equal(calls, 1541);
+  await assert.rejects(() => r.before(image), /PUBLIC_READ_BUDGET/);
+  assert.equal(calls, 1541);
 });
 test("actual response bytes stop at the finite 138MiB operation budget", async () => {
   let calls = 0;

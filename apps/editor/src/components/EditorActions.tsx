@@ -1,3 +1,5 @@
+import { WorkspaceIcon } from "./WorkspaceIcon.js";
+
 interface Props {
   authenticated: boolean;
   busy: boolean;
@@ -28,7 +30,7 @@ export function EditorActions({
           MDX書き出し
         </button>
         <button type="button" onClick={onExportBundle}>
-          画像を含めて保全
+          画像付きバックアップ
         </button>
         <span className="action-spacer" />
         <button type="button" disabled={!authenticated || busy || hasIssues} onClick={onSave}>
@@ -46,7 +48,8 @@ export function EditorActions({
       {pr && (
         <p className="pr-link">
           <a href={pr.url} target="_blank" rel="noreferrer">
-            PR #{pr.number} をGitHubで確認する ↗
+            PR #{pr.number} をGitHubで確認
+            <WorkspaceIcon name="external" />
           </a>
         </p>
       )}

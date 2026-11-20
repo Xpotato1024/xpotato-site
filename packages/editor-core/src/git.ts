@@ -1,3 +1,17 @@
+import { taxonomyRegistrySchema } from "@xpotato/content-contracts/content";
+import { seriesRegistrySchema } from "@xpotato/content-contracts/series";
+import { validateSeriesReferences } from "@xpotato/portable-content/series";
+import {
+  applyTaxonomyAdditions,
+  editorContentIndexPath,
+  parseEditorContentIndex,
+  parseRegistryChanges,
+  seriesRegistryPath,
+  taxonomyRegistryPath,
+  taxonomySnapshotFields,
+  updateEditorContentIndex,
+  type EditorRegistryChanges,
+} from "./registry.js";
 import { reviewArtifactName } from "./review.js";
 import {
   assertEditablePath,
@@ -101,6 +115,31 @@ export interface GitSnapshot {
   branch: string;
   commit: string;
 }
+export interface GitRegistrySaveInput {
+  branch: string;
+  expectedHead: string;
+  registryChanges: EditorRegistryChanges;
+  message?: string;
+}
+export interface GitRegistrySaveResult {
+  branch: string;
+  commit: string;
+  manifest: TaxonomySnapshot;
+}
+export interface GitRegistryPullRequestInput {
+  branch: string;
+  base: string;
+  title?: string;
+}
+export interface GitPullRequestResult {
+  number: number;
+  url: string;
+  draft: boolean;
+}
+interface GitWrite {
+  path: string;
+  source: string;
+}
 export interface GitDocument {
   path: string;
   source: string;
@@ -157,15 +196,22 @@ export class GitRepository {
     assertSha(data.object.sha);
     return { branch, commit: data.object.sha };
   }
-  async manifest(snapshot: GitSnapshot): Promise<TaxonomySnapshot> {
+  private async registryJson(
+    snapshot: GitSnapshot,
+    path: string,
+    maxBytes = 256 * 1024,
+  ): Promise<unknown> {
     assertSha(snapshot.commit);
     const content = await this.api<GitContent>({
       method: "GET",
-      path: "/contents/" + editorManifestPath + "?ref=" + snapshot.commit,
+      path: "/contents/" + path + "?ref=" + snapshot.commit,
     });
-    if (content.type !== "file" || content.encoding !== "base64" || content.size > 256 * 1024)
+    if (content.type !== "file" || content.encoding !== "base64" || content.size > maxBytes)
       throw new GitError("EDITOR_CONTRACT_INVALID");
-    const value = JSON.parse(fromBase64(content.content)) as TaxonomySnapshot;
+    return JSON.parse(fromBase64(content.content));
+  }
+  async manifest(snapshot: GitSnapshot): Promise<TaxonomySnapshot> {
+    const value = (await this.registryJson(snapshot, editorManifestPath)) as TaxonomySnapshot;
     if (
       value.contractVersion !== 1 ||
       !value.categories ||
@@ -173,7 +219,18 @@ export class GitRepository {
       !Array.isArray(value.modules)
     )
       throw new GitError("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
-    return value;
+    // Older work branches remain readable. New editorial registries require the new manifest contract.
+    if (!value.terms) return value;
+    taxonomyRegistrySchema.parse(value.terms);
+    const [index, series] = await Promise.all([
+      this.registryJson(snapshot, editorContentIndexPath, 2 * 1024 * 1024),
+      this.registryJson(snapshot, seriesRegistryPath),
+    ]);
+    return {
+      ...value,
+      contentIndex: parseEditorContentIndex(index).documents,
+      seriesRegistry: seriesRegistrySchema.parse(series),
+    };
   }
   async documents(snapshot: GitSnapshot): Promise<{ path: string; sha: string; bytes: number }[]> {
     assertSha(snapshot.commit);
@@ -220,7 +277,13 @@ export class GitRepository {
     source: string;
     message?: string;
     producer: "human" | "ai" | "mixed";
-  }): Promise<{ commit: string; blobSha: string; handoff: ReturnType<typeof documentHandoff> }> {
+    registryChanges?: EditorRegistryChanges;
+  }): Promise<{
+    commit: string;
+    blobSha: string;
+    handoff: ReturnType<typeof documentHandoff>;
+    manifest: TaxonomySnapshot;
+  }> {
     assertWorkingBranch(input.branch);
     assertSha(input.expectedHead);
     assertEditablePath(input.path);
@@ -229,72 +292,234 @@ export class GitRepository {
     if (current.commit !== input.expectedHead) throw new GitError("GIT_CONFLICT", 409);
     const { data } = parseDraft(input.source);
     if (data.draft !== true) throw new GitError("DRAFT_ONLY", 403);
-    const manifest = await this.manifest(current),
-      issues = validateDraft(input.source, collectionFromPath(input.path), manifest);
-    if (issues.length) throw new GitError("DRAFT_INVALID: " + issues.join("; "));
+    let manifest = await this.manifest(current);
+    const changes =
+      input.registryChanges === undefined ? undefined : parseRegistryChanges(input.registryChanges);
+    const writes: GitWrite[] = [{ path: input.path, source: input.source }];
+    const json = (value: unknown) => JSON.stringify(value, null, 2) + "\n";
+    if (manifest.contentIndex) {
+      const index = updateEditorContentIndex(
+        { schemaVersion: 1, documents: manifest.contentIndex },
+        {
+          contentId: data.id,
+          path: input.path,
+          title: data.title,
+          collection: collectionFromPath(input.path),
+          draft: data.draft,
+          education: Boolean(data.education),
+        },
+      );
+      manifest = { ...manifest, contentIndex: index.documents };
+      writes.push({ path: editorContentIndexPath, source: json(index) });
+    }
+    if (changes) {
+      const prepared = await this.prepareRegistryWrites(current, manifest, changes);
+      manifest = prepared.manifest;
+      writes.push(...prepared.writes);
+    }
+    const issues = validateDraft(input.source, collectionFromPath(input.path), manifest);
+    if (issues.length) {
+      throw new GitError("DRAFT_INVALID: " + issues.join("; "));
+    }
     try {
       const before = await this.read(current, input.path);
-      if (parseDraft(before.source).data.id !== data.id) throw new GitError("CONTENT_ID_IMMUTABLE");
+      if (parseDraft(before.source).data.id !== data.id) {
+        throw new GitError("CONTENT_ID_IMMUTABLE");
+      }
     } catch (error) {
-      if (!(error instanceof GitError && error.code === "GIT_NOT_FOUND")) throw error;
+      if (!(error instanceof GitError && error.code === "GIT_NOT_FOUND")) {
+        throw error;
+      }
     }
+    const result = await this.commitWrites(
+      current,
+      writes,
+      (input.message?.slice(0, 160) || "content: " + data.title) +
+        "\n\nContent-Id: " +
+        data.id +
+        "\nEditor-Producer: " +
+        input.producer,
+    );
+    return {
+      commit: result.commit,
+      blobSha: result.entries[0]!.sha,
+      manifest,
+      handoff: documentHandoff(input.source, result.commit, input.path),
+    };
+  }
+
+  async saveRegistry(input: GitRegistrySaveInput): Promise<GitRegistrySaveResult> {
+    if (
+      !input ||
+      typeof input !== "object" ||
+      Array.isArray(input) ||
+      Object.keys(input).some(
+        (key) => !["branch", "expectedHead", "registryChanges", "message"].includes(key),
+      ) ||
+      typeof input.branch !== "string" ||
+      typeof input.expectedHead !== "string" ||
+      (input.message !== undefined && typeof input.message !== "string")
+    ) {
+      throw new GitError("REGISTRY_SAVE_INVALID");
+    }
+    assertWorkingBranch(input.branch);
+    assertSha(input.expectedHead);
+    const changes = parseRegistryChanges(input.registryChanges);
+    if (!changes.taxonomy?.length && !changes.series) {
+      throw new GitError("REGISTRY_CHANGE_EMPTY");
+    }
+    const current = await this.snapshot(input.branch);
+    if (current.commit !== input.expectedHead) {
+      throw new GitError("GIT_CONFLICT", 409);
+    }
+    const prepared = await this.prepareRegistryWrites(
+      current,
+      await this.manifest(current),
+      changes,
+    );
+    const result = await this.commitWrites(
+      current,
+      prepared.writes,
+      (input.message?.slice(0, 160) || "content: 分類・タグ・連載を更新") +
+        "\n\nEditor-Scope: registries",
+    );
+    return { branch: current.branch, commit: result.commit, manifest: prepared.manifest };
+  }
+
+  private async prepareRegistryWrites(
+    current: GitSnapshot,
+    initial: TaxonomySnapshot,
+    changes: EditorRegistryChanges,
+  ): Promise<{ manifest: TaxonomySnapshot; writes: GitWrite[] }> {
+    let manifest = initial;
+    const writes: GitWrite[] = [];
+    const json = (value: unknown) => JSON.stringify(value, null, 2) + "\n";
+    if (!manifest.terms) {
+      throw new GitError("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
+    }
+    if (changes.taxonomy?.length) {
+      const registry = taxonomyRegistrySchema.parse(
+        await this.registryJson(current, taxonomyRegistryPath),
+      );
+      if (JSON.stringify(registry) !== JSON.stringify(manifest.terms)) {
+        throw new GitError("EDITOR_MANIFEST_STALE");
+      }
+      const updated = applyTaxonomyAdditions(registry, changes.taxonomy);
+      manifest = { ...manifest, ...taxonomySnapshotFields(updated) };
+      writes.push({ path: taxonomyRegistryPath, source: json(updated) });
+      // The checked-in public manifest contains taxonomy/modules only. Private index/series stay API-only.
+      const { contentIndex: _index, seriesRegistry: _series, ...publicManifest } = manifest;
+      writes.push({ path: editorManifestPath, source: json(publicManifest) });
+    }
+    if (changes.series) {
+      if (JSON.stringify(changes.seriesBase) !== JSON.stringify(manifest.seriesRegistry)) {
+        throw new GitError("SERIES_CONFLICT", 409);
+      }
+      if (!manifest.contentIndex) {
+        throw new GitError("EDITOR_CONTENT_INDEX_REQUIRED");
+      }
+      const errors = validateSeriesReferences(
+        changes.series,
+        manifest.contentIndex.map((entry) => entry.contentId),
+      );
+      if (errors.length) {
+        throw new GitError("SERIES_REFERENCE_INVALID: " + errors.join("; "));
+      }
+      manifest = { ...manifest, seriesRegistry: changes.series };
+      writes.push({ path: seriesRegistryPath, source: json(changes.series) });
+    }
+    return { manifest, writes };
+  }
+
+  private async commitWrites(current: GitSnapshot, writes: GitWrite[], message: string) {
     const commit = await this.api<GitCommit>({
       method: "GET",
       path: "/git/commits/" + current.commit,
     });
-    const blob = await this.api<{ sha: string }>({
-      method: "POST",
-      path: "/git/blobs",
-      body: { encoding: "base64", content: utf8Base64(input.source) },
-    });
+    const entries: { path: string; mode: string; type: string; sha: string }[] = [];
+    for (const write of writes) {
+      const blob = await this.api<{ sha: string }>({
+        method: "POST",
+        path: "/git/blobs",
+        body: { encoding: "base64", content: utf8Base64(write.source) },
+      });
+      entries.push({ path: write.path, mode: "100644", type: "blob", sha: blob.sha });
+    }
     const tree = await this.api<{ sha: string }>({
       method: "POST",
       path: "/git/trees",
-      body: {
-        base_tree: commit.tree.sha,
-        tree: [{ path: input.path, mode: "100644", type: "blob", sha: blob.sha }],
-      },
+      body: { base_tree: commit.tree.sha, tree: entries },
     });
     const created = await this.api<{ sha: string }>({
       method: "POST",
       path: "/git/commits",
-      body: {
-        message:
-          (input.message?.slice(0, 160) || "content: " + data.title) +
-          "\n\nContent-Id: " +
-          data.id +
-          "\nEditor-Producer: " +
-          input.producer,
-        tree: tree.sha,
-        parents: [current.commit],
-      },
+      body: { message, tree: tree.sha, parents: [current.commit] },
     });
-    // Non-fast-forward updates fail if another writer advanced the branch in the meantime.
+    // A concurrent branch advance must reject the whole source/registry transaction.
     await this.api({
       method: "PATCH",
-      path: "/git/refs/heads/" + input.branch.split("/").map(segment).join("/"),
+      path: "/git/refs/heads/" + current.branch.split("/").map(segment).join("/"),
       body: { sha: created.sha, force: false },
     });
-    return {
-      commit: created.sha,
-      blobSha: blob.sha,
-      handoff: documentHandoff(input.source, created.sha, input.path),
-    };
+    return { commit: created.sha, entries };
   }
+
   async pullRequest(input: {
     branch: string;
     base: string;
     title: string;
     contentId: string;
-  }): Promise<{ number: number; url: string; draft: boolean }> {
+  }): Promise<GitPullRequestResult> {
+    return this.openDraftPullRequest({
+      branch: input.branch,
+      base: input.base,
+      title: input.title,
+      body:
+        "## 記事制作・レビュー\n\nContentId: " +
+        input.contentId +
+        "\n\nこのPRの本文は制作途中です。公開Gitの履歴として第三者にも閲覧できます。\n\n- [ ] 本文・図版・出典の確認\n- [ ] 該当する権利・プライバシー確認\n- [ ] 固定候補の本人承認\n- [ ] 正式な媒体保存・公開経路\n\nAIへの引継ぎはこのブランチの最新commitを読み、既存原稿を維持して追pushしてください。CMS保存・PR作成は公開承認ではありません。",
+    });
+  }
+
+  async registryPullRequest(input: GitRegistryPullRequestInput): Promise<GitPullRequestResult> {
+    if (
+      !input ||
+      typeof input !== "object" ||
+      Array.isArray(input) ||
+      Object.keys(input).some((key) => !["branch", "base", "title"].includes(key)) ||
+      typeof input.branch !== "string" ||
+      typeof input.base !== "string" ||
+      (input.title !== undefined && typeof input.title !== "string")
+    ) {
+      throw new GitError("REGISTRY_REVIEW_INVALID");
+    }
+    return this.openDraftPullRequest({
+      branch: input.branch,
+      base: input.base,
+      title: input.title?.trim() || "分類・タグ・連載を更新",
+      body: "## 分類・タグ・連載のレビュー\n\n記事本文から独立した管理項目の変更です。\n\n- [ ] 分類・タグの名前と重複の確認\n- [ ] 連載の所属記事・読む順序の確認\n- [ ] このブランチの全変更差分の確認\n\nCMS保存・Draft PR作成は公開承認ではありません。マージ・公開は別途確認します。",
+    });
+  }
+
+  private async openDraftPullRequest(input: {
+    branch: string;
+    base: string;
+    title: string;
+    body: string;
+  }): Promise<GitPullRequestResult> {
     assertWorkingBranch(input.branch);
     assertBranch(input.base);
-    if (input.branch === input.base) throw new GitError("PR_BASE_INVALID");
+    if (input.branch === input.base) {
+      throw new GitError("PR_BASE_INVALID");
+    }
     const head = this.repository.split("/")[0] + ":" + input.branch;
     const found = await this.api<GitPR[]>({
       method: "GET",
       path: "/pulls?state=open&head=" + segment(head) + "&base=" + segment(input.base),
     });
+    if (found[0] && !found[0].draft) {
+      throw new GitError("PR_NOT_DRAFT", 409);
+    }
     const pr =
       found[0] ??
       (await this.api<GitPR>({
@@ -305,14 +530,12 @@ export class GitRepository {
           base: input.base,
           title: input.title.slice(0, 200),
           draft: true,
-          body:
-            "## 記事制作・レビュー\n\nContentId: " +
-            input.contentId +
-            "\n\nこのPRの本文は制作途中です。公開Gitの履歴として第三者にも閲覧できます。\n\n- [ ] 本文・図版・出典の確認\n- [ ] 該当する権利・プライバシー確認\n- [ ] 固定候補の本人承認\n- [ ] 正式な媒体保存・公開経路\n\nAIへの引継ぎはこのブランチの最新commitを読み、既存原稿を維持して追pushしてください。CMS保存・PR作成は公開承認ではありません。",
+          body: input.body,
         },
       }));
     return { number: pr.number, url: pr.html_url, draft: pr.draft };
   }
+
   async reviewArtifact(
     commit: string,
     contentId: string,

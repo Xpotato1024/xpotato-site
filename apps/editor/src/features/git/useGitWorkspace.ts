@@ -1,3 +1,5 @@
+import { previewRegistryChanges, reconcileRegistryChanges } from "@xpotato/editor-core/registry";
+import { validateReviewComments } from "@xpotato/editor-core/annotations";
 import { useEffect, useMemo, useState } from "react";
 import {
   collectionFromPath,
@@ -6,12 +8,17 @@ import {
   validateDraft,
   type TaxonomySnapshot,
 } from "@xpotato/editor-core/draft";
-import type { GitSnapshot } from "@xpotato/editor-core/git";
+import { assertWorkingBranch, type GitSnapshot } from "@xpotato/editor-core/git";
 import { EditorApiError, loginState, query, request, type LoginState } from "../../data/api.js";
 import { findMediaSnapshot, restoreMediaSnapshot } from "../../data/media-sync.js";
-import { saveLocalDraft, type LocalDraft } from "../../data/storage.js";
+import {
+  localMedia,
+  saveLocalMedia,
+  updateLocalDraft,
+  type LocalDraft,
+} from "../../data/storage.js";
 import { errorLabel } from "../../shared/messages.js";
-import { mergeGitSaveResult } from "../drafts/model.js";
+import { acceptGitSaveResult } from "../drafts/model.js";
 import type { DraftWorkspace } from "../drafts/useDraftWorkspace.js";
 import schema from "../../../../../content/registry/editor.json";
 
@@ -23,6 +30,16 @@ interface RepositoryDocument {
 interface PullRequest {
   number: number;
   url: string;
+}
+export interface BranchPlan {
+  mode: "local" | "existing" | "new";
+  sourceBranch: string;
+  targetBranch: string;
+}
+export interface PreparedWorkspace {
+  snapshot: GitSnapshot | null;
+  manifest: TaxonomySnapshot;
+  sourceBranch: string;
 }
 
 export function useGitWorkspace(
@@ -39,17 +56,34 @@ export function useGitWorkspace(
   const [sourceBranch, setSourceBranch] = useState("main");
   const [snapshot, setSnapshot] = useState<GitSnapshot | null>(null);
   const [documents, setDocuments] = useState<RepositoryDocument[]>([]);
-  const [taxonomy, setTaxonomy] = useState<TaxonomySnapshot>(schema as TaxonomySnapshot);
+  const [repositoryManifest, setRepositoryManifest] = useState<TaxonomySnapshot>(
+    schema as TaxonomySnapshot,
+  );
   const [pr, setPr] = useState<PullRequest | null>(null);
-  const [conflict, setConflict] = useState<string | null>(null);
+  const [conflict, setConflict] = useState<{
+    base: string;
+    remote: string;
+    head: GitSnapshot;
+    manifest: TaxonomySnapshot;
+    draftId: string;
+  } | null>(null);
   const { draft, hydrated } = workspace;
+  const baseTaxonomy = draft.registrySnapshot ?? (schema as TaxonomySnapshot);
+  const taxonomy = useMemo(() => {
+    try {
+      return previewRegistryChanges(baseTaxonomy, draft.pendingRegistryChanges);
+    } catch {
+      return baseTaxonomy;
+    }
+  }, [baseTaxonomy, draft.pendingRegistryChanges]);
   const issues = useMemo(() => {
     try {
+      previewRegistryChanges(baseTaxonomy, draft.pendingRegistryChanges);
       return validateDraft(draft.source, collectionFromPath(draft.path), taxonomy);
-    } catch {
-      return ["記事パスが不正です"];
+    } catch (error) {
+      return [error instanceof Error ? error.message : "記事情報を確認してください"];
     }
-  }, [draft.source, draft.path, taxonomy]);
+  }, [draft.source, draft.path, draft.pendingRegistryChanges, baseTaxonomy, taxonomy]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -99,9 +133,9 @@ export function useGitWorkspace(
     setAuth(await loginState());
   }
 
-  async function readBranch() {
+  async function readBranch(branch = sourceBranch) {
     await workspace.persist();
-    const selected = await request<GitSnapshot>("/snapshot" + query({ branch: sourceBranch }));
+    const selected = await request<GitSnapshot>("/snapshot" + query({ branch }));
     const [manifest, files] = await Promise.all([
       request<TaxonomySnapshot>("/manifest" + query({ ...selected })),
       request<RepositoryDocument[]>("/documents" + query({ ...selected })),
@@ -111,40 +145,148 @@ export function useGitWorkspace(
       throw new Error("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
     }
     setSnapshot(selected);
-    setTaxonomy(manifest);
+    setRepositoryManifest(manifest);
     setDocuments(files);
-    onNotice(
-      "ブランチ " +
-        selected.branch +
-        " の " +
-        selected.commit.slice(0, 8) +
-        " を読み込みました。現在の原稿は上書きしていません。",
-    );
+    return { snapshot: selected, manifest, documents: files };
   }
 
-  async function openDocument(file: string) {
-    if (!snapshot) {
+  async function prepareWorkspace(
+    plan: BranchPlan,
+    pinnedSource?: GitSnapshot,
+  ): Promise<PreparedWorkspace> {
+    if (plan.mode === "local") {
+      return { snapshot: null, manifest: schema as TaxonomySnapshot, sourceBranch: "main" };
+    }
+    if (!auth.authenticated) throw new Error("AUTH_REQUIRED");
+    assertWorkingBranch(plan.targetBranch);
+    let selected: GitSnapshot;
+    if (plan.mode === "new") {
+      const source =
+        pinnedSource ??
+        (await request<GitSnapshot>("/snapshot" + query({ branch: plan.sourceBranch })));
+      selected = await request<GitSnapshot>("/branch", {
+        method: "POST",
+        body: { source, target: plan.targetBranch },
+      });
+      setBranches((current) => [...new Set([...current, selected.branch])]);
+    } else {
+      selected = await request<GitSnapshot>("/snapshot" + query({ branch: plan.targetBranch }));
+    }
+    const manifest = await request<TaxonomySnapshot>("/manifest" + query({ ...selected }));
+    if ((manifest as { contractHash?: string }).contractHash !== schema.contractHash) {
+      throw new Error("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
+    }
+    return {
+      snapshot: selected,
+      manifest,
+      sourceBranch: plan.mode === "new" ? plan.sourceBranch : "main",
+    };
+  }
+
+  async function prepareLocalWorkspace(
+    local: LocalDraft,
+    plan: BranchPlan,
+  ): Promise<Partial<LocalDraft>> {
+    if (
+      plan.mode === "local" ||
+      (plan.mode === "existing" && plan.targetBranch === local.workingBranch)
+    )
+      return {};
+    const prepared = await prepareWorkspace(
+      plan,
+      plan.mode === "new" && local.baseCommit
+        ? {
+            branch: local.workingBranch || local.sourceBranch,
+            commit: local.baseCommit,
+          }
+        : undefined,
+    );
+    if (!prepared.snapshot) return {};
+    // Joining another branch must not hide a conflicting remote article behind a fresh head.
+    const remote = await request<{ source: string }>(
+      "/document" + query({ ...prepared.snapshot, path: local.path }),
+    ).catch((failure: unknown) => {
+      if (failure instanceof EditorApiError && failure.code === "GIT_NOT_FOUND")
+        return { source: "" };
+      throw failure;
+    });
+    const previous = local.baseSource ?? local.syncedSource ?? "";
+    if (remote.source !== previous)
+      throw new Error(
+        "このブランチの原稿は下書きの保存元と異なります。元の作業ブランチを続けるか、下書きの保存元から新しいブランチを作成してください。",
+      );
+    const pending = reconcileRegistryChanges(prepared.manifest, local.pendingRegistryChanges);
+    return {
+      workingBranch: prepared.snapshot.branch,
+      sourceBranch: local.baseCommit ? local.sourceBranch : prepared.sourceBranch,
+      baseCommit: prepared.snapshot.commit,
+      baseSource: remote.source,
+      registrySnapshot: prepared.manifest,
+      pendingRegistryChanges: pending,
+    };
+  }
+
+  async function openDocument(
+    file: string,
+    selected = snapshot,
+    source = selected?.branch,
+    intent?: "revise" | "drafts",
+    localOnly = false,
+  ) {
+    if (!selected) {
       return;
     }
     await workspace.persist();
-    const document = await request<{ source: string; path: string; blobSha: string }>(
-      "/document" + query({ ...snapshot, path: file }),
-    );
+    const [document, manifest] = await Promise.all([
+      request<{ source: string; path: string; blobSha: string }>(
+        "/document" + query({ ...selected, path: file }),
+      ),
+      request<TaxonomySnapshot>("/manifest" + query({ ...selected })),
+    ]);
+    const metadata = parseDraft(document.source).data;
+    if (intent === "drafts" && !metadata.draft)
+      throw new Error("公開済みの原稿です。「既存記事を改稿」から開いてください。");
+    if (intent === "revise" && metadata.draft)
+      throw new Error("下書きの原稿です。「下書きの続き」から開いてください。");
     let opened: LocalDraft = {
       id: crypto.randomUUID(),
       source: updateDraft(document.source, { draft: true }),
       path: file,
-      sourceBranch: snapshot.branch,
-      workingBranch: snapshot.branch.startsWith("content/") ? snapshot.branch : "",
-      baseCommit: snapshot.commit,
+      sourceBranch: source ?? selected.branch,
+      workingBranch: selected.branch.startsWith("content/") ? selected.branch : "",
+      baseCommit: selected.commit,
+      baseSource: document.source,
+      registrySnapshot: manifest,
       savedAt: new Date().toISOString(),
       producer: "mixed",
     };
+    let detachPrivateState = localOnly;
     try {
-      const remote = await findMediaSnapshot(opened);
+      let restoredFrom = opened;
+      let remote = await findMediaSnapshot(restoredFrom);
+      if (!remote && source?.startsWith("content/") && source !== selected.branch) {
+        // A new Git branch has no private draft yet. Copy the source branch's local cache,
+        // then detach its IDs so later sync/rejection cannot mutate the original draft.
+        restoredFrom = { ...opened, sourceBranch: source, workingBranch: source };
+        remote = await findMediaSnapshot(restoredFrom);
+        detachPrivateState = true;
+      }
       if (remote) {
-        const restored = await restoreMediaSnapshot(opened, remote);
-        opened = restored.draft;
+        const restored = await restoreMediaSnapshot(restoredFrom, remote);
+        opened = {
+          ...restored.draft,
+          sourceBranch: opened.sourceBranch,
+          workingBranch: opened.workingBranch,
+        };
+        if (remote.draft.review)
+          opened = {
+            ...opened,
+            annotations: validateReviewComments(
+              remote.draft.review.comments,
+              parseDraft(opened.source).data.id,
+            ),
+            reviewRevision: remote.draft.review.revision,
+          };
         if (restored.missing.length) {
           onError("本文は読み込みましたが、未取得の画像があります: " + restored.missing.join("、"));
         }
@@ -155,16 +297,33 @@ export function useGitWorkspace(
           errorLabel(error instanceof Error ? error.message : "MEDIA_UNAVAILABLE"),
       );
     }
+    if (detachPrivateState) {
+      const {
+        remoteDraftId: _remoteDraftId,
+        remoteRevision: _remoteRevision,
+        reviewRevision: _reviewRevision,
+        syncedCommit: _syncedCommit,
+        syncedSource: _syncedSource,
+        ...local
+      } = opened;
+      opened = { ...local, ...(localOnly ? { workingBranch: "" } : {}) };
+      // restoreMediaSnapshot wrote new media records under opened.id, never under the source ID.
+      for (const item of await localMedia(opened.id)) {
+        const { remoteId: _remoteId, ...image } = item;
+        await saveLocalMedia(image);
+      }
+    }
     // 取得を待つ間に入力された内容も保存してから画面を切り替える。
     await workspace.openLocal(opened);
-    onNotice("元の記事は変更していません。編集は作業ブランチに保存します。");
+    setRepositoryManifest(manifest);
   }
 
   async function saveGit() {
     if (issues.length) {
       throw new Error("入力の確認が必要です: " + issues.join(" / "));
     }
-    let submitted = { ...draft };
+    let submitted = { ...workspace.current.current };
+    await workspace.persist("Git保存前");
     if (!submitted.baseCommit) {
       const selected = await request<GitSnapshot>("/snapshot" + query({ branch: sourceBranch }));
       submitted.baseCommit = selected.commit;
@@ -192,32 +351,86 @@ export function useGitWorkspace(
       );
     }
     try {
-      const result = await request<{ commit: string; blobSha: string }>("/save", {
-        method: "POST",
-        body: {
-          branch: submitted.workingBranch,
-          expectedHead: submitted.baseCommit,
-          path: submitted.path,
-          source: submitted.source,
-          producer: submitted.producer,
+      if (submitted.pendingRegistryChanges) {
+        const manifest = await request<TaxonomySnapshot>(
+          "/manifest" + query({ branch: submitted.workingBranch, commit: submitted.baseCommit }),
+        );
+        submitted = {
+          ...submitted,
+          pendingRegistryChanges: reconcileRegistryChanges(
+            manifest,
+            submitted.pendingRegistryChanges,
+          ),
+        };
+      }
+      const result = await request<{ commit: string; blobSha: string; manifest: TaxonomySnapshot }>(
+        "/save",
+        {
+          method: "POST",
+          body: {
+            branch: submitted.workingBranch,
+            expectedHead: submitted.baseCommit,
+            path: submitted.path,
+            source: submitted.source,
+            producer: submitted.producer,
+            ...(submitted.pendingRegistryChanges
+              ? { registryChanges: submitted.pendingRegistryChanges }
+              : {}),
+          },
         },
-      });
-      const updated = mergeGitSaveResult(workspace.current.current, submitted, result.commit);
-      workspace.setDraft((current) => (current.id === submitted.id ? updated : current));
-      await saveLocalDraft({ ...updated, savedAt: new Date().toISOString() });
-      onNotice("Gitへ保存しました。 " + result.commit.slice(0, 8));
-      setConflict(null);
+      );
+      let registryConflict = false;
+      const merge = (latest: LocalDraft): LocalDraft => {
+        const accepted = acceptGitSaveResult(latest, submitted, result.commit, result.manifest);
+        registryConflict ||= accepted.registryConflict;
+        return { ...accepted.draft, savedAt: new Date().toISOString() };
+      };
+      // Later autosaves and navigation saves must capture the successful commit too.
+      if (workspace.current.current.id === submitted.id) {
+        workspace.setDraft((current) => (current.id === submitted.id ? merge(current) : current));
+      }
+      // A response for a closed document must preserve edits made after submission.
+      await updateLocalDraft(submitted.id, submitted, (stored) =>
+        merge(workspace.current.current.id === submitted.id ? workspace.current.current : stored),
+      );
+      if (workspace.current.current.id === submitted.id) {
+        workspace.setDraft((current) => (current.id === submitted.id ? merge(current) : current));
+      }
+      if (registryConflict && workspace.current.current.id === submitted.id) {
+        setConflict({
+          base: submitted.source,
+          remote: submitted.source,
+          head: { branch: submitted.workingBranch, commit: result.commit },
+          manifest: result.manifest,
+          draftId: submitted.id,
+        });
+        onNotice("Gitへの保存は完了しました。保存中に変更した連載設定を比較してください。");
+      } else {
+        onNotice("Gitへ保存しました。 " + result.commit.slice(0, 8));
+        setConflict(null);
+      }
     } catch (error) {
-      if (error instanceof EditorApiError && error.code === "GIT_CONFLICT") {
+      if (error instanceof Error && ["GIT_CONFLICT", "SERIES_CONFLICT"].includes(error.message)) {
         const latest = await request<GitSnapshot>(
           "/snapshot" + query({ branch: submitted.workingBranch }),
         );
         const remote = await request<{ source: string }>(
           "/document" + query({ ...latest, path: submitted.path }),
-        );
+        ).catch((failure: unknown) => {
+          if (failure instanceof EditorApiError && failure.code === "GIT_NOT_FOUND")
+            return { source: "" };
+          throw failure;
+        });
         // 競合は上書きで解決しない。手元のMDXは維持し、比較対象だけを表示する。
         if (workspace.current.current.id === submitted.id) {
-          setConflict(remote.source);
+          const manifest = await request<TaxonomySnapshot>("/manifest" + query({ ...latest }));
+          setConflict({
+            base: submitted.baseSource ?? submitted.syncedSource ?? "",
+            remote: remote.source,
+            head: latest,
+            manifest,
+            draftId: submitted.id,
+          });
         }
       }
       throw error;
@@ -225,7 +438,12 @@ export function useGitWorkspace(
   }
 
   async function createPR() {
-    if (!draft.workingBranch || !draft.syncedCommit || draft.syncedSource !== draft.source) {
+    if (
+      !draft.workingBranch ||
+      !draft.syncedCommit ||
+      draft.syncedSource !== draft.source ||
+      draft.pendingRegistryChanges
+    ) {
       throw new Error("最新の変更を先にGitへ保存してください。");
     }
     const metadata = parseDraft(draft.source).data;
@@ -238,8 +456,50 @@ export function useGitWorkspace(
         contentId: metadata.id,
       },
     });
-    setPr(result);
+    if (workspace.current.current.id === draft.id) setPr(result);
     onNotice("Draft PR #" + result.number + " を用意しました。AIは同じブランチから続けられます。");
+  }
+
+  async function resolveConflict(source: string, registry: "local" | "remote") {
+    if (!conflict || workspace.current.current.id !== conflict.draftId) return;
+    parseDraft(source);
+    await workspace.persist("競合の解決前");
+    if (workspace.current.current.id !== conflict.draftId) return;
+    workspace.setDraft((current) => {
+      let pending = registry === "remote" ? undefined : current.pendingRegistryChanges;
+      if (pending?.series && pending.seriesBase) {
+        const remote = conflict.manifest.seriesRegistry ?? {
+          schemaVersion: 1 as const,
+          series: [],
+        };
+        const merged = new Map(remote.series.map((entry) => [entry.id, entry]));
+        const before = new Map(pending.seriesBase.series.map((entry) => [entry.id, entry]));
+        const after = new Map(pending.series.series.map((entry) => [entry.id, entry]));
+        // Explicit local preference applies only the edited series; unseen remote series survive.
+        for (const id of new Set([...before.keys(), ...after.keys()])) {
+          if (JSON.stringify(before.get(id)) === JSON.stringify(after.get(id))) continue;
+          const entry = after.get(id);
+          if (entry) merged.set(id, entry);
+          else merged.delete(id);
+        }
+        pending = {
+          ...pending,
+          series: { schemaVersion: 1, series: [...merged.values()] },
+          seriesBase: remote,
+        };
+      }
+      return {
+        ...current,
+        source,
+        baseCommit: conflict.head.commit,
+        baseSource: conflict.remote,
+        registrySnapshot: conflict.manifest,
+        pendingRegistryChanges:
+          registry === "remote" ? undefined : reconcileRegistryChanges(conflict.manifest, pending),
+      };
+    });
+    setConflict(null);
+    onNotice("比較結果を原稿へ反映しました。確認してGitへ保存してください。");
   }
 
   return {
@@ -250,11 +510,16 @@ export function useGitWorkspace(
     snapshot,
     documents,
     taxonomy,
+    baseTaxonomy,
+    repositoryManifest,
     issues,
     pr,
     conflict,
+    resolveConflict,
     logout,
     readBranch,
+    prepareWorkspace,
+    prepareLocalWorkspace,
     openDocument,
     saveGit,
     createPR,

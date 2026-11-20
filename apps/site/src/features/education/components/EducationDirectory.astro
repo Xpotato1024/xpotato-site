@@ -1,0 +1,100 @@
+---
+import { getLiveContentCatalog } from "../../discovery/model/live-catalog.js";
+import { getPublicSeries } from "../../series/model/live-series.js";
+import { seriesStatusLabel } from "../../series/model/labels.js";
+import { deriveEducationDirectory } from "../model/directory.js";
+
+const [catalog, series] = await Promise.all([getLiveContentCatalog(), getPublicSeries()]);
+const subjects = deriveEducationDirectory(catalog);
+const courses = series.filter((item) => item.kind === "course");
+---
+
+<section class="education-directory" aria-label="公開された教育資料">
+  <h2>公開資料</h2>
+  {subjects.length === 0 && courses.length === 0 && <p>公開された教育資料はまだありません。</p>}
+  {courses.length > 0 && (
+    <section aria-labelledby="education-courses">
+      <h3 id="education-courses">学習コース</h3>
+      <ul>
+        {courses.map((course) => (
+          <li>
+            <h4>
+              <a href={course.route}>{course.title}</a>
+            </h4>
+            <p class="education-meta">
+              {seriesStatusLabel(course.status)} · 公開{course.entries.length}回
+            </p>
+            {course.description && <p>{course.description}</p>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+  {subjects.map(({ subject, entries }, index) => (
+    <section aria-labelledby={`education-subject-${index}`}>
+      <h3 id={`education-subject-${index}`}>{subject}</h3>
+      <ul>
+        {entries.map((entry) => (
+          <li>
+            <h4>
+              <a href={entry.route}>{entry.title}</a>
+            </h4>
+            <p>{entry.description}</p>
+            {entry.education.audience && (
+              <p class="education-meta">対象: {entry.education.audience}</p>
+            )}
+            {entry.education.prerequisites && (
+              <p class="education-meta">前提: {entry.education.prerequisites}</p>
+            )}
+            {(entry.education.goals?.length ?? 0) > 0 && (
+              <details>
+                <summary>学べること</summary>
+                <ul class="education-goals">
+                  {entry.education.goals!.map((goal) => (
+                    <li>{goal}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+  <a href="/series/">連載・学習コースの目次を見る →</a>
+</section>
+
+<style>
+  .education-directory {
+    margin-block: 2.5rem;
+  }
+  .education-directory section {
+    margin-block: 2rem;
+  }
+  .education-directory h4 {
+    margin: 0 0 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+  .education-directory ul:not(.education-goals) {
+    list-style: none;
+    padding: 0;
+  }
+  .education-directory ul:not(.education-goals) > li {
+    padding-block: 1rem;
+    border-bottom: 1px solid var(--border-divider);
+  }
+  .education-meta {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+  .education-directory summary {
+    cursor: pointer;
+    padding-block: 0.5rem;
+    min-height: var(--control-min-size);
+  }
+  .education-goals {
+    padding-inline-start: 1.5rem;
+  }
+</style>

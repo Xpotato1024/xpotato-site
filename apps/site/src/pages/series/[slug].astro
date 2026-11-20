@@ -1,0 +1,71 @@
+---
+import type { PublicSeries } from "@xpotato/portable-content/series";
+import BaseLayout from "../../shared/layouts/BaseLayout.astro";
+import { getPublicSeries } from "../../features/series/model/live-series.js";
+import {
+  seriesKindLabel,
+  seriesStatusLabel,
+  seriesLastEntryLabel,
+} from "../../features/series/model/labels.js";
+import seriesCssHref from "../../features/series/styles/series.css?url&no-inline";
+import { siteConfig } from "../../shared/lib/site-config.js";
+
+export async function getStaticPaths() {
+  return (await getPublicSeries()).map((series) => ({
+    params: { slug: series.slug },
+    props: { series },
+  }));
+}
+interface Props {
+  series: PublicSeries;
+}
+const { series } = Astro.props;
+const first = series.entries[0]!;
+const breadcrumbs = [
+  { name: "連載・学習コース", url: new URL("/series/", siteConfig.site.canonicalOrigin).href },
+  { name: series.title, url: new URL(series.route, siteConfig.site.canonicalOrigin).href },
+];
+---
+
+<BaseLayout
+  title={series.title}
+  description={
+    series.description || `${series.title}の目次。公開${series.entries.length}回を順に読めます。`
+  }
+  pageCssHrefs={[seriesCssHref]}
+  breadcrumbs={breadcrumbs}
+>
+  <main id="main-content" class="series-page">
+    <a class="series-all-link" href="/series/">
+      ← 連載・学習コース
+    </a>
+    <div class="page-heading">
+      <p class="series-meta">
+        {seriesKindLabel(series.kind)} · {seriesStatusLabel(series.status)} · 公開
+        {series.entries.length}回
+      </p>
+      <h1>{series.title}</h1>
+      {series.description && <p>{series.description}</p>}
+      <a class="series-all-link" href={first.route}>
+        第1回から読む →
+      </a>
+    </div>
+    <ol class="series-entries" aria-label={`${series.title}の目次`}>
+      {series.entries.map((entry, index) => (
+        <li>
+          <span class="series-ordinal">第{entry.ordinal}回</span>
+          <div>
+            {entry.label && <p class="series-entry-label">{entry.label}</p>}
+            <h2>
+              <a href={entry.route}>{entry.title}</a>
+            </h2>
+            <p>{entry.description}</p>
+            {index === series.entries.length - 1 && (
+              <p class="series-meta">{seriesLastEntryLabel(series.status)}</p>
+            )}
+          </div>
+        </li>
+      ))}
+    </ol>
+  </main>
+</BaseLayout>

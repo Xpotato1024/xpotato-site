@@ -1,3 +1,15 @@
+import type {
+  GitRegistrySaveInput,
+  GitRegistrySaveResult,
+  GitRegistryPullRequestInput,
+  GitPullRequestResult,
+} from "@xpotato/editor-core/git";
+
+export type RegistrySaveInput = GitRegistrySaveInput;
+export type RegistrySaveResult = GitRegistrySaveResult;
+export type RegistryPullRequestInput = GitRegistryPullRequestInput;
+export type RegistryPullRequestResult = GitPullRequestResult;
+
 export interface LoginState {
   authenticated: boolean;
   configured: boolean;
@@ -64,4 +76,13 @@ export async function fetchPrivateMedia(id: string): Promise<Blob> {
   const response = await fetch(mediaUrl(id), { credentials: "same-origin", cache: "no-store" });
   if (!response.ok) throw new EditorApiError("MEDIA_LOAD_FAILED", response.status);
   return response.blob();
+}
+export function saveRegistryChanges(input: RegistrySaveInput): Promise<RegistrySaveResult> {
+  return request("/registry/save", { method: "POST", body: input });
+}
+
+export function createRegistryPullRequest(
+  input: RegistryPullRequestInput,
+): Promise<RegistryPullRequestResult> {
+  return request("/registry/pull-request", { method: "POST", body: input });
 }

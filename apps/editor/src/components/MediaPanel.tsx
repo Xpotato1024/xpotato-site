@@ -5,7 +5,7 @@ import {
   type RemoteMediaSnapshot,
 } from "../data/media-sync.js";
 import { parseDraft } from "@xpotato/editor-core/draft";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mediaPolicy, type MediaKind } from "@xpotato/editor-core/policy";
 import { optimizeImage } from "../media/optimize.js";
 import {
@@ -19,7 +19,9 @@ import { request } from "../data/api.js";
 interface Props {
   draft: LocalDraft;
   authenticated: boolean;
-  onInsert: (assetId: string, alt: string) => void;
+  onInsert: (assetId: string, alt: string, caption?: string) => void;
+  onHero?: (assetId: string) => void;
+  onGallery?: (items: { asset: string; alt: string; caption?: string }[]) => void;
   onDraft: (value: LocalDraft) => void;
   onError: (message: string) => void;
 }
@@ -36,7 +38,24 @@ function Thumbnail({ media }: { media: LocalMedia }) {
   }, [media.blob]);
   return <img src={url} alt={media.assetId} loading="lazy" />;
 }
-export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }: Props) {
+export function MediaPanel({
+  draft,
+  authenticated,
+  onInsert,
+  onHero,
+  onGallery,
+  onDraft,
+  onError,
+}: Props) {
+  const canSync = authenticated && Boolean(draft.workingBranch && draft.baseCommit);
+  const syncUnavailableMessage = authenticated
+    ? "同期するには、下書きの開始画面で作業ブランチを選んでください。"
+    : "同期するには、GitHubに接続してください。";
+  const [selected, setSelected] = useState<string[]>([]);
+  const altInputs = useRef(new Map<string, HTMLInputElement>());
+  const captionInputs = useRef(new Map<string, HTMLTextAreaElement>());
+  const mediaWrites = useRef<Promise<void>>(Promise.resolve());
+  const [invalidAlt, setInvalidAlt] = useState<string | null>(null);
   const [items, setItems] = useState<LocalMedia[]>([]),
     [kind, setKind] = useState<MediaKind>("photo"),
     [busy, setBusy] = useState(false),
@@ -52,6 +71,53 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
   useEffect(() => {
     void reload();
   }, [draft.id]);
+  function updateMedia(
+    id: string,
+    fields: Partial<Pick<LocalMedia, "alt" | "caption" | "remoteId">>,
+  ) {
+    const next = mediaWrites.current
+      .catch(() => {})
+      .then(async () => {
+        const latest = (await localMedia(draft.id)).find((item) => item.id === id);
+        if (!latest) throw Error("MEDIA_NOT_FOUND");
+        await saveLocalMedia({ ...latest, ...fields });
+      });
+    mediaWrites.current = next;
+    return next;
+  }
+  async function presentation(
+    media: LocalMedia,
+    fields: Partial<Pick<LocalMedia, "alt" | "caption">>,
+  ) {
+    try {
+      await updateMedia(media.id, fields);
+      await reload();
+    } catch {
+      onError("画像の情報を保存できませんでした。");
+    }
+  }
+  function insertionValues(media: LocalMedia[]) {
+    const values = media.map((item) => ({
+      id: item.id,
+      asset: item.assetId,
+      alt: (altInputs.current.get(item.id)?.value ?? item.alt ?? "").trim(),
+      caption: (captionInputs.current.get(item.id)?.value ?? item.caption ?? "").trim(),
+    }));
+    const missing = values.find((item) => !item.alt);
+    if (missing) {
+      setInvalidAlt(missing.id);
+      onError("代替テキストを入力してから、画像を挿入してください。");
+      altInputs.current.get(missing.id)?.focus();
+      return null;
+    }
+    setInvalidAlt(null);
+    onError("");
+    return values.map(({ asset, alt, caption }) => ({
+      asset,
+      alt,
+      ...(caption ? { caption } : {}),
+    }));
+  }
   async function add(files: FileList | null) {
     if (!files?.length) return;
     setBusy(true);
@@ -84,10 +150,12 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
     }
   }
   async function sync(media: LocalMedia) {
+    if (!canSync) {
+      onError(syncUnavailableMessage);
+      return;
+    }
     setBusy(true);
     try {
-      if (!draft.workingBranch || !draft.baseCommit)
-        throw Error("先に編集ブランチを作成して、記事をGitへ保存してください。");
       const remote = await request<{ id: string; revision: number }>("/drafts", {
         method: "POST",
         body: {
@@ -118,7 +186,7 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
         method: "PUT",
         blob: media.blob,
       });
-      await saveLocalMedia({ ...media, remoteId: asset.id });
+      await updateMedia(media.id, { remoteId: asset.id });
       onDraft({ ...draft, remoteDraftId: remote.id, remoteRevision: remote.revision + 1 });
       setQuota(await request("/quota"));
       await reload();
@@ -130,6 +198,10 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
     }
   }
   async function restoreRemote() {
+    if (!canSync) {
+      onError(syncUnavailableMessage);
+      return;
+    }
     setBusy(true);
     try {
       const remote = await findMediaSnapshot(draft);
@@ -152,6 +224,10 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
     }
   }
   async function restoreRejected(id: string) {
+    if (!canSync) {
+      onError(syncUnavailableMessage);
+      return;
+    }
     setBusy(true);
     try {
       const remote = await findMediaSnapshot(draft);
@@ -173,7 +249,7 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
     }
   }
   async function remove(media: LocalMedia) {
-    if (media.remoteId) {
+    if (media.remoteId && canSync) {
       try {
         const snapshot = await request<{ draft: { revision: number } }>(
           "/draft?id=" + encodeURIComponent(draft.remoteDraftId ?? draft.id),
@@ -194,7 +270,7 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
     }
     await deleteLocalMedia(media.id);
     await reload();
-    if (authenticated) setRemoteSnapshot(await findMediaSnapshot(draft));
+    if (canSync) setRemoteSnapshot(await findMediaSnapshot(draft));
   }
   return (
     <section className="media-panel" aria-label="画像とGIF">
@@ -203,9 +279,10 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
         <span>{items.length}点</span>
       </div>
       <p className="muted">画像は先に端末内で処理します。同期先は非公開の下書き領域です。</p>
-      <button type="button" disabled={!authenticated || busy} onClick={() => void restoreRemote()}>
+      <button type="button" disabled={!canSync || busy} onClick={() => void restoreRemote()}>
         別の端末で同期した画像を取得
       </button>
+      {authenticated && !canSync && <p className="muted small">{syncUnavailableMessage}</p>}
       <label>
         画像の用途
         <select value={kind} onChange={(event) => setKind(event.target.value as MediaKind)}>
@@ -246,9 +323,67 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
         </label>
       </details>
       {busy && <p role="status">画像を処理しています…</p>}
+      {onGallery && selected.length > 1 && (
+        <button
+          type="button"
+          className="primary"
+          onClick={() => {
+            const values = insertionValues(items.filter((item) => selected.includes(item.id)));
+            if (values) onGallery(values);
+          }}
+        >
+          選択した画像をギャラリーへ
+        </button>
+      )}
       {items.map((media) => (
         <article className="media-card" key={media.id}>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={selected.includes(media.id)}
+              onChange={(event) =>
+                setSelected(
+                  event.target.checked
+                    ? [...selected, media.id]
+                    : selected.filter((id) => id !== media.id),
+                )
+              }
+            />
+            {media.originalName || media.assetId}
+          </label>
           <Thumbnail media={media} />
+          <label>
+            代替テキスト
+            <input
+              ref={(input) => {
+                if (input) altInputs.current.set(media.id, input);
+                else altInputs.current.delete(media.id);
+              }}
+              defaultValue={media.alt ?? ""}
+              placeholder="画像から伝えたい内容"
+              required
+              aria-invalid={invalidAlt === media.id || undefined}
+              onChange={(event) => {
+                if (invalidAlt === media.id && event.currentTarget.value.trim()) {
+                  setInvalidAlt(null);
+                  onError("");
+                }
+              }}
+              onBlur={(event) => void presentation(media, { alt: event.target.value })}
+            />
+          </label>
+          <label>
+            キャプション
+            <textarea
+              ref={(input) => {
+                if (input) captionInputs.current.set(media.id, input);
+                else captionInputs.current.delete(media.id);
+              }}
+              rows={2}
+              defaultValue={media.caption ?? ""}
+              onBlur={(event) => void presentation(media, { caption: event.target.value })}
+            />
+          </label>
           <div>
             <strong>{media.assetId}</strong>
             <p>
@@ -260,12 +395,24 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
             </p>
           </div>
           <div className="media-actions">
-            <button type="button" onClick={() => onInsert(media.assetId, "画像の説明")}>
-              本文に挿入
-            </button>
             <button
               type="button"
-              disabled={!authenticated || busy || Boolean(media.remoteId)}
+              onClick={() => {
+                const values = insertionValues([media]);
+                const value = values?.[0];
+                if (value) onInsert(value.asset, value.alt, value.caption);
+              }}
+            >
+              本文に挿入
+            </button>
+            {onHero && (
+              <button type="button" onClick={() => onHero(media.assetId)}>
+                アイキャッチに設定
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={!canSync || busy || Boolean(media.remoteId)}
               onClick={() => void sync(media)}
             >
               画像を同期
@@ -284,7 +431,11 @@ export function MediaPanel({ draft, authenticated, onInsert, onDraft, onError }:
             .map((item) => (
               <p key={item.id}>
                 {item.assetId}{" "}
-                <button type="button" disabled={busy} onClick={() => void restoreRejected(item.id)}>
+                <button
+                  type="button"
+                  disabled={!canSync || busy}
+                  onClick={() => void restoreRejected(item.id)}
+                >
                   復元
                 </button>
               </p>

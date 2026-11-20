@@ -1,0 +1,401 @@
+@reference "../../styles.css";
+
+.editor-scene {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.workspace-header .editor-brand {
+  display: inline;
+}
+.connection-link {
+  @apply cms-quiet-button;
+  margin-left: auto;
+}
+.workspace-navigation {
+  display: flex;
+  flex: none;
+  gap: 0.25rem;
+  padding: 0.35rem max(0.7rem, calc((100vw - 1120px) / 2));
+  border-bottom: 1px solid var(--border-divider);
+  background: var(--surface-control);
+}
+.workspace-navigation button {
+  @apply cms-quiet-button;
+  gap: 0.5rem;
+}
+.workspace-navigation button[aria-current="page"] {
+  color: var(--accent);
+  background: var(--cms-accent-soft);
+}
+.workspace-navigation svg,
+.workspace-screen svg {
+  flex: none;
+  width: var(--cms-icon-size);
+  height: var(--cms-icon-size);
+}
+.workspace-screen {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 1.5rem clamp(1rem, 4vw, 3.5rem) max(3rem, env(safe-area-inset-bottom));
+  scroll-padding-block: 1rem 2rem;
+}
+.workspace-screen > div,
+.workspace-screen > section {
+  max-width: 1080px;
+  margin-inline: auto;
+}
+.workspace-page-heading {
+  margin-bottom: 1.25rem;
+}
+.workspace-page-heading h1 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.4;
+  margin: 0 0 0.6rem;
+}
+.entry-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.entry-cards button {
+  display: grid;
+  grid-template-columns: var(--cms-icon-size) minmax(0, 1fr) var(--cms-icon-size);
+  gap: 0.75rem;
+  min-height: 64px;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+.entry-cards button > svg:first-child {
+  color: var(--text-muted);
+}
+.entry-cards button strong {
+  font-weight: 500;
+  font-size: var(--text-cms-control);
+}
+.entry-cards button > svg:last-child {
+  color: var(--text-muted);
+}
+.resume-draft {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 0.8rem;
+  margin: 1.2rem 0;
+  padding: 1rem;
+  background: var(--surface-control);
+  border-color: var(--border-divider);
+}
+.resume-draft span {
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+  text-align: left;
+}
+.resume-draft small {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+.resume-draft strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.resume-draft > svg:last-child {
+  margin-left: auto;
+}
+.sample-entry {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border-divider);
+  padding-top: 1rem;
+}
+.sample-entry > span,
+.sample-entry > small {
+  color: var(--text-muted);
+  font-size: var(--text-cms-label);
+}
+.sample-entry button {
+  flex: none;
+}
+.start-controls,
+.registry-series-controls {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.document-kind-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+.document-kind-grid button {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  justify-items: start;
+  text-align: left;
+  gap: 0.2rem 0.6rem;
+  padding: 1rem;
+}
+.document-kind-grid button svg {
+  grid-row: 1 / 3;
+  align-self: center;
+  color: var(--accent);
+}
+.document-kind-grid button strong {
+  font-size: var(--text-cms-control);
+  font-weight: 500;
+}
+.document-kind-grid button span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.start-selection {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border-divider);
+  padding-top: 1.2rem;
+}
+.start-selection h2 {
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+.branch-setup {
+  border: 1px solid var(--border-divider);
+  border-radius: var(--cms-control-radius);
+  padding: 1rem;
+  margin: 0 0 1rem;
+  min-width: 0;
+}
+.branch-setup legend {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 0.35rem;
+  font-size: 0.85rem;
+}
+.branch-setup legend svg {
+  width: 18px;
+  height: 18px;
+}
+.branch-options {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+.branch-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+.branch-fields p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.branch-setup > p {
+  margin: 0;
+}
+.branch-setup > a {
+  font-size: 0.8rem;
+  display: inline-block;
+  padding-top: 0.6rem;
+}
+.start-editing {
+  min-width: 180px;
+  margin-top: 0.7rem;
+  gap: 1rem;
+}
+.catalog-filter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 220px);
+  gap: 0.6rem;
+  margin-bottom: 1.3rem;
+}
+.catalog-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.catalog-section-heading h2,
+.repository-panel h2 {
+  font-size: 1rem;
+}
+.repository-source {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-end;
+}
+.repository-source label {
+  flex: 1;
+  min-width: 0;
+}
+.repository-source > button {
+  flex: none;
+  width: auto;
+}
+.draft-list {
+  margin-bottom: 1rem;
+}
+.draft-list > button[aria-pressed="true"] {
+  background: var(--cms-accent-soft);
+  border-color: var(--accent);
+}
+.draft-list > button > span {
+  overflow-wrap: anywhere;
+}
+.registry-workplace {
+  border-bottom: 1px solid var(--border-divider);
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.2rem;
+}
+.registry-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+.registry-status > span {
+  display: grid;
+  min-width: 0;
+}
+.registry-status strong {
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+.registry-status small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.registry-status > button {
+  flex: none;
+}
+.registry-save-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+.editor-tabs button {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  justify-content: center;
+}
+.editing-main {
+  scroll-padding-block: calc(var(--editor-toolbar-height, 56px) + 12px) 20px;
+}
+.inspector-body {
+  scroll-padding-block: 12px 20px;
+}
+@media (max-width: 800px) {
+  .workspace-screen {
+    padding: 1.3rem 0.9rem 2rem;
+  }
+  .workspace-page-heading {
+    margin-bottom: 1.2rem;
+  }
+  .workspace-page-heading h1 {
+    font-size: 1.5rem;
+  }
+  .workspace-navigation {
+    justify-content: space-between;
+    gap: 0;
+    padding: 0.15rem 0.45rem;
+  }
+  .workspace-navigation button {
+    flex: 1;
+    min-width: 0;
+    padding: 0.35rem 0.5rem;
+    font-size: var(--text-cms-label);
+  }
+  .entry-cards {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .sample-entry {
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+  }
+  .document-kind-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .document-kind-grid button {
+    padding: 0.8rem 0.6rem;
+    grid-template-columns: var(--cms-icon-size) 1fr;
+    gap: 0.2rem 0.4rem;
+  }
+  .branch-fields {
+    grid-template-columns: 1fr;
+  }
+  .branch-options {
+    gap: 0.2rem 0.7rem;
+  }
+  .catalog-filter {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .workbench-toolbar .view-buttons {
+    display: none;
+  }
+  .workbench-toolbar {
+    justify-content: flex-start;
+    min-height: 52px;
+    padding: 0.125rem 0.375rem;
+  }
+  .editor-tabs {
+    margin-left: auto;
+    padding: 2px;
+    gap: 1px;
+    border-radius: var(--cms-control-radius);
+  }
+  .editor-tabs button {
+    flex-direction: column;
+    gap: 1px;
+    min-width: 58px;
+    min-height: var(--control-min-size);
+    padding: 0.125rem 0.375rem;
+    font-size: 0.75rem;
+    line-height: 1.25;
+  }
+  .editor-tabs button svg {
+    width: var(--cms-icon-size);
+    height: var(--cms-icon-size);
+  }
+  .history-buttons {
+    gap: 0;
+  }
+  .document-heading {
+    margin-bottom: 1rem;
+  }
+  .title-label textarea {
+    padding-block: 0.3rem;
+  }
+  html[data-editor-keyboard="true"] .workspace-rail {
+    display: none;
+  }
+  html[data-editor-keyboard="true"] .editor-workspace {
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "canvas";
+  }
+  html[data-editor-keyboard="true"] .editor-workspace.has-panel,
+  html[data-editor-keyboard="true"] .editor-workspace.has-page {
+    grid-template-areas: "inspector";
+  }
+  html[data-editor-keyboard="true"] .workspace-navigation {
+    display: none;
+  }
+}

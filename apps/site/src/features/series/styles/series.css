@@ -1,0 +1,63 @@
+@import "./series-navigation.css";
+
+.series-page {
+  max-width: 70rem;
+}
+.series-page .page-heading {
+  display: grid;
+  gap: 1rem;
+  margin-block: 1.5rem 2.5rem;
+}
+.series-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 1.5rem;
+}
+.series-card {
+  padding-block: 1.5rem;
+  border-top: 1px solid var(--border-divider);
+  display: grid;
+  gap: 0.65rem;
+  overflow-wrap: anywhere;
+}
+.series-card h2 {
+  font-size: 1.5rem;
+}
+.series-entries {
+  padding: 0;
+  margin-block: 2rem;
+  list-style: none;
+}
+.series-entries li {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: 1.25rem;
+  padding-block: 1.5rem;
+  border-top: 1px solid var(--border-divider);
+}
+.series-entries h2 {
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+.series-entries p,
+.series-entries a {
+  overflow-wrap: anywhere;
+}
+.series-ordinal {
+  color: var(--accent);
+  font: 0.85rem/1.8 var(--font-meta);
+}
+.series-entry-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+@media (max-width: 40rem) {
+  .series-entries li {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}

@@ -1,66 +1,60 @@
-import type { LoginState } from "../data/api.js";
-
+import { WorkspaceIcon } from "./WorkspaceIcon.js";
 interface Props {
   online: boolean;
   localStatus: string;
-  auth: LoginState;
+  menuOpen: boolean;
   onToggleNavigation: () => void;
-  onLogout: () => void;
-  onUnavailable: () => void;
+  onWorkflow: () => void;
+  onMenu: () => void;
 }
-
 export function EditorHeader({
   online,
   localStatus,
-  auth,
+  menuOpen,
   onToggleNavigation,
-  onLogout,
-  onUnavailable,
+  onWorkflow,
+  onMenu,
 }: Props) {
+  const status = online ? localStatus : "オフライン · " + localStatus;
   return (
     <header className="editor-header">
       <button
         type="button"
-        className="mobile-nav"
-        aria-label="下書き一覧を開く"
+        className="brand-button"
         onClick={onToggleNavigation}
+        aria-label="ホームに戻る"
       >
-        ☰
-      </button>
-      <a className="editor-brand" href="/editor/">
-        <span className="brand-mark">X</span>
-        <span>
-          Xpotato <strong>Editor</strong>
+        <WorkspaceIcon name="back" />
+        <span className="editor-brand">
+          <span className="brand-mark">X</span>potato
         </span>
-      </a>
-      <div className="save-state">
-        <span className={"status-dot " + (online ? "online" : "offline")} />
-        {online ? localStatus : "オフライン · " + localStatus}
-      </div>
-      <div className="auth-control">
-        {auth.authenticated ? (
-          <>
-            <span>{auth.user}</span>
-            <button type="button" onClick={onLogout}>
-              切断
-            </button>
-          </>
-        ) : (
-          <a
-            className="button"
-            href="/editor-api/auth/start"
-            aria-disabled={!auth.configured}
-            onClick={(event) => {
-              if (!auth.configured) {
-                event.preventDefault();
-                onUnavailable();
-              }
-            }}
-          >
-            GitHubと接続
-          </a>
-        )}
-      </div>
+        <span className="mobile-library-label">ホーム</span>
+      </button>
+      <button
+        type="button"
+        className="save-state-button"
+        onClick={onWorkflow}
+        aria-label="保存と確認を開く"
+        title={status}
+      >
+        <span className="save-state" role="status">
+          <span className={"status-dot " + (online ? "online" : "offline")} />
+          <span className="save-state-full">{status}</span>
+          <span className="save-state-compact" aria-hidden="true">
+            {localStatus.includes("保存済み") ? "保存済み" : localStatus}
+          </span>
+        </span>
+      </button>
+      <button
+        type="button"
+        className="workspace-menu-button"
+        aria-label="記事メニューを開く"
+        aria-expanded={menuOpen}
+        aria-controls={menuOpen ? "workspace-panel" : undefined}
+        onClick={onMenu}
+      >
+        <WorkspaceIcon name="more" />
+      </button>
     </header>
   );
 }

@@ -31,8 +31,12 @@ describe("article style boundaries", () => {
     const css = await get("../styles/article-structure.css");
     for (const rule of css.split("}").filter((s) => s.includes(".prose > h")))
       expect(rule).not.toMatch(/font-(?:family|size|weight)|line-height|letter-spacing/u);
-    const modules = await get("../styles/article-modules.css");
-    const selectors = proseSelectors(modules);
+    const modules = await Promise.all(
+      ["article-modules.css", "article-gallery.css", "article-diagnostics.css"].map((file) =>
+        get(`../styles/${file}`),
+      ),
+    );
+    const selectors = modules.flatMap(proseSelectors);
     expect(selectors.length).toBeGreaterThan(10);
     for (const selector of selectors)
       expect(selector).toMatch(/:not\(:where\(\[data-bt\],\s*\[data-bt\] \*\)\)/u);

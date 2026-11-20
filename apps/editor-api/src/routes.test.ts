@@ -3,6 +3,7 @@ import { GitRepository } from "@xpotato/editor-core/git";
 import { createHandler } from "./worker.js";
 import { MemoryBucket } from "./test-bucket.js";
 import { APIError, type Environment, type Session } from "./types.js";
+import { seal } from "./auth.js";
 
 const identity: Session = {
   userId: "190472511",
@@ -33,9 +34,12 @@ describe("API routing preserves the authorization and failure boundary", () => {
     ["GET", "/branches"],
     ["POST", "/branch"],
     ["POST", "/save"],
+    ["POST", "/registry/save"],
+    ["POST", "/registry/pull-request"],
     ["POST", "/pull-request"],
     ["GET", "/drafts"],
     ["POST", "/draft-state"],
+    ["POST", "/draft-review"],
     ["POST", "/media/reserve"],
     ["PUT", "/media/upload/11111111-1111-4111-8111-111111111111"],
     ["GET", "/gc/plan"],
@@ -59,6 +63,35 @@ describe("API routing preserves the authorization and failure boundary", () => {
     expect(accessedGit).toBe(false);
     expect(bucket.writes).toEqual([]);
   });
+  it.each(["/registry/save", "/registry/pull-request"])(
+    "%s requires same-origin and CSRF even with an owner session",
+    async (route) => {
+      const env = environment();
+      const cookie = "__Host-xpotato-editor=" + (await seal(identity, env.SESSION_SECRET));
+      let accessedGit = false;
+      const handle = createHandler({
+        git: () => {
+          accessedGit = true;
+          throw Error("must not run");
+        },
+      });
+      for (const [origin, csrf, expected] of [
+        ["https://attacker.example", identity.csrf, "ORIGIN_REJECTED"],
+        [env.EDITOR_ORIGIN, "incorrect", "CSRF_REJECTED"],
+      ]) {
+        const response = await handle(
+          new Request(url(route), {
+            method: "POST",
+            headers: { Cookie: cookie, Origin: origin!, "X-CSRF-Token": csrf! },
+          }),
+          env,
+        );
+        expect(response.status).toBe(403);
+        expect(await response.json()).toEqual({ error: expected });
+      }
+      expect(accessedGit).toBe(false);
+    },
+  );
   it("sanitizes asynchronously rejected Git operations instead of leaking provider details", async () => {
     const handle = createHandler({
       authenticate: async () => identity,

@@ -115,6 +115,27 @@ test("missing linked assets and published routes stop before artifact admission"
     /PUBLICATION_ROUTE_MISSING/,
   );
 });
+test("CMS font subsets remain individually bound in a plan beyond the former 512-target budget", () => {
+  const files = new Map([["/editor/index.html", Buffer.from("<h1>Editor</h1>")]]);
+  for (let i = 0; i < 371; i++)
+    files.set("/editor/fonts/font-" + i + ".woff2", Buffer.from("font subset " + i));
+  for (let i = 0; i < 305; i++)
+    files.set("/articles/example-" + i + "/index.html", Buffer.from("<h1>Article " + i + "</h1>"));
+  const plan = compilePublicationPlan({ files, sourceSha: sha, media, headers });
+  assert.equal(plan.targets.length, 677);
+  for (let i = 0; i < 371; i++) {
+    const path = "/editor/fonts/font-" + i + ".woff2",
+      bytes = files.get(path);
+    assert.deepEqual(
+      plan.targets.find((target) => target.path === path),
+      {
+        path,
+        bytes: bytes.length,
+        sha256: hashBytes(bytes),
+      },
+    );
+  }
+});
 test("readback re-observes old bytes with GET only and checks response headers", async () => {
   const body = "current",
     old = "older response is longer",
