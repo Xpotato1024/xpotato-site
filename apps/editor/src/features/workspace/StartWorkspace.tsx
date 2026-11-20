@@ -185,16 +185,20 @@ export function StartWorkspace({
           : !parsed?.data.education && collectionFromPath(item.path) === filter))
     );
   });
+  const indexByPath = new Map(
+    (git.repositoryManifest.contentIndex ?? []).map((record) => [record.path, record]),
+  );
+  const indexMissing = git.documents.length > 0 && !git.repositoryManifest.contentIndex?.length;
   const remote = git.documents
     .map((item) => ({
       ...item,
-      metadata: git.repositoryManifest.contentIndex?.find((record) => record.path === item.path),
+      metadata: indexByPath.get(item.path),
     }))
     .filter((item) => {
       const metadata = item.metadata;
       return (
         (metadata?.draft === undefined || metadata.draft === (intent === "drafts")) &&
-        matches(metadata?.title ?? item.path) &&
+        matches([metadata?.title, item.path].filter(Boolean).join(" ")) &&
         (!filter ||
           (filter === "education"
             ? metadata?.education === true
@@ -325,6 +329,11 @@ export function StartWorkspace({
               )}
               {git.snapshot?.branch === git.sourceBranch && (
                 <div className="draft-list repository-documents">
+                  {indexMissing && (
+                    <p className="small muted" role="status">
+                      記事タイトル索引を取得できていません。最新の一覧を再取得してください。
+                    </p>
+                  )}
                   {remote.map((item) => (
                     <button
                       type="button"
@@ -341,16 +350,22 @@ export function StartWorkspace({
                         setReview(false);
                       }}
                     >
-                      <strong>
-                        {item.metadata?.title ?? item.path.replace(/^content\//u, "")}
-                      </strong>
+                      <strong>{item.metadata?.title ?? "題名を取得できません"}</strong>
                       <span>
+                        {item.metadata?.education
+                          ? "教育記事"
+                          : (draftKinds.find((kind) => kind.id === item.metadata?.collection)
+                              ?.label ?? "種類未取得")}
+                        {" · "}
                         {item.metadata?.draft === undefined
-                          ? "公開状態は開く前に確認"
+                          ? "公開状態未取得"
                           : item.metadata.draft
                             ? "下書き"
                             : "公開済み"}
                       </span>
+                      {!item.metadata && (
+                        <small className="muted">{item.path.replace(/^content\//u, "")}</small>
+                      )}
                     </button>
                   ))}
                   {!remote.length && <p className="small muted">該当する原稿はありません。</p>}
