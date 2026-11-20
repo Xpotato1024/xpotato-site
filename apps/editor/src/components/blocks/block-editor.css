@@ -596,29 +596,17 @@
   gap: 0.5rem;
 }
 .cms-palette-choice {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.65rem;
-  min-width: 0;
-  text-align: left;
-  padding: 0.7rem;
-  border: 1px solid var(--border-divider);
+  @apply cms-icon-label cms-outlined-card p-3;
   background: var(--surface);
-  border-radius: var(--cms-control-radius);
 }
 .cms-palette-choice:hover {
   border-color: var(--cms-block-accent);
   background: color-mix(in srgb, var(--cms-block-accent) 5%, transparent);
 }
 .cms-palette-visual {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @apply flex shrink-0 items-center justify-center rounded-cms-control;
   width: 42px;
   height: 40px;
-  flex-shrink: 0;
-  border-radius: var(--cms-control-radius);
   background: color-mix(in srgb, var(--cms-block-accent) 8%, transparent);
   color: var(--cms-block-accent);
   font-size: 1.4rem;
@@ -1004,10 +992,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .cms-palette-choice {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.45rem;
-    padding: 0.7rem;
+    @apply flex-col items-start;
   }
   .cms-palette-visual {
     width: 100%;

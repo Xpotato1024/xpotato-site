@@ -1,3 +1,5 @@
+@reference "../styles.css";
+
 .taxonomy-manager {
   min-width: 0;
 }
@@ -46,21 +48,11 @@
   margin: 0.7rem 0 1rem;
 }
 .taxonomy-record {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding: 0.8rem;
-  border: 1px solid var(--border-divider);
-  border-radius: var(--cms-control-radius);
+  @apply cms-outlined-card flex flex-col p-3;
   overflow-wrap: anywhere;
 }
 .taxonomy-record-heading {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.3rem 0.7rem;
-  margin-bottom: 0.3rem;
+  @apply mb-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1;
 }
 .taxonomy-record-heading strong {
   font-size: 0.9rem;
