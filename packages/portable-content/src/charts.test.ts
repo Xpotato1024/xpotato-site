@@ -297,7 +297,8 @@ describe("theory formula rendering", () => {
     expect(html).toContain('data-role="formula"');
     expect(html).toContain("article-line-chart__formula-result");
     expect(html).toContain("理論式・計算条件を見る");
-    expect(html).toContain("y = x^2");
+    expect(html).toContain("<msup><mi>x</mi><mn>2</mn></msup>");
+    expect(html).toContain('<annotation data-search-exclude="true"');
     expect(html).toContain("理論（理論式の計算値）");
     expect(html).not.toContain("article-line-chart__point");
     expect(html).not.toContain("<dt>R²");
@@ -352,5 +353,44 @@ describe("theory formula rendering", () => {
     expect(() => prepareLineChart(props)).toThrow(/理論/u);
     const source = `<LineChart title="式" kind="analysis" xLabel="X" yLabel="Y" series='${props.series}' />`;
     expect(validatePortableMdx(source).some((issue) => issue.startsWith("LineChart:"))).toBe(true);
+  });
+});
+
+describe("reader-facing chart analysis", () => {
+  const measured = [{ label: "測定", points: [{ x: 0, y: 4.1 }, { x: 1, y: 6 }, { x: 2, y: 8.2 }], fit: { method: "linear" } }];
+  it("defaults to compact, static MathML and keeps raw coefficients out of the prose", () => {
+    const html = renderLineChart(input(measured));
+    expect(html).toContain("article-line-chart__analysis");
+    expect(html).toContain("<math");
+    expect(html).toContain("<mfrac>");
+    expect(html).toContain("R²");
+    expect(html).toContain("RMSE");
+    expect(html).not.toContain("計算に使った係数");
+    expect(html).not.toContain("計算座標");
+    expect(html).not.toContain("<script");
+    expect(html).not.toContain("style=");
+  });
+  it("lets the reader inspect unrounded coefficients behind a nested disclosure", () => {
+    const html = renderLineChart({ ...input(measured), analysisDisplay: "detailed" });
+    expect(html).toContain("計算の詳細");
+    expect(html).toContain("計算に使った係数（丸めなし）");
+    expect(html).toContain("計算座標");
+    expect(html).toMatch(/<details class="article-line-chart__diagnostics">/u);
+  });
+  it("hides only analysis HTML while keeping the graph and data table", () => {
+    const html = renderLineChart({ ...input(measured), analysisDisplay: "hidden" });
+    expect(html).not.toContain("article-line-chart__analysis");
+    expect(html).not.toContain("article-line-chart__fit-result");
+    expect(html).not.toContain("近似式・計算条件を見る");
+    expect(html).toContain("article-line-chart__fit");
+    expect(html).toContain("<td>4.1</td>");
+    expect(html).toContain("データ表を見る");
+  });
+  it("does not mutate stored points in any display mode", () => {
+    const source = input(measured);
+    for (const analysisDisplay of ["concise", "detailed", "hidden"] as const) {
+      renderLineChart({ ...source, analysisDisplay });
+      expect(JSON.parse(source.series)).toEqual(measured);
+    }
   });
 });

@@ -202,9 +202,10 @@ describe("public Astro numeric charts and CMS preview", () => {
       1,
     );
     expect(classCount(html, "article-line-chart__fit-result")).toBe(1);
-    expect(html).toContain("4点（この系列の全測定点）");
-    expect(html).toContain("R²（元のYで算出）</dt><dd>1</dd>");
-    expect(html).toContain("外挿なし");
+    expect(html).toContain("article-line-chart__math-line");
+    expect(html).toContain("<math");
+    expect(html).toContain("<dt>R²</dt><dd>1</dd>");
+    expect(html).toContain("article-line-chart__fit");
     expect(html).not.toMatch(/<script|<canvas|astro-island|NaN|Infinity/u);
     expect(JSON.parse(input.series)[0].points).toEqual(observed.points);
   });
@@ -244,7 +245,7 @@ describe("public Astro numeric charts and CMS preview", () => {
     expect(classCount(html, "article-line-chart__point", "article-line-chart__plot")).toBe(4);
     expect(classCount(html, "article-line-chart__formula-result")).toBe(1);
     expect(classCount(html, "article-line-chart__range-note")).toBe(1);
-    expect(html).toContain("y = 0.5*x^2");
+    expect(html).toContain("<msup><mi>x</mi><mn>2</mn></msup>");
     expect(html).toContain("理論（理論式の計算値）");
     expect(html).toContain("<td>4</td><td>8</td>");
     expect(html).toContain("<td>4</td><td>8.2</td>");

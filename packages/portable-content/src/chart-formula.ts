@@ -732,7 +732,7 @@ export function chartFormulaToTex(expression: string): string {
         exp: "exp", ln: "ln", log: "log", log10: "log_{10}",
         sqrt: "sqrt", abs: "abs",
       };
-      return String.raw`\${name[node.name]}\left(${argument}\right)`;
+      return "\\" + name[node.name] + String.raw`\left(${argument}\right)`;
     }
     const { left, right, operator } = node;
     if (operator === "/") return String.raw`\frac{${tex(left)}}{${tex(right)}}`;

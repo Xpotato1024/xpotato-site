@@ -273,9 +273,9 @@ try {
   await chart.getByText("近似式・計算条件を見る", { exact: true }).click();
   const result = chart.locator(".article-line-chart__fit-result");
   await result.waitFor();
-  assert.match(await result.innerText(), /R²（元のYで算出）/u);
-  assert.match(await result.innerText(), /係数/u);
-  assert((await result.locator("code").count()) >= 1, "Computed coefficients are inspectable");
+  assert.match(await result.innerText(), /R²/u);
+  assert((await result.locator("math").count()) >= 2, "Fit and normalization use MathML");
+  assert.equal(await result.locator("code").count(), 0, "Raw coefficients are hidden by default");
   const fittedBody = await readBody(page);
   await page.reload();
   await ensureEditing(page);
