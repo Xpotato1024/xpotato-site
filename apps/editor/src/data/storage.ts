@@ -169,8 +169,44 @@ export const readWorkspaceRecord = <T>(id: string) =>
   transact<T | undefined>("workspace", "readonly", (s) => s.get(id));
 export const writeWorkspaceRecord = <T extends { id: string }>(value: T) =>
   transact("workspace", "readwrite", (s) => s.put(value));
-export const deleteLocalDraft = (id: string) =>
-  transact("drafts", "readwrite", (s) => s.delete(id));
+/** Remove one device-only draft, including its local images and revisions, atomically.
+ * Serialize with autosaves so a queued write cannot recreate a deleted draft.
+ */
+export function deleteLocalDraft(id: string): Promise<void> {
+  const next = saveQueue
+    .catch(() => {})
+    .then(async () => {
+      const db = await database();
+      return new Promise<void>((resolve, reject) => {
+        let tx: IDBTransaction;
+        try {
+          tx = db.transaction(["drafts", "media", "revisions"], "readwrite");
+        } catch (error) {
+          db.close();
+          reject(error);
+          return;
+        }
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        tx.onabort = tx.onerror = () => {
+          db.close();
+          reject(tx.error ?? Error("LOCAL_DRAFT_DELETE_FAILED"));
+        };
+        tx.objectStore("drafts").delete(id);
+        for (const name of ["media", "revisions"] as const) {
+          const store = tx.objectStore(name);
+          const keys = store.index("draftId").getAllKeys(id);
+          keys.onsuccess = () => {
+            for (const key of keys.result) store.delete(key);
+          };
+        }
+      });
+    });
+  saveQueue = next;
+  return next;
+}
 export const saveLocalMedia = (media: LocalMedia) =>
   transact("media", "readwrite", (s) => s.put(media));
 export const localMedia = (draftId: string) =>

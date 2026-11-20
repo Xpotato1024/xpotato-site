@@ -29,6 +29,12 @@ PR140の新しい配信manifest・状態分離・診断方式とPR141の配置�
 
 [run 41787362572](https://github.com/Xpotato1024/xpotato-site/actions/runs/41787362572) はsource `265dadfd33cbf91c5d6099eb4f5aaf4d0fd8b117`で、配信前の`REPOSITORY_GUARD_PATH_OR_MODE`により停止しました。`deployment=not_attempted`、`deployCount=0`で、旧runの配備後不一致とは別の障害です。phase7/8 guardの移動先を通常比較が認識せず、現行package treeを自分自身と比較しても停止する不整合でした。修正コードのCI成功を、このrunの再実行や本番受入れとして扱いません。
 
+## CMSのAccess保護下におけるProduction readback（2026-11-20）
+
+[配信run 44719601350](https://github.com/Xpotato1024/xpotato-site/actions/runs/44719601350) はCloudflareへの配備が1回成功し、Workerの新versionを読み戻した後、公開readbackで `PUBLIC_HTTP_OR_REDIRECT` に停止した。未認証の `/editor/` がCloudflare Accessへ302リダイレクトされることを従来の200/本文SHA照合だけでは判定できず、別の `/articles/tag/troubleshooting/` は初回の本文SHAが一致しなかった。後続の独立したHTTP照合では当該記事が承認済みProduction artifactとサイズ・SHAともに一致した。
+
+修正後は**`/editor/` のみ**、固定済みのCloudflare Accessチームホスト（`xpotato1024.cloudflareaccess.com`）、ログイン用パス、必須クエリ項目、元の `redirect_url=/editor/` がすべて一致する302応答を認証境界として許容する。その観測は `bodyMatch=cloudflare-access-protected` と明示し、**HTMLのbyte一致を証明したとは扱わない**。配信元artifactの検証と同じWorker versionのreadbackは引き続き必須。未知のリダイレクトや一般ページを許容する例外ではない。他の公開ページは従来どおり本文とheadersの完全一致を要求し、一時的不一致の再観測でも固定の予算・回数・時間制限を維持する。
+
 ## Cloudflare Managed robots.txt の公開bytes照合
 
 公開後の照合は通常、artifactと応答本文のsize/SHA-256、HTTP 200、対象security/cache headersの一致を要求します。`/robots.txt`だけは、2026-11-04に公開GETで確認したCloudflare付加内容2676 bytes（SHA-256 `3073d1e371afb3271c7666148766fedc5145f7d8440f7114062db79b7bd58add`）と、既知の原本70 bytes（SHA-256 `cc7aa07ebda6b8ac79827a8b110a8941101ed035f58b2b26b677974683b7f9bb`）の連結も認めます。fixtureの出典・観測時刻・全本文は[固定capture](../../ops/deployment/fixtures/managed-robots-20261104.json)、検査は[限定policy](../../ops/deployment/managed-robots-policy.mjs)です。[Cloudflare公式説明](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)の例から許可本文を推測しません。
@@ -51,13 +57,13 @@ provider/publicの成功portや配信portは受け取りません。既存のGET
 
 実入口は`deploy-site.yml` → Production archive取得・初回handoff → `manual-deployment-cli.mjs` → `createManualGitHub.verify()` → CLI内の再handoff・公開対象検査 → providerのfresh preimage → 再検証 → 一度だけのWrangler呼出しです。最初のGitHub/source検査が失敗した場合、CLI内のhandoff以降へ進みません。外側のarchive取得・初回handoffはすでに完了し得ます。CLIの最初のhold manifest取得とartifact取得は読取りであり、配信ではありません。
 
-| 対象 | 比較・拒否条件 |
-|---|---|
-| rootの公開build・検証入力 | `apps`、`schemas`、`package.json`/lock、Node pinに加え、`tools`、`config`、`templates`、`vendor`、`tests`、TypeScript/Vitest設定とcheckout属性を比較。未分類の新しいrootも既定で比較し、片側だけの追加・削除・型/mode/hash差を拒否 |
-| `packages` | 現行4guardの正規所有先・regular blobを要求し、全leafのpath/mode/type/hashを一致させる。旧所有先との混在や移動の自動正規化はしない |
-| 歴史的な例外 | 旧4path/blob対とschema tree対は旧layoutの一方向遷移だけに固定。現行layoutの任意変更を許すhashへ書き換えない。layoutをまたぐartifact再利用は拒否 |
-| `scripts` | build・artifact consumer・共通transport・policyを比較。既存の配信操作コードだけは旧/現行の明示した完全パスで除外し、basename/globで無関係な同名ファイルを除外しない。現行操作依存の欠落・mode変更も停止 |
-| docs・workflowの別境界 | 現行layoutの`.github` tree全体を比較。`docs`はこの運用状況ページ1件（通常ファイル必須）以外の全leafを比較し、機械検証用JSON・未知の追加文書も固定する。hold manifestとinfrastructure handoffの個別blob SHA一致、manual workflowのexact source、owner/main/attempt、main保護、Environmentの本人承認も維持 |
-| archive・公開対象 | canonical PowerShell consumerのProduction適格性・digest・source/run/attempt・staging照合と、同じdistのpublication compiler/CSP/権利・保護来歴検査を維持 |
+| 対象                      | 比較・拒否条件                                                                                                                                                                                                                                                                                           |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| rootの公開build・検証入力 | `apps`、`schemas`、`package.json`/lock、Node pinに加え、`tools`、`config`、`templates`、`vendor`、`tests`、TypeScript/Vitest設定とcheckout属性を比較。未分類の新しいrootも既定で比較し、片側だけの追加・削除・型/mode/hash差を拒否                                                                       |
+| `packages`                | 現行4guardの正規所有先・regular blobを要求し、全leafのpath/mode/type/hashを一致させる。旧所有先との混在や移動の自動正規化はしない                                                                                                                                                                        |
+| 歴史的な例外              | 旧4path/blob対とschema tree対は旧layoutの一方向遷移だけに固定。現行layoutの任意変更を許すhashへ書き換えない。layoutをまたぐartifact再利用は拒否                                                                                                                                                          |
+| `scripts`                 | build・artifact consumer・共通transport・policyを比較。既存の配信操作コードだけは旧/現行の明示した完全パスで除外し、basename/globで無関係な同名ファイルを除外しない。現行操作依存の欠落・mode変更も停止                                                                                                  |
+| docs・workflowの別境界    | 現行layoutの`.github` tree全体を比較。`docs`はこの運用状況ページ1件（通常ファイル必須）以外の全leafを比較し、機械検証用JSON・未知の追加文書も固定する。hold manifestとinfrastructure handoffの個別blob SHA一致、manual workflowのexact source、owner/main/attempt、main保護、Environmentの本人承認も維持 |
+| archive・公開対象         | canonical PowerShell consumerのProduction適格性・digest・source/run/attempt・staging照合と、同じdistのpublication compiler/CSP/権利・保護来歴検査を維持                                                                                                                                                  |
 
 `node --test ops/deployment/manual-deployment.test.mjs`は、旧hash対から作ったfixtureだけでなく、そのcheckoutの実Git treeを読んで実GitHub検査adapterと`runManualDeployment()`へ通します。GitHubの承認情報とhandoff/provider/deploy portsは合成であり、実資格情報やネットワークを使いません。移管先入力の変更、guard欠落・symlink、未知の同名scriptなどによる初回拒否ではCLI内handoff/provider/配信呼出し0を確認します。二回目のsource検査でのdriftは、最初のpreflight読取り後であってもpreimage保存・配信前に停止します。通常CIの実staged package/compiler検査とWindows consumerは別に実行し、合成試験を実provider preflightや本番rolloutの証明にしません。

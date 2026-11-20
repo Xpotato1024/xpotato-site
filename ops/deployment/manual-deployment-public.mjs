@@ -22,6 +22,32 @@ const observationErrorCodes = new Set([
   "PUBLIC_READ_BUDGET",
 ]);
 export const publicReadbackReport = (error) => reports.get(error);
+
+/** Cloudflare Access hides the CMS HTML from unauthenticated readback.
+ * Accept only this single documented login boundary; do not call it an HTML byte match.
+ */
+function isEditorAccessChallenge(response, target) {
+  if (target?.path !== "/editor/" || response.status !== 302) return false;
+  const location = response.headers.get("location");
+  if (!location || !location.startsWith("https://")) return false;
+  try {
+    const url = new URL(location);
+    return (
+      url.protocol === "https:" &&
+      url.hostname === "xpotato1024.cloudflareaccess.com" &&
+      !url.username &&
+      !url.password &&
+      !url.port &&
+      url.pathname === "/cdn-cgi/access/login/" + authority.hostname &&
+      url.searchParams.getAll("redirect_url").length === 1 &&
+      url.searchParams.get("redirect_url") === target.path &&
+      url.searchParams.has("kid") &&
+      url.searchParams.has("meta")
+    );
+  } catch {
+    return false;
+  }
+}
 export function createPublicReadback({
   fetchImpl,
   clock = Date.now,
@@ -46,6 +72,19 @@ export function createPublicReadback({
         headers: { "User-Agent": "xpotato-site-manual-readback", "Cache-Control": "no-cache" },
       });
       fresh();
+      if (isEditorAccessChallenge(response, target)) {
+        await response.body?.cancel().catch(() => {});
+        // The signed release archive and active Worker version are verified elsewhere.
+        // No publicly readable HTML exists behind this authenticated entrypoint.
+        return {
+          status: response.status,
+          bytes: 0,
+          sha256: null,
+          headers: {},
+          managedRobots: null,
+          accessProtected: true,
+        };
+      }
       if (![200, 404].includes(response.status) || !response.body?.getReader)
         stop("PUBLIC_HTTP_OR_REDIRECT");
       const reader = response.body.getReader(),
@@ -222,10 +261,12 @@ export function createPublicReadback({
               headersSha256: headerHash(current.headers),
             };
             const exact = expected.bytes === actual.bytes && expected.sha256 === actual.sha256;
+            const accessProtected = current.accessProtected === true && target.path === "/editor/";
             const matches =
-              expected.status === actual.status &&
-              expected.headersSha256 === actual.headersSha256 &&
-              (exact || current.managedRobots !== null);
+              accessProtected ||
+              (expected.status === actual.status &&
+                expected.headersSha256 === actual.headersSha256 &&
+                (exact || current.managedRobots !== null));
             // Preserve raw wire-body facts; never replace them with origin facts.
             // Exact equality alone makes no assertion about Cloudflare settings.
             observations.push({
@@ -235,11 +276,13 @@ export function createPublicReadback({
               expected,
               actual,
               matches,
-              bodyMatch: exact
-                ? "exact"
-                : current.managedRobots
-                  ? "cloudflare-managed-robots"
-                  : "mismatch",
+              bodyMatch: accessProtected
+                ? "cloudflare-access-protected"
+                : exact
+                  ? "exact"
+                  : current.managedRobots
+                    ? "cloudflare-managed-robots"
+                    : "mismatch",
               ...(current.managedRobots ? { managedRobots: current.managedRobots } : {}),
             });
             if (!matches) next.push(target);

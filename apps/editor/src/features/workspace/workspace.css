@@ -41,9 +41,14 @@
   min-height: 0;
   min-width: 0;
   overflow: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
+  background: var(--surface);
   padding: 1.5rem clamp(1rem, 4vw, 3.5rem) max(3rem, env(safe-area-inset-bottom));
   scroll-padding-block: 1rem 2rem;
+}
+.workspace-screen[data-scrollable="false"] {
+  overflow-y: hidden;
+  touch-action: pan-x;
 }
 .workspace-screen > div,
 .workspace-screen > section {
@@ -248,12 +253,79 @@
 .draft-list {
   margin-bottom: 1rem;
 }
-.draft-list > button[aria-pressed="true"] {
+.draft-choice {
+  min-width: 0;
+}
+.draft-choice > button {
+  width: 100%;
+}
+.draft-choice-local {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.3rem;
+}
+.draft-choice-local > button:first-child {
+  min-width: 0;
+}
+.draft-choice-local > .start-selection-inline {
+  grid-column: 1 / -1;
+}
+.draft-choice-local > .draft-delete {
+  width: auto;
+  min-width: 54px;
+  min-height: 44px;
+  align-self: center;
+  padding: 0.5rem;
+  color: var(--text-muted);
+  border: 1px solid var(--border-divider);
+  background: var(--surface-control);
+  font-size: 0.78rem;
+}
+.catalog-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  margin: 0 0 0.5rem;
+  border-top: 1px solid var(--border-divider);
+}
+.catalog-pagination > button {
+  min-height: 44px;
+  min-width: 64px;
+  width: auto;
+}
+.catalog-pagination > span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+.draft-choice > button[aria-pressed="true"] {
   background: var(--cms-accent-soft);
   border-color: var(--accent);
 }
-.draft-list > button > span {
+.draft-choice > button > span {
   overflow-wrap: anywhere;
+}
+.start-selection-inline {
+  margin: 0.35rem 0 0.75rem;
+  border: 1px solid var(--cms-accent-border);
+  border-radius: var(--cms-control-radius);
+  background: var(--surface-control);
+  padding: 1rem;
+  scroll-margin-block: 1rem;
+}
+.start-selection-inline .start-editing {
+  width: auto;
+}
+@media (max-width: 600px) {
+  .start-selection-inline .branch-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .start-selection-inline .start-editing {
+    width: 100%;
+  }
 }
 .registry-workplace {
   border-bottom: 1px solid var(--border-divider);
