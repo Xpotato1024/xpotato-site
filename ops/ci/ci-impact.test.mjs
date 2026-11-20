@@ -153,19 +153,26 @@ test("real Git snapshots cover modify, rename, delete, absent base and nonancest
   }
 });
 
-test("workflow stores shadow evidence without changing existing execution decisions", () => {
+test("workflow retains shadow evidence while a separate fail-closed policy gates the article PR path", () => {
   const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
   const source = readFileSync(new URL("./ci-impact.mjs", import.meta.url), "utf8");
   const pkg = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"));
   assert.match(workflow, /run: node ops\/ci\/ci-impact.mjs/);
   assert.match(workflow, /name: site-ci-impact-/);
   assert.match(pkg.scripts["test:release"], /ops\/ci\/ci-impact.test.mjs/);
-  assert.equal((workflow.match(/if: needs.scope.outputs.core == 'true'/g) ?? []).length, 4);
+  assert.equal((workflow.match(/if: needs.scope.outputs.core == 'true'/g) ?? []).length, 5);
   assert.doesNotMatch(source, /GITHUB_OUTPUT/);
   assert.doesNotMatch(workflow, /if:.*(?:impact|candidate)/);
   assert.match(workflow, /run: npm run ci:producer:validate/);
   assert.equal(pkg.scripts["ci:producer:validate"], "node ops/ci/producer-parallel.mjs validate");
   assert.ok(producerPhases.validate.includes("ci:final:public"));
+  assert.match(workflow, /run: node ops\/ci\/article-pr-policy\.mjs/);
+  assert.match(workflow, /name: Validate complete article output and public metadata/);
+  assert.match(
+    workflow,
+    /if: needs\.scope\.outputs\.core == 'true' && needs\.scope\.outputs\.article == 'true'/,
+  );
+
   assert.match(workflow, /run: npm run ci:hosted:gate/);
   assert.match(workflow, /run: npm run release:package/);
 });

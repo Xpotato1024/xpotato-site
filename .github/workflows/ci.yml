@@ -36,6 +36,7 @@ jobs:
     outputs:
       core: ${{ steps.scope.outputs.core }}
       reason: ${{ steps.scope.outputs.reason }}
+      article: ${{ steps.article-policy.outputs.article }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -54,6 +55,12 @@ jobs:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           CI_IMPACT_REPORT: ${{ runner.temp }}/ci-impact.json
         run: node ops/ci/ci-impact.mjs
+      - id: article-policy
+        name: Check article-only PR against the exact Git ancestor and source modes
+        env:
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node ops/ci/article-pr-policy.mjs
       - name: Preserve shadow impact report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -62,11 +69,35 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Classifier and execution graph regression
-        run: node --test ops/ci/ci-hosted-gate.test.mjs ops/ci/ci-fixtures.test.mjs ops/ci/ci-scope.test.mjs ops/ci/ci-impact.test.mjs ops/ci/ci-source.test.mjs ops/ci/producer-parallel.test.mjs ops/ci/release-graph.test.mjs ops/qa/lighthouse-collect.test.mjs
+        run: node --test ops/ci/article-pr-policy.test.mjs ops/ci/ci-hosted-gate.test.mjs ops/ci/ci-fixtures.test.mjs ops/ci/ci-scope.test.mjs ops/ci/ci-impact.test.mjs ops/ci/ci-source.test.mjs ops/ci/producer-parallel.test.mjs ops/ci/release-graph.test.mjs ops/qa/lighthouse-collect.test.mjs
+  article-fast:
+    needs: scope
+    if: needs.scope.outputs.core == 'true' && needs.scope.outputs.article == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm install --global npm@11.19.0
+      - run: npm ci --prefer-offline
+      - name: Validate complete article output and public metadata (no browser E2E)
+        env:
+          XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/article-validation
+        run: npm run ci:article:fast
 
   source-validation:
     needs: scope
-    if: needs.scope.outputs.core == 'true'
+    if: needs.scope.outputs.core == 'true' && needs.scope.outputs.article != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -93,7 +124,7 @@ jobs:
 
   publication-fixtures:
     needs: scope
-    if: needs.scope.outputs.core == 'true'
+    if: needs.scope.outputs.core == 'true' && needs.scope.outputs.article != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -118,7 +149,7 @@ jobs:
 
   common-tool:
     needs: scope
-    if: needs.scope.outputs.core == 'true'
+    if: needs.scope.outputs.core == 'true' && needs.scope.outputs.article != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -159,7 +190,7 @@ jobs:
 
   producer:
     needs: scope
-    if: needs.scope.outputs.core == 'true'
+    if: needs.scope.outputs.core == 'true' && needs.scope.outputs.article != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     outputs:
@@ -345,6 +376,7 @@ jobs:
       [
         scope,
         offline-policy,
+        article-fast,
         source-validation,
         publication-fixtures,
         common-tool,
@@ -359,6 +391,8 @@ jobs:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CORE: ${{ needs.scope.outputs.core }}
           REASON: ${{ needs.scope.outputs.reason }}
+          ARTICLE: ${{ needs.scope.outputs.article }}
+          ARTICLE_RESULT: ${{ needs.article-fast.result }}
           SOURCE_RESULT: ${{ needs.source-validation.result }}
           FIXTURES_RESULT: ${{ needs.publication-fixtures.result }}
           COMMON_TOOL_RESULT: ${{ needs.common-tool.result }}
@@ -368,6 +402,13 @@ jobs:
           if [[ "$SCOPE_RESULT" != success ]]; then echo 'FAIL: classification/checks'; exit 1; fi
           if [[ "$POLICY_RESULT" != success ]]; then echo 'FAIL: deployment policy'; exit 1; fi
           if [[ "$CORE" == false ]]; then echo "$REASON" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          if [[ "$ARTICLE" == true ]]; then
+            if [[ "$ARTICLE_RESULT" != success ]]; then echo 'FAIL: article-only publication validation'; exit 1; fi
+            if [[ "$SOURCE_RESULT" != skipped || "$FIXTURES_RESULT" != skipped || "$COMMON_TOOL_RESULT" != skipped || "$PRODUCER_RESULT" != skipped || "$CONSUMER_RESULT" != skipped ]]; then echo 'FAIL: article and full gates overlapped unexpectedly'; exit 1; fi
+            echo 'PASS: full article output and public metadata verified; full release CI remains mandatory on main' | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [[ "$ARTICLE_RESULT" != skipped ]]; then echo 'FAIL: full run unexpectedly admitted article fast lane'; exit 1; fi
           if [[ "$SOURCE_RESULT" != success || "$FIXTURES_RESULT" != success || "$COMMON_TOOL_RESULT" != success ]]; then echo 'FAIL: independent source, publication or Common Tool validation'; exit 1; fi
           if [[ "$PRODUCER_RESULT" != success || "$CONSUMER_RESULT" != success ]]; then echo 'FAIL: producer or Windows consumer'; exit 1; fi
           echo 'PASS: Linux build once + final validation + raw archive Windows consumer (Windows builds=0)' | tee -a "$GITHUB_STEP_SUMMARY"

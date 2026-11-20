@@ -147,7 +147,10 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
   );
   for (const name of ["source-validation", "publication-fixtures", "common-tool", "producer"]) {
     assert.match(sections[name], /needs: scope/);
-    assert.match(sections[name], /if: needs\.scope\.outputs\.core == 'true'/);
+    assert.match(
+      sections[name],
+      /if: needs\.scope\.outputs\.core == 'true' && needs\.scope\.outputs\.article != 'true'/,
+    );
     assert.match(
       sections[name],
       /ref: \$\{\{ github\.event\.pull_request\.head\.sha \|\| github\.sha \}\}/,
@@ -221,6 +224,7 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
   assert.deepEqual(names, [
     "scope",
     "offline-policy",
+    "article-fast",
     "source-validation",
     "publication-fixtures",
     "common-tool",
@@ -229,6 +233,7 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
   ]);
   for (const name of [
     "POLICY_RESULT",
+    "ARTICLE_RESULT",
     "SOURCE_RESULT",
     "FIXTURES_RESULT",
     "COMMON_TOOL_RESULT",
@@ -238,6 +243,44 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
     assert.ok(sections.result.includes(`"$${name}" != success`), name);
 });
 
+test("article-only PR runs a complete content build without releasing an unverified artifact", () => {
+  const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
+  const article = workflow.split("  article-fast:")[1].split("  source-validation:")[0];
+  const fullJobs = ["source-validation", "publication-fixtures", "common-tool", "producer"];
+  assert.match(article, /needs: scope/);
+  assert.match(
+    article,
+    /if: needs\.scope\.outputs\.core == 'true' && needs\.scope\.outputs\.article == 'true'/,
+  );
+  assert.match(article, /run: npm run ci:article:fast/);
+  assert.match(article, /XPOTATO_SITE_TEMP_ROOT: \$\{\{ runner\.temp \}\}\/article-validation/);
+  assert.doesNotMatch(article, /GH_TOKEN:|CLOUDFLARE_|release:package|upload-artifact|deploy-site/);
+  for (const name of fullJobs) {
+    const block = workflow.split("  " + name + ":")[1].split(/^  [a-z-]+:/m)[0];
+    assert.match(block, /needs: scope/);
+    assert.match(
+      block,
+      /if: needs\.scope\.outputs\.core == 'true' && needs\.scope\.outputs\.article != 'true'/,
+    );
+  }
+  const result = workflow.split("  result:")[1];
+  assert.match(result, /if: always\(\)/);
+  assert.match(result, /ARTICLE_RESULT: \$\{\{ needs\.article-fast\.result \}\}/);
+  assert.match(result, /if \[\[ "\$ARTICLE" == true \]\]; then/);
+  assert.match(result, /if \[\[ "\$ARTICLE_RESULT" != success \]\]; then/);
+  assert.match(result, /if \[\[ "\$ARTICLE_RESULT" != skipped \]\]; then/);
+  const required = [
+    "validate:repository",
+    "astro:check",
+    "build",
+    "publication:check",
+    "validate:static",
+    "site:output:check",
+  ];
+  const script = scripts["ci:article:fast"];
+  for (const command of required) assert.ok(script.includes("npm run " + command), command);
+  assert.ok(script.indexOf("npm run build") < script.indexOf("npm run publication:check"));
+});
 test("public image cache never admits test success, private sources or a skipped build", () => {
   const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
   const producer = workflow.split("  producer:")[1].split("  windows-consumer:")[0];
@@ -327,7 +370,7 @@ test("hosted browser jobs prepare font caches once before their existing require
 test("hosted CI pins Linux ABI and caches only versioned WebKit binaries after real layout checks", () => {
   const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
   const producer = workflow.split("  producer:")[1].split("  windows-consumer:")[0];
-  assert.equal((workflow.match(/runs-on: ubuntu-24\.04/g) ?? []).length, 7);
+  assert.equal((workflow.match(/runs-on: ubuntu-24\.04/g) ?? []).length, 8);
   assert.doesNotMatch(workflow, /runs-on: ubuntu-latest/);
   const steps = [
     "name: Restore version-pinned WebKit browser binaries",
