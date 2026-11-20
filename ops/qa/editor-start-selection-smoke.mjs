@@ -145,6 +145,18 @@ try {
   assert.equal(await localRows.count(), 6);
   assert.match(await localPager.innerText(), /15件/u);
   assert.match(await localRows.first().innerText(), /端末テスト14/u);
+  const archiveToggle = page.getByRole("button", { name: /アーカイブ済みを表示/u });
+  assert.equal(await archiveToggle.count(), 0);
+  const firstDraft = localRows.filter({ hasText: "端末テスト14" });
+  await firstDraft.getByRole("button", { name: /をアーカイブ/u }).click();
+  await firstDraft.waitFor({ state: "hidden" });
+  await page.reload();
+  await archiveToggle.click();
+  await firstDraft.getByRole("button", { name: /を下書きに戻す/u }).click();
+  await firstDraft.waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "作業中の下書きを表示" }).click();
+  await firstDraft.waitFor();
+  assert.equal(await archiveToggle.count(), 0);
   await localPager.getByRole("button", { name: "次へ" }).click();
   assert.equal(await localRows.count(), 6);
   assert.match(await localRows.first().innerText(), /端末テスト8/u);

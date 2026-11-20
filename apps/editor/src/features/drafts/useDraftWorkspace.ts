@@ -161,7 +161,7 @@ export function useDraftWorkspace(onError: (message: string) => void) {
       // Pause autosave until the archive state and any unsaved edits are stored together.
       activeDraft.current = false;
       try {
-        await saveLocalDraft(next);
+        await updateLocalDraftArchive(id, archived, next);
       } catch (error) {
         activeDraft.current = true;
         throw error;

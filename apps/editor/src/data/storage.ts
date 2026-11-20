@@ -162,20 +162,38 @@ function queueDraftWrite<T>(write: () => Promise<T>): Promise<T> {
   saveQueue = next;
   return next;
 }
-export const saveLocalDraft = (draft: LocalDraft): Promise<IDBValidKey> =>
-  queueDraftWrite(() => transact("drafts", "readwrite", (store) => store.put(draft)));
-export function updateLocalDraftArchive(id: string, archived: boolean): Promise<void> {
-  return queueDraftWrite(async () => {
-    const previous = await transact<LocalDraft | undefined>("drafts", "readwrite", (store) => {
+function writeDraftRecord(
+  id: string,
+  update: (stored: LocalDraft | undefined) => LocalDraft | undefined,
+) {
+  return queueDraftWrite(() =>
+    transact<LocalDraft | undefined>("drafts", "readwrite", (store) => {
       const request = store.get(id);
       request.addEventListener("success", () => {
-        const draft: LocalDraft | undefined = request.result;
-        if (draft) store.put({ ...draft, archived });
+        const next = update(request.result);
+        if (next) store.put(next);
       });
       return request;
-    });
-    if (!previous) throw Error("端末に下書きが見つかりません。");
+    }),
+  );
+}
+export async function saveLocalDraft(draft: LocalDraft): Promise<IDBValidKey> {
+  // Another tab may have archived or restored this draft since it was opened here.
+  await writeDraftRecord(draft.id, (stored) =>
+    stored?.archived === undefined ? draft : { ...draft, archived: stored.archived },
+  );
+  return draft.id;
+}
+export async function updateLocalDraftArchive(
+  id: string,
+  archived: boolean,
+  activeDraft?: LocalDraft,
+): Promise<void> {
+  const stored = await writeDraftRecord(id, (previous) => {
+    const draft = activeDraft ?? previous;
+    return draft ? { ...draft, archived } : undefined;
   });
+  if (!stored && !activeDraft) throw Error("端末に下書きが見つかりません。");
 }
 export const localDrafts = () => transact<LocalDraft[]>("drafts", "readonly", (s) => s.getAll());
 export const readWorkspaceRecord = <T>(id: string) =>
