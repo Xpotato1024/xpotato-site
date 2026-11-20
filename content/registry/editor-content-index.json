@@ -28,7 +28,7 @@
     {
       "contentId": "4ccd039f-2625-4f2b-83bb-fe248906ef96",
       "path": "content/articles/anythingllm-fresh-thread-reembed-workspace.mdx",
-      "title": "AnythingLLMでdefaultスレッドだけ正しいときに確認すべきこと",
+      "title": "AnythingLLMでdefaultスレッドだけ正しいときに確認すべきこと [CI smoke]",
       "collection": "blog",
       "draft": true,
       "education": false
