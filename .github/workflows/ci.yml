@@ -62,7 +62,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Classifier and execution graph regression
-        run: node --test ops/ci/ci-hosted-gate.test.mjs ops/ci/ci-fixtures.test.mjs ops/ci/ci-scope.test.mjs ops/ci/ci-impact.test.mjs ops/ci/ci-source.test.mjs ops/ci/release-graph.test.mjs ops/qa/lighthouse-collect.test.mjs
+        run: node --test ops/ci/ci-hosted-gate.test.mjs ops/ci/ci-fixtures.test.mjs ops/ci/ci-scope.test.mjs ops/ci/ci-impact.test.mjs ops/ci/ci-source.test.mjs ops/ci/producer-parallel.test.mjs ops/ci/release-graph.test.mjs ops/qa/lighthouse-collect.test.mjs
 
   source-validation:
     needs: scope
@@ -206,14 +206,8 @@ jobs:
         run: |
           if [[ -n "$MATCHED_KEY" && "$MATCHED_KEY" != "$EXPECTED_KEY" ]]; then echo 'Unexpected image cache key'; exit 1; fi
           echo "Image cache: ${MATCHED_KEY:+exact hit}${MATCHED_KEY:-miss}; every object is validated by the normal build" >> "$GITHUB_STEP_SUMMARY"
-      - name: Prebuild isolation and one public build
-        env:
-          XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
-          XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
-        run: npm run release:build:hosted
-      # ubuntu-latest currently selects 26.04; pin the producer's browser/ABI
-      # environment and reuse only the Playwright 1.65.0 WebKit binaries.
-      # --with-deps still verifies/installs OS packages on every fresh runner.
+      # Only the binaries are cached; OS dependencies are still checked on each
+      # runner. Restore before starting either preparation lane.
       - name: Restore version-pinned WebKit browser binaries
         id: webkit-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -227,14 +221,20 @@ jobs:
         run: |
           if [[ -n "$MATCHED_KEY" && "$MATCHED_KEY" != "$EXPECTED_KEY" ]]; then echo 'Unexpected WebKit cache key'; exit 1; fi
           echo "WebKit cache: ${MATCHED_KEY:+exact hit}${MATCHED_KEY:-miss}; OS dependencies and real WebKit checks remain mandatory" >> "$GITHUB_STEP_SUMMARY"
-      - name: Install pinned WebKit engine on the ephemeral runner
+      - name: Prepare the one public build and browser engines concurrently
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
-        run: npx --no-install playwright install --with-deps webkit
-      - name: Check the final linked home CSS in WebKit
+          XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
+          XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
+        run: npm run ci:producer:prepare
+      # Keep a step boundary: Chrome's prepared font cache is exported through
+      # GITHUB_ENV only after both preparation lanes have completed successfully.
+      - name: Validate the same build in WebKit and Chrome concurrently
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
-        run: npm run quality:home-webkit -- --dist "$GITHUB_WORKSPACE/apps/site/dist" --out "$RUNNER_TEMP/release-validation"
+          XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
+          XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
+        run: npm run ci:producer:validate
       - name: Save WebKit browser cache after its real CSS smoke passes
         if: steps.webkit-cache.outputs.cache-hit != 'true'
         continue-on-error: true
@@ -242,15 +242,6 @@ jobs:
         with:
           path: ${{ runner.temp }}/playwright
           key: site-webkit-v1-ubuntu-24.04-${{ runner.arch }}-playwright-1.65.0
-      # WebKit's OS dependency installation can add fonts, so seed Chrome only
-      # after it finishes. Test profiles still own their own copies and deadlines.
-      - name: Prepare Chrome font cache for isolated profiles
-        run: node ops/ci/prepare-chrome-font-cache.mjs
-      - name: Final public consumers of the same build
-        env:
-          XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
-          XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
-        run: npm run ci:final:public
       - name: Require this attempt's independent source and private validations
         env:
           GH_TOKEN: ${{ github.token }}

@@ -26,6 +26,8 @@ Gitには固定commitの分類・部品契約を使って保存し、Draft PRを
 
 Draft PRの「Editor Astro layout preview」が成功したら、CMSの「Astroレビューを取得」で正規のレイアウトを表示する。公開CIは文章・CSSのみ、私有画像はその端末の確認済みhash/assetIdへ解決する。別端末では先に「別端末の画像を復元」を行う。原稿変更後は古いレビューを表示し続けず、最新commitの生成を待つ。表示専用のためブラウザツール操作は別のtool QAで確認する。
 
+この正式レビューは、公開前検証の「vNext CI」が終わる前でも取得できる。原稿の保存先commitに対応する「Editor Astro layout preview」の成功を確認する。作業場の即時プレビューはGitHubの処理完了を待たずに使える。
+
 ## HEIC・GIFを専用処理へ渡す
 
 ブラウザがHEICを安全にdecodeできない場合、またはGIFを可逆WebPへ変換する場合は同じrepositoryの専用処理を使う。AIもこの入口を使い、独自の別上限・別encoderにしない。

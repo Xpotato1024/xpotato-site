@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { createRequire } from "node:module";
-import { mkdtemp, mkdir, readFile, writeFile, cp, lstat } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, appendFile, cp, lstat } from "node:fs/promises";
 import { resolve, join, dirname, relative, isAbsolute, extname } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parse, serialize, type DefaultTreeAdapterTypes as P } from "parse5";
@@ -312,6 +312,23 @@ export async function buildEditorAstroReview(input: {
     codeClean,
   };
 }
+
+export async function writeEditorReviewOutput(
+  result: Awaited<ReturnType<typeof buildEditorAstroReview>>,
+  outputFile: string,
+): Promise<void> {
+  const context = validateReviewContext(result.context);
+  const expectedName = reviewArtifactName(context.commit, context.contentId);
+  if (
+    result.artifactName !== expectedName ||
+    result.privateMediaDownloaded !== false ||
+    result.codeClean !== true
+  ) {
+    throw Error("EDITOR_REVIEW_OUTPUT_INVALID");
+  }
+  await appendFile(outputFile, "artifact-name=" + expectedName + "\n");
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const args = process.argv.slice(2),
     option = (key: string) => {
@@ -321,17 +338,18 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const sourcePath = option("--source");
   if (!sourcePath)
     throw Error(
-      "Usage: npm run editor:review -- --source content/articles/<id>.mdx --output .local/editor-review/<id> [--commit SHA]",
+      "Usage: npm run editor:review -- --source content/articles/<id>.mdx --output .local/editor-review/<id> [--commit SHA] [--github-output PATH]",
     );
   const expectedCommit = option("--commit");
-  console.log(
-    JSON.stringify(
-      await buildEditorAstroReview({
-        repositoryRoot: resolve("."),
-        sourcePath,
-        output: option("--output") ?? ".local/editor-review/" + Date.now(),
-        ...(expectedCommit ? { expectedCommit } : {}),
-      }),
-    ),
-  );
+  const result = await buildEditorAstroReview({
+    repositoryRoot: resolve("."),
+    sourcePath,
+    output: option("--output") ?? ".local/editor-review/" + Date.now(),
+    ...(expectedCommit ? { expectedCommit } : {}),
+  });
+  const githubOutput = option("--github-output");
+  if (githubOutput) {
+    await writeEditorReviewOutput(result, githubOutput);
+  }
+  console.log(JSON.stringify(result));
 }

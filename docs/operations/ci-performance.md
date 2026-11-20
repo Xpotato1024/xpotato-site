@@ -1,12 +1,33 @@
 ---
 status: canonical
 owner: operations
-last_verified: 2026-11-20
+last_verified: 2026-11-21
 canonical_for:
   - CI latency measurement and optimization boundaries
 ---
 
 # CI時間の測定
+
+## 2026-11-21: 記事更新で待つ実時間の短縮
+
+最適化の主指標は、PR更新から必要な結果が揃うまでのwall timeです。各jobの延べrunner時間が増えても、この待ち時間が短くなる変更を優先します。並列処理の個別durationを合計した値は、利用者の待ち時間として報告しません。
+
+記事編集には二つの待ち経路があります。CMSの正式レイアウト確認は `Editor Astro layout preview` の成功したexact commitのartifactを取得し、`vNext CI`の完了を待ちません。公開前のPR検証では、通常CIの全必須jobを待ちます。端末内の即時プレビューはどちらのworkflowにも依存しません。
+
+| 経路 | 改善前の観測 | 主な直列区間 |
+| --- | ---: | --- |
+| 通常CI [44762048942](https://github.com/Xpotato1024/xpotato-site/actions/runs/44762048942)、source `4db61c8cad4fb0b29f5fb8a4161781c11d81e118` | 11分11秒 | producer604秒。build155秒、WebKit依存導入98秒・実検査37秒、フォント準備17秒、public final218秒 |
+| 正式プレビュー [44689953019](https://github.com/Xpotato1024/xpotato-site/actions/runs/44689953019) | 62秒 | scope28秒とreview28秒。両jobでそれぞれ16秒・13秒のnpm ci |
+
+通常CIはproducerの二段階を並列化します。`ci:producer:prepare` は、既存の隔離fixture生成・一回の公開buildと、WebKit導入・その後のChromeフォント準備を同時に開始し、両方の終了を待ちます。次のworkflow stepの `ci:producer:validate` で、同じdistを使うWebKit実検査と従来のpublic final検査を同時に開始します。準備と検査を別stepにすることで、成功したフォント準備の `GITHUB_ENV` が後続Chromeへ渡ります。
+
+必要な検査、同run/attemptのgate、packageの順序は維持します。一方の失敗でも他方の終了・cleanupを待ち、片方だけの成功ではpackageへ進みません。隔離fixtureはprivate rootのlockを共有するため、build側の内部順序を保ちます。WebKitとChromeのreport名・profile・serverは分離されています。中間distの転送や再buildは追加しません。
+
+この変更は、直列だったWebKit導入・フォント準備・WebKit検査を、既存のbuild・public finalと重ねるものです。共有CPUによる各処理の変動を含むため、変更前の98秒・17秒・37秒をそのまま短縮実績とはしません。laneごとの開始・完了・elapsedMsと、CI全体のwall timeを最終PRに記録します。
+
+正式プレビューのscopeはNode標準APIだけでexact base/head・変更path・最大8記事を選択し、npm依存導入をreview jobへ集約します。ContentId・MDX・review contextの検証と正規Astro描画が成功したCLIだけがartifact名を出力します。最大4記事の並列実行、全review成功、exact commit/ContentIdの取得条件は維持します。workflow/helper変更だけならscopeの空matrixをHostedで確認し、通常CIの実Astro review回帰も通します。この空matrixの時間を、記事を実際に描画したプレビュー時間と比較しません。
+
+記事本文やregistryの変更を理由に既存検査を省略する変更は含みません。変更範囲による省略は引き続き[観測段階](ci-change-impact.md)です。
 
 ## 2026-11-20: runner固定とWebKit binaryの再利用
 

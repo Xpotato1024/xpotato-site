@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { assertManualWorkflow } from "../deployment/manual-deployment-workflow-policy.mjs";
 import { sourceLanes } from "./ci-source.mjs";
+import { producerPhases } from "./producer-parallel.mjs";
 const scripts = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url))).scripts;
 function expanded(name, ancestors = []) {
   assert.ok(!ancestors.includes(name), `Cycle: ${name}`);
@@ -12,6 +13,11 @@ function expanded(name, ancestors = []) {
       return applicationBuildScripts.flatMap((script) => expanded(script, [...ancestors, name]));
     if (cmd === "node ops/ci/ci-source.mjs")
       return sourceLanes.flatMap((lane) => expanded(lane, [...ancestors, name]));
+    for (const phase of Object.keys(producerPhases)) {
+      if (cmd === "node ops/ci/producer-parallel.mjs " + phase) {
+        return producerPhases[phase].flatMap((lane) => expanded(lane, [...ancestors, name]));
+      }
+    }
     const match = /^npm run ([\w:-]+)$/.exec(cmd);
     return match ? expanded(match[1], [...ancestors, name]) : [cmd];
   });
@@ -45,25 +51,54 @@ test("production dispatch remains manual/main/owner-only", () => {
   );
 });
 
-test("WebKit checks the one final build before packaging with a pinned engine dependency", () => {
+test("both preparation lanes finish before the parallel final consumers and packaging", () => {
   const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
   const producer = workflow.split("  producer:")[1].split("  windows-consumer:")[0];
-  const webkit = producer.indexOf("run: npm run quality:home-webkit");
-  assert.ok(webkit > producer.indexOf("run: npm run release:build:hosted"));
-  assert.ok(webkit < producer.indexOf("run: npm run ci:final:public"));
+  const prepare = producer.indexOf("run: npm run ci:producer:prepare");
+  const validate = producer.indexOf("run: npm run ci:producer:validate");
+  const gate = producer.indexOf("run: npm run ci:hosted:gate");
+  const pack = producer.indexOf("run: npm run release:package");
+  assert.ok(prepare >= 0 && prepare < validate && validate < gate && gate < pack);
+  assert.deepEqual(producerPhases.prepare, ["release:build:hosted", "ci:browsers:prepare"]);
+  assert.deepEqual(producerPhases.validate, ["quality:home-webkit:hosted", "ci:final:public"]);
+  assert.equal(
+    scripts["ci:browsers:prepare"],
+    "npm run toolchain:check && npx --no-install playwright install --with-deps webkit && node ops/ci/prepare-chrome-font-cache.mjs",
+  );
+  assert.equal(
+    scripts["quality:home-webkit:hosted"],
+    'npm run quality:home-webkit -- --dist "$GITHUB_WORKSPACE/apps/site/dist" --out "$RUNNER_TEMP/release-validation"',
+  );
+  const preparation = expanded("ci:producer:prepare"),
+    validation = expanded("ci:producer:validate");
+  assert.equal(
+    preparation.filter((c) => c === "npm run build --workspace @xpotato/site").length,
+    1,
+  );
+  assert.equal(
+    preparation.filter((c) => c === "npm run build --workspace @xpotato/editor").length,
+    1,
+  );
+  assert.ok(!validation.some((c) => /astro build|npm run build/u.test(c)));
+  assert.deepEqual(validation.slice(1), expanded("ci:final:public"));
   assert.ok(
-    producer.indexOf("run: npm run ci:final:public") <
-      producer.indexOf("run: npm run ci:hosted:gate"),
+    ![...preparation, ...validation].some((c) => /ci-hosted-gate|release-package-cli/u.test(c)),
   );
   assert.equal(
     scripts["release:validate:hosted"],
     "npm run release:build:hosted && npm run ci:final:public",
   );
-  assert.match(producer, /npx --no-install playwright install --with-deps webkit/);
-  assert.match(
-    producer,
-    /--dist "\$GITHUB_WORKSPACE\/apps\/site\/dist" --out "\$RUNNER_TEMP\/release-validation"/,
-  );
+  const steps = producer.split(/\n      - /u);
+  const preparationStep = steps.find((step) => step.includes("run: npm run ci:producer:prepare"));
+  const validationStep = steps.find((step) => step.includes("run: npm run ci:producer:validate"));
+  assert.ok(preparationStep && validationStep && preparationStep !== validationStep);
+  assert.equal((producer.match(/run: npm run ci:producer:prepare/g) ?? []).length, 1);
+  assert.equal((producer.match(/run: npm run ci:producer:validate/g) ?? []).length, 1);
+  for (const step of [preparationStep, validationStep]) {
+    assert.doesNotMatch(step, /continue-on-error:|\n        if:/u);
+    assert.match(step, /PLAYWRIGHT_BROWSERS_PATH: \$\{\{ runner\.temp \}\}\/playwright/u);
+    assert.match(step, /XPOTATO_RELEASE_TEMP: \$\{\{ runner\.temp \}\}\/release-validation/u);
+  }
   assert.match(producer, /release-validation\/home-design-webkit\.json/);
   assert.equal(
     JSON.parse(readFileSync(new URL("../../package.json", import.meta.url))).devDependencies
@@ -80,7 +115,8 @@ test("only superseded PR runs are cancelled and dependency caching never caches 
   assert.match(workflow, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);
   assert.match(workflow, /cache: npm/);
   assert.match(workflow, /run: npm ci --prefer-offline/);
-  assert.match(workflow, /run: npm run release:build:hosted/);
+  assert.match(workflow, /run: npm run ci:producer:prepare/);
+  assert.match(workflow, /run: npm run ci:producer:validate/);
   assert.match(workflow, /run: npm run ci:hosted:gate/);
   assert.match(workflow, /run: npm run release:package/);
   assert.doesNotMatch(workflow, /pull_request_target|workflow_run|contents: write|actions: write/);
@@ -163,7 +199,7 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
   );
   assert.ok(isolation >= 0 && isolation < build && build < gate && gate < pack);
   assert.ok(
-    sections.producer.indexOf("run: npm run release:build:hosted") <
+    sections.producer.indexOf("run: npm run ci:producer:validate") <
       sections.producer.indexOf("run: npm run ci:hosted:gate"),
   );
   assert.ok(
@@ -237,7 +273,7 @@ test("public image cache never admits test success, private sources or a skipped
   assert.match(producer, /\[\[ -n "\$MATCHED_KEY" && "\$MATCHED_KEY" != "\$EXPECTED_KEY" \]\]/);
   assert.ok(
     producer.indexOf("run: npm run ci:media-cache:key") <
-      producer.indexOf("run: npm run release:build:hosted"),
+      producer.indexOf("run: npm run ci:producer:prepare"),
   );
   assert.ok(
     producer.indexOf("run: npm run ci:hosted:gate") <
@@ -257,11 +293,10 @@ test("public image cache never admits test success, private sources or a skipped
 test("hosted browser jobs prepare font caches once before their existing required checks", () => {
   const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
   const preparation = "run: node ops/ci/prepare-chrome-font-cache.mjs";
-  assert.equal(workflow.split(preparation).length - 1, 3);
+  assert.equal(workflow.split(preparation).length - 1, 2);
   for (const [name, command] of [
     ["source-validation", "run: npm run ci:source:validate"],
     ["common-tool", "run: npm run release:interaction -- common-tool"],
-    ["producer", "run: npm run ci:final:public"],
   ]) {
     const job = workflow.split("\n  " + name + ":")[1].split(/\n  [a-z][a-z-]*:/u)[0];
     const prepare = job.indexOf(preparation);
@@ -271,12 +306,22 @@ test("hosted browser jobs prepare font caches once before their existing require
       .split("name: Prepare Chrome font cache for isolated profiles")[1]
       .split(/\n      - /u)[0];
     assert.doesNotMatch(step, /continue-on-error:|\n        if:/u, name);
-    if (name === "producer") {
-      assert.ok(prepare > job.indexOf("run: npm run quality:home-webkit"));
-    }
   }
+  const browserPreparation = scripts["ci:browsers:prepare"].split(" && ");
+  assert.deepEqual(browserPreparation, [
+    "npm run toolchain:check",
+    "npx --no-install playwright install --with-deps webkit",
+    "node ops/ci/prepare-chrome-font-cache.mjs",
+  ]);
+  const producer = workflow.split("\n  producer:")[1].split(/\n  [a-z][a-z-]*:/u)[0];
+  assert.ok(
+    producer.indexOf("run: npm run ci:producer:prepare") <
+      producer.indexOf("run: npm run ci:producer:validate"),
+  );
   assert.match(scripts["test:release"], /ops\/ci\/prepare-chrome-font-cache\.test\.mjs/u);
   assert.match(scripts["test:release"], /ops\/qa\/chrome-font-cache\.test\.mjs/u);
+  assert.match(scripts["test:release"], /ops\/ci\/producer-parallel\.test\.mjs/u);
+  assert.match(workflow, /run: node --test[^\n]*ops\/ci\/producer-parallel\.test\.mjs/u);
 });
 
 test("hosted CI pins Linux ABI and caches only versioned WebKit binaries after real layout checks", () => {
@@ -287,10 +332,9 @@ test("hosted CI pins Linux ABI and caches only versioned WebKit binaries after r
   const steps = [
     "name: Restore version-pinned WebKit browser binaries",
     "name: Require exact restored WebKit cache identity",
-    "name: Install pinned WebKit engine on the ephemeral runner",
-    "name: Check the final linked home CSS in WebKit",
+    "name: Prepare the one public build and browser engines concurrently",
+    "name: Validate the same build in WebKit and Chrome concurrently",
     "name: Save WebKit browser cache after its real CSS smoke passes",
-    "name: Final public consumers of the same build",
   ];
   let previous = -1;
   for (const step of steps) {
@@ -305,14 +349,17 @@ test("hosted CI pins Linux ABI and caches only versioned WebKit binaries after r
     producer,
     /name: Save WebKit browser cache after its real CSS smoke passes\n        if: steps\.webkit-cache\.outputs\.cache-hit != 'true'\n        continue-on-error: true/,
   );
-  for (const name of [steps[1], steps[2], steps[3], steps[5]]) {
+  for (const name of [steps[1], steps[2], steps[3]]) {
     const step = producer.slice(producer.indexOf(name)).split(/\n      - /u)[0];
     assert.doesNotMatch(step, /continue-on-error:|\n        if:/u, name + " remains mandatory");
   }
   assert.match(producer, /steps\.webkit-cache\.outputs\.cache-primary-key/u);
   assert.match(producer, /steps\.webkit-cache\.outputs\.cache-matched-key/u);
   assert.match(producer, /Unexpected WebKit cache key'; exit 1/u);
-  assert.match(producer, /run: npx --no-install playwright install --with-deps webkit/);
+  assert.match(
+    scripts["ci:browsers:prepare"],
+    /npx --no-install playwright install --with-deps webkit/,
+  );
   assert.doesNotMatch(producer, /restore-keys:/);
 });
 test("parallel public UI suite retains required design-role checks and both quality artifact sets", () => {

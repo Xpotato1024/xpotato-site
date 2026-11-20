@@ -1,8 +1,15 @@
 import { it, expect, afterEach } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm, readFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { inlineReviewAssets, separateReviewStyles } from "./editor-astro-review.js";
+import {
+  inlineReviewAssets,
+  separateReviewStyles,
+  writeEditorReviewOutput,
+} from "./editor-astro-review.js";
 const roots: string[] = [];
 afterEach(async () => {
   for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });
@@ -46,7 +53,113 @@ it("the PR workflow grants only read access and renders exact-head public MDX wi
   expect(source).not.toMatch(/secrets\.|pull_request_target|actions: write|wrangler deploy/u);
   expect(source).toContain("path: .local/editor-review-output/review.json");
   expect(source).toContain("retention-days: 1");
+  const scope = source.slice(source.indexOf("  scope:"), source.indexOf("  review:"));
+  expect(scope).toContain("node ops/authoring/editor-review-scope.mjs");
+  expect(scope).not.toMatch(/npm ci|cache: npm|--import tsx/u);
+  expect(source).toContain('"ops/authoring/editor-review-scope.*"');
+  expect(source).toContain("name: ${{ steps.review.outputs.artifact-name }}");
+  expect(source).not.toContain("matrix.contentId");
+  expect(source).toContain('--github-output "$GITHUB_OUTPUT"');
 });
+
+it("publishes only the artifact name bound to a clean validated source context", async () => {
+  const root = await mkdtemp(join(tmpdir(), "editor-review-output-"));
+  roots.push(root);
+  const output = join(root, "github-output");
+  const commit = "a".repeat(40);
+  const contentId = "11111111-1111-4111-8111-111111111111";
+  const result = {
+    artifactName: `editor-layout-${commit}-${contentId}`,
+    bundlePath: join(root, "review.json"),
+    context: {
+      schemaVersion: 1 as const,
+      contentId,
+      commit,
+      sourcePath: "content/articles/example.mdx",
+      sourceSha256: "b".repeat(64),
+      scope: "public-git-draft" as const,
+      productionEligible: false as const,
+    },
+    bytes: 100,
+    privateMediaDownloaded: false as const,
+    codeClean: true,
+  };
+  for (const invalid of [
+    { ...result, artifactName: result.artifactName + "\nother=untrusted" },
+    { ...result, codeClean: false },
+    { ...result, context: { ...result.context, contentId: "wrong-id" } },
+    { ...result, context: { ...result.context, commit: "wrong-commit" } },
+    { ...result, context: { ...result.context, sourcePath: ".github/workflows/ci.yml" } },
+  ]) {
+    await expect(writeEditorReviewOutput(invalid, output)).rejects.toThrow();
+    await expect(readFile(output)).rejects.toMatchObject({ code: "ENOENT" });
+  }
+  await writeEditorReviewOutput(result, output);
+  expect(await readFile(output, "utf8")).toBe(`artifact-name=${result.artifactName}\n`);
+});
+
+it("the review CLI rejects invalid selected MDX before emitting an upload name", async () => {
+  const root = await mkdtemp(join(tmpdir(), "editor-review-invalid-source-"));
+  roots.push(root);
+  const sourcePath = "content/pages/example.mdx";
+  const githubOutput = join(root, "github-output");
+  const output = join(root, ".local/review-output");
+  const git = (...args: string[]) =>
+    execFileSync("git", args, {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+  git("init", "-q");
+  await mkdir(join(root, "content/pages"), { recursive: true });
+  for (const [source, expectedError] of [
+    ["Missing frontmatter\n", "FRONTMATTER_REQUIRED"],
+    ["---\nid: invalid\n---\nBody\n", "ZodError"],
+    [
+      '---\nid: 11111111-1111-4111-8111-111111111111\ntitle: Example\ndescription: Example\ndraft: true\n---\nimport unsafe from "./runtime.js";\n',
+      "EDITOR_REVIEW_SOURCE_INVALID",
+    ],
+  ]) {
+    await writeFile(join(root, sourcePath), source!);
+    git("add", sourcePath);
+    git(
+      "-c",
+      "user.name=CI fixture",
+      "-c",
+      "user.email=ci@example.invalid",
+      "commit",
+      "-qm",
+      "fixture",
+    );
+    const commit = git("rev-parse", "HEAD");
+    let failure: unknown;
+    try {
+      execFileSync(
+        process.execPath,
+        [
+          "--import",
+          pathToFileURL(createRequire(import.meta.url).resolve("tsx")).href,
+          fileURLToPath(new URL("./editor-astro-review.ts", import.meta.url)),
+          "--source",
+          sourcePath,
+          "--commit",
+          commit,
+          "--output",
+          output,
+          "--github-output",
+          githubOutput,
+        ],
+        { cwd: root, stdio: ["ignore", "pipe", "pipe"], timeout: 10000 },
+      );
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).toBeInstanceOf(Error);
+    expect((failure as { stderr: Buffer }).stderr.toString()).toContain(expectedError!);
+    await expect(readFile(githubOutput)).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(readFile(join(output, "review.json"))).rejects.toMatchObject({ code: "ENOENT" });
+  }
+}, 15000);
 
 it("separates CSS before browser HTML parsing and preserves declaration semantics", () => {
   const output = separateReviewStyles(
