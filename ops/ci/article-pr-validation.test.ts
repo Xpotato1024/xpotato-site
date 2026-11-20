@@ -8,8 +8,45 @@ import {
   articlePrFixture,
   assertDraftAbsentFromPublicOutput,
   assertFixtureIsUnpublished,
+  assertSingleArticleBuild,
   writeCmsArticleFixture,
 } from "./article-pr-fixture.js";
+
+describe("article validation build invocation evidence", () => {
+  const commands = {
+    pipeline: "> npm run build:apps && npm run search:build && npm run publication:generate",
+    site: "> astro build",
+    editor: "> vite build",
+  };
+  const output = [
+    "> build",
+    commands.pipeline,
+    "> build:editor",
+    "> npm run build --workspace @xpotato/editor",
+    "> build:site",
+    "> npm run build --workspace @xpotato/site",
+    "> build",
+    commands.editor,
+    "> build",
+    commands.site,
+  ].join("\n");
+
+  it.each(["\n", "\r\n"])("counts one Site build across npm's nested labels (%j)", (newline) => {
+    expect(assertSingleArticleBuild(output.replaceAll("\n", newline))).toBe(1);
+  });
+
+  it.each(Object.entries(commands))("rejects a missing %s build command", (_name, command) => {
+    expect(() => assertSingleArticleBuild(output.replace(command, ""))).toThrow();
+  });
+
+  it.each(Object.entries(commands))("rejects a repeated %s build command", (_name, command) => {
+    expect(() => assertSingleArticleBuild(output + "\n" + command)).toThrow();
+  });
+
+  it("does not infer a real build from npm script labels alone", () => {
+    expect(() => assertSingleArticleBuild("> build\n> build\n> build\n")).toThrow();
+  });
+});
 
 describe("ordinary CMS drafts in the article validation lane", () => {
   let root: string;

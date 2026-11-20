@@ -116,6 +116,22 @@ export async function assertDraftAbsentFromPublicOutput(dist: string) {
   return files;
 }
 
+export function assertSingleArticleBuild(output: string) {
+  const lines = output.replaceAll("\r\n", "\n").split("\n");
+  const count = (command: string) => lines.filter((line) => line === "> " + command).length;
+  assert.equal(
+    count("npm run build:apps && npm run search:build && npm run publication:generate"),
+    1,
+    "The article command must invoke the complete public build pipeline once",
+  );
+  // npm uses the same `> build` label for the root, Site and Editor scripts.
+  // Count their actual commands to distinguish one Site build from nested labels.
+  const siteBuildCount = count("astro build");
+  assert.equal(siteBuildCount, 1, "The article command must invoke one Astro Site build");
+  assert.equal(count("vite build"), 1, "The article command must invoke one Editor build");
+  return siteBuildCount;
+}
+
 export async function runArticlePrFixture(root = repositoryRoot) {
   const npm = process.env.npm_execpath;
   assert.ok(npm && isAbsolute(npm), "Run the fixture through its pinned npm script");
@@ -213,9 +229,7 @@ export async function runArticlePrFixture(root = repositoryRoot) {
     admit(additionHead, revisionHead);
     await assertFixtureIsUnpublished(workspace);
     const validation = run([npm, "run", "ci:article:fast"], "validate the real article command");
-    const buildCount = (validation.output.replaceAll("\r\n", "\n").match(/^> build$/gmu) ?? [])
-      .length;
-    assert.equal(buildCount, 1, "The actual article command must invoke one complete public build");
+    const buildCount = assertSingleArticleBuild(validation.output);
     const publicFilesChecked = await assertDraftAbsentFromPublicOutput(
       join(workspace, "apps/site/dist"),
     );

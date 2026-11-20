@@ -186,10 +186,40 @@ describe("CMS draft PR semantic admission", () => {
   it("retains approved semantic modules and fenced code as valid draft content", () => {
     withRepository(({ original, save, commit, admit }) => {
       const body =
-        '```js\nimport unsafe from "./example.js";\n```\n\n<Group>\n\n<Callout kind="note">\n\nText.\n\n</Callout>\n\n</Group>\n';
+        '```js\nimport unsafe from "./example.js";\n```\n\n```md\n![example](../../package.json?url)\n```\n\n<Group>\n\n<Callout kind="note">\n\nText.\n\n</Callout>\n\n</Group>\n';
       save(updateDraft(original, {}, body));
       commit();
       expect(admit().eligible).toBe(true);
+    });
+  });
+
+  it.each([
+    "![example](../../package.json?url)\n",
+    "![example][asset]\n\n[asset]: ../../package.json?url\n",
+    "![asset][]\n\n[asset]: ../../package.json?url\n",
+    "![example](https://example.invalid/image.png)\n",
+    '<Callout kind="note">\n\n![example](./asset.png)\n\n</Callout>\n',
+  ])("returns Markdown images and their compiler-generated dependencies to full CI: %s", (body) => {
+    withRepository(({ original, save, commit, admit }) => {
+      save(updateDraft(original, {}, body));
+      commit();
+      expect(admit()).toEqual({
+        eligible: false,
+        reason: "Markdown image compilation requires full CI",
+      });
+    });
+  });
+
+  it("also checks the old draft when a Markdown image is removed", () => {
+    withRepository(({ original, save, commit, admit }) => {
+      save(updateDraft(original, {}, "![example](../../package.json?url)\n"));
+      const imageBase = commit();
+      save(updateDraft(original, {}, "Plain text after the image was removed.\n"));
+      commit();
+      expect(admit({ DIFF_BASE: imageBase })).toEqual({
+        eligible: false,
+        reason: "Markdown image compilation requires full CI",
+      });
     });
   });
 

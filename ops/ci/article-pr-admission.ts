@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import type { ContentCollection } from "@xpotato/content-contracts/common";
 import { parseDraft, validateDraft } from "@xpotato/editor-core/draft";
+import { blockTree, type BlockNode } from "@xpotato/editor-core/blocks";
 import {
   parseEditorContentIndex,
   updateEditorContentIndex,
@@ -19,6 +20,16 @@ import {
 export interface ArticlePrAdmission {
   eligible: boolean;
   reason: string;
+}
+
+// Astro can turn Markdown images into imports after portable MDX validation.
+// Keep them on full CI; the CMS's registered Figure/Gallery modules remain eligible.
+function hasMarkdownImage(node: BlockNode): boolean {
+  return (
+    node.type === "image" ||
+    node.type === "imageReference" ||
+    (node.children?.some(hasMarkdownImage) ?? false)
+  );
 }
 
 export function inspectArticlePrAdmission({
@@ -48,6 +59,9 @@ export function inspectArticlePrAdmission({
       if (next.data.draft !== true || validateDraft(source, collection).length) {
         return { eligible: false, reason: "head is not a valid portable draft" };
       }
+      if (hasMarkdownImage(blockTree(next.body))) {
+        return { eligible: false, reason: "Markdown image compilation requires full CI" };
+      }
       const indexEntry = (data: ReturnType<typeof parseDraft>["data"]): EditorContentRecord =>
         parseEditorContentIndex({
           schemaVersion: 1,
@@ -67,6 +81,9 @@ export function inspectArticlePrAdmission({
         const original = parseDraft(originalSource);
         if (original.data.draft !== true || validateDraft(originalSource, collection).length) {
           return { eligible: false, reason: "base is not a valid portable draft" };
+        }
+        if (hasMarkdownImage(blockTree(original.body))) {
+          return { eligible: false, reason: "Markdown image compilation requires full CI" };
         }
         if (original.data.id !== next.data.id) {
           return { eligible: false, reason: "ContentId changed" };

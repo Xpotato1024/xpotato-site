@@ -44,6 +44,8 @@ PRへ `ci:full` labelを付けると全体CIを強制できる。labelの追加�
 
 原稿は正規portable MDXだけを認める。runtime import/export、任意JSX、生HTML、式・spread等は既存AST validatorで拒否する。fenced codeの説明例をruntime importと誤認する独自正規表現は作らない。
 
+Markdownの画像記法と参照形式の画像は、Astroが後段でimportへ変換する場合があるため旧新とも全体CIへ戻す。CMSの登録媒体を使うFigure/Galleryはこの記法と区別する。コードブロック内の画像記法は実画像ではないため短経路の対象を維持する。
+
 公開catalogはdraftを除外し、各route、検索、feed、関連記事、連載はその公開集合から生成する。Tailwindはcontent sourceをscanせず、font subsetは生成済み公開HTMLから作る。CMS索引は認証API用で、公開editor bundleとは分離される。これらの実装やlockの変更は候補pathから除外するため、公開UIに渡る内容を変えない下書きだけを短縮する。
 
 Astroは下書きもcompileするため、build自体や出力予算を省かない。commit SHA/日時を含むfooterは正常に変わるので、base/headのdistが完全に同一bytesだとは主張しない。別revisionのHTML・成功report・release artifactを流用しない。
