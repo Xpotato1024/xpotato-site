@@ -40,6 +40,18 @@ try {
   ).join("\n\n");
   await writeBody(page, longBody);
   await page.getByRole("tab", { name: "プレビュー", exact: true }).click();
+  const iframe = page.locator("iframe.cms-preview-frame[srcdoc]");
+  await iframe.waitFor();
+  assert.equal(await iframe.getAttribute("sandbox"), "allow-same-origin");
+  assert.match(
+    await iframe.getAttribute("srcdoc"),
+    /script-src &#39;none&#39;|script-src \x27none\x27/u,
+  );
+  await page
+    .frameLocator("iframe.cms-preview-frame")
+    .getByText("端末切替バーの固定位置を確認するための本文です。", { exact: false })
+    .first()
+    .waitFor();
   const toolbar = page.locator(".cms-site-preview-toolbar");
   await toolbar.waitFor();
   const buttons = page.locator(".cms-preview-devices button");

@@ -25,9 +25,21 @@ async function publicReadiness(origin: string) {
   const check = async (path: string, kind: "shell" | "api") => {
     try {
       const response = await fetch(origin + path, {
-        redirect: "error",
+        redirect: "manual",
         signal: AbortSignal.timeout(10000),
       });
+      // A protected editor legitimately redirects unauthenticated readers to Cloudflare Access.
+      // This confirms the security boundary, not an authenticated shell load.
+      if (kind === "shell" && [302, 303, 307].includes(response.status)) {
+        const destination = new URL(response.headers.get("location") ?? "/", origin);
+        if (
+          destination.protocol === "https:" &&
+          destination.hostname.endsWith(".cloudflareaccess.com") &&
+          destination.pathname.startsWith("/cdn-cgi/access/login/")
+        ) {
+          return { ready: true, status: response.status, accessProtected: true };
+        }
+      }
       if (response.status !== 200) {
         return { ready: false, status: response.status };
       }

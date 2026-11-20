@@ -31,7 +31,7 @@ export function SitePreview({
   const [zoom, setZoom] = useState<"fit" | "actual">("fit");
   const [available, setAvailable] = useState(390);
   const [height, setHeight] = useState(600);
-  const [frameUrl, setFrameUrl] = useState("");
+  const [frameHtml, setFrameHtml] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState("");
   const preview = useRef<HTMLElement>(null);
@@ -93,15 +93,15 @@ export function SitePreview({
       );
       const styleUrl = URL.createObjectURL(new Blob([css], { type: "text/css" }));
       urls.push(styleUrl);
+      // srcDoc avoids blob: document navigation, which is unreliable in standalone Safari PWAs.
+      // The frame remains scriptless and keeps the same strict CSP and sandbox.
       const html = renderer.previewFrameDocument(result, styleUrl);
-      const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-      urls.push(url);
       setHeight(600);
       setWarnings(result.warnings);
-      setFrameUrl(url);
+      setFrameHtml(html);
     })().catch((reason: unknown) => {
       if (!current) return;
-      setFrameUrl("");
+      setFrameHtml("");
       setError(reason instanceof Error ? reason.message : "プレビューを表示できません。");
     });
     return () => {
@@ -178,7 +178,7 @@ export function SitePreview({
         </p>
       )}
       <div className="cms-preview-viewport" ref={viewport} data-zoom={zoom}>
-        {frameUrl ? (
+        {frameHtml ? (
           <div
             className="cms-preview-stage"
             style={{ width: width * scale, height: height * scale }}
@@ -189,7 +189,7 @@ export function SitePreview({
               title={`${devices.find((item) => item.id === device)!.label}表示 ${width}px`}
               sandbox="allow-same-origin"
               referrerPolicy="no-referrer"
-              src={frameUrl}
+              srcDoc={frameHtml}
               width={width}
               height={height}
               style={{ width, height, transform: `scale(${scale})` }}
