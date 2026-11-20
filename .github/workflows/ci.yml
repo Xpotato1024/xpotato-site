@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   offline-policy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -32,7 +32,7 @@ jobs:
         run: node --test ops/deployment/environment-approval.test.mjs ops/deployment/deployment-policy.test.mjs ops/deployment/deployment-persistent-policy.test.mjs ops/deployment/deployment-adapters.test.mjs ops/deployment/monitoring/site-integrity-monitor.test.mjs ops/deployment/monitoring/site-monitor-bootstrap.test.mjs ops/deployment/monitoring/site-monitor-bootstrap-once.test.mjs ops/deployment/monitoring/site-monitor-runtime.test.mjs ops/deployment/monitoring/site-monitor-trial.test.mjs ops/deployment/monitoring/site-monitor-readiness.test.mjs ops/deployment/shared/site-domain-evidence.test.mjs ops/deployment/monitoring/site-monitor-conditions.test.mjs ops/deployment/monitoring/site-monitor-candidate.test.mjs ops/deployment/monitoring/site-monitor-version-structure.test.mjs ops/deployment/monitoring/site-monitor-version-structure-cli.test.mjs ops/deployment/monitoring/site-monitor-finite.test.mjs ops/deployment/monitoring/site-monitor-finite-cli.test.mjs ops/deployment/monitoring/site-monitor-evidence-cli.test.mjs ops/deployment/monitoring/site-monitor-armed.test.mjs ops/deployment/monitoring/site-monitor-armed-cli.test.mjs ops/deployment/monitoring/site-monitor-evidence-ready.test.mjs ops/deployment/manual-deployment-readiness.test.mjs ops/deployment/manual-deployment.test.mjs
 
   scope:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       core: ${{ steps.scope.outputs.core }}
       reason: ${{ steps.scope.outputs.reason }}
@@ -67,7 +67,7 @@ jobs:
   source-validation:
     needs: scope
     if: needs.scope.outputs.core == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       ASTRO_TELEMETRY_DISABLED: "1"
@@ -92,7 +92,7 @@ jobs:
   publication-fixtures:
     needs: scope
     if: needs.scope.outputs.core == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       ASTRO_TELEMETRY_DISABLED: "1"
@@ -117,7 +117,7 @@ jobs:
   common-tool:
     needs: scope
     if: needs.scope.outputs.core == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       ASTRO_TELEMETRY_DISABLED: "1"
@@ -156,7 +156,7 @@ jobs:
   producer:
     needs: scope
     if: needs.scope.outputs.core == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     outputs:
       artifact-id: ${{ steps.upload.outputs.artifact-id }}
@@ -207,6 +207,15 @@ jobs:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
           XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
         run: npm run release:build:hosted
+      # ubuntu-latest currently selects 26.04; pin the producer's browser/ABI
+      # environment and reuse only the Playwright 1.65.0 WebKit binaries.
+      # --with-deps still verifies/installs OS packages on every fresh runner.
+      - name: Restore version-pinned WebKit browser binaries
+        id: webkit-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/playwright
+          key: site-webkit-v1-ubuntu-24.04-${{ runner.arch }}-playwright-1.65.0
       - name: Install pinned WebKit engine on the ephemeral runner
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
@@ -215,6 +224,12 @@ jobs:
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
         run: npm run quality:home-webkit -- --dist "$GITHUB_WORKSPACE/apps/site/dist" --out "$RUNNER_TEMP/release-validation"
+      - name: Save WebKit browser cache after its real CSS smoke passes
+        if: steps.webkit-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/playwright
+          key: site-webkit-v1-ubuntu-24.04-${{ runner.arch }}-playwright-1.65.0
       - name: Final public consumers of the same build
         env:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
@@ -329,7 +344,7 @@ jobs:
         producer,
         windows-consumer,
       ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Stable result
         env:
