@@ -1,12 +1,22 @@
 ---
 status: canonical
 owner: operations
-last_verified: 2026-11-09
+last_verified: 2026-11-20
 canonical_for:
   - CI latency measurement and optimization boundaries
 ---
 
 # CI時間の測定
+
+## 2026-11-20: runner固定とWebKit binaryの再利用
+
+`ubuntu-latest`の実行環境が26.04へ移ったため、Linux 7jobを`ubuntu-24.04`へ固定します。WebKit binaryはOS・architecture・Playwrightの固定版をkeyに保存し、実WebKit検査の成功後だけ更新します。cache hitでもOS依存導入と全検査を実行します。任意のcache saveだけは非blockingです。
+
+変更前mainの[run 44741654561](https://github.com/Xpotato1024/xpotato-site/actions/runs/44741654561)では、最初の`carousel-desktop`と次の`carousel-mobile`が20秒のChrome起動期限に達しました。前のsuiteのCDP-readyまで次を起動しないため、最初の失敗を8本の同時起動によるものとは判断できません。Chromeは生存し、最初のstderrは空でした。起動期限・操作assertion・実行数は維持し、自動retryは追加しません。
+
+Ubuntu 24.04の初回[run 44752479609](https://github.com/Xpotato1024/xpotato-site/actions/runs/44752479609)、source `4905f444e124f54e3bc31f3add328059a900892c`は8jobが成功しました。公開画像とWebKitのcacheはともにmissです。全体9分06秒、producer444秒、WebKit依存導入とdownload54秒、実WebKit検査32秒でした。WebKit本体のdownloadはログ上約3秒であり、cacheだけで依存導入54秒をすべて除けるとは扱いません。
+
+このrunでも最初のChromeは13.002秒、独立common-tool jobのChromeは10.006秒かかっています。runner固定だけで初回起動遅延の根因を解消したとは断定しません。warm測定はcacheのexact hit、依存導入、全公開suiteとWindows consumerの成功を確認し、exact source/runと時間をPRへ追記します。単発のcold/warm差には公開画像cacheと共有runnerの変動も含まれ、WebKit cache単独の短縮率や安定性の保証とは区別します。
 
 ## 測定した現状
 

@@ -216,6 +216,13 @@ jobs:
         with:
           path: ${{ runner.temp }}/playwright
           key: site-webkit-v1-ubuntu-24.04-${{ runner.arch }}-playwright-1.65.0
+      - name: Require exact restored WebKit cache identity
+        env:
+          EXPECTED_KEY: ${{ steps.webkit-cache.outputs.cache-primary-key }}
+          MATCHED_KEY: ${{ steps.webkit-cache.outputs.cache-matched-key }}
+        run: |
+          if [[ -n "$MATCHED_KEY" && "$MATCHED_KEY" != "$EXPECTED_KEY" ]]; then echo 'Unexpected WebKit cache key'; exit 1; fi
+          echo "WebKit cache: ${MATCHED_KEY:+exact hit}${MATCHED_KEY:-miss}; OS dependencies and real WebKit checks remain mandatory" >> "$GITHUB_STEP_SUMMARY"
       - name: Install pinned WebKit engine on the ephemeral runner
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
@@ -226,6 +233,7 @@ jobs:
         run: npm run quality:home-webkit -- --dist "$GITHUB_WORKSPACE/apps/site/dist" --out "$RUNNER_TEMP/release-validation"
       - name: Save WebKit browser cache after its real CSS smoke passes
         if: steps.webkit-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/playwright

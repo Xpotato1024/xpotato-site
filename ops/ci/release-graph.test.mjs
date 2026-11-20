@@ -261,6 +261,7 @@ test("hosted CI pins Linux ABI and caches only versioned WebKit binaries after r
   assert.doesNotMatch(workflow, /runs-on: ubuntu-latest/);
   const steps = [
     "name: Restore version-pinned WebKit browser binaries",
+    "name: Require exact restored WebKit cache identity",
     "name: Install pinned WebKit engine on the ephemeral runner",
     "name: Check the final linked home CSS in WebKit",
     "name: Save WebKit browser cache after its real CSS smoke passes",
@@ -277,8 +278,15 @@ test("hosted CI pins Linux ABI and caches only versioned WebKit binaries after r
   assert.equal((producer.match(/path: \$\{\{ runner\.temp \}\}\/playwright/g) ?? []).length, 2);
   assert.match(
     producer,
-    /name: Save WebKit browser cache after its real CSS smoke passes\n        if: steps\.webkit-cache\.outputs\.cache-hit != 'true'/,
+    /name: Save WebKit browser cache after its real CSS smoke passes\n        if: steps\.webkit-cache\.outputs\.cache-hit != 'true'\n        continue-on-error: true/,
   );
+  for (const name of [steps[1], steps[2], steps[3], steps[5]]) {
+    const step = producer.slice(producer.indexOf(name)).split(/\n      - /u)[0];
+    assert.doesNotMatch(step, /continue-on-error:|\n        if:/u, name + " remains mandatory");
+  }
+  assert.match(producer, /steps\.webkit-cache\.outputs\.cache-primary-key/u);
+  assert.match(producer, /steps\.webkit-cache\.outputs\.cache-matched-key/u);
+  assert.match(producer, /Unexpected WebKit cache key'; exit 1/u);
   assert.match(producer, /run: npx --no-install playwright install --with-deps webkit/);
   assert.doesNotMatch(producer, /restore-keys:/);
 });
