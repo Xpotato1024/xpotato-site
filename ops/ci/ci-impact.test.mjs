@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { articleClosure, classifyImpact, inspectImpact, parseNameStatus } from "./ci-impact.mjs";
 import { classify } from "./ci-scope.mjs";
+import { producerPhases } from "./producer-parallel.mjs";
 const article = "content/articles/example.mdx";
 const change = (path, status = "M") => ({ status, paths: [path] });
 
@@ -162,7 +163,9 @@ test("workflow stores shadow evidence without changing existing execution decisi
   assert.equal((workflow.match(/if: needs.scope.outputs.core == 'true'/g) ?? []).length, 4);
   assert.doesNotMatch(source, /GITHUB_OUTPUT/);
   assert.doesNotMatch(workflow, /if:.*(?:impact|candidate)/);
-  assert.match(workflow, /run: npm run ci:final:public/);
+  assert.match(workflow, /run: npm run ci:producer:validate/);
+  assert.equal(pkg.scripts["ci:producer:validate"], "node ops/ci/producer-parallel.mjs validate");
+  assert.ok(producerPhases.validate.includes("ci:final:public"));
   assert.match(workflow, /run: npm run ci:hosted:gate/);
   assert.match(workflow, /run: npm run release:package/);
 });
