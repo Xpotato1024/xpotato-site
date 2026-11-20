@@ -254,6 +254,31 @@ test("public image cache never admits test success, private sources or a skipped
   );
 });
 
+test("hosted browser jobs prepare font caches once before their existing required checks", () => {
+  const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
+  const preparation = "run: node ops/ci/prepare-chrome-font-cache.mjs";
+  assert.equal(workflow.split(preparation).length - 1, 3);
+  for (const [name, command] of [
+    ["source-validation", "run: npm run ci:source:validate"],
+    ["common-tool", "run: npm run release:interaction -- common-tool"],
+    ["producer", "run: npm run ci:final:public"],
+  ]) {
+    const job = workflow.split("\n  " + name + ":")[1].split(/\n  [a-z][a-z-]*:/u)[0];
+    const prepare = job.indexOf(preparation);
+    assert.ok(prepare > job.indexOf("run: npm ci --prefer-offline"), name);
+    assert.ok(prepare < job.indexOf(command), name);
+    const step = job
+      .split("name: Prepare Chrome font cache for isolated profiles")[1]
+      .split(/\n      - /u)[0];
+    assert.doesNotMatch(step, /continue-on-error:|\n        if:/u, name);
+    if (name === "producer") {
+      assert.ok(prepare > job.indexOf("run: npm run quality:home-webkit"));
+    }
+  }
+  assert.match(scripts["test:release"], /ops\/ci\/prepare-chrome-font-cache\.test\.mjs/u);
+  assert.match(scripts["test:release"], /ops\/qa\/chrome-font-cache\.test\.mjs/u);
+});
+
 test("hosted CI pins Linux ABI and caches only versioned WebKit binaries after real layout checks", () => {
   const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
   const producer = workflow.split("  producer:")[1].split("  windows-consumer:")[0];

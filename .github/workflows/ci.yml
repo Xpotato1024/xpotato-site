@@ -85,6 +85,8 @@ jobs:
           cache: npm
       - run: npm install --global npm@11.19.0
       - run: npm ci --prefer-offline
+      - name: Prepare Chrome font cache for isolated profiles
+        run: node ops/ci/prepare-chrome-font-cache.mjs
       - env:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
         run: npm run ci:source:validate
@@ -136,6 +138,8 @@ jobs:
           cache: npm
       - run: npm install --global npm@11.19.0
       - run: npm ci --prefer-offline
+      - name: Prepare Chrome font cache for isolated profiles
+        run: node ops/ci/prepare-chrome-font-cache.mjs
       - env:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
         run: npm run release:interaction -- common-tool
@@ -238,6 +242,10 @@ jobs:
         with:
           path: ${{ runner.temp }}/playwright
           key: site-webkit-v1-ubuntu-24.04-${{ runner.arch }}-playwright-1.65.0
+      # WebKit's OS dependency installation can add fonts, so seed Chrome only
+      # after it finishes. Test profiles still own their own copies and deadlines.
+      - name: Prepare Chrome font cache for isolated profiles
+        run: node ops/ci/prepare-chrome-font-cache.mjs
       - name: Final public consumers of the same build
         env:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation

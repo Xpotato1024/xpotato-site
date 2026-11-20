@@ -53,6 +53,8 @@ final browserはcarousel desktop、carousel mobile、content/search/footerのrem
 
 Chromeの起動だけは順番に行い、同suite/runのCDP-ready通知を受けてから次を起動します。起動済みの操作検査はそのまま並行継続します。readyは成功証拠ではなく、最終PASSには従来どおり成功exitとfresh reportが必要です。Linuxのconfig/cache/data用XDG領域も検査用profile内へ分離し、通常のHOMEや永続設定は変更しません。Chromeのport/target/CDP接続は従来の20秒期限、親のprocess監督はNode/server準備・終了処理を含む25秒上限です。操作assertionの期限緩和や全suiteの自動retryは行いません。
 
+Hostedの`source-validation`と`common-tool`は検査前、`producer`はWebKitのOS依存導入と検査後に、同じinstalled Chromeでfontconfig cacheを準備します。準備専用profileで一度だけ起動し、120秒以内の正常終了と所有processのcleanupを要求します。sandboxは有効です。生成したfontconfigの通常ファイルだけをjob内に残し、XDGを隔離する各検査profileへコピーします。profile・Cookie・Web cache・検査結果は共有せず、font cacheを別job/runへ保存しません。cache形式を固定せず、準備時間・生成数を記録します。通常検査の20秒、技術図の25秒の起動期限と全assertionは維持します。
+
 
 `release:package` は検証済みoutputをコピーするだけでbuildしません。`tools:readiness`と`site:output:check`は同じ `apps/site/dist` を検査します。旧Phaseごとの再現や仮公開fixtureは使いません。
 

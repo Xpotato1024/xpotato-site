@@ -1,5 +1,6 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
+import { copyChromeFontCache } from "./chrome-font-cache.mjs";
 
 // --user-data-dir does not isolate the Linux wrapper's XDG_DATA_HOME writes
 // or every product-level crash/config path. Keep those inside this test profile
@@ -14,6 +15,9 @@ export async function isolatedChromeEnvironment(
     cache = join(profile, "xdg-cache"),
     data = join(profile, "xdg-data");
   await Promise.all([config, cache, data].map((path) => mkdir(path, { recursive: true })));
+  if (env.XPOTATO_CHROME_FONT_CACHE) {
+    await copyChromeFontCache(env.XPOTATO_CHROME_FONT_CACHE, join(cache, "fontconfig"));
+  }
   return {
     ...env,
     CHROME_CONFIG_HOME: config,

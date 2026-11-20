@@ -18,6 +18,14 @@ Ubuntu 24.04の初回[run 44752479609](https://github.com/Xpotato1024/xpotato-si
 
 このrunでも最初のChromeは13.002秒、独立common-tool jobのChromeは10.006秒かかっています。runner固定だけで初回起動遅延の根因を解消したとは断定しません。warm測定はcacheのexact hit、依存導入、全公開suiteとWindows consumerの成功を確認し、exact source/runと時間をPRへ追記します。単発のcold/warm差には公開画像cacheと共有runnerの変動も含まれ、WebKit cache単独の短縮率や安定性の保証とは区別します。
 
+### 初回Chromeのフォント準備
+
+WebKit cacheがhitした[run 44756247723](https://github.com/Xpotato1024/xpotato-site/actions/runs/44756247723)は8job成功・全体8分13秒でしたが、その後の[run 44757637650](https://github.com/Xpotato1024/xpotato-site/actions/runs/44757637650)、source `c0997dc54a7c536675c5bd92126389cd99d77148`では、独立した`source-validation`内のMermaid描画用Chromeが25秒の起動期限に達しました。Ubuntu固定だけで初回起動の不安定を解消したとは扱いません。この失敗runは性能改善の成功値へ含めません。
+
+[WPTの同時期の修正](https://chromium.googlesource.com/external/github.com/web-platform-tests/wpt/+/653efdcc8a57730af0efe739d599b4062e1525f7)は、Chrome同梱fontconfigとOSのcache形式が異なる場合に初回の全フォント走査でタイムアウトする問題を、Chromeによる事前生成で対処しています。これは今回の初回だけ遅い観測と整合する機序ですが、当該runnerの根因を直接証明したものではありません。
+
+同じinstalled Chromeの一度限りの準備処理を、実検査の前へ追加します。準備だけに120秒の上限を設け、失敗を検査成功へ変換せず、通常の20/25秒の起動期限は維持します。XDGを分離するprofileには、同じjob内で生成したfontconfig cacheだけをコピーします。各profileの所有権、sandbox、操作assertion、公開build回数は変えません。準備時間・cache数・実検査の起動時間と全体wall timeを別々に測定し、準備時間を除外した見かけの短縮率は使いません。
+
 ## 測定した現状
 
 変更前の基準mainは`e862538b8cae2249fba7c8fe98a043d7f96b67f5`。以下はGitHub Actions APIのrun/job/step時刻とproducerログによる実測です。完了runのwall timeを作成から最終更新まで、job queueをjob作成から開始までとしました。未完了runのupdated_atを実行時間として扱いません。
