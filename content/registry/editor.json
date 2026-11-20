@@ -1505,6 +1505,14 @@
             "analysis"
           ]
         },
+        "analysisDisplay": {
+          "type": "string",
+          "enum": [
+            "concise",
+            "detailed",
+            "hidden"
+          ]
+        },
         "series": {
           "type": "string",
           "minLength": 1,
@@ -1879,5 +1887,5 @@
       "status": "active"
     }
   ],
-  "contractHash": "5bb2d8b5a985b8bec34ded700939c8fd5f834dbe7a14947681be9d7b6d9e9d24"
+  "contractHash": "233c74c6290bc68d9acf4c097ee13d26fe49420763120bf5a288239b99130fc6"
 }

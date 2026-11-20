@@ -279,8 +279,9 @@ function formulaDetails(
   return `<section class="article-line-chart__fit-result article-line-chart__formula-result">
     <p class="article-line-chart__fit-title"><strong>${escape(label)}：理論式</strong></p>
     ${mathLines([formulaChartTex(formula.expression)])}
-    ${detailed
-      ? `<details class="article-line-chart__diagnostics"><summary class="disclosure-summary">計算の詳細</summary>
+    ${
+      detailed
+        ? `<details class="article-line-chart__diagnostics"><summary class="disclosure-summary">計算の詳細</summary>
           <dl>
             <dt>計算するXの範囲</dt><dd>${formula.domain[0]} ～ ${formula.domain[1]}</dd>
             <dt>描画点数</dt><dd>${formula.sampleCount}点（理論式から計算）</dd>
@@ -288,32 +289,37 @@ function formulaDetails(
           <p>${escape(formula.note)}</p>
           <p>有限個の点と通常の数値精度を使って描画しています。</p>
         </details>`
-      : ""}
+        : ""
+    }
   </section>`;
 }
 
 function fitDetails(label: string, fit: ChartFitResult, detailed: boolean): string {
   const tex = fitChartTex(fit);
   const normalization = fit.normalization
-    ? `<dt>計算座標</dt><dd>${fit.normalization.transform === "log"
-      ? `z = ln(x / ${fit.normalization.offset}) / ${fit.normalization.scale}`
-      : `z = (x − ${fit.normalization.offset}) / ${fit.normalization.scale}`}</dd>`
+    ? `<dt>計算座標</dt><dd>${
+        fit.normalization.transform === "log"
+          ? `z = ln(x / ${fit.normalization.offset}) / ${fit.normalization.scale}`
+          : `z = (x − ${fit.normalization.offset}) / ${fit.normalization.scale}`
+      }</dd>`
     : "";
   const coefficients = fit.coefficients
     ? `<dt>計算に使った係数（丸めなし）</dt><dd><code>${escape(JSON.stringify(fit.coefficients))}</code></dd>`
     : "";
-  const metrics = fit.method !== "loess"
-    ? `<dl class="article-line-chart__metrics">
+  const metrics =
+    fit.method !== "loess"
+      ? `<dl class="article-line-chart__metrics">
           <dt>R²</dt><dd>${fit.rSquared === null ? "算出できません（Yが一定）" : statistic(fit.rSquared)}</dd>
           <dt>RMSE</dt><dd>${statistic(fit.rmse)}（Yと同じ単位）</dd>
         </dl>`
-    : "<p class=\"article-line-chart__loess-note\">局所的な平滑化です。単一の近似式はありません。</p>";
+      : '<p class="article-line-chart__loess-note">局所的な平滑化です。単一の近似式はありません。</p>';
   return `<section class="article-line-chart__fit-result">
     <p class="article-line-chart__fit-title"><strong>${escape(label)}：${escape(fit.label)}</strong></p>
     ${tex.length ? mathLines(tex) : ""}
     ${metrics}
-    ${detailed
-      ? `<details class="article-line-chart__diagnostics"><summary class="disclosure-summary">計算の詳細</summary>
+    ${
+      detailed
+        ? `<details class="article-line-chart__diagnostics"><summary class="disclosure-summary">計算の詳細</summary>
           <dl>
             ${normalization}${coefficients}
             <dt>使用した点数</dt><dd>${fit.sampleCount}点（この系列の全測定点）</dd>
@@ -321,7 +327,8 @@ function fitDetails(label: string, fit: ChartFitResult, detailed: boolean): stri
           </dl>
           <p>${tex.length ? "数式の表示係数は丸めています。計算には丸め前の値を使用しています。" : ""}${escape(fit.note)}</p>
         </details>`
-      : ""}
+        : ""
+    }
   </section>`;
 }
 
@@ -394,17 +401,18 @@ export function renderLineChart(input: unknown): string {
     )
     .join("");
   const analysisDisplay = props.analysisDisplay ?? "concise";
-  const details = analysisDisplay === "hidden"
-    ? ""
-    : data
-        .map((item, index) =>
-          formulas[index]
-            ? formulaDetails(item.label, formulas[index], analysisDisplay === "detailed")
-            : fits[index]
-              ? fitDetails(item.label, fits[index], analysisDisplay === "detailed")
-              : "",
-        )
-        .join("");
+  const details =
+    analysisDisplay === "hidden"
+      ? ""
+      : data
+          .map((item, index) =>
+            formulas[index]
+              ? formulaDetails(item.label, formulas[index], analysisDisplay === "detailed")
+              : fits[index]
+                ? fitDetails(item.label, fits[index], analysisDisplay === "detailed")
+                : "",
+          )
+          .join("");
   const hasFormula = formulas.some(Boolean);
   const detailsLabel = hasFormula
     ? fits.some(Boolean)

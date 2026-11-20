@@ -700,7 +700,6 @@ export function buildChartFormula(input: ChartFormula): ChartFormulaResult {
   };
 }
 
-
 /** Convert the limited formula language into TeX, not arbitrary user-supplied TeX. */
 export function chartFormulaToTex(expression: string): string {
   const source = expression.trim().replace(/^y\s*=\s*/u, "");
@@ -712,35 +711,52 @@ export function chartFormulaToTex(expression: string): string {
     if (node.kind === "number") {
       const value = String(node.value);
       const scientific = /^(-?(?:\d+(?:\.\d+)?|\.\d+))e([+-]?\d+)$/u.exec(value);
-      return scientific
-        ? String.raw`${scientific[1]}\times 10^{${Number(scientific[2])}}`
-        : value;
+      return scientific ? String.raw`${scientific[1]}\times 10^{${Number(scientific[2])}}` : value;
     }
     if (node.kind === "x") return "x";
     if (node.kind === "unary") {
-      return node.operator + (node.argument.kind === "binary" &&
+      return (
+        node.operator +
+        (node.argument.kind === "binary" &&
         (node.argument.operator === "+" || node.argument.operator === "-")
-        ? wrap(node.argument) : tex(node.argument));
+          ? wrap(node.argument)
+          : tex(node.argument))
+      );
     }
     if (node.kind === "call") {
       const argument = tex(node.argument);
       if (node.name === "sqrt") return String.raw`\sqrt{${argument}}`;
       if (node.name === "abs") return String.raw`\left|${argument}\right|`;
       const name: Record<FunctionName, string> = {
-        sin: "sin", cos: "cos", tan: "tan",
-        asin: "arcsin", acos: "arccos", atan: "arctan",
-        exp: "exp", ln: "ln", log: "log", log10: "log_{10}",
-        sqrt: "sqrt", abs: "abs",
+        sin: "sin",
+        cos: "cos",
+        tan: "tan",
+        asin: "arcsin",
+        acos: "arccos",
+        atan: "arctan",
+        exp: "exp",
+        ln: "ln",
+        log: "log",
+        log10: "log_{10}",
+        sqrt: "sqrt",
+        abs: "abs",
       };
       return "\\" + name[node.name] + String.raw`\left(${argument}\right)`;
     }
     const { left, right, operator } = node;
     if (operator === "/") return String.raw`\frac{${tex(left)}}{${tex(right)}}`;
-    if (operator === "^") return String.raw`{${left.kind === "binary" || left.kind === "unary" ? wrap(left) : tex(left)}}^{${tex(right)}}`;
-    const l = left.kind === "binary" && ["+", "-"].includes(left.operator) && operator === "*"
-      ? wrap(left) : tex(left);
-    const r = right.kind === "binary" && ["+", "-"].includes(right.operator)
-      && (operator === "*" || operator === "-") ? wrap(right) : tex(right);
+    if (operator === "^")
+      return String.raw`{${left.kind === "binary" || left.kind === "unary" ? wrap(left) : tex(left)}}^{${tex(right)}}`;
+    const l =
+      left.kind === "binary" && ["+", "-"].includes(left.operator) && operator === "*"
+        ? wrap(left)
+        : tex(left);
+    const r =
+      right.kind === "binary" &&
+      ["+", "-"].includes(right.operator) &&
+      (operator === "*" || operator === "-")
+        ? wrap(right)
+        : tex(right);
     return `${l} ${operator === "*" ? String.raw`\cdot` : operator} ${r}`;
   };
   return tex(parse(source));

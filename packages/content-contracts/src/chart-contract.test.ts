@@ -177,7 +177,15 @@ describe("theory formulas and editable chart axes", () => {
 });
 
 describe("analysis visibility contract", () => {
-  const series = [{ label: "測定値", points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] }];
+  const series = [
+    {
+      label: "測定値",
+      points: [
+        { x: 0, y: 0 },
+        { x: 1, y: 1 },
+      ],
+    },
+  ];
   for (const analysisDisplay of ["concise", "detailed", "hidden"] as const) {
     it(`accepts ${analysisDisplay} as a portable display setting`, () => {
       const source = { ...chart(series), analysisDisplay };
@@ -186,7 +194,9 @@ describe("analysis visibility contract", () => {
   }
   it("rejects unknown and non-string visibility settings", () => {
     for (const analysisDisplay of ["expanded", false, 0]) {
-      expect(lineChartModulePropsSchema.safeParse({ ...chart(series), analysisDisplay }).success).toBe(false);
+      expect(
+        lineChartModulePropsSchema.safeParse({ ...chart(series), analysisDisplay }).success,
+      ).toBe(false);
     }
   });
 });

@@ -33,10 +33,13 @@ export function fitChartTex(fit: ChartFitResult): string[] {
     fit.method === "exp" || fit.method === "pow"
       ? String.raw`y\approx ${numberTex(c[0]!)}e^{${numberTex(c[1]!)}z}`
       : String.raw`y\approx ${numberTex(c[0]!)}` +
-        c.slice(1).map((value, index) => {
-          const power = index === 0 ? "z" : String.raw`z^{${index + 1}}`;
-          return ` ${value < 0 ? "-" : "+"} ${numberTex(Math.abs(value))}${power}`;
-        }).join("");
+        c
+          .slice(1)
+          .map((value, index) => {
+            const power = index === 0 ? "z" : String.raw`z^{${index + 1}}`;
+            return ` ${value < 0 ? "-" : "+"} ${numberTex(Math.abs(value))}${power}`;
+          })
+          .join("");
   const n = fit.normalization;
   const scale = numberTex(n.scale);
   const transformed =

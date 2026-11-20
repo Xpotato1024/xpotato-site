@@ -248,7 +248,8 @@ function ModuleFields({
   const requiredFields =
     module.name === "Comparison" ? ["leftLabel", "rightLabel"] : (schema?.required ?? []);
   const mainField = (name: string) =>
-    requiredFields.includes(name) || (module.name === "LineChart" && name === "kind");
+    requiredFields.includes(name) ||
+    (module.name === "LineChart" && (name === "kind" || name === "analysisDisplay"));
   const update = (name: string, value: string | boolean) =>
     setValues((current) => ({ ...current, [name]: value }));
   const apply = () => {

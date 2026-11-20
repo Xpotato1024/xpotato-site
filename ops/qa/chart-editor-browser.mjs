@@ -287,6 +287,32 @@ try {
     "Invalid logarithmic fit/manual underflow preserve input and stored data; linear fit, coefficients/R², exact raw values, portable MDX and IndexedDB reload",
   );
 
+  begin("switch compact MathML, expanded diagnostics and hidden analysis without altering data");
+  await openSettings();
+  const visibility = fields.getByRole("combobox", {
+    name: "近似式・計算情報の表示",
+    exact: true,
+  });
+  await visibility.selectOption("detailed");
+  await apply();
+  await chart.getByText("近似式・計算条件を見る", { exact: true }).click();
+  await chart.getByText("計算の詳細", { exact: true }).click();
+  assert((await chart.locator(".article-line-chart__diagnostics code").count()) > 0);
+  await visibility.selectOption("hidden");
+  const hidden = await apply();
+  assert.equal(await chart.locator(".article-line-chart__analysis").count(), 0);
+  assert.equal(
+    await chart.locator(".article-line-chart__plot .article-line-chart__fit").count(),
+    1,
+  );
+  assert.equal(savedSeries(hidden.source)[2].points[0].y, 0.123456789012345);
+  await visibility.selectOption("concise");
+  await apply();
+  await chart.locator(".article-line-chart__analysis").waitFor();
+  checks.push(
+    "Reader analysis visibility: compact semantic math, inspectable detailed coefficients, hidden analysis with preserved fit and measurements",
+  );
+
   begin("append a supplied theoretical curve without observed markers or invented fit statistics");
   importer = await openImport();
   await importer
@@ -420,9 +446,11 @@ try {
     0,
   );
   await chart.getByText("理論式・計算条件を見る", { exact: true }).click();
+  assert.equal(await chart.locator(".article-line-chart__formula-result math").count(), 1);
+  assert.equal(await chart.locator(".article-line-chart__formula-result msup").count(), 1);
   assert.match(
-    await chart.locator(".article-line-chart__formula-result").innerText(),
-    /0\.5\*9\.81\*x\^2/u,
+    (await chart.locator(".article-line-chart__formula-result annotation").textContent()) ?? "",
+    /0\.5/u,
   );
   const xTickTexts = () =>
     chart

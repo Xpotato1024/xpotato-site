@@ -357,7 +357,17 @@ describe("theory formula rendering", () => {
 });
 
 describe("reader-facing chart analysis", () => {
-  const measured = [{ label: "測定", points: [{ x: 0, y: 4.1 }, { x: 1, y: 6 }, { x: 2, y: 8.2 }], fit: { method: "linear" } }];
+  const measured = [
+    {
+      label: "測定",
+      points: [
+        { x: 0, y: 4.1 },
+        { x: 1, y: 6 },
+        { x: 2, y: 8.2 },
+      ],
+      fit: { method: "linear" },
+    },
+  ];
   it("defaults to compact, static MathML and keeps raw coefficients out of the prose", () => {
     const html = renderLineChart(input(measured));
     expect(html).toContain("article-line-chart__analysis");
