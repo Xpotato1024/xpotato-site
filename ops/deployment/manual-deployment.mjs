@@ -239,6 +239,7 @@ export async function runManualDeployment({
   persistPreimage,
   persistProgress = async () => {},
   clock = Date.now,
+  wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 }) {
   requireManualRun(env);
   validateSelection(selection);
@@ -315,8 +316,23 @@ export async function runManualDeployment({
       stop("DEPLOY_RECEIPT_UNKNOWN");
     deployment = "acknowledged";
     await persistProgress(progress());
-    postimage = await provider.snapshot();
-    if (postimage.versionId !== receipt.versionId) stop("POST_VERSION_MISMATCH");
+    // Cloudflare may acknowledge the new version before its active deployment
+    // becomes visible through the read-only API. Poll only the old known-good
+    // identity for a bounded interval; a third-party version still fails closed.
+    const postDeadline = clock() + 90_000;
+    for (let attempt = 0; attempt < 15; attempt++) {
+      postimage = await provider.snapshot();
+      if (postimage.versionId === receipt.versionId) break;
+      if (
+        postimage.versionId !== latest.versionId ||
+        postimage.deploymentId !== latest.deploymentId ||
+        postimage.workerTag !== latest.workerTag ||
+        attempt === 14 ||
+        clock() + 4000 >= postDeadline
+      )
+        stop("POST_VERSION_MISMATCH");
+      await wait(4000);
+    }
     verification = "pending";
     await persistProgress(progress());
     readback = await verifyPublished(targets, postimage, () =>

@@ -103,6 +103,9 @@ function fixture(overrides = {}) {
     env,
     selection,
     clock: () => now,
+    wait: async () => {
+      calls.push("postversion-wait");
+    },
     provider: {
       verifyDeployToken: async () => {
         calls.push("token");
@@ -316,7 +319,53 @@ for (const gate of ["deployOnce", "verifyPublished"])
   });
 test("receipt/provider version mismatch is never reported as successful", async () => {
   const f = fixture({ deployOnce: async () => ({ count: 1, exitCode: 0, versionId: uid(99) }) });
-  assert.equal((await runManualDeployment(f.input)).code, "POST_VERSION_MISMATCH");
+  const result = await runManualDeployment(f.input);
+  assert.equal(result.code, "POST_VERSION_MISMATCH");
+  assert.equal(result.deployCount, 1);
+  assert.equal(f.calls.filter((value) => value === "postversion-wait").length, 0);
+});
+test("post-deploy read-only snapshot waits for the acknowledged version to become active", async () => {
+  const f = fixture();
+  let snapshots = 0;
+  f.input.provider.snapshot = async () => {
+    f.calls.push("snapshot");
+    snapshots++;
+    return snapshots <= 4 ? { ...image } : { ...image, deploymentId: uid(7), versionId: uid(3) };
+  };
+  const result = await runManualDeployment(f.input);
+  assert.equal(result.status, "DEPLOYED_READBACK_VERIFIED");
+  assert.equal(result.deployment.receipt.versionId, uid(3));
+  assert.equal(result.postimage.versionId, uid(3));
+  assert.equal(result.postimage.deploymentId, uid(7));
+  assert.equal(f.calls.filter((value) => value === "postversion-wait").length, 2);
+  assert.equal(f.calls.filter((value) => value === "deploy").length, 1);
+});
+test("unexpected third-party active version fails closed without retrying the deployment", async () => {
+  const f = fixture();
+  let snapshots = 0;
+  f.input.provider.snapshot = async () => {
+    f.calls.push("snapshot");
+    return { ...image, versionId: ++snapshots > 2 ? uid(8) : uid(2) };
+  };
+  const result = await runManualDeployment(f.input);
+  assert.equal(result.code, "POST_VERSION_MISMATCH");
+  assert.equal(result.deployCount, 1);
+  assert.equal(f.calls.filter((value) => value === "postversion-wait").length, 0);
+  assert.equal(f.calls.filter((value) => value === "deploy").length, 1);
+});
+test("post-version polling obeys a bounded deadline", async () => {
+  const f = fixture();
+  let time = now;
+  f.input.clock = () => time;
+  f.input.wait = async (ms) => {
+    time += ms;
+  };
+  f.input.provider.snapshot = async () => ({ ...image });
+  const result = await runManualDeployment(f.input);
+  assert.equal(result.code, "POST_VERSION_MISMATCH");
+  assert.equal(result.deployCount, 1);
+  assert.equal(result.verification.status, "not_started");
+  assert.equal(time <= now + 90_000, true);
 });
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
