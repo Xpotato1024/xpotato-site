@@ -229,7 +229,7 @@ test("public image cache never admits test success, private sources or a skipped
     );
   }
   assert.doesNotMatch(producer, /restore-keys:/);
-  assert.equal((producer.match(/cache-hit/g) ?? []).length, 1);
+  assert.equal((producer.match(/steps\.media-cache-restore\.outputs\.cache-hit/g) ?? []).length, 1);
   assert.match(
     producer,
     /name: Save verified public derived images only\n        if: steps\.media-cache-restore\.outputs\.cache-hit != 'true'\n        continue-on-error: true/,
@@ -245,7 +245,7 @@ test("public image cache never admits test success, private sources or a skipped
   );
   assert.ok(
     producer.indexOf("run: npm run ci:media-cache:verify") <
-      producer.indexOf("uses: actions/cache/save@"),
+      producer.indexOf("name: Save verified public derived images only"),
   );
   const hosted = expanded("release:produce:hosted");
   assert.ok(
@@ -254,6 +254,34 @@ test("public image cache never admits test success, private sources or a skipped
   );
 });
 
+test("hosted CI pins Linux ABI and caches only versioned WebKit binaries after real layout checks", () => {
+  const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
+  const producer = workflow.split("  producer:")[1].split("  windows-consumer:")[0];
+  assert.equal((workflow.match(/runs-on: ubuntu-24\.04/g) ?? []).length, 7);
+  assert.doesNotMatch(workflow, /runs-on: ubuntu-latest/);
+  const steps = [
+    "name: Restore version-pinned WebKit browser binaries",
+    "name: Install pinned WebKit engine on the ephemeral runner",
+    "name: Check the final linked home CSS in WebKit",
+    "name: Save WebKit browser cache after its real CSS smoke passes",
+    "name: Final public consumers of the same build",
+  ];
+  let previous = -1;
+  for (const step of steps) {
+    const current = producer.indexOf(step);
+    assert.ok(current > previous, step + " must run after its predecessor");
+    previous = current;
+  }
+  const exactKey = "site-webkit-v1-ubuntu-24.04-${{ runner.arch }}-playwright-1.65.0";
+  assert.equal(producer.split("key: " + exactKey).length - 1, 2);
+  assert.equal((producer.match(/path: \$\{\{ runner\.temp \}\}\/playwright/g) ?? []).length, 2);
+  assert.match(
+    producer,
+    /name: Save WebKit browser cache after its real CSS smoke passes\n        if: steps\.webkit-cache\.outputs\.cache-hit != 'true'/,
+  );
+  assert.match(producer, /run: npx --no-install playwright install --with-deps webkit/);
+  assert.doesNotMatch(producer, /restore-keys:/);
+});
 test("parallel public UI suite retains required design-role checks and both quality artifact sets", () => {
   const suite = readFileSync(
     new URL("../qa/release-interaction-suite.mjs", import.meta.url),
