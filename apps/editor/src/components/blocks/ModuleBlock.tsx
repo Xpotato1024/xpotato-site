@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { semanticContentModuleJsonSchemas } from "@xpotato/content-contracts/content";
 import { renderLineChart } from "@xpotato/portable-content/charts";
 import { ChartSeriesEditor } from "./ChartSeriesEditor.js";
+import { ChartAxisSettings, chartAxisFields } from "./ChartAxisSettings.js";
 import { LineChartPreview } from "./LineChartPreview.js";
 import { BlockIcon } from "./BlockIcon.js";
 import {
@@ -68,6 +69,12 @@ const labels: Record<string, string> = {
   series: "測定系列",
   xLabel: "横軸（単位を含む）",
   yLabel: "縦軸（単位を含む）",
+  xMin: "横軸の最小値",
+  xMax: "横軸の最大値",
+  yMin: "縦軸の最小値",
+  yMax: "縦軸の最大値",
+  xPadding: "横軸の余白",
+  yPadding: "縦軸の余白",
 };
 const choices: Record<string, string> = {
   content: "本文幅",
@@ -231,7 +238,9 @@ function ModuleFields({
     setError("");
   }, [serialized]);
   const schema = schemas[module.name];
-  const fields = Object.entries(schema?.properties ?? {});
+  const fields = Object.entries(schema?.properties ?? {}).filter(
+    ([name]) => module.name !== "LineChart" || !chartAxisFields.some((field) => field === name),
+  );
   const requiredFields =
     module.name === "Comparison" ? ["leftLabel", "rightLabel"] : (schema?.required ?? []);
   const mainField = (name: string) =>
@@ -255,11 +264,17 @@ function ModuleFields({
     } catch (caught) {
       const issues =
         caught && typeof caught === "object" && "issues" in caught && Array.isArray(caught.issues)
-          ? (caught.issues as { path?: (string | number)[]; message?: string }[])
+          ? (caught.issues as { code?: string; path?: (string | number)[]; message?: string }[])
           : [];
-      const seriesIssue =
+      const chartIssue =
         module.name === "LineChart"
-          ? issues.find((issue) => issue.path?.[0] === "series" && issue.message)
+          ? issues.find(
+              (issue) =>
+                issue.message &&
+                (issue.path?.[0] === "series" ||
+                  (issue.code === "custom" &&
+                    chartAxisFields.some((field) => field === issue.path?.[0]))),
+            )
           : undefined;
       const fields = [
         ...new Set(
@@ -269,7 +284,7 @@ function ModuleFields({
         ),
       ];
       setError(
-        seriesIssue?.message ??
+        chartIssue?.message ??
           (module.name === "LineChart" && caught instanceof Error && !issues.length
             ? caught.message
             : undefined) ??
@@ -389,6 +404,22 @@ function ModuleFields({
   return (
     <div className="cms-module-fields">
       <div className="cms-field-grid">{fields.filter(([name]) => mainField(name)).map(field)}</div>
+      {module.name === "LineChart" && (
+        <ChartAxisSettings
+          values={values}
+          onChange={update}
+          onReset={() => {
+            setValues((current) => {
+              const next = { ...current };
+              for (const field of chartAxisFields) {
+                delete next[field];
+              }
+              return next;
+            });
+            setError("");
+          }}
+        />
+      )}
       {fields.some(([name]) => !mainField(name)) && (
         <details className="cms-optional-fields">
           <summary>表示・補足の設定</summary>

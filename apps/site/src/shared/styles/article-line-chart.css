@@ -19,6 +19,13 @@
     max-width: none;
     overflow: visible;
   }
+  /* The nested SVG clips only the fixed 640 × 380 chart's drawing area. */
+  :is(.prose, .cms-chart-preview) .article-line-chart__drawing& {
+    width: 502px;
+    height: 284px;
+    max-width: none;
+    overflow: hidden;
+  }
   :is(.prose, .cms-chart-preview) .article-line-chart__grid& {
     stroke: var(--border-divider);
     stroke-width: 1;

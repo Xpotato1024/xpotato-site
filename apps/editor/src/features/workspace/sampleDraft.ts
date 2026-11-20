@@ -90,11 +90,13 @@ const sampleCharts = [
     ]),
   }),
   moduleSource("LineChart", {
-    title: "近似曲線の操作サンプル",
-    description: "近似と計算済み曲線を試す合成データです。実測結果ではありません。",
+    title: "近似と理論式の操作サンプル",
+    description: "近似・理論式と軸の余白を試す合成データです。実測結果ではありません。",
     kind: "analysis",
     xLabel: "時間 (任意単位)",
     yLabel: "値 (任意単位)",
+    xPadding: "8",
+    yPadding: "10",
     series: JSON.stringify([
       {
         label: "系列A",
@@ -109,13 +111,8 @@ const sampleCharts = [
       },
       {
         label: "系列B",
-        role: "curve",
-        points: [
-          { x: 0, y: 1 },
-          { x: 1, y: 3 },
-          { x: 2, y: 5 },
-          { x: 3, y: 7 },
-        ],
+        role: "formula",
+        formula: { expression: "2*x+1", xMin: 0, xMax: 4, samples: 201 },
       },
     ]),
   }),
@@ -145,7 +142,7 @@ const sampleBody = [
   '<Figure asset="sample-block-group" alt="複数の文章ブロックを一つにまとめた図" caption="この節も、見出し・本文・数式・コード・図をまとめて移動できます。" />',
   "</Group>",
   "## 比較とグラフを試す",
-  "比較の条件は追加・並べ替えができます。グラフの設定では、数値の編集、CSVの取り込み、近似方法の選択ができます。図とデータ表、近似式・計算条件を開いて確認してください。",
+  "比較の条件は追加・並べ替えができます。グラフの設定では、CSVの取り込み、近似方法の選択、理論式の追加ができます。軸の範囲・余白も変えられます。図とデータ表、式・計算条件を開いて確認してください。",
   sampleComparison,
   ...sampleCharts,
 ].join("\n\n");

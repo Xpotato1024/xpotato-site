@@ -208,6 +208,52 @@ describe("public Astro numeric charts and CMS preview", () => {
     expect(html).not.toMatch(/<script|<canvas|astro-island|NaN|Infinity/u);
     expect(JSON.parse(input.series)[0].points).toEqual(observed.points);
   });
+  it("shares formula curves, custom padding and cropped observations without changing source or adding runtime", async () => {
+    const theory = {
+      label: "理論",
+      role: "formula",
+      formula: { expression: "y = 0.5*x^2", xMin: 0, xMax: 4, samples: 21 },
+    };
+    const observed = {
+      label: "測定",
+      points: [
+        { x: 0, y: 0.2 },
+        { x: 1, y: 0.6 },
+        { x: 2, y: 2.1 },
+        { x: 3, y: 4.4 },
+        { x: 4, y: 8.2 },
+      ],
+    };
+    const input = {
+      ...props,
+      kind: "analysis",
+      series: JSON.stringify([theory, observed]),
+      xPadding: "10",
+      yPadding: "20",
+      xMin: "0",
+      xMax: "3",
+      yMin: "0",
+    };
+    const original = structuredClone(input);
+    const html = await renderers["LineChart/LineChart"]!(input);
+    const source = `<LineChart title="${props.title}" description="${props.description}" xLabel="${props.xLabel}" yLabel="${props.yLabel}" kind="analysis" xPadding="10" yPadding="20" xMin="0" xMax="3" yMin="0" series='${input.series}' />`;
+    const preview = await previewDocument(draft(source));
+    expect(preview.warnings).toEqual([]);
+    expect(preview.html).toContain(html.trim());
+    expect(classCount(html, "article-line-chart__formula", "article-line-chart__plot")).toBe(1);
+    expect(classCount(html, "article-line-chart__point", "article-line-chart__plot")).toBe(4);
+    expect(classCount(html, "article-line-chart__formula-result")).toBe(1);
+    expect(classCount(html, "article-line-chart__range-note")).toBe(1);
+    expect(html).toContain("y = 0.5*x^2");
+    expect(html).toContain("理論（理論式の計算値）");
+    expect(html).toContain("<td>4</td><td>8</td>");
+    expect(html).toContain("<td>4</td><td>8.2</td>");
+    expect(html).toContain(">9.84</text>");
+    expect(html).not.toMatch(/<script|<canvas|astro-island| style=|NaN|Infinity/u);
+    expect(input).toEqual(original);
+    expect(JSON.parse(input.series)).toEqual([theory, observed]);
+    expect(JSON.parse(input.series)[0]).not.toHaveProperty("points");
+  });
   it("renders one scatter observation and retains zero without fabricating a positive value", async () => {
     const html = await renderers["LineChart/LineChart"]!({
       ...props,

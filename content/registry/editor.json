@@ -1509,6 +1509,42 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 240000
+        },
+        "xMin": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$"
+        },
+        "xMax": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$"
+        },
+        "yMin": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$"
+        },
+        "yMax": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$"
+        },
+        "xPadding": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$"
+        },
+        "yPadding": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$"
         }
       },
       "required": [
@@ -1843,5 +1879,5 @@
       "status": "active"
     }
   ],
-  "contractHash": "1ecc426e65120c98b110540d023efaf38fe6909e9cf9eaf475aeed0f2ced4fb1"
+  "contractHash": "5bb2d8b5a985b8bec34ded700939c8fd5f834dbe7a14947681be9d7b6d9e9d24"
 }

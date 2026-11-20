@@ -662,60 +662,101 @@ export const chartFitSchema = z.discriminatedUnion("method", [
     .strict(),
 ]);
 
+export const chartPointSeriesSchema = z
+  .object({
+    label: z.string().trim().min(1).max(100),
+    role: z.enum(["observed", "curve"]).optional(),
+    fit: chartFitSchema.optional(),
+    points: z
+      .array(
+        z
+          .object({
+            x: z.number().finite().min(-1e12).max(1e12),
+            y: z.number().finite().min(-1e12).max(1e12),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(500),
+  })
+  .strict()
+  .superRefine((series, context) => {
+    const issue = (message: string) => context.addIssue({ code: "custom", message });
+    if (series.role === "curve") {
+      if (series.fit) issue("計算済み曲線には近似を追加できません。測定値の系列を選んでください。");
+      if (
+        series.points.length < 2 ||
+        series.points.some((point, index) => index > 0 && point.x <= series.points[index - 1]!.x)
+      )
+        issue("計算済み曲線は2点以上必要です。Xを小さい順に並べ、重複を除いてください。");
+    }
+    if (!series.fit) return;
+    const { method } = series.fit;
+    const required = method === "poly" ? 4 : method === "quad" || method === "loess" ? 3 : 2;
+    const unique = new Set(series.points.map((point) => point.x)).size;
+    if (unique < required) issue(`この近似には異なるXの値が${required}種類以上必要です。`);
+    if (method === "loess" && unique !== series.points.length)
+      issue("LOESSはXが重複した測定点に対応していません。別の近似方法を選んでください。");
+    const invalid = series.points.findIndex(
+      (point) =>
+        ((method === "log" || method === "pow") && point.x <= 0) ||
+        ((method === "exp" || method === "pow") && point.y <= 0),
+    );
+    if (invalid >= 0)
+      issue(
+        `${invalid + 1}点目を確認してください。${method === "pow" ? "べき乗近似はXとY" : method === "log" ? "対数近似はX" : "指数近似はY"}が0より大きい値を必要とします。`,
+      );
+  });
+
+export const chartFormulaSchema = z
+  .object({
+    expression: z.string().trim().min(1).max(500),
+    xMin: z.number().finite().min(-1e12).max(1e12),
+    xMax: z.number().finite().min(-1e12).max(1e12),
+    samples: z.number().int().min(21).max(1001).optional(),
+  })
+  .strict()
+  .refine((value) => value.xMin < value.xMax, {
+    message: "理論式のXの最小値は、最大値より小さくしてください。",
+    path: ["xMin"],
+  });
+
+export const chartFormulaSeriesSchema = z
+  .object({
+    label: z.string().trim().min(1).max(100),
+    role: z.literal("formula"),
+    formula: chartFormulaSchema,
+  })
+  .strict();
+
 export const lineChartSeriesSchema = z
-  .array(
-    z
-      .object({
-        label: z.string().trim().min(1).max(100),
-        role: z.enum(["observed", "curve"]).optional(),
-        fit: chartFitSchema.optional(),
-        points: z
-          .array(
-            z
-              .object({
-                x: z.number().finite().min(-1e12).max(1e12),
-                y: z.number().finite().min(-1e12).max(1e12),
-              })
-              .strict(),
-          )
-          .min(1)
-          .max(500),
-      })
-      .strict()
-      .superRefine((series, context) => {
-        const issue = (message: string) => context.addIssue({ code: "custom", message });
-        if (series.role === "curve") {
-          if (series.fit)
-            issue("計算済み曲線には近似を追加できません。測定値の系列を選んでください。");
-          if (
-            series.points.length < 2 ||
-            series.points.some(
-              (point, index) => index > 0 && point.x <= series.points[index - 1]!.x,
-            )
-          )
-            issue("計算済み曲線は2点以上必要です。Xを小さい順に並べ、重複を除いてください。");
-        }
-        if (!series.fit) return;
-        const { method } = series.fit;
-        const required = method === "poly" ? 4 : method === "quad" || method === "loess" ? 3 : 2;
-        const unique = new Set(series.points.map((point) => point.x)).size;
-        if (unique < required) issue(`この近似には異なるXの値が${required}種類以上必要です。`);
-        if (method === "loess" && unique !== series.points.length)
-          issue("LOESSはXが重複した測定点に対応していません。別の近似方法を選んでください。");
-        const invalid = series.points.findIndex(
-          (point) =>
-            ((method === "log" || method === "pow") && point.x <= 0) ||
-            ((method === "exp" || method === "pow") && point.y <= 0),
-        );
-        if (invalid >= 0)
-          issue(
-            `${invalid + 1}点目を確認してください。${method === "pow" ? "べき乗近似はXとY" : method === "log" ? "対数近似はX" : "指数近似はY"}が0より大きい値を必要とします。`,
-          );
-      }),
-  )
+  .array(z.union([chartPointSeriesSchema, chartFormulaSeriesSchema]))
   .min(1)
   .max(6);
 export type LineChartSeries = z.infer<typeof lineChartSeriesSchema>;
+
+const chartAxisNumberSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(80)
+  .regex(/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/u)
+  .refine(
+    (value) => {
+      const number = Number(value);
+      return (
+        Number.isFinite(number) &&
+        Math.abs(number) <= 1e12 &&
+        !(number === 0 && /[1-9]/u.test(value.split(/[eE]/u)[0]!))
+      );
+    },
+    { message: "軸の値は、絶対値が1兆以下の数値で指定してください。" },
+  );
+const chartAxisPaddingSchema = chartAxisNumberSchema.refine(
+  (value) => Number(value) >= 0 && Number(value) <= 100,
+  { message: "軸の余白は0〜100%で指定してください。" },
+);
+
 export const lineChartModulePropsSchema = z
   .object({
     title: z.string().trim().min(1).max(120),
@@ -724,9 +765,26 @@ export const lineChartModulePropsSchema = z
     yLabel: z.string().trim().min(1).max(60),
     kind: z.enum(["line", "scatter", "analysis"]).optional(),
     series: z.string().min(1).max(240000),
+    xMin: chartAxisNumberSchema.optional(),
+    xMax: chartAxisNumberSchema.optional(),
+    yMin: chartAxisNumberSchema.optional(),
+    yMax: chartAxisNumberSchema.optional(),
+    xPadding: chartAxisPaddingSchema.optional(),
+    yPadding: chartAxisPaddingSchema.optional(),
   })
   .strict()
   .superRefine((value, context) => {
+    for (const axis of ["x", "y"] as const) {
+      const min = value[`${axis}Min`];
+      const max = value[`${axis}Max`];
+      if (min !== undefined && max !== undefined && Number(min) >= Number(max)) {
+        context.addIssue({
+          code: "custom",
+          path: [`${axis}Min`],
+          message: `${axis === "x" ? "横軸" : "縦軸"}の最小値は、最大値より小さくしてください。`,
+        });
+      }
+    }
     let parsed: unknown;
     try {
       parsed = JSON.parse(value.series);
@@ -748,7 +806,7 @@ export const lineChartModulePropsSchema = z
               .filter((issue) => issue.code === "custom")
               .map((issue) => `系列${Number(issue.path[0]) + 1}: ${issue.message}`)
               .join(" ")
-          : "名前と数値を確認してください。6系列まで、各500点まで、数値の絶対値は1兆以下です。",
+          : "系列の名前と数値、理論式の設定を確認してください。6系列まで、測定値は各500点まで、数値の絶対値は1兆以下です。",
       });
       return;
     }
@@ -756,6 +814,7 @@ export const lineChartModulePropsSchema = z
       (value.kind ?? "line") === "line" &&
       series.data.some(
         (item) =>
+          item.role !== "formula" &&
           !item.fit &&
           (item.points.length < 2 ||
             item.points.some((point, index) => index > 0 && point.x <= item.points[index - 1]!.x)),

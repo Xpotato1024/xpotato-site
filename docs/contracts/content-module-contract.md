@@ -170,7 +170,7 @@ Site側はDefinition Listで症状、確認内容、任意の見直す候補と�
 
 従来の`leftLabel`と`rightLabel`を持つComparisonは互換形式として残す。2つのラベルと共通本文を保持し、本文のどの部分がどちらの条件に属するかを推測しない。新しい条件形式との混在は拒否する。
 
-## LineChart（折れ線・散布図）
+## LineChart（折れ線・散布図・近似曲線・理論式）
 
 CMSで系列・数値を編集する静的グラフ。公開ページにグラフ用JavaScriptやVega runtimeを追加しない。
 
@@ -180,16 +180,24 @@ interface LineChartProps {
   description?: string;
   xLabel: string; // 単位を含む
   yLabel: string; // 単位を含む
-  kind?: "line" | "scatter"; // 省略時line
-  series: string; // [{ label, points: [{ x, y }] }] のJSON
+  kind?: "line" | "scatter" | "analysis"; // 省略時line
+  series: string; // 下記の系列配列のJSON
+  xMin?: string; // 横軸の最小値。未指定は自動
+  xMax?: string; // 横軸の最大値。未指定は自動
+  yMin?: string; // 縦軸の最小値。未指定は自動
+  yMax?: string; // 縦軸の最大値。未指定は自動
+  xPadding?: string; // 横軸の自動端の余白率（%、既定5）
+  yPadding?: string; // 縦軸の自動端の余白率（%、既定5）
 }
 ```
 
-1〜6系列、各1〜500点、数値の絶対値は1兆以下。折れ線は各系列2点以上でXを厳密な昇順にする。散布図は同じXや順序不同を許す。欠測を0へ変換せず、未完成の入力は設定欄に保持して適用時に指摘する。元データはMDXへ保持し、データ表には丸めていない値を出す。
+系列は点列の`{label,points:[{x,y}],role?,fit?}`と、理論式の`{label,role:"formula",formula:{expression,xMin,xMax,samples?}}`を合計1〜6件持てる。点列の`role`は`observed`（既定）または`curve`。`fit`で近似方法を指定し、`analysis`では測定点に近似曲線を重ねる。理論式は測定値なしでも作成でき、式と計算範囲から描画点を再生成する。元の点列・式・設定をMDXへ保持し、理論式の計算値を測定値として扱わない。
+
+軸の6属性は数値文字列で指定する。各端の固定値を優先し、自動の端へだけ余白率を適用する。表示範囲を狭くしても元データや近似対象は変えない。数値・点数・式の文法・近似方法・軸の上限と失敗時の扱い、CSV取り込みは[CMS編集画面の実験グラフ契約](cms-workbench-contract.md#実験グラフcsv取り込み)を正とする。
 
 共有portable rendererをCMSの編集画面、即時プレビュー、Astroが使用する。系列は色だけでなく形と線種でも区別する。狭幅で文字を潰さないよう図の領域だけを横スクロールでき、表でも値を確認できる。任意コード・外部データURL・自動取得は扱わない。
 
-既存の[Vega-Lite/Mermaid制作CLI](../operations/technical-visuals.md)は別の図版制作経路である。新規LineChartが任意のVega仕様やMermaid全形式への対応を意味するものではない。判断の理由は[ADR-0087](../design/adr/0087-cms-comparison-and-static-charts.md)。
+既存の[Vega-Lite/Mermaid制作CLI](../operations/technical-visuals.md)は別の図版制作経路である。LineChartが任意のVega仕様やMermaid全形式への対応を意味するものではない。判断の理由は[ADR-0087](../design/adr/0087-cms-comparison-and-static-charts.md)、[ADR-0088](../design/adr/0088-experimental-charts-and-csv.md)、[ADR-0089](../design/adr/0089-chart-formulas-and-axis-ranges.md)。
 
 ## LinkCard
 

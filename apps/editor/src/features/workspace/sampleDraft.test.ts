@@ -136,7 +136,9 @@ describe("an explicitly opened local operation sample", () => {
       expect(chart.description).toContain("実測結果");
       const series = lineChartSeriesSchema.parse(JSON.parse(chart.series));
       expect(series.map((item) => item.label)).toEqual(["系列A", "系列B"]);
-      expect(series.every((item) => item.points.length === 4)).toBe(true);
+      expect(series.every((item) => item.role === "formula" || item.points.length === 4)).toBe(
+        true,
+      );
     }
 
     const bytes = new Uint8Array(await media[0]!.blob.arrayBuffer());
@@ -163,8 +165,18 @@ describe("an explicitly opened local operation sample", () => {
     expect(conditionsShown).toBe(3);
     expect(chartKinds).toEqual(["line", "scatter", "analysis"]);
     const analysis = lineChartSeriesSchema.parse(JSON.parse(charts[2]!.series));
-    expect(analysis[0]!.fit).toEqual({ method: "linear" });
-    expect(analysis[1]!.role).toBe("curve");
+    const measured = analysis[0]!;
+    expect(measured.role).toBe("observed");
+    if (measured.role !== "formula") {
+      expect(measured.fit).toEqual({ method: "linear" });
+    }
+    expect(analysis[1]).toEqual({
+      label: "系列B",
+      role: "formula",
+      formula: { expression: "2*x+1", xMin: 0, xMax: 4, samples: 201 },
+    });
+    expect(charts[2]!.xPadding).toBe("8");
+    expect(charts[2]!.yPadding).toBe("10");
     expect(preview.html).toContain("近似式・計算条件を見る");
     expect(preview.html).toContain("条件Bに添えたブロック構成のサンプル図");
   });

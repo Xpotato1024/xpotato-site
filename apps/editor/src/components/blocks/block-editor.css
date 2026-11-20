@@ -428,6 +428,39 @@
   gap: 0.65rem;
   margin-block: 0.65rem;
 }
+.cms-chart-formula-expression {
+  min-width: 0;
+}
+.cms-chart-formula-expression > span {
+  flex: none;
+}
+.cms-chart-formula-expression input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+.cms-chart-formula-help > summary,
+.cms-chart-axis-settings > summary {
+  cursor: pointer;
+  font-size: var(--text-cms-label);
+}
+.cms-chart-axis-settings {
+  min-width: 0;
+}
+.cms-chart-axis {
+  min-width: 0;
+  border: 1px solid var(--border-divider);
+  padding: 0.65rem;
+  margin-block: 0.65rem;
+}
+.cms-chart-axis legend {
+  font-size: var(--text-cms-label);
+}
+.cms-chart-axis-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 0.65rem;
+}
 .cms-chart-point-editor {
   margin-top: 0.65rem;
 }

@@ -44,7 +44,7 @@ last_verified: 2026-11-15
 | フロー・構成 | 共通Mermaid制作経路から静的SVG | 関係の正確さ、読み順、代替説明。client runtime不要 |
 | 手動レイアウトが必要な構成図 | draw.ioの編集元と安全なSVG export | viewer/iframe/外部fontを持ち込まない |
 | 小さいカテゴリー比較 | 既存BarChart | 0始点・値と単位を表示。比較条件は本文に残す |
-| 折れ線・散布図・近似曲線 | CMS・MDXのLineChart、または共通Vega-Lite図版制作経路から静的SVG | 元データ、単位、軸、凡例、色以外の区別、表/データ代替。近似は方法・式・対象範囲も保持 |
+| 折れ線・散布図・近似曲線・理論式 | CMS・MDXのLineChart、または共通Vega-Lite図版制作経路から静的SVG | 元データ、単位、軸の範囲・余白、凡例、色以外の区別、表/データ代替。近似と理論式は式・対象範囲と計算値の区別も保持 |
 | 回路・機構・3D断面 | 回路設計ソフト・CAD・simulationの実出力 | 汎用構成図・生成イラストを実モデル/実結果の代わりにしない |
 | CAD/CSV/ZIP等 | 内容確認済み配布物と管理されたdownload経路 | MIME/size/hash/license、私有情報除去、実取得。画像変換と分ける |
 | 補足・注意 | 必要箇所にCallout/Details、末尾だけArticleEndnote | 重要条件・危険を末尾や閉じた領域に隠さない |

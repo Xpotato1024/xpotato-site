@@ -379,6 +379,198 @@ try {
     "Shared static analysis preview/data table; mode and viewport changes leave the source untouched",
   );
 
+  begin("create an editable formula without measurements and preserve it after invalid input");
+  await page.setViewportSize({ width: 1365, height: 1000 });
+  await openSettings();
+  await fields.getByRole("button", { name: "理論式を追加", exact: true }).click();
+  for (let index = 0; index < finalSeries.length; index++) {
+    await fields
+      .locator(".cms-chart-series")
+      .first()
+      .getByRole("button", { name: "系列を削除", exact: true })
+      .click();
+  }
+  assert.equal(await fields.locator(".cms-chart-series").count(), 1);
+  await fields.getByRole("textbox", { name: "系列1の名前", exact: true }).fill("自由落下の理論値");
+  const formulaInput = fields.getByRole("textbox", { name: "系列1の理論式", exact: true });
+  const formulaMin = fields.getByRole("textbox", { name: "系列1の理論式 X最小値", exact: true });
+  const formulaMax = fields.getByRole("textbox", { name: "系列1の理論式 X最大値", exact: true });
+  await formulaInput.fill("0.5*9.81*x^2");
+  await formulaMin.fill("0");
+  await formulaMax.fill("2");
+  await fields.getByRole("textbox", { name: "系列1の描画点数の目安", exact: true }).fill("201");
+  const theoryDraft = await apply();
+  const theorySeries = savedSeries(theoryDraft.source);
+  assert.deepEqual(theorySeries, [
+    {
+      label: "自由落下の理論値",
+      role: "formula",
+      formula: { expression: "0.5*9.81*x^2", xMin: 0, xMax: 2, samples: 201 },
+    },
+  ]);
+  assert.equal(await chart.locator('.article-line-chart__plot g[data-role="formula"]').count(), 1);
+  assert.equal(
+    await chart.locator(".article-line-chart__plot .article-line-chart__point").count(),
+    0,
+  );
+  assert.equal(
+    await chart
+      .locator(".article-line-chart__fit-result:not(.article-line-chart__formula-result)")
+      .count(),
+    0,
+  );
+  await chart.getByText("理論式・計算条件を見る", { exact: true }).click();
+  assert.match(
+    await chart.locator(".article-line-chart__formula-result").innerText(),
+    /0\.5\*9\.81\*x\^2/u,
+  );
+  const xTickTexts = () =>
+    chart
+      .locator(".article-line-chart__plot .article-line-chart__tick")
+      .allTextContents()
+      .then((values) => values.slice(-5));
+  let xTicks = await xTickTexts();
+  assert.equal(xTicks[0], "-0.1");
+  assert.equal(xTicks.at(-1), "2.1");
+  await openSettings();
+  await formulaInput.fill("1/x");
+  await formulaMin.fill("-1");
+  await formulaMax.fill("1");
+  await fields.getByRole("button", { name: "設定を適用", exact: true }).click();
+  await fields.getByRole("alert").waitFor();
+  assert.equal(await formulaInput.inputValue(), "1/x");
+  assert.equal(await formulaMin.inputValue(), "-1");
+  assert.equal((await savedDraft(page)).source, theoryDraft.source);
+  await formulaInput.fill("globalThis.__chartFormulaExecuted=1");
+  await fields.getByRole("button", { name: "設定を適用", exact: true }).click();
+  await fields.getByRole("alert").waitFor();
+  assert.equal(await page.evaluate(() => "__chartFormulaExecuted" in globalThis), false);
+  assert.equal((await savedDraft(page)).source, theoryDraft.source);
+  await formulaInput.fill("0.5*9.81*x^2");
+  await formulaMin.fill("0");
+  await formulaMax.fill("2");
+  await apply(false);
+  await fields.getByRole("alert").waitFor({ state: "hidden" });
+  checks.push(
+    "Formula-only authoring retains its editable equation/range, has default 5% padding, and rejects a pole or code without replacing the saved source",
+  );
+
+  begin("adjust independent padding, fixed bounds and reset without changing formula source");
+  const axisSettings = fields.locator(".cms-chart-axis-settings");
+  const openAxes = async () => {
+    await openSettings();
+    if (!(await axisSettings.evaluate((node) => node.open))) {
+      await axisSettings.locator("summary").click();
+    }
+  };
+  await openAxes();
+  await fields.getByRole("textbox", { name: "横軸の余白（%）", exact: true }).fill("10");
+  await fields.getByRole("textbox", { name: "縦軸の余白（%）", exact: true }).fill("20");
+  const padded = await apply();
+  assert.deepEqual(savedSeries(padded.source), theorySeries);
+  xTicks = await xTickTexts();
+  assert.equal(xTicks[0], "-0.2");
+  assert.equal(xTicks.at(-1), "2.2");
+  await openAxes();
+  await fields.getByRole("textbox", { name: "横軸の最小値", exact: true }).fill("0");
+  const anchored = await apply();
+  assert.deepEqual(savedSeries(anchored.source), theorySeries);
+  xTicks = await xTickTexts();
+  assert.equal(xTicks[0], "0");
+  assert.equal(xTicks.at(-1), "2.2");
+  await openAxes();
+  await fields.getByRole("textbox", { name: "横軸の最大値", exact: true }).fill("3");
+  await fields.getByRole("textbox", { name: "縦軸の最小値", exact: true }).fill("0");
+  await fields.getByRole("textbox", { name: "縦軸の最大値", exact: true }).fill("10");
+  const cropped = await apply();
+  assert.deepEqual(savedSeries(cropped.source), theorySeries);
+  xTicks = await xTickTexts();
+  assert.equal(xTicks[0], "0");
+  assert.equal(xTicks.at(-1), "3");
+  await chart.locator(".article-line-chart__range-note").waitFor();
+  const clip = chart.locator(".article-line-chart__drawing");
+  assert.equal(await clip.evaluate((node) => getComputedStyle(node).overflow), "hidden");
+  await openAxes();
+  await fields.getByRole("textbox", { name: "縦軸の最小値", exact: true }).fill("20");
+  await fields.getByRole("button", { name: "設定を適用", exact: true }).click();
+  await fields.getByRole("alert").waitFor();
+  assert.equal((await savedDraft(page)).source, cropped.source);
+  assert.equal(
+    await fields.getByRole("textbox", { name: "縦軸の最小値", exact: true }).inputValue(),
+    "20",
+  );
+  await fields.getByRole("button", { name: "自動に戻す", exact: true }).click();
+  const reset = await apply();
+  assert.deepEqual(savedSeries(reset.source), theorySeries);
+  assert.doesNotMatch(reset.source, /\b(?:xMin|xMax|yMin|yMax|xPadding|yPadding)=/u);
+  xTicks = await xTickTexts();
+  assert.equal(xTicks[0], "-0.1");
+  assert.equal(xTicks.at(-1), "2.1");
+  checks.push(
+    "Separate axis padding, a single fixed endpoint, explicit cropped bounds, rejected inverted bounds and reset preserve formula source",
+  );
+
+  begin("overlay CSV measurements after the formula and reopen both sources");
+  importer = await openImport();
+  await importer
+    .getByLabel("ファイル", { exact: true })
+    .setInputFiles(csvFile("after-theory.csv", "時間,比較用の合成測定値\n0,0.1\n1,4.8\n2,19.8"));
+  await importer.getByRole("region", { name: "CSVの先頭5行", exact: true }).waitFor();
+  await importer.getByRole("button", { name: "系列を追加して取り込む", exact: true }).click();
+  const combined = await apply();
+  assert.deepEqual(savedSeries(combined.source)[0], theorySeries[0]);
+  assert.deepEqual(savedSeries(combined.source)[1].points, [
+    { x: 0, y: 0.1 },
+    { x: 1, y: 4.8 },
+    { x: 2, y: 19.8 },
+  ]);
+  const combinedBody = await readBody(page);
+  await page.reload();
+  await ensureEditing(page);
+  assert.equal(await readBody(page), combinedBody);
+  await openSettings();
+  assert.equal(
+    await fields.getByRole("textbox", { name: "系列1の理論式", exact: true }).inputValue(),
+    "0.5*9.81*x^2",
+  );
+  for (const width of [320, 390, 1365]) {
+    await page.setViewportSize({ width, height: 900 });
+    await openAxes();
+    const input = fields.getByRole("textbox", { name: "横軸の余白（%）", exact: true });
+    await input.focus();
+    const measurements = await fields.evaluate((element) => ({
+      page: document.documentElement.scrollWidth,
+      viewport: innerWidth,
+      escapedControls: Array.from(element.querySelectorAll("input,select,button"))
+        .filter((control) => control.getClientRects().length > 0)
+        .map((control) => ({
+          label: control.getAttribute("aria-label") ?? control.textContent,
+          rect: control.getBoundingClientRect(),
+        }))
+        .filter(({ rect }) => rect.left < -1 || rect.right > innerWidth + 1)
+        .map(({ label }) => label),
+    }));
+    assert(measurements.page <= measurements.viewport + 1, JSON.stringify(measurements));
+    assert.deepEqual(measurements.escapedControls, [], JSON.stringify(measurements));
+    geometry.push({ width, feature: "formula-and-axes", ...measurements });
+    await page.screenshot({
+      path: resolve(out, `formula-axis-settings-${width}.png`),
+      fullPage: true,
+    });
+  }
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.getByRole("tab", { name: "プレビュー", exact: true }).click();
+  await frame.locator('.article-line-chart__plot g[data-role="formula"]').waitFor();
+  assert.equal(
+    await frame.locator(".article-line-chart__plot .article-line-chart__point").count(),
+    3,
+  );
+  await page.screenshot({ path: resolve(out, "formula-preview-390.png"), fullPage: true });
+  assert.equal((await savedDraft(page)).source, combined.source);
+  checks.push(
+    "CSV observations added after a formula survive reload; formula/axis controls fit 320/390/1365px and the shared preview retains both series",
+  );
+
   assert.deepEqual(errors, [], "No browser page errors");
   assert.deepEqual(violations, [], "No CSP violations");
   await writeFile(

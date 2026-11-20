@@ -57,7 +57,7 @@ Mermaid はインストール済み Chrome/Chromium を使う（WindowsではEdg
 
 ## Vega-Lite の許可範囲
 
-CMSで測定値を編集する実験グラフは、[LineChartの契約](../contracts/cms-workbench-contract.md#実験グラフcsv取り込み)を使う。CSV取り込み、7種類の近似、計算済み曲線、式・指標・元データ表はその共通静的rendererが扱う。以下は画像として制作する既存CLIの許可範囲であり、LineChartの設定を任意のVega-Lite入力へ変換するAPIではない。
+CMSで測定値を編集する実験グラフは、[LineChartの契約](../contracts/cms-workbench-contract.md#実験グラフcsv取り込み)を使う。CSV取り込み、7種類の近似、計算済み曲線、限定文法の理論式、軸の範囲・余白、式・指標・データ表はその共通静的rendererが扱う。以下は画像として制作する既存CLIの許可範囲であり、LineChartの設定を任意のVega-Lite入力へ変換するAPIではない。
 
 実 Vega-Lite 6.5.0 → Vega 6.4.0 の静的 SVG。入力は template の単一 view subset に限定する。top-level は `title, description, data, mark, encoding` のみ、`mark` は `line / point / bar`。`data.values` は inline のみ、各行は x/y の field だけ。
 

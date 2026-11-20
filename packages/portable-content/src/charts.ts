@@ -1,9 +1,9 @@
 import {
   lineChartModulePropsSchema,
   lineChartSeriesSchema,
-  type LineChartSeries,
 } from "@xpotato/content-contracts/content";
 import { fitChartSeries, type ChartFitResult } from "./chart-regression.js";
+import { buildChartFormula } from "./chart-formula.js";
 
 const escape = (value: string) =>
   value.replace(
@@ -18,9 +18,114 @@ const tickLabel = (value: number) =>
 const statistic = (value: number | null) =>
   value === null ? "算出なし" : String(Number(value.toPrecision(6)));
 
-export function lineChartGeometry(
-  series: LineChartSeries,
-  additionalPoints: readonly { x: number; y: number }[] = [],
+type Point = { x: number; y: number };
+type Axis = "x" | "y";
+type Extent = { min: number; max: number };
+type AxisSettings = Partial<Record<`${Axis}${"Min" | "Max" | "Padding"}`, string | undefined>>;
+
+function axisValue(value: string | undefined, axis: Axis, padding = false) {
+  if (value === undefined) {
+    return undefined;
+  }
+  const label = axis === "x" ? "横軸" : "縦軸";
+  const parsed = Number(value);
+  if (
+    !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/u.test(value.trim()) ||
+    !Number.isFinite(parsed) ||
+    Math.abs(parsed) > 1e12 ||
+    (parsed === 0 && /[1-9]/u.test(value.split(/[eE]/u)[0]!)) ||
+    (padding && (parsed < 0 || parsed > 100))
+  ) {
+    throw new Error(
+      padding
+        ? `${label}の余白は0〜100%で指定してください。`
+        : `${label}の表示範囲は、絶対値が1兆以下の数値で指定してください。`,
+    );
+  }
+  return parsed;
+}
+
+function axisExtent(points: readonly Point[], axis: Axis, settings: AxisSettings) {
+  const values = points.map((point) => point[axis]);
+  const raw = { min: Math.min(...values), max: Math.max(...values) };
+  if (!Number.isFinite(raw.min) || !Number.isFinite(raw.max)) {
+    throw new Error("グラフには有限の数値を持つ点が必要です。");
+  }
+  const fixedMin = axisValue(settings[`${axis}Min`], axis);
+  const fixedMax = axisValue(settings[`${axis}Max`], axis);
+  const padding = axisValue(settings[`${axis}Padding`], axis, true) ?? 5;
+  let baseMin = raw.min;
+  let baseMax = raw.max;
+  if (baseMin === baseMax) {
+    const margin = Math.max(baseMin === 0 ? 1 : Math.abs(baseMin) * 0.1, Number.MIN_VALUE * 8);
+    baseMin -= margin;
+    baseMax += margin;
+  }
+  // A positive margin must also move a bound when large values differ by only a few ULPs.
+  const margin =
+    padding === 0
+      ? 0
+      : Math.max(
+          (baseMax - baseMin) * (padding / 100),
+          Math.max(Math.abs(baseMin), Math.abs(baseMax)) * Number.EPSILON * 4,
+          Number.MIN_VALUE * 4,
+        );
+  const min = fixedMin ?? baseMin - margin;
+  const max = fixedMax ?? baseMax + margin;
+  const label = axis === "x" ? "横軸" : "縦軸";
+  if (!(min < max) || !Number.isFinite(max - min)) {
+    throw new Error(
+      `${label}の最小値は、最大値より小さくしてください。自動の端も含めて確認してください。`,
+    );
+  }
+  const span = max - min;
+  if (Math.max(Math.abs(raw.min - min), Math.abs(raw.max - min)) / span > 1e12) {
+    throw new Error(`${label}の表示範囲がデータに対して細かすぎます。範囲を広げてください。`);
+  }
+  return { min, max, raw, cropped: raw.min < min || raw.max > max };
+}
+
+function clipSegment(start: Point, end: Point, x: Extent, y: Extent): [Point, Point] | null {
+  const region = (point: Point) =>
+    (point.x < x.min ? 1 : point.x > x.max ? 2 : 0) |
+    (point.y < y.min ? 4 : point.y > y.max ? 8 : 0);
+  const interpolate = (a: number, b: number, amount: number) =>
+    amount <= 0.5 ? a + (b - a) * amount : b + (a - b) * (1 - amount);
+  let a = start;
+  let b = end;
+  for (let iteration = 0; iteration < 8; iteration++) {
+    const aRegion = region(a);
+    const bRegion = region(b);
+    if (!(aRegion | bRegion)) {
+      return [a, b];
+    }
+    if (aRegion & bRegion) {
+      return null;
+    }
+    const outside = aRegion || bRegion;
+    let point: Point;
+    if (outside & 12) {
+      const boundary = outside & 8 ? y.max : y.min;
+      const amount = (boundary - a.y) / (b.y - a.y);
+      point = { x: interpolate(a.x, b.x, amount), y: boundary };
+    } else {
+      const boundary = outside & 2 ? x.max : x.min;
+      const amount = (boundary - a.x) / (b.x - a.x);
+      point = { x: boundary, y: interpolate(a.y, b.y, amount) };
+    }
+    if (outside === aRegion) {
+      a = point;
+    } else {
+      b = point;
+    }
+  }
+  throw new Error("表示範囲の境界を十分な精度で描けません。軸の範囲を広げてください。");
+}
+
+export function lineChartGeometry<T extends { label: string; points: readonly Point[] }>(
+  series: readonly T[],
+  additionalPoints: readonly Point[] = [],
+  settings: AxisSettings = {},
 ) {
   const width = 640,
     height = 380,
@@ -29,32 +134,49 @@ export function lineChartGeometry(
     right = 38,
     bottom = 70;
   const points = [...series.flatMap((item) => item.points), ...additionalPoints];
-  const extent = (axis: "x" | "y") => {
-    let min = Math.min(...points.map((point) => point[axis]));
-    let max = Math.max(...points.map((point) => point[axis]));
-    if (min === max) {
-      const margin = Math.max(1, Math.abs(min) * 0.1);
-      min -= margin;
-      max += margin;
-    }
-    return { min, max };
-  };
-  const x = extent("x"),
-    y = extent("y");
+  const x = axisExtent(points, "x", settings),
+    y = axisExtent(points, "y", settings);
   const sx = (value: number) => left + ((value - x.min) / (x.max - x.min)) * (width - left - right);
   const sy = (value: number) =>
     height - bottom - ((value - y.min) / (y.max - y.min)) * (height - top - bottom);
-  const ticks = ({ min, max }: { min: number; max: number }) =>
-    Array.from({ length: 5 }, (_, index) => min + (max - min) * (index / 4));
-  const path = (points: readonly { x: number; y: number }[]) =>
-    points
-      .map(
-        (point, index) => `${index ? "L" : "M"}${sx(point.x).toFixed(2)} ${sy(point.y).toFixed(2)}`,
-      )
-      .join(" ");
+  const ticks = ({ min, max }: Extent) => [
+    ...new Set(Array.from({ length: 5 }, (_, index) => min + (max - min) * (index / 4))),
+  ];
+  const visible = (point: Point) =>
+    point.x >= x.min && point.x <= x.max && point.y >= y.min && point.y <= y.max;
+  const position = (point: Point) => `${sx(point.x).toFixed(2)} ${sy(point.y).toFixed(2)}`;
+  // Clip before serialization: huge offscreen SVG coordinates can lose visible precision.
+  const path = (points: readonly Point[]) => {
+    if (points.length === 1) {
+      return visible(points[0]!) ? `M${position(points[0]!)}` : "";
+    }
+    const commands: string[] = [];
+    let previousEnd: Point | null = null;
+    for (let index = 1; index < points.length; index++) {
+      const segment = clipSegment(points[index - 1]!, points[index]!, x, y);
+      if (!segment) {
+        previousEnd = null;
+        continue;
+      }
+      const [start, end] = segment;
+      if (!previousEnd || previousEnd.x !== start.x || previousEnd.y !== start.y) {
+        commands.push(`M${position(start)}`);
+      }
+      commands.push(`L${position(end)}`);
+      previousEnd = end;
+    }
+    return commands.join(" ");
+  };
   // Close, large values need an explicit axis offset so distinct ticks remain distinct.
-  const offset = ({ min, max }: { min: number; max: number }) =>
-    Math.abs(min) > (max - min) * 10000 ? min : 0;
+  const offset = (domain: Extent & { raw: Extent }) => {
+    const { min, max, raw } = domain;
+    const values = ticks(domain);
+    const repeatedLabels = new Set(values.map(tickLabel)).size !== values.length;
+    if (repeatedLabels || Math.abs(min) > (max - min) * 10000) {
+      return raw.min >= min && raw.min <= max ? raw.min : min;
+    }
+    return 0;
+  };
   return {
     width,
     height,
@@ -63,6 +185,9 @@ export function lineChartGeometry(
     right,
     bottom,
     path,
+    xDomain: { min: x.min, max: x.max },
+    yDomain: { min: y.min, max: y.max },
+    cropped: x.cropped || y.cropped,
     xOffset: offset(x),
     yOffset: offset(y),
     xTicks: ticks(x).map((value) => ({ value, at: sx(value) })),
@@ -70,7 +195,12 @@ export function lineChartGeometry(
     series: series.map((item) => ({
       label: item.label,
       path: path(item.points),
-      points: item.points.map((point) => ({ ...point, cx: sx(point.x), cy: sy(point.y) })),
+      points: item.points.map((point) => ({
+        ...point,
+        cx: sx(point.x),
+        cy: sy(point.y),
+        visible: visible(point),
+      })),
     })),
   };
 }
@@ -98,9 +228,26 @@ function marker(index: number, x: number, y: number, title = "") {
 /** Recompute from observations and settings; never trust saved, potentially stale coefficients. */
 export function prepareLineChart(input: unknown) {
   const props = lineChartModulePropsSchema.parse(input);
-  const data = lineChartSeriesSchema.parse(JSON.parse(props.series));
+  const source = lineChartSeriesSchema.parse(JSON.parse(props.series));
+  const formulas = source.map((item) => {
+    if (item.role !== "formula") {
+      return null;
+    }
+    try {
+      return buildChartFormula(item.formula);
+    } catch (error) {
+      throw new Error(
+        `系列「${item.label}」: ${error instanceof Error ? error.message : "理論式と計算範囲を確認してください。"}`,
+      );
+    }
+  });
+  const data = source.map((item, index) =>
+    item.role === "formula" ? { ...item, points: formulas[index]!.points } : item,
+  );
   const fits = data.map((item) => {
-    if (!item.fit) return null;
+    if (item.role === "formula" || !item.fit) {
+      return null;
+    }
     try {
       return fitChartSeries(item.points, item.fit);
     } catch (error) {
@@ -109,7 +256,24 @@ export function prepareLineChart(input: unknown) {
       );
     }
   });
-  return { props, data, fits };
+  const plot = lineChartGeometry(
+    data,
+    fits.flatMap((fit) => fit?.points ?? []),
+    props,
+  );
+  return { props, data, fits, formulas, plot };
+}
+
+function formulaDetails(label: string, formula: ReturnType<typeof buildChartFormula>): string {
+  return `<section class="article-line-chart__fit-result article-line-chart__formula-result">
+    <p><strong>${escape(label)}：理論式</strong></p>
+    <dl>
+      <dt>理論式</dt><dd><code>y = ${escape(formula.expression)}</code></dd>
+      <dt>計算するXの範囲</dt><dd>${formula.domain[0]} ～ ${formula.domain[1]}</dd>
+      <dt>描画点数</dt><dd>${formula.sampleCount}点（理論式から計算）</dd>
+    </dl><p>${escape(formula.note)}</p>
+    <p>点数や計算の桁数には限りがあるため、ごく細かな変化や、大きな数同士を引いた小さな差は正確に描けないことがあります。</p>
+  </section>`;
 }
 
 function fitDetails(label: string, fit: ChartFitResult): string {
@@ -133,11 +297,7 @@ function fitDetails(label: string, fit: ChartFitResult): string {
 
 /** A single escaped, static renderer shared by Astro, the canvas and the preview iframe. */
 export function renderLineChart(input: unknown): string {
-  const { props, data, fits } = prepareLineChart(input);
-  const plot = lineChartGeometry(
-    data,
-    fits.flatMap((fit) => fit?.points ?? []),
-  );
+  const { props, data, fits, formulas, plot } = prepareLineChart(input);
   const kind = props.kind ?? "line";
   const grid = plot.yTicks
     .map(
@@ -154,18 +314,39 @@ export function renderLineChart(input: unknown): string {
   const curves = plot.series
     .map((item, index) => {
       const fit = fits[index];
-      const curve = data[index]!.role === "curve";
+      const formula = data[index]!.role === "formula";
+      const curve = data[index]!.role === "curve" || formula;
       const connected = curve || (kind === "line" && !fit);
-      return `<g class="article-line-chart__series--${index + 1}" data-role="${curve ? "curve" : "observed"}">${connected ? `<path class="article-line-chart__line${curve ? " article-line-chart__external-curve" : ""}" d="${item.path}"/>` : ""}${fit ? `<path class="article-line-chart__line article-line-chart__fit" d="${plot.path(fit.points)}"/>` : ""}${curve ? "" : item.points.map((point) => marker(index, point.cx, point.cy, `${item.label}: ${props.xLabel} ${point.x}, ${props.yLabel} ${point.y}`)).join("")}</g>`;
+      const line = connected
+        ? `<path class="article-line-chart__line${formula ? " article-line-chart__formula" : curve ? " article-line-chart__external-curve" : ""}" d="${item.path}"/>`
+        : "";
+      const fitted = fit
+        ? `<path class="article-line-chart__line article-line-chart__fit" d="${plot.path(fit.points)}"/>`
+        : "";
+      const observations = curve
+        ? ""
+        : item.points
+            .filter((point) => point.visible)
+            .map((point) =>
+              marker(
+                index,
+                point.cx,
+                point.cy,
+                `${item.label}: ${props.xLabel} ${point.x}, ${props.yLabel} ${point.y}`,
+              ),
+            )
+            .join("");
+      return `<g class="article-line-chart__series--${index + 1}" data-role="${formula ? "formula" : curve ? "curve" : "observed"}">${line}${fitted}${observations}</g>`;
     })
     .join("");
   const legend = plot.series
     .map((item, index) => {
       const fit = fits[index];
-      const curve = data[index]!.role === "curve";
+      const formula = data[index]!.role === "formula";
+      const curve = data[index]!.role === "curve" || formula;
       const connected = curve || (kind === "line" && !fit);
       const itemClass = `article-line-chart__legend-item article-line-chart__series--${index + 1}`;
-      const observed = `<li class="${itemClass}"><svg viewBox="0 0 24 14" aria-hidden="true">${connected ? '<path class="article-line-chart__line" d="M1 7H23"/>' : ""}${curve ? "" : marker(index, 12, 7)}</svg>${escape(item.label)}${curve ? "（計算済み曲線）" : fit || kind === "analysis" ? "（測定値）" : ""}</li>`;
+      const observed = `<li class="${itemClass}"><svg viewBox="0 0 24 14" aria-hidden="true">${connected ? '<path class="article-line-chart__line" d="M1 7H23"/>' : ""}${curve ? "" : marker(index, 12, 7)}</svg>${escape(item.label)}${formula ? "（理論式）" : curve ? "（計算済み曲線）" : fit || kind === "analysis" ? "（測定値）" : ""}</li>`;
       return (
         observed +
         (fit
@@ -178,13 +359,25 @@ export function renderLineChart(input: unknown): string {
     .flatMap((item) =>
       item.points.map(
         (point) =>
-          `<tr><th scope="row">${escape(item.label)}${item.role === "curve" ? "（計算済み曲線）" : ""}</th><td>${point.x}</td><td>${point.y}</td></tr>`,
+          `<tr><th scope="row">${escape(item.label)}${item.role === "formula" ? "（理論式の計算値）" : item.role === "curve" ? "（計算済み曲線）" : ""}</th><td>${point.x}</td><td>${point.y}</td></tr>`,
       ),
     )
     .join("");
-  const details = fits
-    .map((fit, index) => (fit ? fitDetails(data[index]!.label, fit) : ""))
+  const details = data
+    .map((item, index) =>
+      formulas[index]
+        ? formulaDetails(item.label, formulas[index])
+        : fits[index]
+          ? fitDetails(item.label, fits[index])
+          : "",
+    )
     .join("");
+  const hasFormula = formulas.some(Boolean);
+  const detailsLabel = hasFormula
+    ? fits.some(Boolean)
+      ? "理論式・近似式・計算条件を見る"
+      : "理論式・計算条件を見る"
+    : "近似式・計算条件を見る";
   const axisOffset = [
     plot.xOffset ? `横軸の目盛りは${plot.xOffset}からの差です。` : "",
     plot.yOffset ? `縦軸の目盛りは${plot.yOffset}からの差です。` : "",
@@ -193,15 +386,17 @@ export function renderLineChart(input: unknown): string {
     <figcaption class="article-line-chart__title">${escape(props.title)}</figcaption>
     ${props.description ? `<p class="article-line-chart__description">${escape(props.description)}</p>` : ""}
     <div class="article-line-chart__viewport" tabindex="0" role="region" aria-label="${escape(props.title)}のグラフ">
-      <svg class="article-line-chart__plot" viewBox="0 0 ${plot.width} ${plot.height}" role="img" aria-label="${escape(props.title)}。横軸${escape(props.xLabel)}、縦軸${escape(props.yLabel)}。各点の値は後のデータ表でも確認できます。">
-        ${grid}${ticks}<path class="article-line-chart__axis" d="M${plot.left} ${plot.top}V${plot.height - plot.bottom}H${plot.width - plot.right}"/>${curves}
+      <svg class="article-line-chart__plot" viewBox="0 0 ${plot.width} ${plot.height}" role="img" aria-label="${escape(props.title)}。横軸${escape(props.xLabel)}、縦軸${escape(props.yLabel)}。各系列の値は後のデータ表でも確認できます。">
+        ${grid}${ticks}<path class="article-line-chart__axis" d="M${plot.left} ${plot.top}V${plot.height - plot.bottom}H${plot.width - plot.right}"/>
+        <svg class="article-line-chart__drawing" x="${plot.left}" y="${plot.top}" width="${plot.width - plot.left - plot.right}" height="${plot.height - plot.top - plot.bottom}" viewBox="${plot.left} ${plot.top} ${plot.width - plot.left - plot.right} ${plot.height - plot.top - plot.bottom}" overflow="hidden">${curves}</svg>
         <text class="article-line-chart__axis-title" x="${plot.width / 2}" y="${plot.height - 8}" text-anchor="middle">${escape(props.xLabel)}</text>
         <text class="article-line-chart__axis-title" transform="translate(20 ${plot.height / 2}) rotate(-90)" text-anchor="middle">${escape(props.yLabel)}</text>
       </svg>
     </div>
     ${axisOffset ? `<p class="article-line-chart__axis-note">${axisOffset}データ表には元の値を表示します。</p>` : ""}
+    ${plot.cropped ? `<p class="article-line-chart__axis-note article-line-chart__range-note">表示範囲の外にある点や曲線はグラフに表示していません。データ表には全ての値を残しています。${fits.some(Boolean) ? "近似には全ての測定点を使っています。" : ""}</p>` : ""}
     <ul class="article-line-chart__legend" aria-label="系列">${legend}</ul>
-    ${details ? `<details class="article-line-chart__data article-line-chart__analysis"><summary class="disclosure-summary">近似式・計算条件を見る</summary>${details}</details>` : ""}
+    ${details ? `<details class="article-line-chart__data article-line-chart__analysis"><summary class="disclosure-summary">${detailsLabel}</summary>${details}</details>` : ""}
     <details class="article-line-chart__data"><summary class="disclosure-summary">データ表を見る</summary><div class="article-line-chart__table"><table><caption>${escape(props.title)}のデータ</caption><thead><tr><th scope="col">系列</th><th scope="col">${escape(props.xLabel)}</th><th scope="col">${escape(props.yLabel)}</th></tr></thead><tbody>${rows}</tbody></table></div></details>
   </figure>`;
 }

@@ -79,4 +79,99 @@ describe("experimental chart source contract", () => {
     const series = [{ label: "理論曲線", role: "curve", points }];
     expect(lineChartSeriesSchema.parse(series)).toEqual(series);
   });
+
+  it("retains the actionable model error when a formula series is also supported", () => {
+    const result = lineChartModulePropsSchema.safeParse(
+      chart([
+        {
+          label: "測定",
+          points: [
+            { x: 0, y: 1 },
+            { x: 1, y: 2 },
+          ],
+          fit: { method: "log" },
+        },
+      ]),
+    );
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]!.message).toContain("対数近似はX");
+    }
+  });
+});
+
+describe("theory formulas and editable chart axes", () => {
+  const theory = {
+    label: "自由落下の理論値",
+    role: "formula",
+    formula: { expression: "0.5*9.81*x^2", xMin: 0, xMax: 3 },
+  };
+
+  it.each(["line", "scatter", "analysis"])(
+    "keeps a formula as source without requiring measurements in %s mode",
+    (kind) => {
+      const source = chart([theory], kind);
+      expect(lineChartModulePropsSchema.parse(source)).toEqual(source);
+      expect(lineChartSeriesSchema.parse([theory])).toEqual([theory]);
+    },
+  );
+
+  it("counts formula, measured and imported curve series against the same limit", () => {
+    const mixed = [theory, { label: "測定", points }, { label: "外部計算", role: "curve", points }];
+    expect(lineChartSeriesSchema.parse(mixed)).toEqual(mixed);
+    expect(lineChartSeriesSchema.safeParse([...mixed, ...mixed]).success).toBe(true);
+    expect(lineChartSeriesSchema.safeParse([...mixed, ...mixed, theory]).success).toBe(false);
+  });
+
+  it.each([
+    { points },
+    { fit: { method: "linear" } },
+    { formula: { expression: "x", xMin: 1, xMax: 1 } },
+    { formula: { expression: "x", xMin: 2, xMax: 1 } },
+    { formula: { expression: "", xMin: 0, xMax: 1 } },
+    { formula: { expression: "x".repeat(501), xMin: 0, xMax: 1 } },
+    { formula: { expression: "x", xMin: 0, xMax: 1, samples: 20 } },
+    { formula: { expression: "x", xMin: 0, xMax: 1, samples: 1002 } },
+    { formula: { expression: "x", xMin: 0, xMax: 1, samples: 100.5 } },
+    { formula: { expression: "x", xMin: "0", xMax: 1 } },
+    { formula: { expression: "x", xMin: 0, xMax: 1e13 } },
+    { formula: { expression: "x", xMin: 0, xMax: 1, transform: "custom" } },
+  ])(
+    "rejects ambiguous or invalid formula source instead of retaining cached points: %j",
+    (patch) => {
+      expect(lineChartModulePropsSchema.safeParse(chart([{ ...theory, ...patch }])).success).toBe(
+        false,
+      );
+    },
+  );
+
+  it("preserves independent fixed bounds and automatic padding as portable attributes", () => {
+    const source = {
+      ...chart([theory]),
+      xMin: "0",
+      yMax: "5e1",
+      xPadding: "0",
+      yPadding: "12.5",
+    };
+    expect(lineChartModulePropsSchema.parse(source)).toEqual(source);
+  });
+
+  it.each([
+    { xMin: "0", xMax: "0" },
+    { yMin: "2", yMax: "1" },
+    { xMin: "1e-999" },
+    { xMax: "1e13" },
+    { yMin: "NaN" },
+    { yMax: "Infinity" },
+    { xMin: "0x10" },
+    { xMin: "" },
+    { yMax: "12 mm" },
+    { xPadding: "-1" },
+    { yPadding: "100.1" },
+    { xPadding: 5 },
+  ])("rejects invalid axis settings without normalizing them into zero: %j", (patch) => {
+    expect(lineChartModulePropsSchema.safeParse({ ...chart([theory]), ...patch }).success).toBe(
+      false,
+    );
+  });
 });

@@ -154,3 +154,5 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR-0086: CMSの作業開始と記事に依存しない管理](0086-cms-workflow-and-independent-registries.md) — 実装候補。新規・改稿・下書きの入口、編集前のブランチ選択、原稿なしの分類・連載管理、caretの可視化と安全な添削表示。
 
 - [ADR-0088: 実験グラフの近似曲線とCSV取り込み](0088-experimental-charts-and-csv.md) — 実装候補。測定値と推定の分離、限定した近似方法、計算済み曲線、列を確認して取り込むCSVと共有静的描画。
+
+- [ADR-0089: 理論式からの曲線と軸の範囲・余白](0089-chart-formulas-and-axis-ranges.md) — 実装候補。編集できる理論式、限定した計算、軸ごとの自動余白・固定端とデータを保持する表示範囲。

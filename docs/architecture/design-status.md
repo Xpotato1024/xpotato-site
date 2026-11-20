@@ -33,6 +33,8 @@ last_verified: 2026-11-19
 
 同日の実験グラフ追加候補では、LineChartに系列ごとの近似と計算済み曲線を重ね、CSVから列を確認して取り込みます。静的描画とVegaの限定した統計計算を共有し、任意の非線形最適化・外挿は扱いません。[ADR-0088](../design/adr/0088-experimental-charts-and-csv.md)と[CMS契約](../contracts/cms-workbench-contract.md)に範囲を記録しています。実装・検証・非公開プレビュー・main採用はそれぞれ対象revisionで確認します。
 
+その追加候補に、理論式を正本として再編集する系列と、軸ごとの自動余白・表示範囲を加えています。理論式だけを先に描いて後から測定値を重ねられます。範囲を狭くしても元の値と近似対象は保持します。限定した数式文法・計算上限と描画の判断は[ADR-0089](../design/adr/0089-chart-formulas-and-axis-ranges.md)に記録し、汎用コード実行やパラメーターの自動推定は開放しません。
+
 ## 実環境との区別
 
 - 既存公開サイトの配信状況は[現行配信状態](../operations/current-deployment-status.md)だけを参照します。本整理は本番デプロイではありません。

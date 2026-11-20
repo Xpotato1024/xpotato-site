@@ -7,6 +7,12 @@ interface Props {
   yLabel: string;
   kind?: "line" | "scatter" | "analysis";
   series: string;
+  xMin?: string;
+  xMax?: string;
+  yMin?: string;
+  yMax?: string;
+  xPadding?: string;
+  yPadding?: string;
 }
 const markup = renderLineChart(Astro.props);
 ---
