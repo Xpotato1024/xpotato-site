@@ -367,6 +367,29 @@ test("body limits, invalid JSON/content type and bounded timeout fail closed", a
     /REMOTE_TIMEOUT/,
   );
 });
+test("an operation deadline aborts a pending request before its per-request timeout", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let signal, ready;
+  const started = new Promise((resolve) => {
+    ready = resolve;
+  });
+  const request = transport(
+    async (_url, options) => {
+      signal = options.signal;
+      ready();
+      return new Promise(() => {});
+    },
+    { clock: () => now, timeoutMs: 10000 },
+  );
+  const checking = request({ path: "/client/v4/mock", deadlineAt: now + 25 });
+  const stopped = assert.rejects(checking, /REMOTE_TIMEOUT/);
+  await started;
+  t.mock.timers.tick(24);
+  assert.equal(signal.aborted, false);
+  t.mock.timers.tick(1);
+  await stopped;
+  assert.equal(signal.aborted, true);
+});
 test("site-read role proves credential ID but cannot audit/revoke/contain", async () => {
   const { adapter, calls } = cloud("site-read");
   assert.equal((await adapter.verifyCredential()).credentialId, tokenId);

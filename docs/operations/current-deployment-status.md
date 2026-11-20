@@ -35,6 +35,14 @@ PR140の新しい配信manifest・状態分離・診断方式とPR141の配置�
 
 修正後は**`/editor/` のみ**、固定済みのCloudflare Accessチームホスト（`xpotato1024.cloudflareaccess.com`）、ログイン用パス、必須クエリ項目、元の `redirect_url=/editor/` がすべて一致する302応答を認証境界として許容する。その観測は `bodyMatch=cloudflare-access-protected` と明示し、**HTMLのbyte一致を証明したとは扱わない**。配信元artifactの検証と同じWorker versionのreadbackは引き続き必須。未知のリダイレクトや一般ページを許容する例外ではない。他の公開ページは従来どおり本文とheadersの完全一致を要求し、一時的不一致の再観測でも固定の予算・回数・時間制限を維持する。
 
+## 配備receipt後のversion反映待ち
+
+Wranglerが新しいversionのreceiptを返してからCloudflareの読取りに反映されるまで、最大15回・90秒、再観測の間隔4秒で確認します。各回でWorker identity、active deployment/version、bindings、domain/routes、endpoint抑止を含む完全なsnapshotを取得します。既知のpreimageと一致する旧versionだけを待機対象とし、第三者のversion、異なるdeployment、Worker identityや設定のdriftは停止します。receiptと一致しても期限を過ぎたsnapshotは成功にしません。
+
+通常のprovider読取り上限64回は維持し、反映待ちだけに12 GET×15回の独立上限180回を設けています。期限はこのphaseで固定し、各HTTP requestにも渡します。request自身の10秒上限より残り時間が短い場合は、残り時間で打ち切ります。反映待ちで公開readbackと最後のtoken確認の予算を消費せず、Wranglerの再呼出しや自動rollbackは行いません。
+
+この方式の合成回帰検証は実provider adapter・GET応答・clockで行います。実Cloudflareでの再配備や、最新Production artifactの公開readback完了を示す記録ではありません。
+
 ## Cloudflare Managed robots.txt の公開bytes照合
 
 公開後の照合は通常、artifactと応答本文のsize/SHA-256、HTTP 200、対象security/cache headersの一致を要求します。`/robots.txt`だけは、2026-11-04に公開GETで確認したCloudflare付加内容2676 bytes（SHA-256 `3073d1e371afb3271c7666148766fedc5145f7d8440f7114062db79b7bd58add`）と、既知の原本70 bytes（SHA-256 `cc7aa07ebda6b8ac79827a8b110a8941101ed035f58b2b26b677974683b7f9bb`）の連結も認めます。fixtureの出典・観測時刻・全本文は[固定capture](../../ops/deployment/fixtures/managed-robots-20261104.json)、検査は[限定policy](../../ops/deployment/managed-robots-policy.mjs)です。[Cloudflare公式説明](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)の例から許可本文を推測しません。

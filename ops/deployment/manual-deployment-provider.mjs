@@ -333,11 +333,11 @@ export function createManualProvider({
   context = structuredClone(validateManualContext(context));
   const account = "/client/v4/accounts/" + context.accountId,
     script = account + "/workers/scripts/" + authority.worker;
-  let count = 0,
-    deployIdentity,
-    readonlyIdentity,
-    workerIdentity,
-    zoneIdentity;
+  // A full snapshot uses 12 GETs. Propagation polling must not consume the
+  // original allowance needed for preflight, public readback and token checks.
+  const operationReadBudget = { count: 0, limit: 64 },
+    postVersionReadBudget = { count: 0, limit: 12 * 15 };
+  let deployIdentity, readonlyIdentity, workerIdentity, zoneIdentity, postVersionDeadline;
   const allowed = new Set([
     account + "/tokens/verify",
     account + "/workers/scripts",
@@ -380,10 +380,16 @@ export function createManualProvider({
       body === undefined &&
       !allow404,
   });
-  async function read(path, request = readRequest, endpoint) {
-    if (++count > 64) stop("PROVIDER_READ_BUDGET");
+  async function read(
+    path,
+    request = readRequest,
+    endpoint,
+    deadlineAt,
+    budget = operationReadBudget,
+  ) {
+    if (++budget.count > budget.limit) stop("PROVIDER_READ_BUDGET");
     try {
-      const r = await request({ path });
+      const r = await request({ path, deadlineAt });
       if (endpoint === "zone-worker-routes") {
         const assessment = assessZoneWorkerRoutes(r.data);
         if (assessment.code) stop(assessment.code, assessment.diagnostics);
@@ -456,8 +462,14 @@ export function createManualProvider({
       };
     }
   }
-  async function activeDeployment() {
-    const d = await read(script + "/deployments?page=1&per_page=100"),
+  async function activeDeployment(deadlineAt, budget) {
+    const d = await read(
+        script + "/deployments?page=1&per_page=100",
+        readRequest,
+        undefined,
+        deadlineAt,
+        budget,
+      ),
       deployments = d.result?.deployments;
     if (
       !Array.isArray(deployments) ||
@@ -485,9 +497,24 @@ export function createManualProvider({
     if (active.id !== expected.deploymentId || active.versions[0].version_id !== expected.versionId)
       stop("POST_VERSION_CHANGED_DURING_READBACK");
   }
-  async function snapshot() {
+  async function postVersionSnapshot({ deadlineAt } = {}) {
+    if (!readonlyIdentity || !workerIdentity) {
+      stop("POST_VERSION_SNAPSHOT_REQUIRED");
+    }
+    if (
+      !Number.isFinite(deadlineAt) ||
+      deadlineAt > clock() + 90_000 ||
+      (postVersionDeadline !== undefined && postVersionDeadline !== deadlineAt)
+    ) {
+      stop("POST_VERSION_DEADLINE_INVALID");
+    }
+    postVersionDeadline ??= deadlineAt;
+    return captureSnapshot(deadlineAt, postVersionReadBudget);
+  }
+  async function captureSnapshot(deadlineAt, budget = operationReadBudget) {
     const started = clock();
-    const token = (await read(account + "/tokens/verify")).result;
+    const readSnapshot = (path, endpoint) => read(path, readRequest, endpoint, deadlineAt, budget);
+    const token = (await readSnapshot(account + "/tokens/verify")).result;
     if (
       !token ||
       !id(token.id) ||
@@ -497,7 +524,7 @@ export function createManualProvider({
     )
       stop("READONLY_TOKEN_IDENTITY");
     readonlyIdentity ??= token.id;
-    const scripts = await read(account + "/workers/scripts"),
+    const scripts = await readSnapshot(account + "/workers/scripts"),
       rows = scripts.result;
     if (!Array.isArray(rows) || !readablePageInfo(scripts, rows, { singlePage: true }))
       stop("WORKER_IDENTITY");
@@ -511,15 +538,16 @@ export function createManualProvider({
       stop("WORKER_IDENTITY");
     workerIdentity ??= target[0].tag;
 
-    const settings = (await read(script + "/settings")).result;
+    const settings = (await readSnapshot(script + "/settings")).result;
     if (!emptySettingsBindings(settings)) stop("BINDINGS_DRIFT");
-    const active = await activeDeployment();
-    const version = (await read(script + "/versions/" + active.versions[0].version_id)).result;
+    const active = await activeDeployment(deadlineAt, budget);
+    const version = (await readSnapshot(script + "/versions/" + active.versions[0].version_id))
+      .result;
     if (version?.id !== active.versions[0].version_id || !emptyVersionBindings(version))
       stop("VERSION_BINDINGS");
-    const flags = (await read(script + "/subdomain")).result;
+    const flags = (await readSnapshot(script + "/subdomain")).result;
     if (flags?.enabled !== false || flags?.previews_enabled !== false) stop("ENDPOINT_DRIFT");
-    const domains = await read(account + "/workers/domains", readRequest, "account-worker-domains");
+    const domains = await readSnapshot(account + "/workers/domains", "account-worker-domains");
     if (
       !completeDomainInventory(domains) ||
       !domainSetMatches(domains.result, authority.worker, authority.hostname)
@@ -534,17 +562,16 @@ export function createManualProvider({
     )
       stop("DOMAIN_ZONE_OR_ENDPOINT_DRIFT");
     zoneIdentity ??= domain.zone_id;
-    await read(
+    await readSnapshot(
       "/client/v4/zones/" + zoneIdentity + "/workers/routes",
-      readRequest,
       "zone-worker-routes",
     );
-    const subdomain = (await read(account + "/workers/subdomain")).result?.subdomain;
+    const subdomain = (await readSnapshot(account + "/workers/subdomain")).result?.subdomain;
     if (!dnsLabel(subdomain)) stop("ACCOUNT_SUBDOMAIN");
-    const again = (await read(script + "/deployments?page=1&per_page=100")).result
+    const again = (await readSnapshot(script + "/deployments?page=1&per_page=100")).result
       ?.deployments?.[0];
-    const finalFlags = (await read(script + "/subdomain")).result;
-    const finalSettings = (await read(script + "/settings")).result;
+    const finalFlags = (await readSnapshot(script + "/subdomain")).result;
+    const finalSettings = (await readSnapshot(script + "/settings")).result;
     if (
       JSON.stringify(again) !== JSON.stringify(active) ||
       finalFlags?.enabled !== false ||
@@ -569,5 +596,11 @@ export function createManualProvider({
       hostname: authority.hostname,
     };
   }
-  return Object.freeze({ snapshot, assertSameVersion, verifyDeployToken, diagnoseDeployToken });
+  return Object.freeze({
+    snapshot: () => captureSnapshot(),
+    postVersionSnapshot,
+    assertSameVersion,
+    verifyDeployToken,
+    diagnoseDeployToken,
+  });
 }
