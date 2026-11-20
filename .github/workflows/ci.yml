@@ -418,6 +418,7 @@ jobs:
 
   windows-consumer:
     needs: producer
+    if: ${{ !cancelled() && needs.producer.result == 'success' }}
     runs-on: windows-2022
     timeout-minutes: 15
     steps:

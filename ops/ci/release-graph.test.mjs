@@ -172,6 +172,12 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
   assert.match(sections["source-validation"], /run: npm run ci:source:validate/);
   assert.match(sections["publication-fixtures"], /run: npm run ci:fixtures:lifecycle/);
   assert.match(sections["common-tool"], /run: npm run release:interaction -- common-tool/);
+  assert.match(sections["windows-consumer"], /needs: producer/);
+  assert.match(
+    sections["windows-consumer"],
+    /if: \$\{\{ !cancelled\(\) && needs\.producer\.result == 'success' \}\}/,
+    "A skipped draft candidate ancestor must not skip the successful producer's Windows consumer",
+  );
   assert.equal(
     scripts["ci:source:validate"],
     "npm run ci:source:preflight && npm run test && npm run test:release && npm run ci:source:checks",
