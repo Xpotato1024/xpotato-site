@@ -84,8 +84,8 @@ export function classifyImpact(
         : candidate === "full"
           ? ["all"]
           : [],
-    // Existing prose policy remains the sole exception. Even article candidates run every current core check.
-    executionPolicy: "unchanged-ci-scope",
+    // The observation itself authorizes no skip; draft admission is a separate policy.
+    executionPolicy: "separate-draft-admission",
     skipAuthorized: false,
     estimatedSavedSeconds: null,
     unresolved:

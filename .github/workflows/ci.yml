@@ -2,6 +2,7 @@ name: vNext CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   push:
     branches: [main]
 
@@ -49,6 +50,7 @@ jobs:
       - id: scope
         env:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CI_FORCE_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'ci:full') }}
         run: node ops/ci/ci-scope.mjs
       - name: Observe change impact without skipping checks
         env:
@@ -56,10 +58,14 @@ jobs:
           CI_IMPACT_REPORT: ${{ runner.temp }}/ci-impact.json
         run: node ops/ci/ci-impact.mjs
       - id: article-policy
-        name: Check article-only PR against the exact Git ancestor and source modes
+        name: Select draft candidates from exact Git revisions
         env:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_BASE_REPOSITORY: ${{ github.event.pull_request.base.repo.full_name }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          CI_FORCE_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'ci:full') }}
         run: node ops/ci/article-pr-policy.mjs
       - name: Preserve shadow impact report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -69,10 +75,51 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Classifier and execution graph regression
-        run: node --test ops/ci/article-pr-policy.test.mjs ops/ci/ci-hosted-gate.test.mjs ops/ci/ci-fixtures.test.mjs ops/ci/ci-scope.test.mjs ops/ci/ci-impact.test.mjs ops/ci/ci-source.test.mjs ops/ci/producer-parallel.test.mjs ops/ci/release-graph.test.mjs ops/qa/lighthouse-collect.test.mjs
+        run: node --test ops/ci/article-pr-policy.test.mjs ops/ci/ci-result.test.mjs ops/ci/ci-hosted-gate.test.mjs ops/ci/ci-fixtures.test.mjs ops/ci/ci-scope.test.mjs ops/ci/ci-impact.test.mjs ops/ci/ci-source.test.mjs ops/ci/producer-parallel.test.mjs ops/ci/release-graph.test.mjs ops/qa/lighthouse-collect.test.mjs
   article-fast:
     needs: scope
     if: needs.scope.outputs.core == 'true' && needs.scope.outputs.article == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    outputs:
+      eligible: ${{ steps.admission.outputs.eligible }}
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm install --global npm@11.19.0
+      - run: npm ci --prefer-offline
+      - id: admission
+        name: Verify old and new drafts and their derived CMS index
+        env:
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_BASE_REPOSITORY: ${{ github.event.pull_request.base.repo.full_name }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          CI_FORCE_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'ci:full') }}
+        run: node --import tsx ops/ci/article-pr-admission.ts
+      - name: Validate complete draft source and public output
+        if: steps.admission.outputs.eligible == 'true'
+        env:
+          XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/article-validation
+        run: npm run ci:article:fast
+
+  article-regression:
+    needs: [scope, article-fast]
+    if: >-
+      ${{ !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true' &&
+          (needs.scope.outputs.article == 'false' ||
+           (needs.article-fast.result == 'success' && needs.article-fast.outputs.eligible == 'false')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     env:
@@ -90,14 +137,26 @@ jobs:
           cache: npm
       - run: npm install --global npm@11.19.0
       - run: npm ci --prefer-offline
-      - name: Validate complete article output and public metadata (no browser E2E)
+      - name: Exercise the real draft pipeline with isolated CMS edits
         env:
-          XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/article-validation
-        run: npm run ci:article:fast
+          XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/article-regression
+          XPOTATO_ARTICLE_FIXTURE_REPORT: ${{ runner.temp }}/article-regression.json
+        run: npm run ci:article:fixture
+      - name: Preserve synthetic draft validation and timing
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: site-article-regression-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/article-regression.json
+          if-no-files-found: warn
+          retention-days: 30
 
   source-validation:
-    needs: scope
-    if: needs.scope.outputs.core == 'true' && needs.scope.outputs.article != 'true'
+    needs: [scope, article-fast]
+    if: >-
+      ${{ !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true' &&
+          (needs.scope.outputs.article == 'false' ||
+           (needs.article-fast.result == 'success' && needs.article-fast.outputs.eligible == 'false')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -123,8 +182,11 @@ jobs:
         run: npm run ci:source:validate
 
   publication-fixtures:
-    needs: scope
-    if: needs.scope.outputs.core == 'true' && needs.scope.outputs.article != 'true'
+    needs: [scope, article-fast]
+    if: >-
+      ${{ !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true' &&
+          (needs.scope.outputs.article == 'false' ||
+           (needs.article-fast.result == 'success' && needs.article-fast.outputs.eligible == 'false')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -148,8 +210,11 @@ jobs:
         run: npm run ci:fixtures:lifecycle
 
   common-tool:
-    needs: scope
-    if: needs.scope.outputs.core == 'true' && needs.scope.outputs.article != 'true'
+    needs: [scope, article-fast]
+    if: >-
+      ${{ !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true' &&
+          (needs.scope.outputs.article == 'false' ||
+           (needs.article-fast.result == 'success' && needs.article-fast.outputs.eligible == 'false')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -189,8 +254,11 @@ jobs:
           retention-days: 30
 
   producer:
-    needs: scope
-    if: needs.scope.outputs.core == 'true' && needs.scope.outputs.article != 'true'
+    needs: [scope, article-fast]
+    if: >-
+      ${{ !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true' &&
+          (needs.scope.outputs.article == 'false' ||
+           (needs.article-fast.result == 'success' && needs.article-fast.outputs.eligible == 'false')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     outputs:
@@ -377,6 +445,7 @@ jobs:
         scope,
         offline-policy,
         article-fast,
+        article-regression,
         source-validation,
         publication-fixtures,
         common-tool,
@@ -393,6 +462,8 @@ jobs:
           REASON: ${{ needs.scope.outputs.reason }}
           ARTICLE: ${{ needs.scope.outputs.article }}
           ARTICLE_RESULT: ${{ needs.article-fast.result }}
+          ARTICLE_ELIGIBLE: ${{ needs.article-fast.outputs.eligible }}
+          ARTICLE_REGRESSION_RESULT: ${{ needs.article-regression.result }}
           SOURCE_RESULT: ${{ needs.source-validation.result }}
           FIXTURES_RESULT: ${{ needs.publication-fixtures.result }}
           COMMON_TOOL_RESULT: ${{ needs.common-tool.result }}
@@ -401,14 +472,24 @@ jobs:
         run: |
           if [[ "$SCOPE_RESULT" != success ]]; then echo 'FAIL: classification/checks'; exit 1; fi
           if [[ "$POLICY_RESULT" != success ]]; then echo 'FAIL: deployment policy'; exit 1; fi
-          if [[ "$CORE" == false ]]; then echo "$REASON" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
-          if [[ "$ARTICLE" == true ]]; then
-            if [[ "$ARTICLE_RESULT" != success ]]; then echo 'FAIL: article-only publication validation'; exit 1; fi
-            if [[ "$SOURCE_RESULT" != skipped || "$FIXTURES_RESULT" != skipped || "$COMMON_TOOL_RESULT" != skipped || "$PRODUCER_RESULT" != skipped || "$CONSUMER_RESULT" != skipped ]]; then echo 'FAIL: article and full gates overlapped unexpectedly'; exit 1; fi
-            echo 'PASS: full article output and public metadata verified; full release CI remains mandatory on main' | tee -a "$GITHUB_STEP_SUMMARY"
+          if [[ "$CORE" == false ]]; then
+            if [[ "$ARTICLE_RESULT" != skipped || "$ARTICLE_REGRESSION_RESULT" != skipped || "$SOURCE_RESULT" != skipped || "$FIXTURES_RESULT" != skipped || "$COMMON_TOOL_RESULT" != skipped || "$PRODUCER_RESULT" != skipped || "$CONSUMER_RESULT" != skipped ]]; then echo 'FAIL: prose-only gates overlapped'; exit 1; fi
+            echo "$REASON" | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          if [[ "$ARTICLE_RESULT" != skipped ]]; then echo 'FAIL: full run unexpectedly admitted article fast lane'; exit 1; fi
+          if [[ "$CORE" != true ]]; then echo 'FAIL: missing core decision'; exit 1; fi
+          if [[ "$ARTICLE" == true && "$ARTICLE_ELIGIBLE" == true ]]; then
+            if [[ "$ARTICLE_RESULT" != success ]]; then echo 'FAIL: draft source/output validation'; exit 1; fi
+            if [[ "$ARTICLE_REGRESSION_RESULT" != skipped || "$SOURCE_RESULT" != skipped || "$FIXTURES_RESULT" != skipped || "$COMMON_TOOL_RESULT" != skipped || "$PRODUCER_RESULT" != skipped || "$CONSUMER_RESULT" != skipped ]]; then echo 'FAIL: draft and full gates overlapped'; exit 1; fi
+            echo 'PASS: draft source and complete public output verified; no release artifact' | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [[ "$ARTICLE" == true ]]; then
+            if [[ "$ARTICLE_RESULT" != success || "$ARTICLE_ELIGIBLE" != false ]]; then echo 'FAIL: incomplete draft admission'; exit 1; fi
+          elif [[ "$ARTICLE" != false || "$ARTICLE_RESULT" != skipped || -n "$ARTICLE_ELIGIBLE" ]]; then
+            echo 'FAIL: invalid full CI decision'; exit 1
+          fi
+          if [[ "$ARTICLE_REGRESSION_RESULT" != success ]]; then echo 'FAIL: draft pipeline regression'; exit 1; fi
           if [[ "$SOURCE_RESULT" != success || "$FIXTURES_RESULT" != success || "$COMMON_TOOL_RESULT" != success ]]; then echo 'FAIL: independent source, publication or Common Tool validation'; exit 1; fi
           if [[ "$PRODUCER_RESULT" != success || "$CONSUMER_RESULT" != success ]]; then echo 'FAIL: producer or Windows consumer'; exit 1; fi
           echo 'PASS: Linux build once + final validation + raw archive Windows consumer (Windows builds=0)' | tee -a "$GITHUB_STEP_SUMMARY"

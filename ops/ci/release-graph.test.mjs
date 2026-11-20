@@ -145,11 +145,17 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
       (match) => [match[1], match[2]],
     ),
   );
-  for (const name of ["source-validation", "publication-fixtures", "common-tool", "producer"]) {
-    assert.match(sections[name], /needs: scope/);
+  for (const name of [
+    "article-regression",
+    "source-validation",
+    "publication-fixtures",
+    "common-tool",
+    "producer",
+  ]) {
+    assert.match(sections[name], /needs: \[scope, article-fast\]/);
     assert.match(
       sections[name],
-      /if: needs\.scope\.outputs\.core == 'true' && needs\.scope\.outputs\.article != 'true'/,
+      /!cancelled\(\)[\s\S]*needs\.scope\.outputs\.article == 'false'[\s\S]*needs\.article-fast\.result == 'success' && needs\.article-fast\.outputs\.eligible == 'false'/,
     );
     assert.match(
       sections[name],
@@ -225,6 +231,7 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
     "scope",
     "offline-policy",
     "article-fast",
+    "article-regression",
     "source-validation",
     "publication-fixtures",
     "common-tool",
@@ -234,6 +241,7 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
   for (const name of [
     "POLICY_RESULT",
     "ARTICLE_RESULT",
+    "ARTICLE_REGRESSION_RESULT",
     "SOURCE_RESULT",
     "FIXTURES_RESULT",
     "COMMON_TOOL_RESULT",
@@ -243,10 +251,16 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
     assert.ok(sections.result.includes(`"$${name}" != success`), name);
 });
 
-test("article-only PR runs a complete content build without releasing an unverified artifact", () => {
+test("verified drafts build once while public changes fall back to full validation", () => {
   const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
-  const article = workflow.split("  article-fast:")[1].split("  source-validation:")[0];
-  const fullJobs = ["source-validation", "publication-fixtures", "common-tool", "producer"];
+  const article = workflow.split("  article-fast:")[1].split("  article-regression:")[0];
+  const fullJobs = [
+    "article-regression",
+    "source-validation",
+    "publication-fixtures",
+    "common-tool",
+    "producer",
+  ];
   assert.match(article, /needs: scope/);
   assert.match(
     article,
@@ -257,24 +271,31 @@ test("article-only PR runs a complete content build without releasing an unverif
   assert.doesNotMatch(article, /GH_TOKEN:|CLOUDFLARE_|release:package|upload-artifact|deploy-site/);
   for (const name of fullJobs) {
     const block = workflow.split("  " + name + ":")[1].split(/^  [a-z-]+:/m)[0];
-    assert.match(block, /needs: scope/);
+    assert.match(block, /needs: \[scope, article-fast\]/);
     assert.match(
       block,
-      /if: needs\.scope\.outputs\.core == 'true' && needs\.scope\.outputs\.article != 'true'/,
+      /!cancelled\(\)[\s\S]*needs\.scope\.outputs\.article == 'false'[\s\S]*needs\.article-fast\.result == 'success' && needs\.article-fast\.outputs\.eligible == 'false'/,
     );
   }
   const result = workflow.split("  result:")[1];
   assert.match(result, /if: always\(\)/);
   assert.match(result, /ARTICLE_RESULT: \$\{\{ needs\.article-fast\.result \}\}/);
-  assert.match(result, /if \[\[ "\$ARTICLE" == true \]\]; then/);
+  assert.match(result, /if \[\[ "\$ARTICLE" == true && "\$ARTICLE_ELIGIBLE" == true \]\]; then/);
   assert.match(result, /if \[\[ "\$ARTICLE_RESULT" != success \]\]; then/);
-  assert.match(result, /if \[\[ "\$ARTICLE_RESULT" != skipped \]\]; then/);
+  assert.match(result, /"\$ARTICLE_RESULT" != skipped \|\| -n "\$ARTICLE_ELIGIBLE"/);
+  assert.match(article, /run: node --import tsx ops\/ci\/article-pr-admission\.ts/);
+  assert.match(article, /if: steps\.admission\.outputs\.eligible == 'true'/);
+  assert.match(
+    workflow,
+    /CI_FORCE_FULL: \$\{\{ contains\(github\.event\.pull_request\.labels\.\*\.name, 'ci:full'\) \}\}/,
+  );
   const required = [
     "validate:repository",
     "astro:check",
     "build",
     "publication:check",
     "validate:static",
+    "performance:check",
     "site:output:check",
   ];
   const script = scripts["ci:article:fast"];
@@ -370,7 +391,7 @@ test("hosted browser jobs prepare font caches once before their existing require
 test("hosted CI pins Linux ABI and caches only versioned WebKit binaries after real layout checks", () => {
   const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
   const producer = workflow.split("  producer:")[1].split("  windows-consumer:")[0];
-  assert.equal((workflow.match(/runs-on: ubuntu-24\.04/g) ?? []).length, 8);
+  assert.equal((workflow.match(/runs-on: ubuntu-24\.04/g) ?? []).length, 9);
   assert.doesNotMatch(workflow, /runs-on: ubuntu-latest/);
   const steps = [
     "name: Restore version-pinned WebKit browser binaries",

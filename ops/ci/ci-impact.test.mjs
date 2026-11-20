@@ -160,14 +160,14 @@ test("workflow retains shadow evidence while a separate fail-closed policy gates
   assert.match(workflow, /run: node ops\/ci\/ci-impact.mjs/);
   assert.match(workflow, /name: site-ci-impact-/);
   assert.match(pkg.scripts["test:release"], /ops\/ci\/ci-impact.test.mjs/);
-  assert.equal((workflow.match(/if: needs.scope.outputs.core == 'true'/g) ?? []).length, 5);
+  assert.equal((workflow.match(/if: needs.scope.outputs.core == 'true'/g) ?? []).length, 1);
   assert.doesNotMatch(source, /GITHUB_OUTPUT/);
   assert.doesNotMatch(workflow, /if:.*(?:impact|candidate)/);
   assert.match(workflow, /run: npm run ci:producer:validate/);
   assert.equal(pkg.scripts["ci:producer:validate"], "node ops/ci/producer-parallel.mjs validate");
   assert.ok(producerPhases.validate.includes("ci:final:public"));
   assert.match(workflow, /run: node ops\/ci\/article-pr-policy\.mjs/);
-  assert.match(workflow, /name: Validate complete article output and public metadata/);
+  assert.match(workflow, /name: Validate complete draft source and public output/);
   assert.match(
     workflow,
     /if: needs\.scope\.outputs\.core == 'true' && needs\.scope\.outputs\.article == 'true'/,

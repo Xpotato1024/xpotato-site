@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 // another run, a cached success, or an intermediate release to satisfy this gate.
 export const hostedGateJobs = Object.freeze([
   "offline-policy",
+  "article-regression",
   "source-validation",
   "publication-fixtures",
   "common-tool",

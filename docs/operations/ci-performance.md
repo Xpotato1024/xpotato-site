@@ -172,3 +172,12 @@ Siteはこの保証と既存のexact source/release admissionを利用し、製�
 PR211で全検査とshadow artifactの実行を確認した後、`remaining` から連続したhome/navigation/copy操作を `home-navigation` へ分離します。design-role/article/search/footer/contact/tagは `remaining` に残します。移したassertion・viewport・待機期限は維持し、新profileの入口では旧search終了時のdesktop/network/motion/Service Worker状態を明示します。公開Chromeは5suite、Common Toolを含むlocal全体は6suiteとなります。ready通知による起動順制御と、全child終了・全fresh reportを要求する集約は維持します。
 
 まだskipは行いません。mainもPRも同じ全検査と一回の公開buildを使います。追加Chromeの資源競合があるため、単純に旧時間を二分して短縮率を主張せず、exact Hosted runのwall time・各suite時間で確認します。
+
+
+## 2026-11-21: 編集待ちと公開前検証の分離
+
+[ADR-0091](../design/adr/0091-draft-editing-ci.md)の候補は、旧新とも未公開のCMS原稿と正規の索引を短い経路へ送る。公開記事や媒体・来歴・コード変更、mainは全体CIを保つ。分離の条件は[下書きCI](ci-change-impact.md)を正とする。
+
+全体CIの直前の成功値は [0fe27582 / run44773079113](https://github.com/Xpotato1024/xpotato-site/actions/runs/44773079113)、全8job成功で実時間409秒（6分49秒）。これを下書き専用経路の測定と混同しない。下書き用の `article-regression` は隔離worktree内の合成CMS編集に対する実command時間を記録する。実際のPR全体時間にはscope、queue、checkout、依存導入、offline-policy、resultも含む。
+
+性能の比較は同じNode/npm・lock・OSを使い、成功した対象commit/run/attemptと各job/stepの実時間を記録する。合成fixtureのsetup時間と検査時間、実記事PR、空matrixの正式previewは別々に扱う。新経路の短縮幅は実測後のPR記録に示し、事前に固定の秒数や速度保証を置かない。

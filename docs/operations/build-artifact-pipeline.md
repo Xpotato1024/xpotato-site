@@ -38,16 +38,17 @@ release:produce
 
 `npm run ci` / `release:produce` はlocalの完全経路を保持します。localではsource preflight・単体/release testの後に型/repository/Astro検査と完全fixture準備を並行実行し、両方の終了とGit HEAD復元を待って公開buildへ進みます。
 
-Hosted CIでは同じexact source SHAを別checkoutで4本並行に検査します。commandの内容は `package.json`、jobの起動とstable resultは `ci.yml` が所有します。
+公開・コード変更とmainのHosted CIでは同じexact source SHAを別checkoutで5本並行に検査します。commandの内容は `package.json`、jobの起動とstable resultは `ci.yml` が所有します。
 
+- `article-regression`: 一時worktreeで合成CMS下書きの新規保存・題名/本文更新を作り、同じ意味判定と下書き用CIを完遂します。実公開原稿を変更せず、公開出力への混入を確認します。
 - `source-validation`: `ci:source:validate`。既存preflight、全単体/release test、型/repository/Astro検査。
 - `publication-fixtures`: `ci:fixtures:lifecycle`。初回候補・mock保存/export/cleanupと本文/題名/hero/category/tagsの5更新をすべて実行。private候補buildであり公開buildは0回。
 - `common-tool`: 独立worktreeの実siteをbuildし、共通Toolのadoption、CSP、通信、操作を検査。private buildは1回、公開buildは0回。
 - `producer`: workflowの別stepで `ci:producer:prepare`、`ci:producer:validate` を実行します。prepareでは、実際のauthoring/review/visualと初回publicationの非公開fixture生成・一回の公開buildを、WebKit導入・Chromeフォント準備と並行します。validateでは、同じdistを使うWebKit実検査と全public final検査を並行します。各stepは両laneの終了を待ち、失敗があれば次へ進みません。publicationの限定modeは5更新だけを別jobへ移し、初回候補・mock source/public/protected・export・job削除後render・承認後変更拒否・leak receiptを残します。fixture間の共有lockとGit HEAD復元があるため、build lane内のfixture順序は保ちます。
 
-producerは公開検査後、`ci:hosted:gate` でGitHubの読取り専用APIにより上記3jobの**同じrun/attempt/sourceのcompleted-success**を確認します。その後だけ `release:package` を実行し、従来どおりimmutable artifactへ保存します。API失敗、別repo/PR/base/source/workflow/attempt、欠損・重複job、失敗/取消/対象外はPASSへ変換しません。待機は最大25分。tokenはこのgate stepだけに渡し、build/browserへ渡しません。一般的なscheduler、別runの成功cache、中間dist転送は導入しません。失敗jobだけの再実行で同attemptの必須jobが揃わない場合は停止するため、復旧時はworkflow全体を再実行します。
+producerは公開検査後、`ci:hosted:gate` でGitHubの読取り専用APIによりoffline-policyと上記4独立jobの**同じrun/attempt/sourceのcompleted-success**を確認します。その後だけ `release:package` を実行し、従来どおりimmutable artifactへ保存します。API失敗、別repo/PR/base/source/workflow/attempt、欠損・重複job、失敗/取消/対象外はPASSへ変換しません。待機は最大25分。tokenはこのgate stepだけに渡し、build/browserへ渡しません。一般的なscheduler、別runの成功cache、中間dist転送は導入しません。失敗jobだけの再実行で同attemptの必須jobが揃わない場合は停止するため、復旧時はworkflow全体を再実行します。
 
-source job完了前に公開buildの計算を始めることがありますが、未検証のdistをreleaseとして保存・昇格しません。stable `result` も3独立job・producer・Windowsの全成功を要求します。Production consumerのcompleted-successful main run条件、source SHA・run/attempt・artifact ID/digest、Windowsの再build禁止は変更しません。
+source job完了前に公開buildの計算を始めることがありますが、未検証のdistをreleaseとして保存・昇格しません。stable `result` も4独立job・producer・Windowsの全成功を要求します。Production consumerのcompleted-successful main run条件、source SHA・run/attempt・artifact ID/digest、Windowsの再build禁止は変更しません。
 
 final browserはcarousel desktop、carousel mobile、content/search/footerのremaining、更新情報のhome-content、写真/headerのhome-shell、navigation、private previewとPrimeのhost-only smokeのtools、CMS操作のeditorを独立Chrome/profile/serverで検査します。起動は次段落のready通知まで順番に進め、起動済みの操作検査は並行します。desktop/mobileを分けても6秒autoplayなどの実時間assertion、motion/viewport/axe条件は同じです。common Toolは上記の独立jobへ分離し、public reportを `mode: public` と明記します。localのdefaultはCommon Toolを含む全9suite、public modeは全8suiteを実行します。Primeの製品matrixは検証済み配布元リリースの責務とし、Siteは固定bytesとhost接続だけを検査します（[検証境界](browser-tools/runtime-validation.md)）。このためtoolsも他のhost suiteと同時実行でき、製品deadline用の直列phaseを設けません。reportはfresh run identityと成功exit receiptの全組を要求し、古い・欠落・別suiteのreportや部分成功を合成PASSにしません。共通Toolのprivate distには専用のCSP/通信検査を行い、公開distのCSP検査は公開suiteで保持します。
 
@@ -65,6 +66,12 @@ Prime PWAの再起動検査は同じ検査用profileだけを使い、復元タ�
 CIは`RUNNER_TEMP`配下の絶対pathを`XPOTATO_RELEASE_TEMP`（browser profile）、`XPOTATO_SITE_TEMP_ROOT`（local serving/private preview）、`XPOTATO_RELEASE_PACKAGE`（fresh package出力）へ設定します。local検証でも前二者をtask temp配下へ明示し、必要なら`CHROME_PATH`でChrome/Edge executableを指定します。local buildはproduction candidateを作りません。
 
 security-header policyはbuilt HTMLと実行script/styleから`apps/site/dist/_headers`を生成します。配布する正本はこのgenerated fileであり、tracked source `_headers`を第二SoTとして残しません。final static validationは同じoutputとheadersを検査します。
+
+### 下書き編集のPR
+
+[下書き用CIの判定](ci-change-impact.md)に適合するPRは `article-fast` で既存CMS parserによる意味判定と全体build/static/publication/performance/route/search検査を行います。通常のコード・公開検証jobは対象外とし、release packageは生成しません。意味判定が正常に不適格を返した場合は全体jobへ進み、下書き検査のfailure/cancelledや出力欠落はstable resultを失敗させます。コード変更はNodeのみの候補判定で全体経路を選び、候補jobの依存導入を待ちません。
+
+mainは下書きだけでも常に全体CIです。PRで `ci:full` labelを付けた場合も全体CIを実行します。公開済み本文、公開状態、media/rights/provenance/taxonomy/series/redirect、実装・validator・lock変更を下書き経路へ入れません。下書きCIのPASSをProduction artifactの資格として扱いません。
 
 ### Docs-only分類
 
