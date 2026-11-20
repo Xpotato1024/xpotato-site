@@ -518,6 +518,98 @@ test("public redirects and byte mismatch fail without writes", async () => {
   }
 });
 
+test("owner-only editor challenge is verified separately from published bytes", async () => {
+  const html = "approved";
+  const location =
+    "https://xpotato1024.cloudflareaccess.com/cdn-cgi/access/login/xpotato.net?kid=present&meta=present&redirect_url=%2Feditor%2F";
+  const readback = createPublicReadback({
+    fetchImpl: async (url) => {
+      const pathname = new URL(url).pathname;
+      if (pathname === "/editor/")
+        return new Response(null, { status: 302, headers: { location } });
+      return new Response(pathname === "/public/" ? html : "missing", {
+        status: url.includes("workers.dev") ? 404 : 200,
+      });
+    },
+  });
+  const report = await readback.published(
+    {
+      targets: [
+        { path: "/editor/", bytes: html.length, sha256: hashBytes(html) },
+        { path: "/public/", bytes: html.length, sha256: hashBytes(html) },
+      ],
+    },
+    image,
+  );
+  assert.equal(report.status, "verified");
+  assert.equal(report.observations[0].actual.status, 302);
+  assert.equal(report.observations[0].bodyMatch, "cloudflare-access-protected");
+  assert.equal(report.observations[0].matches, true);
+  assert.equal(report.observations[0].actual.sha256, null);
+  assert.equal(report.observations[1].bodyMatch, "exact");
+});
+test("unknown redirects and Access-looking challenges outside the editor remain blocked", async () => {
+  const valid =
+    "https://xpotato1024.cloudflareaccess.com/cdn-cgi/access/login/xpotato.net?kid=1&meta=2&redirect_url=%2Feditor%2F";
+  const bad = [
+    ["/public/", valid],
+    [
+      "/editor/",
+      "https://evil.example/cdn-cgi/access/login/xpotato.net?kid=1&meta=2&redirect_url=%2Feditor%2F",
+    ],
+    [
+      "/editor/",
+      valid.replace("redirect_url=%2Feditor%2F", "redirect_url=%2Feditor-api%2Fsession"),
+    ],
+    ["/editor/", valid.replace("kid=1", "other=1")],
+    [
+      "/editor/",
+      valid.replace("xpotato1024.cloudflareaccess.com", "other-team.cloudflareaccess.com"),
+    ],
+    ["/editor/", valid.replace("https://", "http://")],
+  ];
+  for (const [path, location] of bad) {
+    const readback = createPublicReadback({
+      fetchImpl: async () => new Response(null, { status: 302, headers: { location } }),
+    });
+    await assert.rejects(
+      () =>
+        readback.published({ targets: [{ path, bytes: 8, sha256: hashBytes("approved") }] }, image),
+      /PUBLIC_HTTP_OR_REDIRECT/,
+      path + " " + location.slice(0, 35),
+    );
+  }
+});
+test("a transient cache mismatch is retried without accepting incorrect published bytes", async () => {
+  let pageReads = 0;
+  const readback = createPublicReadback({
+    clock: () => now,
+    wait: async () => {},
+    fetchImpl: async (url) => {
+      const pathname = new URL(url).pathname;
+      if (pathname === "/articles/tag/troubleshooting/") {
+        pageReads++;
+        return new Response(pageReads === 1 ? "stale" : "approved", { status: 200 });
+      }
+      return new Response(url.includes("workers.dev") ? "missing" : "approved", {
+        status: url.includes("workers.dev") ? 404 : 200,
+      });
+    },
+  });
+  const report = await readback.published(
+    {
+      targets: [
+        { path: "/articles/tag/troubleshooting/", bytes: 8, sha256: hashBytes("approved") },
+      ],
+    },
+    image,
+  );
+  assert.equal(report.status, "verified");
+  assert.equal(report.attempts, 2);
+  assert.equal(report.observations[0].matches, false);
+  assert.equal(report.observations[1].bodyMatch, "exact");
+  assert.equal(pageReads, 2);
+});
 test("readback plans enforce target, aggregate bytes and per-object budgets before execution", () => {
   const row = (path, bytes = 1) => ({ path, bytes, sha256: "a".repeat(64) });
   assert.equal(

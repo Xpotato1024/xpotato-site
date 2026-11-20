@@ -500,7 +500,8 @@ h3 {
   display: grid;
   gap: 0.35rem;
 }
-.draft-list button,
+.draft-list > button,
+.draft-list > .draft-choice > button,
 .history-list button {
   align-items: flex-start;
   flex-direction: column;
@@ -511,16 +512,19 @@ h3 {
   max-width: 100%;
   overflow-wrap: anywhere;
 }
-.draft-list button.selected {
+.draft-list > button.selected,
+.draft-list > .draft-choice > button.selected {
   background: var(--cms-accent-soft);
   border-color: var(--cms-accent-border);
 }
-.draft-list strong,
+.draft-list > button strong,
+.draft-list > .draft-choice > button strong,
 .history-list strong {
   font-size: 0.88rem;
   font-weight: 500;
 }
-.draft-list span,
+.draft-list > button span,
+.draft-list > .draft-choice > button span,
 .history-list span {
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -540,7 +544,8 @@ h3 {
   gap: 0.3rem;
   margin-top: 0.6rem;
 }
-.repository-documents button {
+.repository-documents > button,
+.repository-documents > .draft-choice > button {
   text-align: left;
   justify-content: flex-start;
   border-color: transparent;

@@ -210,6 +210,54 @@ export function StartWorkspace({
     setPlan(initialBranchPlan(git.auth.authenticated, item));
     setReview(item.producer === "ai");
   }
+  function selectionPanel(choice: NonNullable<typeof selected> | null) {
+    return (
+      <section
+        className={"start-selection" + (choice ? " start-selection-inline" : "")}
+        aria-label="編集の準備"
+      >
+        <BranchSetup
+          plan={plan}
+          onChange={setPlan}
+          branches={git.branches}
+          authenticated={git.auth.authenticated}
+          pinned={
+            choice && "local" in choice && choice.local.baseCommit
+              ? "この下書きの保存元から分岐し、未保存の編集を引き継ぎます。"
+              : choice && "path" in choice
+                ? "選択した一覧の版から分岐します。"
+                : undefined
+          }
+        />
+        {intent === "drafts" && (
+          <label className="review-entry">
+            <input
+              type="checkbox"
+              checked={review}
+              onChange={(event) => setReview(event.target.checked)}
+            />
+            添削から開く
+          </label>
+        )}
+        <button
+          className="primary start-editing"
+          type="button"
+          disabled={plan.mode !== "local" && !plan.targetBranch}
+          onClick={() =>
+            run(async () => {
+              if (intent === "new") await onNew(kind, plan);
+              else if (choice && "local" in choice) await onLocal(choice.local, plan, review);
+              else if (choice && "path" in choice)
+                await onRemote(choice.path, plan, intent, review);
+            })
+          }
+        >
+          {intent === "new" ? "作成して編集" : "編集を始める"}
+          <WorkspaceIcon name="next" />
+        </button>
+      </section>
+    );
+  }
   return (
     <div className="start-workspace">
       <header className="workspace-page-heading">
@@ -272,21 +320,28 @@ export function StartWorkspace({
                 </div>
                 <div className="draft-list">
                   {local.map((item) => (
-                    <button
-                      type="button"
-                      key={item.id}
-                      aria-pressed={Boolean(
-                        selected && "local" in selected && selected.local.id === item.id,
-                      )}
-                      onClick={() => selectLocal(item)}
-                    >
-                      <strong>{parseLocalDraft(item.source)?.data.title ?? "構文を編集中"}</strong>
-                      <span>
-                        {item.producer === "ai" ? "AI下書き · " : ""}
-                        {item.workingBranch || "この端末"} ·{" "}
-                        {new Date(item.savedAt).toLocaleDateString("ja-JP")}
-                      </span>
-                    </button>
+                    <div className="draft-choice" key={item.id}>
+                      <button
+                        type="button"
+                        aria-pressed={Boolean(
+                          selected && "local" in selected && selected.local.id === item.id,
+                        )}
+                        onClick={() => selectLocal(item)}
+                      >
+                        <strong>
+                          {parseLocalDraft(item.source)?.data.title ?? "構文を編集中"}
+                        </strong>
+                        <span>
+                          {item.producer === "ai" ? "AI下書き · " : ""}
+                          {item.workingBranch || "この端末"} ·{" "}
+                          {new Date(item.savedAt).toLocaleDateString("ja-JP")}
+                        </span>
+                      </button>
+                      {selected &&
+                        "local" in selected &&
+                        selected.local.id === item.id &&
+                        selectionPanel(selected)}
+                    </div>
                   ))}
                   {!local.length && <p className="muted small">該当する下書きはありません。</p>}
                 </div>
@@ -335,38 +390,46 @@ export function StartWorkspace({
                     </p>
                   )}
                   {remote.map((item) => (
-                    <button
-                      type="button"
-                      key={item.path}
-                      aria-pressed={Boolean(
-                        selected && "path" in selected && selected.path === item.path,
-                      )}
-                      onClick={() => {
-                        setSelected({ path: item.path, title: item.metadata?.title ?? item.path });
-                        setPlan({
-                          ...initialBranchPlan(git.auth.authenticated),
-                          sourceBranch: git.sourceBranch,
-                        });
-                        setReview(false);
-                      }}
-                    >
-                      <strong>{item.metadata?.title ?? "題名を取得できません"}</strong>
-                      <span>
-                        {item.metadata?.education
-                          ? "教育記事"
-                          : (draftKinds.find((kind) => kind.id === item.metadata?.collection)
-                              ?.label ?? "種類未取得")}
-                        {" · "}
-                        {item.metadata?.draft === undefined
-                          ? "公開状態未取得"
-                          : item.metadata.draft
-                            ? "下書き"
-                            : "公開済み"}
-                      </span>
-                      {!item.metadata && (
-                        <small className="muted">{item.path.replace(/^content\//u, "")}</small>
-                      )}
-                    </button>
+                    <div className="draft-choice" key={item.path}>
+                      <button
+                        type="button"
+                        aria-pressed={Boolean(
+                          selected && "path" in selected && selected.path === item.path,
+                        )}
+                        onClick={() => {
+                          setSelected({
+                            path: item.path,
+                            title: item.metadata?.title ?? item.path,
+                          });
+                          setPlan({
+                            ...initialBranchPlan(git.auth.authenticated),
+                            sourceBranch: git.sourceBranch,
+                          });
+                          setReview(false);
+                        }}
+                      >
+                        <strong>{item.metadata?.title ?? "題名を取得できません"}</strong>
+                        <span>
+                          {item.metadata?.education
+                            ? "教育記事"
+                            : (draftKinds.find((kind) => kind.id === item.metadata?.collection)
+                                ?.label ?? "種類未取得")}
+                          {" · "}
+                          {item.metadata?.draft === undefined
+                            ? "公開状態未取得"
+                            : item.metadata.draft
+                              ? "下書き"
+                              : "公開済み"}
+                        </span>
+                        {!item.metadata && (
+                          <small className="muted">{item.path.replace(/^content\//u, "")}</small>
+                        )}
+                      </button>
+                      {selected &&
+                        "path" in selected &&
+                        selected.path === item.path &&
+                        selectionPanel(selected)}
+                    </div>
                   ))}
                   {!remote.length && <p className="small muted">該当する原稿はありません。</p>}
                 </div>
@@ -416,57 +479,7 @@ export function StartWorkspace({
             )}
           </>
         )}
-        {(intent === "new" || selected) && (
-          <section className="start-selection" aria-label="編集の準備">
-            {selected && (
-              <h2>
-                {"local" in selected
-                  ? (parseLocalDraft(selected.local.source)?.data.title ?? "選択した下書き")
-                  : selected.title}
-              </h2>
-            )}
-            <BranchSetup
-              plan={plan}
-              onChange={setPlan}
-              branches={git.branches}
-              authenticated={git.auth.authenticated}
-              pinned={
-                selected && "local" in selected && selected.local.baseCommit
-                  ? "この下書きの保存元から分岐し、未保存の編集を引き継ぎます。"
-                  : selected && "path" in selected
-                    ? "選択した一覧の版から分岐します。"
-                    : undefined
-              }
-            />
-            {intent === "drafts" && (
-              <label className="review-entry">
-                <input
-                  type="checkbox"
-                  checked={review}
-                  onChange={(event) => setReview(event.target.checked)}
-                />
-                添削から開く
-              </label>
-            )}
-            <button
-              className="primary start-editing"
-              type="button"
-              disabled={plan.mode !== "local" && !plan.targetBranch}
-              onClick={() =>
-                run(async () => {
-                  if (intent === "new") await onNew(kind, plan);
-                  else if (selected && "local" in selected)
-                    await onLocal(selected.local, plan, review);
-                  else if (selected && "path" in selected)
-                    await onRemote(selected.path, plan, intent, review);
-                })
-              }
-            >
-              {intent === "new" ? "作成して編集" : "編集を始める"}
-              <WorkspaceIcon name="next" />
-            </button>
-          </section>
-        )}
+        {intent === "new" && selectionPanel(null)}
       </fieldset>
     </div>
   );

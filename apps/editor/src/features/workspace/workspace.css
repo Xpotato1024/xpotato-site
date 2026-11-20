@@ -248,12 +248,37 @@
 .draft-list {
   margin-bottom: 1rem;
 }
-.draft-list > button[aria-pressed="true"] {
+.draft-choice {
+  min-width: 0;
+}
+.draft-choice > button {
+  width: 100%;
+}
+.draft-choice > button[aria-pressed="true"] {
   background: var(--cms-accent-soft);
   border-color: var(--accent);
 }
-.draft-list > button > span {
+.draft-choice > button > span {
   overflow-wrap: anywhere;
+}
+.start-selection-inline {
+  margin: 0.35rem 0 0.75rem;
+  border: 1px solid var(--cms-accent-border);
+  border-radius: var(--cms-control-radius);
+  background: var(--surface-control);
+  padding: 1rem;
+  scroll-margin-block: 1rem;
+}
+.start-selection-inline .start-editing {
+  width: auto;
+}
+@media (max-width: 600px) {
+  .start-selection-inline .branch-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .start-selection-inline .start-editing {
+    width: 100%;
+  }
 }
 .registry-workplace {
   border-bottom: 1px solid var(--border-divider);
