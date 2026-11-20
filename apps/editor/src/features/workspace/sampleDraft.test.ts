@@ -129,7 +129,7 @@ describe("an explicitly opened local operation sample", () => {
     const charts = blocks
       .filter((block) => block.name === "LineChart")
       .map((block) => lineChartModulePropsSchema.parse(readModuleSource(block.source)!.props));
-    expect(charts.map((chart) => chart.kind)).toEqual(["line", "scatter"]);
+    expect(charts.map((chart) => chart.kind)).toEqual(["line", "scatter", "analysis"]);
     for (const chart of charts) {
       expect(chart.title).toContain("操作サンプル");
       expect(chart.description).toContain("合成データ");
@@ -161,7 +161,11 @@ describe("an explicitly opened local operation sample", () => {
       }
     });
     expect(conditionsShown).toBe(3);
-    expect(chartKinds).toEqual(["line", "scatter"]);
+    expect(chartKinds).toEqual(["line", "scatter", "analysis"]);
+    const analysis = lineChartSeriesSchema.parse(JSON.parse(charts[2]!.series));
+    expect(analysis[0]!.fit).toEqual({ method: "linear" });
+    expect(analysis[1]!.role).toBe("curve");
+    expect(preview.html).toContain("近似式・計算条件を見る");
     expect(preview.html).toContain("条件Bに添えたブロック構成のサンプル図");
   });
 });

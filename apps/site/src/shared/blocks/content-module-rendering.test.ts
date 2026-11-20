@@ -149,7 +149,7 @@ describe("public Astro numeric charts and CMS preview", () => {
     yLabel: "変位 (mm)",
     series: JSON.stringify(series),
   };
-  it.each(["line", "scatter"])(
+  it.each(["line", "scatter", "analysis"])(
     "renders %s from the same static model in Astro and CMS without public runtime",
     async (kind) => {
       const input = { ...props, kind };
@@ -171,6 +171,43 @@ describe("public Astro numeric charts and CMS preview", () => {
       expect(html).not.toMatch(/<script|<canvas|<img|astro-island| style=|NaN|Infinity/u);
     },
   );
+  it("shares fitted observations and an external curve without changing source measurements", async () => {
+    const observed = {
+      label: "測定A",
+      fit: { method: "linear" },
+      points: [
+        { x: 2, y: 5 },
+        { x: 0, y: 1 },
+        { x: 1, y: 3 },
+        { x: 1, y: 3 },
+      ],
+    };
+    const curve = {
+      label: "理論値",
+      role: "curve",
+      points: [
+        { x: 0, y: 1 },
+        { x: 2, y: 5 },
+      ],
+    };
+    const input = { ...props, kind: "analysis", series: JSON.stringify([observed, curve]) };
+    const html = await renderers["LineChart/LineChart"]!(input);
+    const source = `<LineChart title="${props.title}" xLabel="${props.xLabel}" yLabel="${props.yLabel}" description="${props.description}" kind="analysis" series='${input.series}' />`;
+    const preview = await previewDocument(draft(source));
+    expect(preview.warnings).toEqual([]);
+    expect(preview.html).toContain(html.trim());
+    expect(classCount(html, "article-line-chart__point", "article-line-chart__plot")).toBe(4);
+    expect(classCount(html, "article-line-chart__fit", "article-line-chart__plot")).toBe(1);
+    expect(classCount(html, "article-line-chart__external-curve", "article-line-chart__plot")).toBe(
+      1,
+    );
+    expect(classCount(html, "article-line-chart__fit-result")).toBe(1);
+    expect(html).toContain("4点（この系列の全測定点）");
+    expect(html).toContain("R²（元のYで算出）</dt><dd>1</dd>");
+    expect(html).toContain("外挿なし");
+    expect(html).not.toMatch(/<script|<canvas|astro-island|NaN|Infinity/u);
+    expect(JSON.parse(input.series)[0].points).toEqual(observed.points);
+  });
   it("renders one scatter observation and retains zero without fabricating a positive value", async () => {
     const html = await renderers["LineChart/LineChart"]!({
       ...props,

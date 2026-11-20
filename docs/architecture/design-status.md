@@ -31,6 +31,8 @@ last_verified: 2026-11-19
 
 2026-11-20の追加候補は、条件ごとの本文を持つComparisonCase、CMSで数値を編集する静的LineChart、リンクの選択範囲を保つ編集、添削ファイル操作と倍率表示の整理です。[ADR-0087](../design/adr/0087-cms-comparison-and-static-charts.md)と[部品点検](../audits/cms-block-coverage-20261120.md)に記録しています。既存Vega-Lite/Mermaid制作CLIと、任意の図式のブラウザー編集への対応は区別します。
 
+同日の実験グラフ追加候補では、LineChartに系列ごとの近似と計算済み曲線を重ね、CSVから列を確認して取り込みます。静的描画とVegaの限定した統計計算を共有し、任意の非線形最適化・外挿は扱いません。[ADR-0088](../design/adr/0088-experimental-charts-and-csv.md)と[CMS契約](../contracts/cms-workbench-contract.md)に範囲を記録しています。実装・検証・非公開プレビュー・main採用はそれぞれ対象revisionで確認します。
+
 ## 実環境との区別
 
 - 既存公開サイトの配信状況は[現行配信状態](../operations/current-deployment-status.md)だけを参照します。本整理は本番デプロイではありません。

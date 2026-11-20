@@ -3,6 +3,7 @@ import remarkMdx from "remark-mdx";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
+import { prepareLineChart } from "./charts.js";
 
 const portableMdxProcessor = unified().use(remarkParse).use(remarkMdx);
 const approvedModuleNames = new Set(Object.keys(semanticContentModulePropsSchemas));
@@ -103,6 +104,14 @@ const validateApprovedModule = (node: MdxJsxElementNode, errors: string[]): void
   if (!result.success) {
     const issues = result.error.issues.map((issue) => issue.path.join(".") || "props").join(", ");
     errors.push(`${node.name}: props do not match the approved schema (${issues})`);
+  } else if (node.name === "LineChart") {
+    try {
+      prepareLineChart(result.data);
+    } catch (error) {
+      errors.push(
+        `LineChart: ${error instanceof Error ? error.message : "近似を計算できません。"}`,
+      );
+    }
   }
 };
 

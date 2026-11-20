@@ -5,7 +5,7 @@ interface Props {
   description?: string;
   xLabel: string;
   yLabel: string;
-  kind?: "line" | "scatter";
+  kind?: "line" | "scatter" | "analysis";
   series: string;
 }
 const markup = renderLineChart(Astro.props);

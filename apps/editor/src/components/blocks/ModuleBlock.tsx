@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { semanticContentModuleJsonSchemas } from "@xpotato/content-contracts/content";
+import { renderLineChart } from "@xpotato/portable-content/charts";
 import { ChartSeriesEditor } from "./ChartSeriesEditor.js";
 import { LineChartPreview } from "./LineChartPreview.js";
 import { BlockIcon } from "./BlockIcon.js";
@@ -87,6 +88,7 @@ const choices: Record<string, string> = {
   important: "重要",
   line: "折れ線",
   scatter: "散布図",
+  analysis: "実験・近似曲線",
 };
 const names: Record<string, string> = {
   Group: "グループ",
@@ -103,7 +105,7 @@ const names: Record<string, string> = {
   DiagnosticItem: "症状",
   ArticleEndnote: "エンドノート",
   BarChart: "棒グラフ",
-  LineChart: "折れ線・散布図",
+  LineChart: "折れ線・散布図・近似曲線",
   ComparisonCase: "比較条件",
 };
 interface ChartRow {
@@ -232,6 +234,8 @@ function ModuleFields({
   const fields = Object.entries(schema?.properties ?? {});
   const requiredFields =
     module.name === "Comparison" ? ["leftLabel", "rightLabel"] : (schema?.required ?? []);
+  const mainField = (name: string) =>
+    requiredFields.includes(name) || (module.name === "LineChart" && name === "kind");
   const update = (name: string, value: string | boolean) =>
     setValues((current) => ({ ...current, [name]: value }));
   const apply = () => {
@@ -242,6 +246,9 @@ function ModuleFields({
       if (module.name === "Comparison" && (!prepared.leftLabel || !prepared.rightLabel)) {
         setError("両方の条件名を入力してください。");
         return;
+      }
+      if (module.name === "LineChart") {
+        renderLineChart(prepared);
       }
       onApply(updateModuleProps(source, prepared));
       setError("");
@@ -263,6 +270,9 @@ function ModuleFields({
       ];
       setError(
         seriesIssue?.message ??
+          (module.name === "LineChart" && caught instanceof Error && !issues.length
+            ? caught.message
+            : undefined) ??
           (fields.length
             ? fields.join("、") + "を確認してください。必須項目・値の範囲・URL形式を確認できます。"
             : "入力内容を確認してください。"),
@@ -278,6 +288,7 @@ function ModuleFields({
           key={name}
           value={String(value ?? "[]")}
           onChange={(next) => update(name, next)}
+          onAnalysisMode={() => update("kind", "analysis")}
         />
       );
     if (name === "rows")
@@ -305,7 +316,7 @@ function ModuleFields({
     return (
       <label key={name}>
         <span>
-          {labels[name] ?? name}
+          {module.name === "LineChart" && name === "kind" ? "グラフの表示" : (labels[name] ?? name)}
           {required && <small>必須</small>}
         </span>
         {options ? (
@@ -377,14 +388,12 @@ function ModuleFields({
   };
   return (
     <div className="cms-module-fields">
-      <div className="cms-field-grid">
-        {fields.filter(([name]) => requiredFields.includes(name)).map(field)}
-      </div>
-      {fields.some(([name]) => !requiredFields.includes(name)) && (
+      <div className="cms-field-grid">{fields.filter(([name]) => mainField(name)).map(field)}</div>
+      {fields.some(([name]) => !mainField(name)) && (
         <details className="cms-optional-fields">
           <summary>表示・補足の設定</summary>
           <div className="cms-field-grid">
-            {fields.filter(([name]) => !requiredFields.includes(name)).map(field)}
+            {fields.filter(([name]) => !mainField(name)).map(field)}
           </div>
         </details>
       )}

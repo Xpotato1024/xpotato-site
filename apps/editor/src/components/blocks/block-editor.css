@@ -420,6 +420,69 @@
   flex-wrap: wrap;
   gap: 0.45rem;
   margin-top: 0.45rem;
+  align-items: center;
+}
+.cms-chart-import-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 0.65rem;
+  margin-block: 0.65rem;
+}
+.cms-chart-point-editor {
+  margin-top: 0.65rem;
+}
+.cms-chart-point-editor > summary {
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+.cms-chart-point-editor > button {
+  margin-top: 0.5rem;
+}
+.cms-chart-help {
+  color: var(--text-muted);
+  font-size: var(--text-cms-label);
+  margin-block: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.cms-chart-csv,
+.cms-chart-csv-columns {
+  min-width: 0;
+  border: 1px solid var(--border-divider);
+  padding: 0.65rem;
+  margin-block: 0.65rem;
+}
+.cms-chart-csv-column {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 0.5rem;
+  align-items: center;
+  margin-block: 0.4rem;
+}
+.cms-chart-csv-preview {
+  max-width: 100%;
+  max-height: 18rem;
+  overflow: auto;
+  margin-block: 0.75rem;
+  overscroll-behavior-inline: contain;
+}
+.cms-chart-csv-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-cms-label);
+  text-align: start;
+}
+.cms-chart-csv-preview :is(th, td) {
+  min-width: 6rem;
+  max-width: 20rem;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border-divider);
+  overflow-wrap: anywhere;
+  text-align: start;
+}
+.cms-chart-csv-preview caption {
+  text-align: start;
+  padding-bottom: 0.4rem;
+  overflow-wrap: anywhere;
 }
 .cms-insert-overlay {
   --cms-block-accent: var(--accent);

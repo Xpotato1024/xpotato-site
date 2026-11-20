@@ -1501,7 +1501,8 @@
           "type": "string",
           "enum": [
             "line",
-            "scatter"
+            "scatter",
+            "analysis"
           ]
         },
         "series": {
@@ -1842,5 +1843,5 @@
       "status": "active"
     }
   ],
-  "contractHash": "8955e316c7d280f46093379e01b7609a01a6a7b4eccc7ec00cf682a83f4cd448"
+  "contractHash": "1ecc426e65120c98b110540d023efaf38fe6909e9cf9eaf475aeed0f2ced4fb1"
 }

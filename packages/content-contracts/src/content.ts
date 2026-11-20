@@ -650,11 +650,25 @@ export const barChartModulePropsSchema = z
     }
   });
 
+export const chartFitSchema = z.discriminatedUnion("method", [
+  z.object({ method: z.literal("linear") }).strict(),
+  z.object({ method: z.literal("quad") }).strict(),
+  z.object({ method: z.literal("poly"), degree: z.literal(3).optional() }).strict(),
+  z.object({ method: z.literal("exp") }).strict(),
+  z.object({ method: z.literal("log") }).strict(),
+  z.object({ method: z.literal("pow") }).strict(),
+  z
+    .object({ method: z.literal("loess"), bandwidth: z.number().finite().gt(0).max(1).optional() })
+    .strict(),
+]);
+
 export const lineChartSeriesSchema = z
   .array(
     z
       .object({
         label: z.string().trim().min(1).max(100),
+        role: z.enum(["observed", "curve"]).optional(),
+        fit: chartFitSchema.optional(),
         points: z
           .array(
             z
@@ -667,7 +681,37 @@ export const lineChartSeriesSchema = z
           .min(1)
           .max(500),
       })
-      .strict(),
+      .strict()
+      .superRefine((series, context) => {
+        const issue = (message: string) => context.addIssue({ code: "custom", message });
+        if (series.role === "curve") {
+          if (series.fit)
+            issue("計算済み曲線には近似を追加できません。測定値の系列を選んでください。");
+          if (
+            series.points.length < 2 ||
+            series.points.some(
+              (point, index) => index > 0 && point.x <= series.points[index - 1]!.x,
+            )
+          )
+            issue("計算済み曲線は2点以上必要です。Xを小さい順に並べ、重複を除いてください。");
+        }
+        if (!series.fit) return;
+        const { method } = series.fit;
+        const required = method === "poly" ? 4 : method === "quad" || method === "loess" ? 3 : 2;
+        const unique = new Set(series.points.map((point) => point.x)).size;
+        if (unique < required) issue(`この近似には異なるXの値が${required}種類以上必要です。`);
+        if (method === "loess" && unique !== series.points.length)
+          issue("LOESSはXが重複した測定点に対応していません。別の近似方法を選んでください。");
+        const invalid = series.points.findIndex(
+          (point) =>
+            ((method === "log" || method === "pow") && point.x <= 0) ||
+            ((method === "exp" || method === "pow") && point.y <= 0),
+        );
+        if (invalid >= 0)
+          issue(
+            `${invalid + 1}点目を確認してください。${method === "pow" ? "べき乗近似はXとY" : method === "log" ? "対数近似はX" : "指数近似はY"}が0より大きい値を必要とします。`,
+          );
+      }),
   )
   .min(1)
   .max(6);
@@ -678,7 +722,7 @@ export const lineChartModulePropsSchema = z
     description: z.string().trim().min(1).max(1000).optional(),
     xLabel: z.string().trim().min(1).max(60),
     yLabel: z.string().trim().min(1).max(60),
-    kind: z.enum(["line", "scatter"]).optional(),
+    kind: z.enum(["line", "scatter", "analysis"]).optional(),
     series: z.string().min(1).max(240000),
   })
   .strict()
@@ -699,8 +743,12 @@ export const lineChartModulePropsSchema = z
       context.addIssue({
         code: "custom",
         path: ["series"],
-        message:
-          "名前と数値を確認してください。6系列まで、各500点まで、数値の絶対値は1兆以下です。",
+        message: series.error.issues.some((issue) => issue.code === "custom")
+          ? series.error.issues
+              .filter((issue) => issue.code === "custom")
+              .map((issue) => `系列${Number(issue.path[0]) + 1}: ${issue.message}`)
+              .join(" ")
+          : "名前と数値を確認してください。6系列まで、各500点まで、数値の絶対値は1兆以下です。",
       });
       return;
     }
@@ -708,8 +756,9 @@ export const lineChartModulePropsSchema = z
       (value.kind ?? "line") === "line" &&
       series.data.some(
         (item) =>
-          item.points.length < 2 ||
-          item.points.some((point, index) => index > 0 && point.x <= item.points[index - 1]!.x),
+          !item.fit &&
+          (item.points.length < 2 ||
+            item.points.some((point, index) => index > 0 && point.x <= item.points[index - 1]!.x)),
       )
     ) {
       context.addIssue({

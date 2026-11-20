@@ -80,8 +80,7 @@ try {
     "-1.2500",
     "Typing preserves decimal digits before applying",
   );
-  await fields.getByText("表示・補足の設定", { exact: true }).click();
-  await fields.getByRole("combobox", { name: /^種類/u }).selectOption("scatter");
+  await fields.getByRole("combobox", { name: "グラフの表示", exact: true }).selectOption("scatter");
   await fields.getByRole("textbox", { name: "系列1の点2 X", exact: true }).fill("0");
   await fields.getByRole("button", { name: "設定を適用", exact: true }).click();
   await chart.locator('.article-line-chart[data-kind="scatter"]').waitFor();
