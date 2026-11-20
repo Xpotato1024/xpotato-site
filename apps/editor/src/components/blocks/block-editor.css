@@ -598,6 +598,7 @@
 .cms-palette-choice {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.65rem;
   min-width: 0;
   text-align: left;
@@ -626,6 +627,10 @@
 .cms-palette-code {
   font-size: 0.95rem;
   font-family: var(--font-mono, monospace);
+}
+.cms-palette-choice > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .cms-palette-choice strong {
   display: block;

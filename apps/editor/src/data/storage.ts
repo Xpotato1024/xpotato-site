@@ -157,13 +157,26 @@ async function transact<T>(
   });
 }
 let saveQueue: Promise<unknown> = Promise.resolve();
-export const saveLocalDraft = (draft: LocalDraft): Promise<IDBValidKey> => {
-  const next = saveQueue
-    .catch(() => {})
-    .then(() => transact("drafts", "readwrite", (s) => s.put(draft)));
+function queueDraftWrite<T>(write: () => Promise<T>): Promise<T> {
+  const next = saveQueue.catch(() => {}).then(write);
   saveQueue = next;
   return next;
-};
+}
+export const saveLocalDraft = (draft: LocalDraft): Promise<IDBValidKey> =>
+  queueDraftWrite(() => transact("drafts", "readwrite", (store) => store.put(draft)));
+export function updateLocalDraftArchive(id: string, archived: boolean): Promise<void> {
+  return queueDraftWrite(async () => {
+    const previous = await transact<LocalDraft | undefined>("drafts", "readwrite", (store) => {
+      const request = store.get(id);
+      request.addEventListener("success", () => {
+        const draft: LocalDraft | undefined = request.result;
+        if (draft) store.put({ ...draft, archived });
+      });
+      return request;
+    });
+    if (!previous) throw Error("端末に下書きが見つかりません。");
+  });
+}
 export const localDrafts = () => transact<LocalDraft[]>("drafts", "readonly", (s) => s.getAll());
 export const readWorkspaceRecord = <T>(id: string) =>
   transact<T | undefined>("workspace", "readonly", (s) => s.get(id));
@@ -173,39 +186,35 @@ export const writeWorkspaceRecord = <T extends { id: string }>(value: T) =>
  * Serialize with autosaves so a queued write cannot recreate a deleted draft.
  */
 export function deleteLocalDraft(id: string): Promise<void> {
-  const next = saveQueue
-    .catch(() => {})
-    .then(async () => {
-      const db = await database();
-      return new Promise<void>((resolve, reject) => {
-        let tx: IDBTransaction;
-        try {
-          tx = db.transaction(["drafts", "media", "revisions"], "readwrite");
-        } catch (error) {
-          db.close();
-          reject(error);
-          return;
-        }
-        tx.oncomplete = () => {
-          db.close();
-          resolve();
+  return queueDraftWrite(async () => {
+    const db = await database();
+    return new Promise<void>((resolve, reject) => {
+      let tx: IDBTransaction;
+      try {
+        tx = db.transaction(["drafts", "media", "revisions"], "readwrite");
+      } catch (error) {
+        db.close();
+        reject(error);
+        return;
+      }
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      tx.onabort = tx.onerror = () => {
+        db.close();
+        reject(tx.error ?? Error("LOCAL_DRAFT_DELETE_FAILED"));
+      };
+      tx.objectStore("drafts").delete(id);
+      for (const name of ["media", "revisions"] as const) {
+        const store = tx.objectStore(name);
+        const keys = store.index("draftId").getAllKeys(id);
+        keys.onsuccess = () => {
+          for (const key of keys.result) store.delete(key);
         };
-        tx.onabort = tx.onerror = () => {
-          db.close();
-          reject(tx.error ?? Error("LOCAL_DRAFT_DELETE_FAILED"));
-        };
-        tx.objectStore("drafts").delete(id);
-        for (const name of ["media", "revisions"] as const) {
-          const store = tx.objectStore(name);
-          const keys = store.index("draftId").getAllKeys(id);
-          keys.onsuccess = () => {
-            for (const key of keys.result) store.delete(key);
-          };
-        }
-      });
+      }
     });
-  saveQueue = next;
-  return next;
+  });
 }
 export const saveLocalMedia = (media: LocalMedia) =>
   transact("media", "readwrite", (s) => s.put(media));

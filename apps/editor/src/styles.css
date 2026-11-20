@@ -9,6 +9,12 @@
   font-synthesis: none;
   color-scheme: light;
   line-height: 1.65;
+  caret-color: transparent;
+}
+input,
+textarea,
+[contenteditable]:not([contenteditable="false"]) {
+  caret-color: auto;
 }
 * {
   box-sizing: border-box;

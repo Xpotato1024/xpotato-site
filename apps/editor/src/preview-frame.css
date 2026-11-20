@@ -12,6 +12,10 @@
 @import "../../site/src/features/series/styles/series.css";
 @import "../../../packages/design-system/src/fonts.css";
 
+:root {
+  caret-color: transparent;
+}
+
 .preview-unavailable {
   padding: 1rem;
   border: 1px dashed var(--border-control);

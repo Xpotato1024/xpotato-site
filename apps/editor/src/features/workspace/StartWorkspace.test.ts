@@ -38,6 +38,7 @@ function html(withIndex: boolean) {
       onNew: async () => {},
       onLocal: async () => {},
       onDeleteLocal: async () => {},
+      onArchiveLocal: async () => {},
       onRemote: async () => {},
       onImport: async () => {
         throw Error("not used");

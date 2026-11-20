@@ -169,6 +169,7 @@ interface Props {
   onNew: (kind: DraftKind, plan: BranchPlan) => Promise<void>;
   onLocal: (draft: LocalDraft, plan: BranchPlan, review: boolean) => Promise<void>;
   onDeleteLocal: (draft: LocalDraft) => Promise<void>;
+  onArchiveLocal: (draft: LocalDraft, archived: boolean) => Promise<void>;
   onRemote: (
     path: string,
     plan: BranchPlan,
@@ -187,6 +188,7 @@ export function StartWorkspace({
   onNew,
   onLocal,
   onDeleteLocal,
+  onArchiveLocal,
   onRemote,
   onImport,
   run,
@@ -194,7 +196,7 @@ export function StartWorkspace({
   const [kind, setKind] = useState<DraftKind>("blog");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<DraftKind | "">("");
-  const [archive, setArchive] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [localPage, setLocalPage] = useState(1);
   const [remotePage, setRemotePage] = useState(1);
   const [selected, setSelected] = useState<
@@ -207,10 +209,11 @@ export function StartWorkspace({
   const normalized = query.normalize("NFKC").toLocaleLowerCase("ja");
   const matches = (value: string) =>
     value.normalize("NFKC").toLocaleLowerCase("ja").includes(normalized);
+  const archivedCount = saved.filter((item) => item.archived).length;
   const local = saved.filter((item) => {
     const parsed = parseLocalDraft(item.source);
     return (
-      Boolean(item.archived) === archive &&
+      Boolean(item.archived) === showArchived &&
       matches((parsed?.data.title ?? "") + " " + (parsed?.data.description ?? "")) &&
       (!filter ||
         (filter === "education"
@@ -373,18 +376,22 @@ export function StartWorkspace({
             {intent === "drafts" && (
               <section aria-label="この端末の下書き">
                 <div className="catalog-section-heading">
-                  <h2>この端末（{local.length}件）</h2>
-                  <button
-                    type="button"
-                    aria-pressed={archive}
-                    onClick={() => {
-                      setArchive(!archive);
-                      setLocalPage(1);
-                      setSelected(null);
-                    }}
-                  >
-                    アーカイブ
-                  </button>
+                  <h2>
+                    {showArchived ? "この端末のアーカイブ" : "この端末"}（{local.length}件）
+                  </h2>
+                  {(showArchived || archivedCount > 0) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowArchived(!showArchived);
+                        changePage("local", 1);
+                      }}
+                    >
+                      {showArchived
+                        ? "作業中の下書きを表示"
+                        : `アーカイブ済みを表示（${archivedCount}件）`}
+                    </button>
+                  )}
                 </div>
                 <div className="draft-list">
                   {localPageItems.map((item) => (
@@ -404,6 +411,21 @@ export function StartWorkspace({
                           {item.workingBranch || "この端末"} ·{" "}
                           {new Date(item.savedAt).toLocaleDateString("ja-JP")}
                         </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="draft-archive"
+                        aria-label={`「${parseLocalDraft(item.source)?.data.title ?? "無題"}」を${showArchived ? "下書きに戻す" : "アーカイブ"}`}
+                        onClick={() =>
+                          run(async () => {
+                            await onArchiveLocal(item, !showArchived);
+                            if (selected && "local" in selected && selected.local.id === item.id) {
+                              setSelected(null);
+                            }
+                          })
+                        }
+                      >
+                        {showArchived ? "下書きに戻す" : "アーカイブ"}
                       </button>
                       <button
                         type="button"
@@ -433,7 +455,13 @@ export function StartWorkspace({
                         selectionPanel(selected)}
                     </div>
                   ))}
-                  {!local.length && <p className="muted small">該当する下書きはありません。</p>}
+                  {!local.length && (
+                    <p className="muted small">
+                      {showArchived && archivedCount === 0
+                        ? "アーカイブした下書きはありません。"
+                        : "該当する下書きはありません。"}
+                    </p>
+                  )}
                 </div>
                 <CatalogPagination
                   label="この端末"

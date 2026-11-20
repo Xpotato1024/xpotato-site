@@ -228,6 +228,14 @@ export default function App() {
       setBusy(false);
     }
   }
+  async function archiveLocalDraft(item: LocalDraft, archived: boolean) {
+    await workspace.setArchived(item.id, archived);
+    setNotice(
+      archived
+        ? "この端末のアーカイブに移動しました。下書き一覧から戻せます。"
+        : "作業中の下書きに戻しました。",
+    );
+  }
   function openEditor(review = false) {
     setPanel(review ? "review" : null);
     setEditorVisited(true);
@@ -505,7 +513,11 @@ export default function App() {
             {page === "home" && (
               <WorkspaceHome
                 navigate={navigation.navigate}
-                resumeTitle={workspace.hasDraft ? parsed?.data.title || "無題の原稿" : undefined}
+                resumeTitle={
+                  workspace.hasDraft && !draft.archived
+                    ? parsed?.data.title || "無題の原稿"
+                    : undefined
+                }
                 onResume={() => openEditor()}
                 onSample={() => void act(openSample)}
                 busy={busy}
@@ -521,6 +533,7 @@ export default function App() {
                 onNew={newDocument}
                 onLocal={openLocalDocument}
                 onDeleteLocal={(draft) => workspace.removeFromDevice(draft.id)}
+                onArchiveLocal={archiveLocalDraft}
                 onRemote={openRemoteDocument}
                 onImport={importFile}
                 run={(operation) => void act(operation)}
@@ -803,17 +816,13 @@ export default function App() {
                         key={draft.id}
                         draft={draft}
                         onRestore={workspace.restore}
-                        onArchive={() => {
-                          workspace.setDraft((current) => ({
-                            ...current,
-                            archived: !current.archived,
-                          }));
-                          setNotice(
-                            draft.archived
-                              ? "下書きへ戻しました。"
-                              : "アーカイブしました。原稿一覧から戻せます。",
-                          );
-                        }}
+                        onArchive={() =>
+                          void act(async () => {
+                            await archiveLocalDraft(draft, !draft.archived);
+                            if (!draft.archived) navigation.navigate("drafts");
+                          })
+                        }
+                        busy={busy}
                         onError={setError}
                       />
                     )}

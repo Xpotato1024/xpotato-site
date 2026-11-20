@@ -5,11 +5,13 @@ export function HistoryPanel({
   draft,
   onRestore,
   onArchive,
+  busy,
   onError,
 }: {
   draft: LocalDraft;
   onRestore: (revision: DraftRevision) => Promise<void>;
   onArchive: () => void;
+  busy: boolean;
   onError: (message: string) => void;
 }) {
   const [revisions, setRevisions] = useState<DraftRevision[]>([]);
@@ -60,7 +62,7 @@ export function HistoryPanel({
           </button>
         </div>
       )}
-      <button type="button" onClick={onArchive}>
+      <button type="button" onClick={onArchive} disabled={busy}>
         {draft.archived ? "下書きに戻す" : "この下書きをアーカイブ"}
       </button>
     </section>

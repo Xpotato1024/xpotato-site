@@ -40,13 +40,14 @@
 .taxonomy-records {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-  align-items: start;
   gap: 0.6rem;
   list-style: none;
   padding: 0;
   margin: 0.7rem 0 1rem;
 }
 .taxonomy-record {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   padding: 0.8rem;
   border: 1px solid var(--border-divider);
@@ -73,7 +74,8 @@
   font-size: 0.85rem;
   margin-bottom: 0.35rem;
 }
-.taxonomy-record small {
+.taxonomy-record > small {
+  margin-top: auto;
   font-family: var(--font-mono);
   font-size: 0.72rem;
 }
