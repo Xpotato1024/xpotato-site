@@ -6,6 +6,7 @@ import {
   deleteLocalDraft,
   saveLocalDraft,
   saveRevision,
+  updateLocalDraftArchive,
   type DraftRevision,
   type LocalDraft,
 } from "../../data/storage.js";
@@ -154,6 +155,29 @@ export function useDraftWorkspace(onError: (message: string) => void) {
   async function refreshSaved() {
     setSaved((await localDrafts()).sort((a, b) => b.savedAt.localeCompare(a.savedAt)));
   }
+  async function setArchived(id: string, archived: boolean) {
+    if (activeDraft.current && current.current.id === id) {
+      const next = { ...current.current, archived, savedAt: new Date().toISOString() };
+      // Pause autosave until the archive state and any unsaved edits are stored together.
+      activeDraft.current = false;
+      try {
+        await updateLocalDraftArchive(id, archived, next);
+      } catch (error) {
+        activeDraft.current = true;
+        throw error;
+      }
+      if (archived) {
+        setHasDraft(false);
+        setDraft(createLocalDraft());
+      } else {
+        activeDraft.current = true;
+        setDraft(next);
+      }
+    } else {
+      await updateLocalDraftArchive(id, archived);
+    }
+    await refreshSaved();
+  }
   async function removeFromDevice(id: string) {
     const isCurrent = activeDraft.current && current.current.id === id;
     const previous = current.current;
@@ -244,6 +268,7 @@ export function useDraftWorkspace(onError: (message: string) => void) {
     persist,
     refreshSaved,
     removeFromDevice,
+    setArchived,
     openLocal,
     createNew,
     edit,

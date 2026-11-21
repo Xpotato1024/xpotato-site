@@ -9,6 +9,7 @@
   --color-cms-hover: var(--cms-surface-hover);
   --radius-cms-control: var(--cms-control-radius);
   --spacing-cms-control: var(--control-min-size);
+  --spacing-cms-icon: var(--cms-icon-size);
   --text-cms-control: 0.875rem;
   --text-cms-label: 0.8125rem;
 }
@@ -32,6 +33,14 @@
   --cms-warning-fill: color-mix(in srgb, var(--cms-warning) 12%, var(--surface-control));
   --cms-danger-fill: color-mix(in srgb, var(--text-danger) 7%, var(--surface-control));
   --cms-popup-shadow: 0 4px 16px color-mix(in srgb, var(--text-primary) 12%, transparent);
+}
+
+@utility cms-outlined-card {
+  @apply min-w-0 rounded-cms-control border border-cms-divider;
+}
+
+@utility cms-icon-label {
+  @apply inline-flex min-w-0 items-center justify-start gap-2 text-left;
 }
 
 @utility cms-button {
@@ -159,9 +168,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 :where(button, .button, .file-button) > svg {
-  flex: none;
-  width: var(--cms-icon-size);
-  height: var(--cms-icon-size);
+  @apply size-cms-icon shrink-0;
   stroke-width: var(--cms-icon-stroke);
 }
 

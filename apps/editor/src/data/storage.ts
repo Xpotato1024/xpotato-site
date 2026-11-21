@@ -157,13 +157,44 @@ async function transact<T>(
   });
 }
 let saveQueue: Promise<unknown> = Promise.resolve();
-export const saveLocalDraft = (draft: LocalDraft): Promise<IDBValidKey> => {
-  const next = saveQueue
-    .catch(() => {})
-    .then(() => transact("drafts", "readwrite", (s) => s.put(draft)));
+function queueDraftWrite<T>(write: () => Promise<T>): Promise<T> {
+  const next = saveQueue.catch(() => {}).then(write);
   saveQueue = next;
   return next;
-};
+}
+function writeDraftRecord(
+  id: string,
+  update: (stored: LocalDraft | undefined) => LocalDraft | undefined,
+) {
+  return queueDraftWrite(() =>
+    transact<LocalDraft | undefined>("drafts", "readwrite", (store) => {
+      const request = store.get(id);
+      request.addEventListener("success", () => {
+        const next = update(request.result);
+        if (next) store.put(next);
+      });
+      return request;
+    }),
+  );
+}
+export async function saveLocalDraft(draft: LocalDraft): Promise<IDBValidKey> {
+  // Another tab may have archived or restored this draft since it was opened here.
+  await writeDraftRecord(draft.id, (stored) =>
+    stored?.archived === undefined ? draft : { ...draft, archived: stored.archived },
+  );
+  return draft.id;
+}
+export async function updateLocalDraftArchive(
+  id: string,
+  archived: boolean,
+  activeDraft?: LocalDraft,
+): Promise<void> {
+  const stored = await writeDraftRecord(id, (previous) => {
+    const draft = activeDraft ?? previous;
+    return draft ? { ...draft, archived } : undefined;
+  });
+  if (!stored && !activeDraft) throw Error("端末に下書きが見つかりません。");
+}
 export const localDrafts = () => transact<LocalDraft[]>("drafts", "readonly", (s) => s.getAll());
 export const readWorkspaceRecord = <T>(id: string) =>
   transact<T | undefined>("workspace", "readonly", (s) => s.get(id));
@@ -173,39 +204,35 @@ export const writeWorkspaceRecord = <T extends { id: string }>(value: T) =>
  * Serialize with autosaves so a queued write cannot recreate a deleted draft.
  */
 export function deleteLocalDraft(id: string): Promise<void> {
-  const next = saveQueue
-    .catch(() => {})
-    .then(async () => {
-      const db = await database();
-      return new Promise<void>((resolve, reject) => {
-        let tx: IDBTransaction;
-        try {
-          tx = db.transaction(["drafts", "media", "revisions"], "readwrite");
-        } catch (error) {
-          db.close();
-          reject(error);
-          return;
-        }
-        tx.oncomplete = () => {
-          db.close();
-          resolve();
+  return queueDraftWrite(async () => {
+    const db = await database();
+    return new Promise<void>((resolve, reject) => {
+      let tx: IDBTransaction;
+      try {
+        tx = db.transaction(["drafts", "media", "revisions"], "readwrite");
+      } catch (error) {
+        db.close();
+        reject(error);
+        return;
+      }
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      tx.onabort = tx.onerror = () => {
+        db.close();
+        reject(tx.error ?? Error("LOCAL_DRAFT_DELETE_FAILED"));
+      };
+      tx.objectStore("drafts").delete(id);
+      for (const name of ["media", "revisions"] as const) {
+        const store = tx.objectStore(name);
+        const keys = store.index("draftId").getAllKeys(id);
+        keys.onsuccess = () => {
+          for (const key of keys.result) store.delete(key);
         };
-        tx.onabort = tx.onerror = () => {
-          db.close();
-          reject(tx.error ?? Error("LOCAL_DRAFT_DELETE_FAILED"));
-        };
-        tx.objectStore("drafts").delete(id);
-        for (const name of ["media", "revisions"] as const) {
-          const store = tx.objectStore(name);
-          const keys = store.index("draftId").getAllKeys(id);
-          keys.onsuccess = () => {
-            for (const key of keys.result) store.delete(key);
-          };
-        }
-      });
+      }
     });
-  saveQueue = next;
-  return next;
+  });
 }
 export const saveLocalMedia = (media: LocalMedia) =>
   transact("media", "readwrite", (s) => s.put(media));

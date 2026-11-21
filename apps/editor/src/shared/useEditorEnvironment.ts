@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { registerEditorWorker } from "../pwa.js";
+import { activateEditorUpdate, checkEditorUpdate, registerEditorWorker } from "../pwa.js";
 import { useEditorViewport } from "./useEditorViewport.js";
 
 export function useEditorEnvironment() {
@@ -8,7 +8,7 @@ export function useEditorEnvironment() {
   const [updateReady, setUpdateReady] = useState(false);
 
   useEffect(() => {
-    // PWA登録の失敗で執筆を止めない。保存成否はIndexedDB側で別に通知する。
+    // PWA registration must not block editing; the IndexedDB save path reports separately.
     void registerEditorWorker().catch(() => {});
     const network = () => setOnline(navigator.onLine);
     const update = () => setUpdateReady(true);
@@ -22,15 +22,16 @@ export function useEditorEnvironment() {
     };
   }, []);
 
-  async function activateUpdate(persist: () => Promise<void>) {
-    // 更新によるreloadより先に、編集中の本文を耐久保存する。
-    await persist();
-    const registration = await navigator.serviceWorker.getRegistration("/editor/");
-    registration?.waiting?.postMessage({ type: "ACTIVATE" });
-    navigator.serviceWorker.addEventListener("controllerchange", () => location.reload(), {
-      once: true,
-    });
+  async function checkForUpdate() {
+    const status = await checkEditorUpdate();
+    if (status === "ready") setUpdateReady(true);
+    return status;
   }
 
-  return { online, updateReady, activateUpdate };
+  return {
+    online,
+    updateReady,
+    checkForUpdate,
+    activateUpdate: activateEditorUpdate,
+  };
 }

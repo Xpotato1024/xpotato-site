@@ -80,6 +80,51 @@ try {
   assert.equal(noScroll.scrollTop, 0, "Short home must not scroll");
   assert.equal(noScroll.overflowY, "hidden", "Short home must not rubber-band inside the app");
 
+  for (const width of [1203, 320]) {
+    await page.setViewportSize({ width, height: 800 });
+    const layout = await page.locator(".workspace-navigation").evaluate((nav) => {
+      const tabs = [...nav.querySelectorAll("button")].map((button) => {
+        const icon = button.querySelector("svg").getBoundingClientRect();
+        const label = button.querySelector("span").getBoundingClientRect();
+        return {
+          labelTop: label.top,
+          labelHeight: label.height,
+          iconWidth: icon.width,
+          gap: label.left - icon.right,
+        };
+      });
+      const left = nav.getBoundingClientRect().left + parseFloat(getComputedStyle(nav).paddingLeft);
+      const contentLeft = document.querySelector(".workspace-home").getBoundingClientRect().left;
+      return { tabs, left, contentLeft, fits: nav.scrollWidth <= nav.clientWidth };
+    });
+    assert.equal(layout.tabs.length, 3);
+    assert.ok(layout.fits, `Workspace navigation fits at ${width} px`);
+    assert.ok(Math.abs(layout.left - layout.contentLeft) <= 1, "Navigation and page gutters align");
+    for (const tab of layout.tabs) assert.deepEqual(tab, layout.tabs[0]);
+    const updateControl = page.locator(".workspace-header .editor-update-button");
+    assert.equal(await updateControl.getAttribute("aria-label"), "PWAの更新を確認");
+    const updateRect = await updateControl.evaluate((button) => {
+      const box = button.getBoundingClientRect();
+      return { left: box.left, right: box.right, width: box.width, height: box.height };
+    });
+    assert.ok(
+      updateRect.left >= 0 && updateRect.right <= width,
+      "PWA update button fits at " + width,
+    );
+    assert.ok(
+      updateRect.width >= 40 && updateRect.height >= 40,
+      "PWA update button remains touchable",
+    );
+  }
+
+  await page.locator(".workspace-header .editor-update-button").click();
+  const updateMessage = page.locator('.workspace-messages [role="status"]');
+  await updateMessage.waitFor({ timeout: 15000 });
+  assert.match(
+    await updateMessage.innerText(),
+    /編集アプリは最新|新しい編集アプリ/,
+    "Manual PWA check must report the version state without reloading",
+  );
   const firstId = await page.evaluate(async () => {
     const opened = indexedDB.open("xpotato-editor-v1", 3);
     const db = await new Promise((resolve, reject) => {
@@ -268,9 +313,23 @@ try {
   await page.screenshot({
     path: resolve(".local/cms-validation/selection-inline/paged-mobile-390.png"),
   });
+
+  const archiveToggle = page.getByRole("button", { name: /アーカイブ済みを表示/u });
+  assert.equal(await archiveToggle.count(), 0);
+  const firstDraft = localRows.filter({ hasText: "端末テスト13" });
+  await firstDraft.getByRole("button", { name: /をアーカイブ/u }).click();
+  await firstDraft.waitFor({ state: "hidden" });
+  await page.reload();
+  await archiveToggle.click();
+  await firstDraft.getByRole("button", { name: /を下書きに戻す/u }).click();
+  await firstDraft.waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "作業中の下書きを表示" }).click();
+  await firstDraft.waitFor();
+  assert.equal(await archiveToggle.count(), 0);
+
   assert.deepEqual(errors, [], "No browser runtime errors");
   console.log(
-    "Editor paged catalogs, inline actions, local deletion with media/revisions and scroll policy PASS",
+    "Editor paged catalogs, inline actions, navigation alignment, local archiving, deletion with media/revisions and scroll policy PASS",
   );
 } finally {
   await browser?.close();

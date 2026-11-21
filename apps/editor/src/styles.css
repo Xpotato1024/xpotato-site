@@ -9,6 +9,12 @@
   font-synthesis: none;
   color-scheme: light;
   line-height: 1.65;
+  caret-color: transparent;
+}
+input,
+textarea,
+[contenteditable]:not([contenteditable="false"]) {
+  caret-color: auto;
 }
 * {
   box-sizing: border-box;
@@ -91,9 +97,7 @@ h3 {
 .inspector-header svg,
 .article-menu svg,
 .series-membership-link svg {
-  width: var(--cms-icon-size);
-  height: var(--cms-icon-size);
-  flex: none;
+  @apply size-cms-icon shrink-0;
 }
 .mobile-library-label,
 .save-state-compact {
@@ -105,6 +109,15 @@ h3 {
 }
 .workspace-menu-button {
   @apply cms-icon-button cms-quiet-button;
+}
+.editor-update-button {
+  @apply cms-quiet-button inline-flex items-center justify-center gap-2 rounded-cms-control;
+  min-height: var(--control-min-size);
+  min-width: var(--control-min-size);
+  padding-inline: 0.65rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  flex: none;
 }
 .editor-brand {
   color: var(--text-primary);
@@ -258,20 +271,10 @@ h3 {
   color: var(--accent);
 }
 .editor-tabs {
-  display: flex;
-  padding: 2px;
-  gap: 2px;
-  background: var(--cms-surface-hover);
-  border: 1px solid var(--border-divider);
-  border-radius: var(--cms-control-radius);
+  @apply cms-outlined-card flex gap-0.5 bg-cms-hover p-0.5;
 }
 .editor-tabs button {
-  min-height: var(--control-min-size);
-  padding-inline: var(--cms-control-padding-inline);
-  border-color: transparent;
-  background: transparent;
-  color: var(--text-muted);
-  white-space: nowrap;
+  @apply cms-quiet-button min-h-cms-control gap-2 text-cms-muted whitespace-nowrap;
 }
 .editor-tabs button[aria-selected="true"] {
   background: var(--surface-control);
@@ -593,10 +596,7 @@ h3 {
   padding: 0;
 }
 .series-entries li {
-  border: 1px solid var(--border-divider);
-  border-radius: var(--cms-control-radius);
-  padding: 0.7rem;
-  margin: 0.6rem 0;
+  @apply cms-outlined-card my-2.5 p-3;
 }
 .series-entries li.current {
   border-color: var(--cms-accent-border);
@@ -884,6 +884,12 @@ h3 {
   }
 }
 @media (max-width: 800px) {
+  .editor-update-button {
+    @apply cms-icon-button;
+  }
+  .editor-update-button span {
+    display: none;
+  }
   .editor-header {
     min-height: 44px;
     padding: 0 0.7rem;
