@@ -84,8 +84,8 @@ export function classifyImpact(
         : candidate === "full"
           ? ["all"]
           : [],
-    // Existing prose policy remains the sole exception. Even article candidates run every current core check.
-    executionPolicy: "unchanged-ci-scope",
+    // The observation itself authorizes no skip; draft admission is a separate policy.
+    executionPolicy: "separate-draft-admission",
     skipAuthorized: false,
     estimatedSavedSeconds: null,
     unresolved:
@@ -148,7 +148,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (process.env.GITHUB_STEP_SUMMARY)
     appendFileSync(
       process.env.GITHUB_STEP_SUMMARY,
-      `\n### CI impact observation (shadow)\n\nCandidate: ${report.candidate}; changed entries: ${report.changes.length}.\n\nAll existing CI checks and prose-only policy remain unchanged. Skips authorized: none. Time saving: not measured.\n\n${report.reasons.length ? `Full fallback: ${report.reasons.join(", ")}.\n` : ""}`,
+      `\n### CI impact observation (shadow)\n\nCandidate: ${report.candidate}; changed entries: ${report.changes.length}.\n\nThis shadow artifact authorizes no skip. The separate article-pr-policy selects a bounded content-only PR lane; main always runs full CI. Time saving: not measured.\n\n${report.reasons.length ? `Full fallback: ${report.reasons.join(", ")}.\n` : ""}`,
     );
   console.log(json);
 }

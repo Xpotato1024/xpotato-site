@@ -230,6 +230,7 @@ function fixture(change = () => {}) {
         ports.push("provider");
         return { ...image, versionId: ++providerReads === 3 ? uuid(3) : uuid(2) };
       },
+      postVersionSnapshot: async () => input.provider.snapshot(),
     },
     probeBefore: async () => {
       ports.push("public");

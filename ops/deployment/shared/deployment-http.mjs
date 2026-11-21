@@ -153,10 +153,15 @@ export function createJsonTransport({
         return { status: 200, data };
       })();
       const timeout = new Promise((_, reject) => {
-        timer = setTimeout(() => {
-          controller.abort();
-          reject(new TransportError("REMOTE_TIMEOUT"));
-        }, timeoutMs);
+        timer = setTimeout(
+          () => {
+            controller.abort();
+            reject(new TransportError("REMOTE_TIMEOUT"));
+          },
+          deadlineAt === undefined
+            ? timeoutMs
+            : Math.min(timeoutMs, Math.max(0, deadlineAt - clock())),
+        );
       });
       return await Promise.race([operation, timeout]);
     } catch (error) {

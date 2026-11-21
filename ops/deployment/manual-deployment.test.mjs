@@ -119,6 +119,7 @@ function fixture(overrides = {}) {
         calls.push("snapshot");
         return { ...image, versionId: ++snapshots === 3 ? uid(3) : uid(2) };
       },
+      postVersionSnapshot: async () => result.provider.snapshot(),
     },
     verifyGitHub: step("github"),
     verifyHandoff: async () => {
@@ -353,23 +354,24 @@ test("unexpected third-party active version fails closed without retrying the de
   assert.equal(f.calls.filter((value) => value === "postversion-wait").length, 0);
   assert.equal(f.calls.filter((value) => value === "deploy").length, 1);
 });
-test("post-version polling obeys a bounded deadline", async () => {
+test("post-version polling rejects a matching snapshot returned at the deadline", async () => {
   const f = fixture();
   let time = now;
   f.input.clock = () => time;
-  f.input.wait = async (ms) => {
-    time += ms;
+  f.input.provider.postVersionSnapshot = async () => {
+    time += 90_000;
+    return { ...image, versionId: uid(3) };
   };
-  f.input.provider.snapshot = async () => ({ ...image });
   const result = await runManualDeployment(f.input);
   assert.equal(result.code, "POST_VERSION_MISMATCH");
   assert.equal(result.deployCount, 1);
   assert.equal(result.verification.status, "not_started");
-  assert.equal(time <= now + 90_000, true);
+  assert.equal(time, now + 90_000);
+  assert.ok(!f.calls.includes("published"));
 });
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
-function providerFixture(change = () => {}, manualContext = context) {
+function providerFixture(change = () => {}, manualContext = context, clock = () => now) {
   const calls = [];
   const fetchImpl = async (url, options) => {
     const path = new URL(url).pathname;
@@ -426,10 +428,187 @@ function providerFixture(change = () => {}, manualContext = context) {
       readonlyCredential: async () => "readcredential000",
       deployCredential: async () => "writecredential00",
       fetchImpl,
-      clock: () => now,
+      clock,
     }),
   };
 }
+test("all 15 post-version snapshots leave room for public retries and final token verification", async () => {
+  let deployed = false,
+    postSnapshots = 0,
+    time = now,
+    publicReads = 0;
+  const pf = providerFixture(
+    (path, body) => {
+      if (deployed && path.endsWith("/scripts")) postSnapshots++;
+      if (postSnapshots === 15 && path.endsWith("/deployments")) {
+        body.result.deployments[0].id = uid(3);
+        body.result.deployments[0].versions[0].version_id = uid(3);
+      }
+      if (postSnapshots === 15 && path.includes("/versions/")) body.result.id = uid(3);
+    },
+    context,
+    () => time,
+  );
+  const reader = createPublicReadback({
+    clock: () => time,
+    wait: async (ms) => {
+      time += ms;
+    },
+    fetchImpl: async (url) =>
+      new Response(url.includes("workers.dev") ? "missing" : ++publicReads < 4 ? "old" : "new", {
+        status: url.includes("workers.dev") ? 404 : 200,
+      }),
+  });
+  const f = fixture({
+    provider: pf.provider,
+    clock: () => time,
+    wait: async (ms) => {
+      time += ms;
+    },
+    loadTargets: async () => ({ targets: [{ path: "/", bytes: 3, sha256: hashBytes("new") }] }),
+    probeBefore: reader.before,
+    verifyPublished: reader.published,
+    deployOnce: async () => {
+      f.calls.push("deploy");
+      deployed = true;
+      return { count: 1, exitCode: 0, versionId: uid(3) };
+    },
+  });
+  const result = await runManualDeployment(f.input);
+  assert.equal(result.status, "DEPLOYED_READBACK_VERIFIED");
+  assert.equal(result.readback.attempts, 3);
+  assert.equal(postSnapshots, 15);
+  assert.equal(pf.calls.length, 210);
+  assert.equal(time - now, 58_000);
+  assert.equal(f.calls.filter((call) => call === "deploy").length, 1);
+  assert.ok(pf.calls.every((call) => call.method === "GET"));
+});
+test("unchanged active version stops after 15 complete real-adapter snapshots without another deploy", async () => {
+  let time = now;
+  const pf = providerFixture(
+    () => {},
+    context,
+    () => time,
+  );
+  const f = fixture({
+    provider: pf.provider,
+    clock: () => time,
+    wait: async (ms) => {
+      time += ms;
+    },
+  });
+  const result = await runManualDeployment(f.input);
+  assert.equal(result.code, "POST_VERSION_MISMATCH");
+  assert.equal(result.deployment.status, "acknowledged");
+  assert.equal(result.verification.status, "not_started");
+  assert.equal(result.deployCount, 1);
+  assert.equal(pf.calls.length, 206);
+  assert.equal(time - now, 56_000);
+  assert.equal(f.calls.filter((call) => call === "deploy").length, 1);
+  assert.ok(!f.calls.includes("published"));
+});
+for (const drift of ["worker", "settings", "version", "deployment"])
+  test(
+    "post-version polling rejects " + drift + " drift before waiting or public verification",
+    async () => {
+      let deployed = false;
+      const pf = providerFixture((path, body) => {
+        if (!deployed) return;
+        if (drift === "worker" && path.endsWith("/scripts")) body.result[0].tag = id(8);
+        if (drift === "settings" && path.endsWith("/settings"))
+          body.result.bindings = [{ type: "r2_bucket", name: "unexpected" }];
+        if (drift === "version" && path.endsWith("/deployments"))
+          body.result.deployments[0].versions[0].version_id = uid(8);
+        if (drift === "version" && path.includes("/versions/")) body.result.id = uid(8);
+        if (drift === "deployment" && path.endsWith("/deployments"))
+          body.result.deployments[0].id = uid(8);
+      });
+      const f = fixture({
+        provider: pf.provider,
+        deployOnce: async () => {
+          f.calls.push("deploy");
+          deployed = true;
+          return { count: 1, exitCode: 0, versionId: uid(3) };
+        },
+      });
+      const result = await runManualDeployment(f.input);
+      assert.equal(
+        result.code,
+        drift === "worker"
+          ? "WORKER_IDENTITY"
+          : drift === "settings"
+            ? "BINDINGS_DRIFT"
+            : "POST_VERSION_MISMATCH",
+      );
+      assert.equal(result.deployCount, 1);
+      assert.equal(f.calls.filter((call) => call === "deploy").length, 1);
+      assert.ok(!f.calls.includes("postversion-wait"));
+      assert.ok(!f.calls.includes("published"));
+    },
+  );
+test("a receipt-matching full snapshot cannot succeed after the post-version deadline", async () => {
+  let deployed = false,
+    time = now;
+  const pf = providerFixture(
+    (path, body) => {
+      if (!deployed) return;
+      time += 8000;
+      if (path.endsWith("/deployments")) {
+        body.result.deployments[0].id = uid(3);
+        body.result.deployments[0].versions[0].version_id = uid(3);
+      }
+      if (path.includes("/versions/")) body.result.id = uid(3);
+    },
+    context,
+    () => time,
+  );
+  const f = fixture({
+    provider: pf.provider,
+    clock: () => time,
+    deployOnce: async () => {
+      f.calls.push("deploy");
+      deployed = true;
+      return { count: 1, exitCode: 0, versionId: uid(3) };
+    },
+  });
+  const result = await runManualDeployment(f.input);
+  assert.equal(result.status, "STOPPED_OWNER_RECOVERY_REQUIRED");
+  assert.equal(result.code, "REMOTE_TIMEOUT");
+  assert.equal(result.deployCount, 1);
+  assert.equal(result.verification.status, "not_started");
+  assert.equal(pf.calls.length, 38);
+  assert.ok(!f.calls.includes("published"));
+});
+test("post-version reads retain a separate finite budget and cannot extend their deadline", async () => {
+  const pf = providerFixture();
+  await assert.rejects(
+    () => pf.provider.postVersionSnapshot({ deadlineAt: now + 90_000 }),
+    /POST_VERSION_SNAPSHOT_REQUIRED/,
+  );
+  await pf.provider.snapshot();
+  await assert.rejects(() => pf.provider.postVersionSnapshot(), /POST_VERSION_DEADLINE_INVALID/);
+  await assert.rejects(
+    () => pf.provider.postVersionSnapshot({ deadlineAt: now + 90_001 }),
+    /POST_VERSION_DEADLINE_INVALID/,
+  );
+  const deadlineAt = now + 90_000;
+  for (let attempt = 0; attempt < 15; attempt++)
+    await pf.provider.postVersionSnapshot({ deadlineAt });
+  assert.equal(pf.calls.length, 192);
+  await assert.rejects(
+    () => pf.provider.postVersionSnapshot({ deadlineAt: deadlineAt - 1 }),
+    /POST_VERSION_DEADLINE_INVALID/,
+  );
+  await assert.rejects(
+    () => pf.provider.postVersionSnapshot({ deadlineAt }),
+    /PROVIDER_READ_BUDGET/,
+  );
+  assert.equal(pf.calls.length, 192);
+  // Normal verification retains its original 64-read allowance (12 already used).
+  for (let read = 12; read < 64; read++) await pf.provider.verifyDeployToken();
+  await assert.rejects(() => pf.provider.verifyDeployToken(), /PROVIDER_READ_BUDGET/);
+  assert.equal(pf.calls.length, 244);
+});
 test("provider uses readonly fixed GETs and writer only on its own verify endpoint", async () => {
   const f = providerFixture();
   const token = await f.provider.verifyDeployToken();

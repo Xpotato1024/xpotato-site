@@ -269,7 +269,13 @@ test("duplicate jobs/IDs and truncated pagination cannot satisfy the barrier", (
 
 test("scope/producer/downstream jobs are allowed without being mistaken for independent gate success", () => {
   const data = jobs();
-  for (const [index, name] of ["scope", "producer", "windows-consumer", "result"].entries())
+  for (const [index, name] of [
+    "scope",
+    "producer",
+    "windows-consumer",
+    "result",
+    "article-fast",
+  ].entries())
     data.jobs.push({ ...data.jobs[0], id: 40 + index, name, status: "queued", conclusion: null });
   data.total_count = data.jobs.length;
   assert.deepEqual(pendingHostedJobs(data, context), []);

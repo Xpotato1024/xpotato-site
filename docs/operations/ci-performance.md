@@ -1,12 +1,51 @@
 ---
 status: canonical
 owner: operations
-last_verified: 2026-11-09
+last_verified: 2026-11-21
 canonical_for:
   - CI latency measurement and optimization boundaries
 ---
 
 # CI時間の測定
+
+## 2026-11-21: 記事更新で待つ実時間の短縮
+
+最適化の主指標は、PR更新から必要な結果が揃うまでのwall timeです。各jobの延べrunner時間が増えても、この待ち時間が短くなる変更を優先します。並列処理の個別durationを合計した値は、利用者の待ち時間として報告しません。
+
+記事編集には二つの待ち経路があります。CMSの正式レイアウト確認は `Editor Astro layout preview` の成功したexact commitのartifactを取得し、`vNext CI`の完了を待ちません。公開前のPR検証では、通常CIの全必須jobを待ちます。端末内の即時プレビューはどちらのworkflowにも依存しません。
+
+| 経路 | 改善前の観測 | 主な直列区間 |
+| --- | ---: | --- |
+| 通常CI [44762048942](https://github.com/Xpotato1024/xpotato-site/actions/runs/44762048942)、source `4db61c8cad4fb0b29f5fb8a4161781c11d81e118` | 11分11秒 | producer604秒。build155秒、WebKit依存導入98秒・実検査37秒、フォント準備17秒、public final218秒 |
+| 正式プレビュー [44689953019](https://github.com/Xpotato1024/xpotato-site/actions/runs/44689953019) | 62秒 | scope28秒とreview28秒。両jobでそれぞれ16秒・13秒のnpm ci |
+
+通常CIはproducerの二段階を並列化します。`ci:producer:prepare` は、既存の隔離fixture生成・一回の公開buildと、WebKit導入・その後のChromeフォント準備を同時に開始し、両方の終了を待ちます。次のworkflow stepの `ci:producer:validate` で、同じdistを使うWebKit実検査と従来のpublic final検査を同時に開始します。準備と検査を別stepにすることで、成功したフォント準備の `GITHUB_ENV` が後続Chromeへ渡ります。
+
+必要な検査、同run/attemptのgate、packageの順序は維持します。一方の失敗でも他方の終了・cleanupを待ち、片方だけの成功ではpackageへ進みません。隔離fixtureはprivate rootのlockを共有するため、build側の内部順序を保ちます。WebKitとChromeのreport名・profile・serverは分離されています。中間distの転送や再buildは追加しません。
+
+この変更は、直列だったWebKit導入・フォント準備・WebKit検査を、既存のbuild・public finalと重ねるものです。共有CPUによる各処理の変動を含むため、変更前の98秒・17秒・37秒をそのまま短縮実績とはしません。laneごとの開始・完了・elapsedMsと、CI全体のwall timeを最終PRに記録します。
+
+正式プレビューのscopeはNode標準APIだけでexact base/head・変更path・最大8記事を選択し、npm依存導入をreview jobへ集約します。ContentId・MDX・review contextの検証と正規Astro描画が成功したCLIだけがartifact名を出力します。最大4記事の並列実行、全review成功、exact commit/ContentIdの取得条件は維持します。workflow/helper変更だけならscopeの空matrixをHostedで確認し、通常CIの実Astro review回帰も通します。この空matrixの時間を、記事を実際に描画したプレビュー時間と比較しません。
+
+記事本文やregistryの変更を理由に既存検査を省略する変更は含みません。変更範囲による省略は引き続き[観測段階](ci-change-impact.md)です。
+
+## 2026-11-20: runner固定とWebKit binaryの再利用
+
+`ubuntu-latest`の実行環境が26.04へ移ったため、Linux 7jobを`ubuntu-24.04`へ固定します。WebKit binaryはOS・architecture・Playwrightの固定版をkeyに保存し、実WebKit検査の成功後だけ更新します。cache hitでもOS依存導入と全検査を実行します。任意のcache saveだけは非blockingです。
+
+変更前mainの[run 44741654561](https://github.com/Xpotato1024/xpotato-site/actions/runs/44741654561)では、最初の`carousel-desktop`と次の`carousel-mobile`が20秒のChrome起動期限に達しました。前のsuiteのCDP-readyまで次を起動しないため、最初の失敗を8本の同時起動によるものとは判断できません。Chromeは生存し、最初のstderrは空でした。起動期限・操作assertion・実行数は維持し、自動retryは追加しません。
+
+Ubuntu 24.04の初回[run 44752479609](https://github.com/Xpotato1024/xpotato-site/actions/runs/44752479609)、source `4905f444e124f54e3bc31f3add328059a900892c`は8jobが成功しました。公開画像とWebKitのcacheはともにmissです。全体9分06秒、producer444秒、WebKit依存導入とdownload54秒、実WebKit検査32秒でした。WebKit本体のdownloadはログ上約3秒であり、cacheだけで依存導入54秒をすべて除けるとは扱いません。
+
+このrunでも最初のChromeは13.002秒、独立common-tool jobのChromeは10.006秒かかっています。runner固定だけで初回起動遅延の根因を解消したとは断定しません。warm測定はcacheのexact hit、依存導入、全公開suiteとWindows consumerの成功を確認し、exact source/runと時間をPRへ追記します。単発のcold/warm差には公開画像cacheと共有runnerの変動も含まれ、WebKit cache単独の短縮率や安定性の保証とは区別します。
+
+### 初回Chromeのフォント準備
+
+WebKit cacheがhitした[run 44756247723](https://github.com/Xpotato1024/xpotato-site/actions/runs/44756247723)は8job成功・全体8分13秒でしたが、その後の[run 44757637650](https://github.com/Xpotato1024/xpotato-site/actions/runs/44757637650)、source `c0997dc54a7c536675c5bd92126389cd99d77148`では、独立した`source-validation`内のMermaid描画用Chromeが25秒の起動期限に達しました。Ubuntu固定だけで初回起動の不安定を解消したとは扱いません。この失敗runは性能改善の成功値へ含めません。
+
+[WPTの同時期の修正](https://chromium.googlesource.com/external/github.com/web-platform-tests/wpt/+/653efdcc8a57730af0efe739d599b4062e1525f7)は、Chrome同梱fontconfigとOSのcache形式が異なる場合に初回の全フォント走査でタイムアウトする問題を、Chromeによる事前生成で対処しています。これは今回の初回だけ遅い観測と整合する機序ですが、当該runnerの根因を直接証明したものではありません。
+
+同じinstalled Chromeの一度限りの準備処理を、実検査の前へ追加します。準備だけに120秒の上限を設け、失敗を検査成功へ変換せず、通常の20/25秒の起動期限は維持します。XDGを分離するprofileには、同じjob内で生成したfontconfig cacheだけをコピーします。各profileの所有権、sandbox、操作assertion、公開build回数は変えません。準備時間・cache数・実検査の起動時間と全体wall timeを別々に測定し、準備時間を除外した見かけの短縮率は使いません。
 
 ## 測定した現状
 
@@ -133,3 +172,12 @@ Siteはこの保証と既存のexact source/release admissionを利用し、製�
 PR211で全検査とshadow artifactの実行を確認した後、`remaining` から連続したhome/navigation/copy操作を `home-navigation` へ分離します。design-role/article/search/footer/contact/tagは `remaining` に残します。移したassertion・viewport・待機期限は維持し、新profileの入口では旧search終了時のdesktop/network/motion/Service Worker状態を明示します。公開Chromeは5suite、Common Toolを含むlocal全体は6suiteとなります。ready通知による起動順制御と、全child終了・全fresh reportを要求する集約は維持します。
 
 まだskipは行いません。mainもPRも同じ全検査と一回の公開buildを使います。追加Chromeの資源競合があるため、単純に旧時間を二分して短縮率を主張せず、exact Hosted runのwall time・各suite時間で確認します。
+
+
+## 2026-11-21: 編集待ちと公開前検証の分離
+
+[ADR-0091](../design/adr/0091-draft-editing-ci.md)の候補は、旧新とも未公開のCMS原稿と正規の索引を短い経路へ送る。公開記事や媒体・来歴・コード変更、mainは全体CIを保つ。分離の条件は[下書きCI](ci-change-impact.md)を正とする。
+
+全体CIの直前の成功値は [0fe27582 / run44773079113](https://github.com/Xpotato1024/xpotato-site/actions/runs/44773079113)、全8job成功で実時間409秒（6分49秒）。これを下書き専用経路の測定と混同しない。下書き用の `article-regression` は隔離worktree内の合成CMS編集に対する実command時間を記録する。実際のPR全体時間にはscope、queue、checkout、依存導入、offline-policy、resultも含む。
+
+性能の比較は同じNode/npm・lock・OSを使い、成功した対象commit/run/attemptと各job/stepの実時間を記録する。合成fixtureのsetup時間と検査時間、実記事PR、空matrixの正式previewは別々に扱う。新経路の短縮幅は実測後のPR記録に示し、事前に固定の秒数や速度保証を置かない。

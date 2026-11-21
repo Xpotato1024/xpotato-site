@@ -9,6 +9,8 @@ canonical_for:
 
 # Architecture Decision Records
 
+- [ADR-0091: 下書き編集と公開・コードCIの分離](0091-draft-editing-ci.md) — Proposed。未公開原稿と正規索引の意味判定、全体生成物検査、公開変更とmainの全体CI。
+
 - [ADR-0087: CMSから編集する比較条件と静的グラフ](0087-cms-comparison-and-static-charts.md) — Proposed。条件ごとの子本文、数値データを保持する静的グラフ、共通描画。
 
 - [ADR-0084: 原文を保持するリッチ編集とCMS専用runtime予算](0084-source-preserving-rich-cms-editor.md) — Accepted 2026-11-18。MDXの部分編集、Lexical／CodeMirror、初期と全graphの独立した予算。
