@@ -15,13 +15,29 @@ import {
   admissionErrorCode,
 } from "./readback-only-github.mjs";
 import { downloadOriginalEvidence, evidenceErrorCode } from "./readback-only-evidence.mjs";
+import { readbackPlanFiles } from "./readback-only-workflow-policy.mjs";
 
-const root = fileURLToPath(new URL("../../", import.meta.url)),
-  planPath = join(root, "config/readback/robots-20261104.json");
+const root = fileURLToPath(new URL("../../", import.meta.url));
 class CliError extends Error {}
 const stop = (code) => {
   throw new CliError(code);
 };
+export async function readReadbackPlanFile(repositoryRoot, name) {
+  if (!isAbsolute(repositoryRoot) || !readbackPlanFiles.includes(name)) stop("READBACK_PLAN_FILE");
+  const directory = join(repositoryRoot, "config", "readback"),
+    path = join(directory, name);
+  try {
+    for (const parent of [repositoryRoot, join(repositoryRoot, "config"), directory]) {
+      const info = await lstat(parent);
+      if (!info.isDirectory() || info.isSymbolicLink()) stop("READBACK_PLAN_FILE");
+    }
+    const info = await lstat(path);
+    if (!info.isFile() || info.isSymbolicLink() || info.size > 32768) stop("READBACK_PLAN_FILE");
+    return await readFile(path);
+  } catch {
+    stop("READBACK_PLAN_FILE");
+  }
+}
 const shape = (value, keys) => {
   if (!value || Object.keys(value).sort().join("|") !== [...keys].sort().join("|"))
     stop("READBACK_PLAN_INVALID");
@@ -197,6 +213,7 @@ async function executeReadback(env, backend) {
       artifactRelationship: "already-deployed-verification-subject",
       consumer: readbackArtifact(artifact).kind,
       operationId: request.operationId,
+      planFile: env.READBACK_PLAN_FILE,
       planSha256: hashBytes(bytes),
       providerWrites: 0,
       deployCount: 0,
@@ -299,7 +316,7 @@ export async function main(...overrides) {
     nodeVersion: process.versions.node,
     fetchImpl: fetch,
     revision: currentVerifierRevision,
-    readPlan: () => readFile(planPath),
+    readPlan: () => readReadbackPlanFile(root, process.env.READBACK_PLAN_FILE),
     prepareArtifact: acquireCanonicalReadbackArtifact,
   });
 }

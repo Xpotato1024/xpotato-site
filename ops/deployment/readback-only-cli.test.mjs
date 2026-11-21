@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rm, symlink } from "node:fs/promises";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -8,12 +8,18 @@ import { deflateRawSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { fixture, selection, uuid, sentinel } from "./readback-only.test-fixture.mjs";
 import { hashBytes } from "./manual-deployment.mjs";
-import { main, runSyntheticReadbackCli, parseReadbackPlan } from "./readback-only-cli.mjs";
+import {
+  main,
+  runSyntheticReadbackCli,
+  parseReadbackPlan,
+  readReadbackPlanFile,
+} from "./readback-only-cli.mjs";
 import { crc32, readOriginalResult, downloadOriginalEvidence } from "./readback-only-evidence.mjs";
 import {
   assertReadbackWorkflow,
   readbackWorkflowSha256,
   readbackWorkflowPath,
+  readbackPlanFiles,
 } from "./readback-only-workflow-policy.mjs";
 import { authority } from "./deployment-policy.mjs";
 
@@ -101,6 +107,7 @@ async function cliFixture(t, change = {}) {
     READBACK_VERIFIER_SHA: "c".repeat(40),
     GITHUB_RUN_ID: "88",
     GITHUB_REPOSITORY_ID: "42",
+    READBACK_PLAN_FILE: "cms-access-20261121.json",
     READBACK_PLAN_SHA256: hashBytes(planBytes),
     READBACK_OPERATION_ID: uuid(5),
     RUNNER_TEMP: f.root,
@@ -292,6 +299,8 @@ test("manual workflow is exactly pinned, read-only permissions and Environment/o
     ["if-no-files-found: error", "if-no-files-found: warn"],
     ["github.actor == 'Xpotato1024'", "true"],
     ["readback-only-cli.mjs", "manual-deployment-cli.mjs"],
+    ["type: choice", "type: string"],
+    ["READBACK_PLAN_FILE: ${{ inputs.plan_file }}", "READBACK_PLAN_FILE: arbitrary.json"],
   ])
     assert.throws(
       () => assertReadbackWorkflow(source.replace(from, to)),
@@ -317,6 +326,8 @@ test("the whole synthetic CLI verifies GitHub approval, original archive and all
   assert.equal(r.inputReceipt.originalEvidence.digest, c.pin.digest);
   assert.equal(r.inputReceipt.verifierSha, c.env.GITHUB_SHA);
   assert.equal(r.inputReceipt.reviewedLibrarySha, "b".repeat(40));
+  assert.equal(r.inputReceipt.planFile, "cms-access-20261121.json");
+  assert.equal(r.inputReceipt.planSha256, hashBytes(c.args.planBytes));
   assert.equal(r.execution.runId, "88");
   assert.equal(r.execution.verifierSha, c.env.GITHUB_SHA);
   assert.equal(r.inputReceipt.artifactRelationship, "already-deployed-verification-subject");
@@ -334,6 +345,112 @@ test("the whole synthetic CLI verifies GitHub approval, original archive and all
       ),
   );
   safe(r);
+});
+test("the earlier reviewed plan remains explicitly selectable with the same admission and digest checks", async (t) => {
+  const c = await cliFixture(t);
+  c.env.READBACK_PLAN_FILE = "robots-20261104.json";
+  const r = await c.run();
+  assert.equal(r.status, "READBACK_ONLY_CHECKS_PASSED");
+  assert.equal(r.inputReceipt.planFile, "robots-20261104.json");
+  assert.equal(r.inputReceipt.planSha256, c.env.READBACK_PLAN_SHA256);
+  assert.equal(r.evidenceMode, "synthetic");
+  assert.equal(r.deployCount, 0);
+  assert.equal(r.providerWrites, 0);
+});
+test("missing, unknown and path-shaped plan names are rejected before credentials or network", async (t) => {
+  for (const name of [
+    undefined,
+    "",
+    "unreviewed.json",
+    "../robots-20261104.json",
+    "config/readback/robots-20261104.json",
+    "C:\\plans\\robots-20261104.json",
+    "/tmp/robots-20261104.json",
+  ]) {
+    const c = await cliFixture(t);
+    c.env.READBACK_PLAN_FILE = name;
+    const r = await c.run();
+    assert.equal(r.status, "READBACK_ONLY_FAILED", name);
+    assert.equal(r.code, "READBACK_OWNER_MAIN_APPROVAL_REQUIRED", name);
+    assert.equal(c.calls.length, 0, name);
+    assert.equal(c.preparations(), 0, name);
+  }
+});
+test("every selectable checked-in plan has a valid artifact and acknowledged deployment identity", async () => {
+  const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
+  for (const name of readbackPlanFiles) {
+    const bytes = await readReadbackPlanFile(repositoryRoot, name);
+    const { request } = parseReadbackPlan(bytes, {
+      READBACK_PLAN_SHA256: hashBytes(bytes),
+      READBACK_OPERATION_ID: uuid(5),
+      READBACK_VERIFIER_SHA: "c".repeat(40),
+    });
+    assert.equal(request.originalDeployment.deployment.status, "acknowledged", name);
+    assert.equal(
+      request.originalDeployment.deployment.receipt.versionId,
+      request.expected.versionId,
+      name,
+    );
+  }
+});
+test("the live plan reader uses only the selected regular file beneath config/readback", async (t) => {
+  const f = await fixture(t),
+    directory = join(f.root, "config", "readback");
+  await mkdir(directory, { recursive: true });
+  for (const name of readbackPlanFiles) {
+    const bytes = Buffer.from(JSON.stringify({ selected: name }));
+    await writeFile(join(directory, name), bytes);
+    assert.deepEqual(await readReadbackPlanFile(f.root, name), bytes);
+  }
+  await assert.rejects(
+    () => readReadbackPlanFile(f.root, "../robots-20261104.json"),
+    /READBACK_PLAN_FILE/,
+  );
+  const name = "cms-access-20261121.json",
+    path = join(directory, name);
+  await rm(path);
+  await assert.rejects(() => readReadbackPlanFile(f.root, name), /READBACK_PLAN_FILE/);
+  await mkdir(path);
+  await assert.rejects(() => readReadbackPlanFile(f.root, name), /READBACK_PLAN_FILE/);
+  await rm(path, { recursive: true });
+  await writeFile(path, Buffer.alloc(32769));
+  await assert.rejects(() => readReadbackPlanFile(f.root, name), /READBACK_PLAN_FILE/);
+});
+test("a selected plan cannot be a file symlink", async (t) => {
+  const f = await fixture(t),
+    directory = join(f.root, "config", "readback"),
+    target = join(f.root, "elsewhere.json");
+  await mkdir(directory, { recursive: true });
+  await writeFile(target, "{}");
+  try {
+    await symlink(target, join(directory, "cms-access-20261121.json"), "file");
+  } catch (error) {
+    if (process.platform === "win32" && ["EPERM", "EACCES"].includes(error.code)) {
+      t.skip("Windows does not permit the test process to create a file symlink");
+      return;
+    }
+    throw error;
+  }
+  await assert.rejects(
+    () => readReadbackPlanFile(f.root, "cms-access-20261121.json"),
+    /READBACK_PLAN_FILE/,
+  );
+});
+test("the plan directory cannot be reached through a symlink or Windows junction", async (t) => {
+  const f = await fixture(t),
+    redirected = join(f.root, "redirected-config"),
+    directory = join(redirected, "readback");
+  await mkdir(directory, { recursive: true });
+  await writeFile(join(directory, "cms-access-20261121.json"), "{}");
+  await symlink(
+    redirected,
+    join(f.root, "config"),
+    process.platform === "win32" ? "junction" : "dir",
+  );
+  await assert.rejects(
+    () => readReadbackPlanFile(f.root, "cms-access-20261121.json"),
+    /READBACK_PLAN_FILE/,
+  );
 });
 test("live main accepts no env or adapter override; the testing lane is a separate permanently synthetic API", async () => {
   await assert.rejects(() => main({ GITHUB_ACTIONS: "true" }), /READBACK_LIVE_OVERRIDES_FORBIDDEN/);
@@ -353,6 +470,7 @@ for (const key of [
   "READBACK_VERIFIER_SHA",
   "GITHUB_RUN_ID",
   "GITHUB_REPOSITORY_ID",
+  "READBACK_PLAN_FILE",
   "READBACK_PLAN_SHA256",
   "READBACK_OPERATION_ID",
 ])

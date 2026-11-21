@@ -69,6 +69,25 @@ test("all 126 artifact targets, managed robots, headers, alternates and real pro
   assert.deepEqual(await readFile(f.originalEvidencePath), f.originalBytes);
   noSecrets(r);
 });
+test("a 700-target release verifies every artifact-derived target without a historical count gate", async (t) => {
+  const f = await fixture(t, { targetCount: 700 });
+  const r = await f.run();
+  assert.equal(r.status, "READBACK_ONLY_CHECKS_PASSED");
+  assert.equal(r.artifactBefore.targets, 700);
+  assert.equal(r.artifactAfter.targets, 700);
+  assert.equal(r.artifactBefore.planSha256, r.artifactAfter.planSha256);
+  assert.equal(r.network.publicRequests, 705);
+  assert.equal(r.readback.observations.length, 700);
+  assert.deepEqual(
+    r.readback.observations.filter((row) => row.matches).map((row) => row.path),
+    f.plan.targets.map((row) => row.path),
+  );
+  assert.equal(f.loads(), 2);
+  assert.equal(r.deployCount, 0);
+  assert.equal(r.providerWrites, 0);
+  assert.equal(r.acceptance, false);
+  assert.equal(r.evidenceMode, "synthetic");
+});
 test("synthetic handles cannot be forged or upgraded by setting a live kind or injecting success ports", async (t) => {
   const f = await fixture(t);
   assert.ok(Object.isFrozen(readbackArtifact(f.artifact)));
@@ -229,9 +248,9 @@ for (const [name, change, code] of [
     "READBACK_HANDOFF_INVALID",
   ],
   [
-    "one target missing",
+    "no home",
     (v) => {
-      v.plan.targets.pop();
+      v.plan.targets = v.plan.targets.filter((row) => row.path !== "/");
     },
     "READBACK_PLAN_INCOMPLETE",
   ],
@@ -474,6 +493,12 @@ test("readonly token identity drift during provider-after is a failure with no f
 });
 for (const [name, change] of [
   [
+    "target removed",
+    (v) => {
+      v.plan.targets = v.plan.targets.filter((row) => row.path !== "/fixture-0.xml");
+    },
+  ],
+  [
     "target bytes",
     (v) => {
       v.plan.targets.find((row) => row.path === "/fixture-0.xml").sha256 = "f".repeat(64);
@@ -500,6 +525,7 @@ for (const [name, change] of [
 ])
   test("second artifact verification rejects " + name + " after public checks", async (t) => {
     const f = await fixture(t, {
+        ...(name === "target removed" ? { targetCount: 700 } : {}),
         artifact: (v, n) => {
           if (n === 2) change(v);
         },
@@ -507,6 +533,9 @@ for (const [name, change] of [
       r = await f.run();
     assert.equal(r.stage, "artifact-after");
     assert.notEqual(r.status, "READBACK_ONLY_CHECKS_PASSED");
+    if (name === "target removed") {
+      assert.equal(r.code, "READBACK_STAGING_OR_TARGETS_CHANGED");
+    }
     assert.ok(!r.stages.includes("token-final"));
     noSecrets(r);
   });

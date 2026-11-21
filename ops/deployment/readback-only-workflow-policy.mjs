@@ -1,7 +1,11 @@
 import { createHash } from "node:crypto";
 export const readbackWorkflowPath = ".github/workflows/site-readback-only.yml";
+export const readbackPlanFiles = Object.freeze([
+  "cms-access-20261121.json",
+  "robots-20261104.json",
+]);
 export const readbackWorkflowSha256 =
-  "febc587ef75326f16716af47c0c034426357cc1ce508d5a3254f4bb170e0f7df";
+  "24b9959e2a83fbace5fb19f568b4e8329047b3b4e97817f27ecd082cde749d1e";
 export const readbackJobGuard =
   "github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && inputs.readback_approved && inputs.verifier_sha == github.sha";
 export function assertReadbackWorkflow(text) {

@@ -24,7 +24,7 @@ const observationErrorCodes = new Set([
 export const publicReadbackReport = (error) => reports.get(error);
 
 /**
- * Only static CMS shell paths that the signed artifact's public target plan
+ * Only static CMS shell paths that the canonical artifact's public target plan
  * already admitted can use Cloudflare Access as their observable readback.
  * API routes, arbitrary editor paths and all other site assets remain exact.
  */
@@ -85,8 +85,8 @@ export function createPublicReadback({
       fresh();
       if (isEditorAccessChallenge(response, target)) {
         await response.body?.cancel().catch(() => {});
-        // The signed release archive and active Worker version are verified elsewhere.
-        // No publicly readable HTML exists behind this authenticated entrypoint.
+        // The canonical release archive and active Worker version are verified elsewhere.
+        // Access protects the entire CMS shell; unauthenticated requests cannot read its bytes.
         return {
           status: response.status,
           bytes: 0,
