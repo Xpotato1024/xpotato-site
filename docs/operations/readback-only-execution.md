@@ -48,7 +48,7 @@ CLI `ops/deployment/readback-only-cli.mjs`の実入口`main()`はenv/transport/p
 
 1. CLI/workflow全体の独立review、本人によるmergeとread-only operationの実行認可を別々に確認する。現在はいずれの外部操作も行っていません。
 2. 対象versionが既に変わっていれば、このplanは使用せず、新しい対象と証跡をreviewする。provider観測の不一致をplan変更で自動修復しない。
-3. review済みmainのexact SHAを`verifier_sha`とし、planのUTF-8/LF bytesのSHA-256を`plan_sha256`とする。新しいUUIDを`operation_id`に指定し、`readback_approved=true`で新規manual operationを本人が明示的に認可する。既存deploy workflowの再実行ではない。
+3. review済みmainのexact SHAを`verifier_sha`とし、対象の`plan_file`と、そのUTF-8/LF bytesのSHA-256を`plan_sha256`へ指定する。新しいUUIDを`operation_id`に指定し、`readback_approved=true`で新規manual operationを本人が明示的に認可する。既存deploy workflowの再実行ではない。
 4. 既存Environmentの承認を通す。既存の`CLOUDFLARE_SITE_API_TOKEN`、`CLOUDFLARE_SITE_MONITOR_READ_TOKEN`、accepted `CLOUDFLARE_SITE_DEPLOY_CONTEXT_JSON`がexecutor内部で供給可能であることを確認する。秘密値をtaskやログへ取り出さない。欠ければincompleteで停止し、新規発行/登録はこの手順に含めない。
 5. checkoutはexact SHA、persist-credentials=false、full history、pinned Nodeだけ。npm install、site build、Wranglerは不要。実Git HEAD/clean treeも検査する。
 6. GitHub run/required checks/Environment approvalとworkflowのexact bytesを確認する。元run/証跡artifactのmetadata・archive digest・安全なZIP構造・本文digestを検査する。
@@ -56,7 +56,14 @@ CLI `ops/deployment/readback-only-cli.mjs`の実入口`main()`はenv/transport/p
 8. readback-only libraryで前後provider snapshot、正規成果物の全対象とsecurity headers、限定robots、alternate endpoints、staging/plan不変性、final token checkを実行する。対象数は過去の126件へ固定しない。canonical consumerのarchive/staging照合後に実distから完全なmanifestを再生成し、保存manifestと照合する。件数だけが変わっても失敗にせず、対象欠落・改変・検査未完了は拒否する。既存120秒/requests/bytes/attempt予算を維持し、過去の長い観測をsuccessへ変換しない。
 9. `site-readback-result.json`、`readback-input-receipt.json`、`readback-only-<UUID>.json`を新しいartifactへ保存する。保存不能なら成功にしない。upload対象にsource archive/staging/original raw evidence/credentialを含めない。
 
-planの現在のSHA-256は `625a095f39f177d8e1dc2a63c2862be9e0acde658491cfb5ede1a17a39729d0a`です。実行前にreview対象bytesと再照合します。新しい認可済みmain verifier SHAとoperation UUIDは未定です。`config/readback/*.json`とworkflowはLF固定です。
+planファイル名とSHA-256は以下の組を使い、実行前にreview対象bytesと再照合する。新CMS planのlibrary review対象は`b56d08eac23a1b59011279f0a63a639882666d09`であり、実行時のmain verifier SHAとは別に記録する。
+
+| plan_file | plan_sha256 |
+| --- | --- |
+| `cms-access-20261121.json` | `905ed13dc8f7bb1050f44a8e3f1aa27e0660e6ff036461ddc883179bfa318688` |
+| `robots-20261104.json` | `625a095f39f177d8e1dc2a63c2862be9e0acde658491cfb5ede1a17a39729d0a` |
+
+新しい認可済みmain verifier SHAとoperation UUIDは未定です。`config/readback/*.json`とworkflowはLF固定です。
 
 ## 結果の読み方と未実施境界
 
