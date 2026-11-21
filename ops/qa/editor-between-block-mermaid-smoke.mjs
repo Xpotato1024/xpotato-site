@@ -31,7 +31,8 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(server.origin + "/editor/");
   await ensureEditing(page);
-  await writeBody(page, "先頭の文章。\n\n末尾の文章。");
+  // Match the reported layout: a paragraph followed by a nested Group block.
+  await writeBody(page, "先頭の文章。\n\n<Group>\n\n## グループ見出し\n\n末尾の文章。\n\n</Group>");
   await showBlocks(page);
   const firstRegion = page.locator(".cms-editor-region").first();
   await firstRegion.locator(".cms-preview-target").first().tap();
@@ -57,6 +58,7 @@ try {
   const diagram = body.indexOf("flowchart TB");
   const end = body.indexOf("末尾の文章。");
   assert(start >= 0 && diagram > start && end > diagram, "inserted Mermaid must be between blocks");
+  assert(diagram < body.indexOf("<Group>"), "insertion must occur before the Group, not inside it");
   assert(body.includes("accTitle: 工程の例"));
   assert.equal(errors.length, 0, errors.join("\n"));
   console.log("PASS: touch insertion between blocks, Mermaid authoring/preview, MDX order.");
