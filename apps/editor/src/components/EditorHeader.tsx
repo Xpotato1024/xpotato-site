@@ -1,4 +1,5 @@
 import { WorkspaceIcon } from "./WorkspaceIcon.js";
+import { EditorUpdateButton } from "./EditorUpdateButton.js";
 interface Props {
   online: boolean;
   localStatus: string;
@@ -6,6 +7,10 @@ interface Props {
   onToggleNavigation: () => void;
   onWorkflow: () => void;
   onMenu: () => void;
+  updateReady: boolean;
+  updateChecking: boolean;
+  updateDisabled: boolean;
+  onUpdate: () => void;
 }
 export function EditorHeader({
   online,
@@ -14,6 +19,10 @@ export function EditorHeader({
   onToggleNavigation,
   onWorkflow,
   onMenu,
+  updateReady,
+  updateChecking,
+  updateDisabled,
+  onUpdate,
 }: Props) {
   const status = online ? localStatus : "オフライン · " + localStatus;
   return (
@@ -45,6 +54,12 @@ export function EditorHeader({
           </span>
         </span>
       </button>
+      <EditorUpdateButton
+        ready={updateReady}
+        checking={updateChecking}
+        disabled={updateDisabled}
+        onClick={onUpdate}
+      />
       <button
         type="button"
         className="workspace-menu-button"

@@ -110,6 +110,15 @@ h3 {
 .workspace-menu-button {
   @apply cms-icon-button cms-quiet-button;
 }
+.editor-update-button {
+  @apply cms-quiet-button inline-flex items-center justify-center gap-2 rounded-cms-control;
+  min-height: var(--control-min-size);
+  min-width: var(--control-min-size);
+  padding-inline: 0.65rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  flex: none;
+}
 .editor-brand {
   color: var(--text-primary);
   font-family: var(--font-english-display);
@@ -875,6 +884,12 @@ h3 {
   }
 }
 @media (max-width: 800px) {
+  .editor-update-button {
+    @apply cms-icon-button;
+  }
+  .editor-update-button span {
+    display: none;
+  }
   .editor-header {
     min-height: 44px;
     padding: 0 0.7rem;

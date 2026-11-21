@@ -13,6 +13,7 @@ import type {
 } from "@xpotato/editor-core/annotations";
 import { ConnectionStatus } from "./components/ConnectionStatus.js";
 import { EditorHeader } from "./components/EditorHeader.js";
+import { EditorUpdateButton } from "./components/EditorUpdateButton.js";
 import { WorkspaceIcon } from "./components/WorkspaceIcon.js";
 import { DocumentOutline } from "./components/DocumentOutline.js";
 import { EditorActions } from "./components/EditorActions.js";
@@ -117,6 +118,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [panel, setPanel] = useState<Panel | null>(null);
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
   const [reviewSelectionRequest, setReviewSelectionRequest] = useState(0);
@@ -226,6 +228,31 @@ export default function App() {
       );
     } finally {
       setBusy(false);
+    }
+  }
+  async function requestPwaUpdate() {
+    if (busy || checkingUpdate) return;
+    setCheckingUpdate(true);
+    setError("");
+    setNotice("");
+    try {
+      if (environment.updateReady) {
+        await environment.activateUpdate(workspace.persist);
+        return;
+      }
+      const result = await environment.checkForUpdate();
+      if (result === "ready")
+        setNotice("新しい編集アプリがあります。「保存して更新」で適用できます。");
+      else if (result === "installing")
+        setNotice("新しい編集アプリを準備しています。完了すると更新できます。");
+      else if (result === "current") setNotice("編集アプリは最新です。");
+      else setNotice("この環境ではPWAの更新機能を利用できません。");
+    } catch (failure) {
+      setError(
+        errorLabel(failure instanceof Error ? failure.message : "更新の確認に失敗しました。"),
+      );
+    } finally {
+      setCheckingUpdate(false);
     }
   }
   async function archiveLocalDraft(item: LocalDraft, archived: boolean) {
@@ -447,6 +474,10 @@ export default function App() {
           onToggleNavigation={() => navigation.navigate("home")}
           onWorkflow={() => setPanel("workflow")}
           onMenu={() => setPanel(panel === "menu" ? null : "menu")}
+          updateReady={environment.updateReady}
+          updateChecking={checkingUpdate}
+          updateDisabled={busy || checkingUpdate}
+          onUpdate={() => void requestPwaUpdate()}
         />
       ) : (
         <header className="editor-header workspace-header">
@@ -460,6 +491,12 @@ export default function App() {
               <span className="brand-mark">X</span>potato
             </span>
           </button>
+          <EditorUpdateButton
+            ready={environment.updateReady}
+            checking={checkingUpdate}
+            disabled={busy || checkingUpdate}
+            onClick={() => void requestPwaUpdate()}
+          />
           <button
             type="button"
             className="connection-link"
@@ -493,6 +530,7 @@ export default function App() {
               新しい編集アプリがあります。
               <button
                 type="button"
+                disabled={busy || checkingUpdate}
                 onClick={() => void act(() => environment.activateUpdate(workspace.persist))}
               >
                 保存して更新

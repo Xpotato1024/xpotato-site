@@ -17,6 +17,8 @@
 }
 .connection-link {
   @apply cms-quiet-button;
+}
+.workspace-header .editor-update-button {
   margin-left: auto;
 }
 .workspace-navigation {

@@ -101,8 +101,30 @@ try {
     assert.ok(layout.fits, `Workspace navigation fits at ${width} px`);
     assert.ok(Math.abs(layout.left - layout.contentLeft) <= 1, "Navigation and page gutters align");
     for (const tab of layout.tabs) assert.deepEqual(tab, layout.tabs[0]);
+    const updateControl = page.locator(".workspace-header .editor-update-button");
+    assert.equal(await updateControl.getAttribute("aria-label"), "PWAの更新を確認");
+    const updateRect = await updateControl.evaluate((button) => {
+      const box = button.getBoundingClientRect();
+      return { left: box.left, right: box.right, width: box.width, height: box.height };
+    });
+    assert.ok(
+      updateRect.left >= 0 && updateRect.right <= width,
+      "PWA update button fits at " + width,
+    );
+    assert.ok(
+      updateRect.width >= 40 && updateRect.height >= 40,
+      "PWA update button remains touchable",
+    );
   }
 
+  await page.locator(".workspace-header .editor-update-button").click();
+  const updateMessage = page.locator('.workspace-messages [role="status"]');
+  await updateMessage.waitFor({ timeout: 15000 });
+  assert.match(
+    await updateMessage.innerText(),
+    /編集アプリは最新|新しい編集アプリ/,
+    "Manual PWA check must report the version state without reloading",
+  );
   const firstId = await page.evaluate(async () => {
     const opened = indexedDB.open("xpotato-editor-v1", 3);
     const db = await new Promise((resolve, reject) => {

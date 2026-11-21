@@ -30,6 +30,7 @@ const paths = {
   series: "M9 5h12 M9 12h12 M9 19h12 M3 3v4 M2 7h3 M2 11h3l-3 3h3 M2 17h3v4H2",
   history: "M3 12a9 9 0 1 0 3-7 M3 3v5h5 M12 7v5l3 2",
   workflow: "M4 3h13l3 3v15H4z M8 3v6h8V3 M8 21v-8h8v8",
+  refresh: "M20 7v5h-5 M4 17v-5h5 M5.5 9A7 7 0 0 1 18 6l2 1 M18.5 15A7 7 0 0 1 6 18l-2-1",
 } as const;
 
 export function WorkspaceIcon({ name }: { name: keyof typeof paths }) {
