@@ -7,6 +7,9 @@ on:
       - "content/projects/**"
       - "content/tools/**"
       - "content/pages/**"
+      - ".github/workflows/editor-preview.yml"
+      - "ops/authoring/editor-review-scope.*"
+      - "ops/authoring/editor-astro-review.*"
 permissions:
   contents: read
 concurrency:
@@ -14,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   scope:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.scope.outputs.matrix }}
       count: ${{ steps.scope.outputs.count }}
@@ -26,14 +29,12 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version-file: .node-version
-          cache: npm
-      - run: npm ci --no-audit --no-fund
       - id: scope
-        run: node --import tsx ops/authoring/editor-review-scope.ts
+        run: node ops/authoring/editor-review-scope.mjs
   review:
     needs: scope
     if: needs.scope.outputs.count != '0'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
     strategy:
       fail-fast: false
@@ -48,16 +49,18 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      - run: npm ci --no-audit --no-fund
-      - name: Build selected public MDX with the real Astro components
+      - run: npm install --global npm@11.19.0
+      - run: npm ci --prefer-offline --no-audit --no-fund
+      - id: review
+        name: Build selected public MDX with the real Astro components
         env:
           REVIEW_SOURCE: ${{ matrix.path }}
           REVIEW_COMMIT: ${{ matrix.commit }}
-        run: npm run editor:review -- --source "$REVIEW_SOURCE" --commit "$REVIEW_COMMIT" --output .local/editor-review-output
+        run: npm run editor:review -- --source "$REVIEW_SOURCE" --commit "$REVIEW_COMMIT" --output .local/editor-review-output --github-output "$GITHUB_OUTPUT"
       - name: Upload public-text-only review package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: editor-layout-${{ matrix.commit }}-${{ matrix.contentId }}
+          name: ${{ steps.review.outputs.artifact-name }}
           path: .local/editor-review-output/review.json
           retention-days: 1
           if-no-files-found: error

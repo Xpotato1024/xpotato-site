@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: operations
-last_verified: 2026-09-28
+last_verified: 2026-11-21
 canonical_for:
   - vNext source validation and build graph
   - immutable production release artifact
@@ -20,7 +20,7 @@ canonical_for:
 
 `.github/workflows/ci.yml`はpull requestと`main`へのpushで動きます。Hosted Linux producerがsiteを1回buildし、同じoutputでfinal validationを実施してからrelease packageにします。Windows consumerはそのpackageを検証し、siteを再buildしません。
 
-実行順序の唯一のownerはroot `package.json`です。
+検査commandはroot `package.json`、Hosted jobとstepの依存は `.github/workflows/ci.yml` が所有します。localの完全経路は次のとおりです。
 
 ```text
 release:produce
@@ -38,20 +38,23 @@ release:produce
 
 `npm run ci` / `release:produce` はlocalの完全経路を保持します。localではsource preflight・単体/release testの後に型/repository/Astro検査と完全fixture準備を並行実行し、両方の終了とGit HEAD復元を待って公開buildへ進みます。
 
-Hosted CIでは同じexact source SHAを別checkoutで4本並行に検査します。commandの内容は `package.json`、jobの起動とstable resultは `ci.yml` が所有します。
+公開・コード変更とmainのHosted CIでは同じexact source SHAを別checkoutで5本並行に検査します。commandの内容は `package.json`、jobの起動とstable resultは `ci.yml` が所有します。
 
+- `article-regression`: 一時worktreeで合成CMS下書きの新規保存・題名/本文更新を作り、同じ意味判定と下書き用CIを完遂します。実公開原稿を変更せず、公開出力への混入を確認します。
 - `source-validation`: `ci:source:validate`。既存preflight、全単体/release test、型/repository/Astro検査。
 - `publication-fixtures`: `ci:fixtures:lifecycle`。初回候補・mock保存/export/cleanupと本文/題名/hero/category/tagsの5更新をすべて実行。private候補buildであり公開buildは0回。
 - `common-tool`: 独立worktreeの実siteをbuildし、共通Toolのadoption、CSP、通信、操作を検査。private buildは1回、公開buildは0回。
-- `producer`: `release:validate:hosted`。実際のauthoring/review/visualと初回publicationの非公開fixtureを生成してから、公開buildを1回実施。同じdistへ全final検査を行います。publicationの限定modeは5更新だけを別jobへ移し、初回候補・mock source/public/protected・export・job削除後render・承認後変更拒否・leak receiptを残します。架空のmarkerだけを置く方式ではありません。
+- `producer`: workflowの別stepで `ci:producer:prepare`、`ci:producer:validate` を実行します。prepareでは、実際のauthoring/review/visualと初回publicationの非公開fixture生成・一回の公開buildを、WebKit導入・Chromeフォント準備と並行します。validateでは、同じdistを使うWebKit実検査と全public final検査を並行します。各stepは両laneの終了を待ち、失敗があれば次へ進みません。publicationの限定modeは5更新だけを別jobへ移し、初回候補・mock source/public/protected・export・job削除後render・承認後変更拒否・leak receiptを残します。fixture間の共有lockとGit HEAD復元があるため、build lane内のfixture順序は保ちます。
 
-producerは公開検査後、`ci:hosted:gate` でGitHubの読取り専用APIにより上記3jobの**同じrun/attempt/sourceのcompleted-success**を確認します。その後だけ `release:package` を実行し、従来どおりimmutable artifactへ保存します。API失敗、別repo/PR/base/source/workflow/attempt、欠損・重複job、失敗/取消/対象外はPASSへ変換しません。待機は最大25分。tokenはこのgate stepだけに渡し、build/browserへ渡しません。一般的なscheduler、別runの成功cache、中間dist転送は導入しません。失敗jobだけの再実行で同attemptの必須jobが揃わない場合は停止するため、復旧時はworkflow全体を再実行します。
+producerは公開検査後、`ci:hosted:gate` でGitHubの読取り専用APIによりoffline-policyと上記4独立jobの**同じrun/attempt/sourceのcompleted-success**を確認します。その後だけ `release:package` を実行し、従来どおりimmutable artifactへ保存します。API失敗、別repo/PR/base/source/workflow/attempt、欠損・重複job、失敗/取消/対象外はPASSへ変換しません。待機は最大25分。tokenはこのgate stepだけに渡し、build/browserへ渡しません。一般的なscheduler、別runの成功cache、中間dist転送は導入しません。失敗jobだけの再実行で同attemptの必須jobが揃わない場合は停止するため、復旧時はworkflow全体を再実行します。
 
-source job完了前に公開buildの計算を始めることがありますが、未検証のdistをreleaseとして保存・昇格しません。stable `result` も3独立job・producer・Windowsの全成功を要求します。Production consumerのcompleted-successful main run条件、source SHA・run/attempt・artifact ID/digest、Windowsの再build禁止は変更しません。
+source job完了前に公開buildの計算を始めることがありますが、未検証のdistをreleaseとして保存・昇格しません。stable `result` も4独立job・producer・Windowsの全成功を要求します。Production consumerのcompleted-successful main run条件、source SHA・run/attempt・artifact ID/digest、Windowsの再build禁止は変更しません。
 
-final browserはcarousel desktop、carousel mobile、content/search/footerのremaining、更新情報のhome-content、写真/headerのhome-shell、navigation、private previewとPrimeのhost-only smokeのtoolsを独立Chrome/profile/serverで並行実行します。desktop/mobileを分けても6秒autoplayなどの実時間assertion、motion/viewport/axe条件は同じです。common Toolは上記の独立jobへ分離し、public reportを `mode: public` と明記します。localのdefaultはCommon Toolを含む全8suite、public modeは全7suiteを実行します。Primeの製品matrixは検証済み配布元リリースの責務とし、Siteは固定bytesとhost接続だけを検査します（[検証境界](browser-tools/runtime-validation.md)）。このためtoolsも他のhost suiteと同時実行でき、製品deadline用の直列phaseを設けません。reportはfresh run identityと成功exit receiptの全組を要求し、古い・欠落・別suiteのreportや部分成功を合成PASSにしません。共通Toolのprivate distには専用のCSP/通信検査を行い、公開distのCSP検査は公開suiteで保持します。
+final browserはcarousel desktop、carousel mobile、content/search/footerのremaining、更新情報のhome-content、写真/headerのhome-shell、navigation、private previewとPrimeのhost-only smokeのtools、CMS操作のeditorを独立Chrome/profile/serverで検査します。起動は次段落のready通知まで順番に進め、起動済みの操作検査は並行します。desktop/mobileを分けても6秒autoplayなどの実時間assertion、motion/viewport/axe条件は同じです。common Toolは上記の独立jobへ分離し、public reportを `mode: public` と明記します。localのdefaultはCommon Toolを含む全9suite、public modeは全8suiteを実行します。Primeの製品matrixは検証済み配布元リリースの責務とし、Siteは固定bytesとhost接続だけを検査します（[検証境界](browser-tools/runtime-validation.md)）。このためtoolsも他のhost suiteと同時実行でき、製品deadline用の直列phaseを設けません。reportはfresh run identityと成功exit receiptの全組を要求し、古い・欠落・別suiteのreportや部分成功を合成PASSにしません。共通Toolのprivate distには専用のCSP/通信検査を行い、公開distのCSP検査は公開suiteで保持します。
 
 Chromeの起動だけは順番に行い、同suite/runのCDP-ready通知を受けてから次を起動します。起動済みの操作検査はそのまま並行継続します。readyは成功証拠ではなく、最終PASSには従来どおり成功exitとfresh reportが必要です。Linuxのconfig/cache/data用XDG領域も検査用profile内へ分離し、通常のHOMEや永続設定は変更しません。Chromeのport/target/CDP接続は従来の20秒期限、親のprocess監督はNode/server準備・終了処理を含む25秒上限です。操作assertionの期限緩和や全suiteの自動retryは行いません。
+
+Hostedの`source-validation`と`common-tool`は検査前、`producer`はWebKitのOS依存導入後に、同じinstalled Chromeでfontconfig cacheを準備します。producerでは公開buildとこの準備を並行し、両方完了した次のworkflow stepで検査を始めます。`GITHUB_ENV`の内容を同じstep内の親processへ反映できるとは仮定しません。準備専用profileで一度だけ起動し、120秒以内の正常終了と所有processのcleanupを要求します。sandboxは有効です。生成したfontconfigの通常ファイルだけをjob内に残し、XDGを隔離する各検査profileへコピーします。profile・Cookie・Web cache・検査結果は共有せず、font cacheを別job/runへ保存しません。cache形式を固定せず、準備時間・生成数を記録します。通常検査の20秒、技術図の25秒の起動期限と全assertionは維持します。
 
 
 `release:package` は検証済みoutputをコピーするだけでbuildしません。`tools:readiness`と`site:output:check`は同じ `apps/site/dist` を検査します。旧Phaseごとの再現や仮公開fixtureは使いません。
@@ -63,6 +66,12 @@ Prime PWAの再起動検査は同じ検査用profileだけを使い、復元タ�
 CIは`RUNNER_TEMP`配下の絶対pathを`XPOTATO_RELEASE_TEMP`（browser profile）、`XPOTATO_SITE_TEMP_ROOT`（local serving/private preview）、`XPOTATO_RELEASE_PACKAGE`（fresh package出力）へ設定します。local検証でも前二者をtask temp配下へ明示し、必要なら`CHROME_PATH`でChrome/Edge executableを指定します。local buildはproduction candidateを作りません。
 
 security-header policyはbuilt HTMLと実行script/styleから`apps/site/dist/_headers`を生成します。配布する正本はこのgenerated fileであり、tracked source `_headers`を第二SoTとして残しません。final static validationは同じoutputとheadersを検査します。
+
+### 下書き編集のPR
+
+[下書き用CIの判定](ci-change-impact.md)に適合するPRは `article-fast` で既存CMS parserによる意味判定と全体build/static/publication/performance/route/search検査を行います。通常のコード・公開検証jobは対象外とし、release packageは生成しません。意味判定が正常に不適格を返した場合は全体jobへ進み、下書き検査のfailure/cancelledや出力欠落はstable resultを失敗させます。コード変更はNodeのみの候補判定で全体経路を選び、候補jobの依存導入を待ちません。
+
+mainは下書きだけでも常に全体CIです。PRで `ci:full` labelを付けた場合も全体CIを実行します。公開済み本文、公開状態、media/rights/provenance/taxonomy/series/redirect、実装・validator・lock変更を下書き経路へ入れません。下書きCIのPASSをProduction artifactの資格として扱いません。
 
 ### Docs-only分類
 
@@ -130,7 +139,9 @@ rollbackは同じidentity規則で既存のimmutable releaseを選びます。�
 
 ### ホームのWebKit配布物検査
 
-producerは一回buildの直後、固定PlaywrightのWebKitを一時runnerへ導入し、`quality:home-webkit` で実HTMLがリンクする共有/ホームCSSを検査します。再buildせず、成功後に既存の最終public検査、同attemptの独立ゲートとpackageへ進みます。早い段階でWebKitの差異を検出しますが、既存検査は省略しません。依存token欠落・computed style・NEW/JSなし・JST・モバイル/全幅・200%・focus・axeの失敗はblockingです。`home-design-webkit.json` と `home-webkit-*.png` をquality artifactへ保存します。これはheadless WebKitの証拠で、実iPhone受入れや全Safari版保証ではありません。
+producerは一回の公開buildと並行して固定PlaywrightのWebKitを一時runnerへ導入し、両方完了した後に `quality:home-webkit` で実HTMLがリンクする共有/ホームCSSを検査します。同じdistの最終public検査と並行しますが、両方の成功後だけ同attemptの独立ゲートとpackageへ進みます。再buildや検査の省略はしません。依存token欠落・computed style・NEW/JSなし・JST・モバイル/全幅・200%・focus・axeの失敗はblockingです。`home-design-webkit.json` と `home-webkit-*.png` をquality artifactへ保存します。これはheadless WebKitの証拠で、実iPhone受入れや全Safari版保証ではありません。
+
+Hosted Linux jobは`ubuntu-24.04`へ固定します。WebKitのbrowser binaryだけをrunnerの一時pathへ復元し、keyをOS・architecture・固定Playwright版に結びます。prefix fallbackは使いません。cache hitでも`playwright install --with-deps webkit`と実WebKit検査は必須で、OS依存packageの導入や検査成功をcacheで代用しません。実検査に成功してからbinaryを保存します。saveの失敗だけは任意の高速化の失敗として扱い、検証済みreleaseを停止させません。cache復元、依存導入、検査の時間は分けて測定します。
 
 ## 本人確認済みの公開ダウンロード
 

@@ -5,7 +5,8 @@ import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 // Only prose is exempt. Machine-readable migration evidence and all unknown paths run core.
-export function classify(paths) {
+export function classify(paths, { forceFull = false } = {}) {
+  if (forceFull) return { core: true, reason: "Full CI explicitly requested" };
   const docsOnly =
     paths.length > 0 &&
     paths.every(
@@ -37,7 +38,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       /* Unknown => core. */
     }
   }
-  const result = classify(paths);
+  const result = classify(paths, { forceFull: process.env.CI_FORCE_FULL === "true" });
   execFileSync(
     "git",
     resolvedBase ? ["diff", "--check", base, "HEAD"] : ["show", "--format=", "--check", "HEAD"],

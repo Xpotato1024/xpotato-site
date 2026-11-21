@@ -317,20 +317,32 @@ export async function runManualDeployment({
     deployment = "acknowledged";
     await persistProgress(progress());
     // Cloudflare may acknowledge the new version before its active deployment
-    // becomes visible through the read-only API. Poll only the old known-good
-    // identity for a bounded interval; a third-party version still fails closed.
+    // becomes visible through the read-only API. Full identity/drift checks use
+    // their own finite read budget so they cannot exhaust the operation budget
+    // needed for public readback and the final token verification.
     const postDeadline = clock() + 90_000;
     for (let attempt = 0; attempt < 15; attempt++) {
-      postimage = await provider.snapshot();
-      if (postimage.versionId === receipt.versionId) break;
+      if (clock() >= postDeadline) {
+        stop("POST_VERSION_MISMATCH");
+      }
+      postimage = await provider.postVersionSnapshot({ deadlineAt: postDeadline });
+      if (clock() >= postDeadline) {
+        stop("POST_VERSION_MISMATCH");
+      }
+      if (postimage.workerTag !== latest.workerTag) {
+        stop("POST_VERSION_MISMATCH");
+      }
+      if (postimage.versionId === receipt.versionId) {
+        break;
+      }
       if (
         postimage.versionId !== latest.versionId ||
         postimage.deploymentId !== latest.deploymentId ||
-        postimage.workerTag !== latest.workerTag ||
         attempt === 14 ||
         clock() + 4000 >= postDeadline
-      )
+      ) {
         stop("POST_VERSION_MISMATCH");
+      }
       await wait(4000);
     }
     verification = "pending";

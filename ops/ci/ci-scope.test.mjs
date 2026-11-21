@@ -3,6 +3,11 @@ import assert from "node:assert/strict";
 import { classify } from "./ci-scope.mjs";
 test("prose only completes without build", () =>
   assert.equal(classify(["docs/operations/validation.md", "AGENTS.md"]).core, false));
+test("an explicit full request includes prose and content changes", () => {
+  for (const paths of [["README.md"], ["content/articles/draft.mdx"], []]) {
+    assert.equal(classify(paths, { forceFull: true }).core, true);
+  }
+});
 test("vendor ownership README is prose, including the PR167 documentation-only change set", () => {
   const result = classify([
     "docs/README.md",

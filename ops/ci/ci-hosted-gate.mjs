@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 // another run, a cached success, or an intermediate release to satisfy this gate.
 export const hostedGateJobs = Object.freeze([
   "offline-policy",
+  "article-regression",
   "source-validation",
   "publication-fixtures",
   "common-tool",
@@ -12,7 +13,14 @@ export const hostedGateJobs = Object.freeze([
 const repository = "Xpotato1024/xpotato-site";
 const workflow = "vNext CI";
 const workflowPath = ".github/workflows/ci.yml";
-const allowedJobs = new Set(["scope", ...hostedGateJobs, "producer", "windows-consumer", "result"]);
+const allowedJobs = new Set([
+  "scope",
+  "article-fast",
+  ...hostedGateJobs,
+  "producer",
+  "windows-consumer",
+  "result",
+]);
 const activeStatuses = new Set(["queued", "in_progress", "waiting", "pending", "requested"]);
 const positiveInteger = (value) =>
   typeof value === "string" && /^[1-9][0-9]*$/u.test(value) && Number.isSafeInteger(Number(value));
