@@ -105,7 +105,7 @@ try {
 
   await page.getByRole("tab", { name: "プレビュー", exact: true }).click();
   await visibleFrame().locator('.article-line-chart[data-kind="scatter"]').waitFor();
-  await visibleFrame().getByText("データ表を見る", { exact: true }).click();
+  await visibleFrame().getByText("入力データ表を見る", { exact: true }).click();
   assert.equal(await visibleFrame().locator("tbody tr").count(), 6);
   assert.equal(
     await visibleFrame().locator("tbody tr").first().locator("td").last().textContent(),
