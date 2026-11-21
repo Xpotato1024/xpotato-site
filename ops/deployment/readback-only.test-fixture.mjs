@@ -62,7 +62,8 @@ export async function fixture(t, change = {}) {
     ["/robots.txt", Buffer.from(capture.body).subarray(2676)],
     ["/_headers", Buffer.from(headers)],
   ]);
-  for (let i = 0; i < 124; i++)
+  const targetCount = change.targetCount ?? 126;
+  for (let i = 0; i < targetCount - 2; i++)
     files.set("/fixture-" + i + ".xml", Buffer.from('<xml n="' + i + '"/>'));
   const plan = compilePublicationPlan({
     files,
@@ -74,7 +75,7 @@ export async function fixture(t, change = {}) {
     },
     headers,
   });
-  assert.equal(plan.targets.length, 126);
+  assert.equal(plan.targets.length, targetCount);
   const deployment = {
     status: "acknowledged",
     receipt: { count: 1, exitCode: 0, versionId: expected.versionId },

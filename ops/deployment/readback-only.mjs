@@ -210,9 +210,10 @@ function assertArtifact(value, selection) {
   )
     stop("READBACK_HANDOFF_INVALID");
   const plan = value.plan;
+  // The canonical consumer rebuilds and verifies the complete target plan from
+  // the immutable archive. A past release's target count is not completeness.
   assertPublicTargetPlan(plan?.targets);
   if (
-    plan.targets.length !== 126 ||
     !plan.targets.some((row) => row.path === "/") ||
     !plan.targets.some((row) => row.path === "/robots.txt") ||
     typeof plan.headers !== "string" ||

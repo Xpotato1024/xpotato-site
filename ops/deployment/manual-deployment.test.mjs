@@ -776,6 +776,164 @@ test("owner-only editor challenge is verified separately from published bytes", 
   assert.equal(report.observations[0].actual.sha256, null);
   assert.equal(report.observations[1].bodyMatch, "exact");
 });
+test("Cloudflare Access protects each canonical CMS shell asset without pretending its bytes were read", async () => {
+  const paths = [
+    "/editor/",
+    "/editor/index.html",
+    "/editor/assets/AstroReview-CIwfr59E.js",
+    "/editor/assets/index-CKLULtcL.css",
+    "/editor/fonts/regular.woff2",
+    "/editor/sw.js",
+    "/editor/manifest.webmanifest",
+    "/editor/icon.svg",
+  ];
+  const body = "approved";
+  const readback = createPublicReadback({
+    fetchImpl: async (url) => {
+      if (url.includes("workers.dev")) return new Response("missing", { status: 404 });
+      const path = new URL(url).pathname;
+      if (paths.includes(path))
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location:
+              "https://xpotato1024.cloudflareaccess.com/cdn-cgi/access/login/xpotato.net?kid=present&meta=present&redirect_url=" +
+              encodeURIComponent(path),
+          },
+        });
+      return new Response(body, { status: 200 });
+    },
+  });
+  const report = await readback.published(
+    { targets: paths.map((path) => ({ path, bytes: body.length, sha256: hashBytes(body) })) },
+    image,
+  );
+  assert.equal(report.status, "verified");
+  assert.equal(report.observations.length, paths.length);
+  for (const row of report.observations) {
+    assert.equal(row.matches, true, row.path);
+    assert.equal(row.actual.status, 302, row.path);
+    assert.equal(row.actual.sha256, null, row.path);
+    assert.equal(row.bodyMatch, "cloudflare-access-protected", row.path);
+  }
+});
+test("an acknowledged deployment with protected CMS assets completes readback after the active version is confirmed", async () => {
+  const body = "approved";
+  const paths = ["/", "/editor/", "/editor/assets/AstroReview-CIwfr59E.js"];
+  const readback = createPublicReadback({
+    clock: () => now,
+    fetchImpl: async (url, options) => {
+      assert.equal(options.method, "GET");
+      assert.equal(options.redirect, "manual");
+      if (url.includes("workers.dev")) return new Response("missing", { status: 404 });
+      const path = new URL(url).pathname;
+      if (path.startsWith("/editor/")) {
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location:
+              "https://xpotato1024.cloudflareaccess.com/cdn-cgi/access/login/xpotato.net?kid=present&meta=present&redirect_url=" +
+              encodeURIComponent(path),
+          },
+        });
+      }
+      return new Response(body);
+    },
+  });
+  const f = fixture({
+    loadTargets: async () => ({
+      targets: paths.map((path) => ({ path, bytes: body.length, sha256: hashBytes(body) })),
+    }),
+    probeBefore: readback.before,
+    verifyPublished: readback.published,
+  });
+  let versionChecks = 0;
+  f.input.provider.assertSameVersion = async (current) => {
+    assert.equal(current.versionId, uid(3));
+    versionChecks++;
+  };
+  const result = await runManualDeployment(f.input);
+  assert.equal(result.status, "DEPLOYED_READBACK_VERIFIED");
+  assert.equal(result.deployment.status, "acknowledged");
+  assert.equal(result.verification.status, "verified");
+  assert.equal(result.readback.status, "verified");
+  assert.equal(result.deployCount, 1);
+  assert.equal(f.calls.filter((call) => call === "deploy").length, 1);
+  assert.equal(versionChecks, 1);
+  assert.equal(result.readback.observations[0].bodyMatch, "exact");
+  for (const row of result.readback.observations.slice(1)) {
+    assert.equal(row.bodyMatch, "cloudflare-access-protected");
+    assert.equal(row.actual.sha256, null);
+    assert.equal(row.matches, true);
+  }
+});
+test("a readable CMS asset still requires exact bytes, headers and HTTP 200", async (t) => {
+  const path = "/editor/assets/AstroReview-CIwfr59E.js";
+  const plan = {
+    targets: [{ path, bytes: 8, sha256: hashBytes("approved") }],
+    headers: "/editor/*\n  X-Content-Type-Options: nosniff\n",
+  };
+  for (const [name, body, status, header, accepted] of [
+    ["exact asset", "approved", 200, "nosniff", true],
+    ["changed body", "modified", 200, "nosniff", false],
+    ["changed header", "approved", 200, "wrong", false],
+    ["missing asset", "approved", 404, "nosniff", false],
+  ]) {
+    await t.test(name, async () => {
+      const reader = createPublicReadback({
+        clock: () => now,
+        wait: async () => {},
+        fetchImpl: async (url) =>
+          url.includes("workers.dev")
+            ? new Response("missing", { status: 404 })
+            : new Response(body, { status, headers: { "x-content-type-options": header } }),
+      });
+      if (accepted) {
+        const report = await reader.published(plan, image);
+        assert.equal(report.observations[0].bodyMatch, "exact");
+      } else {
+        await assert.rejects(() => reader.published(plan, image), /PUBLIC_BYTES_MISMATCH/);
+      }
+    });
+  }
+});
+test("Cloudflare Access cannot disguise an unexpected CMS path or redirect", async () => {
+  const protectedAsset = "/editor/assets/AstroReview-CIwfr59E.js";
+  const accessLocation = (path) =>
+    "https://xpotato1024.cloudflareaccess.com/cdn-cgi/access/login/xpotato.net?kid=present&meta=present&redirect_url=" +
+    encodeURIComponent(path);
+  const bad = [
+    ["/editor-api/session", accessLocation("/editor-api/session")],
+    ["/editor/data.json", accessLocation("/editor/data.json")],
+    ["/editor/assets/source.js.map", accessLocation("/editor/assets/source.js.map")],
+    ["/editor/assets/source.exe", accessLocation("/editor/assets/source.exe")],
+    ["/editor/fonts/source.ttf", accessLocation("/editor/fonts/source.ttf")],
+    ["/editor/secret/", accessLocation("/editor/secret/")],
+    ["/editor-evil/assets/index.js", accessLocation("/editor-evil/assets/index.js")],
+    [protectedAsset, accessLocation("/editor/")],
+    [protectedAsset, accessLocation(protectedAsset).replace("kid=present", "other=present")],
+    [protectedAsset, accessLocation(protectedAsset).replace("meta=present", "other=present")],
+    [
+      protectedAsset,
+      accessLocation(protectedAsset).replace("xpotato1024.cloudflareaccess.com", "evil.example"),
+    ],
+    [
+      protectedAsset,
+      accessLocation(protectedAsset) + "&redirect_url=" + encodeURIComponent(protectedAsset),
+    ],
+  ];
+  for (const [path, location] of bad) {
+    const readback = createPublicReadback({
+      fetchImpl: async () => new Response(null, { status: 302, headers: { location } }),
+    });
+    await assert.rejects(
+      () =>
+        readback.published({ targets: [{ path, bytes: 8, sha256: hashBytes("approved") }] }, image),
+      /PUBLIC_HTTP_OR_REDIRECT/,
+      path,
+    );
+  }
+});
 test("unknown redirects and Access-looking challenges outside the editor remain blocked", async () => {
   const valid =
     "https://xpotato1024.cloudflareaccess.com/cdn-cgi/access/login/xpotato.net?kid=1&meta=2&redirect_url=%2Feditor%2F";

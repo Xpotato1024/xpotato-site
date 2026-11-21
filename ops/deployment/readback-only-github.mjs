@@ -1,6 +1,10 @@
 import { createJsonTransport, transportFailureCode } from "./shared/deployment-http.mjs";
 import { authority } from "./deployment-policy.mjs";
-import { assertReadbackWorkflow, readbackWorkflowPath } from "./readback-only-workflow-policy.mjs";
+import {
+  assertReadbackWorkflow,
+  readbackWorkflowPath,
+  readbackPlanFiles,
+} from "./readback-only-workflow-policy.mjs";
 class AdmissionError extends Error {}
 const stop = (code) => {
   throw new AdmissionError(code);
@@ -23,6 +27,7 @@ export function requireReadbackRun(env) {
     env.READBACK_VERIFIER_SHA !== env.GITHUB_SHA ||
     !/^[1-9][0-9]*$/.test(env.GITHUB_RUN_ID ?? "") ||
     !/^[1-9][0-9]*$/.test(env.GITHUB_REPOSITORY_ID ?? "") ||
+    !readbackPlanFiles.includes(env.READBACK_PLAN_FILE) ||
     !/^[a-f0-9]{64}$/.test(env.READBACK_PLAN_SHA256 ?? "") ||
     !/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(env.READBACK_OPERATION_ID ?? "")
   )

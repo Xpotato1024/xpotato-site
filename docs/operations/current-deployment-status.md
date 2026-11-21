@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: operations
-last_verified: 2026-11-03
+last_verified: 2026-11-21
 canonical_for:
   - current repository deployment workflow status
 ---
@@ -33,7 +33,27 @@ PR140の新しい配信manifest・状態分離・診断方式とPR141の配置�
 
 [配信run 44719601350](https://github.com/Xpotato1024/xpotato-site/actions/runs/44719601350) はCloudflareへの配備が1回成功し、Workerの新versionを読み戻した後、公開readbackで `PUBLIC_HTTP_OR_REDIRECT` に停止した。未認証の `/editor/` がCloudflare Accessへ302リダイレクトされることを従来の200/本文SHA照合だけでは判定できず、別の `/articles/tag/troubleshooting/` は初回の本文SHAが一致しなかった。後続の独立したHTTP照合では当該記事が承認済みProduction artifactとサイズ・SHAともに一致した。
 
-修正後は**`/editor/` のみ**、固定済みのCloudflare Accessチームホスト（`xpotato1024.cloudflareaccess.com`）、ログイン用パス、必須クエリ項目、元の `redirect_url=/editor/` がすべて一致する302応答を認証境界として許容する。その観測は `bodyMatch=cloudflare-access-protected` と明示し、**HTMLのbyte一致を証明したとは扱わない**。配信元artifactの検証と同じWorker versionのreadbackは引き続き必須。未知のリダイレクトや一般ページを許容する例外ではない。他の公開ページは従来どおり本文とheadersの完全一致を要求し、一時的不一致の再観測でも固定の予算・回数・時間制限を維持する。
+2026-11-20時点の修正では**`/editor/` のみ**、固定済みのCloudflare Accessチームホスト（`xpotato1024.cloudflareaccess.com`）、ログイン用パス、必須クエリ項目、元の `redirect_url=/editor/` がすべて一致する302応答を認証境界として許容した。その観測は `bodyMatch=cloudflare-access-protected` と明示し、**HTMLのbyte一致を証明したとは扱わない**。翌日の静的ファイルへの拡張は次節に記録する。
+
+## 2026-11-21 CMS静的ファイルのAccess境界と本番readback
+
+[manual deployment run 44859337802](https://github.com/Xpotato1024/xpotato-site/actions/runs/44859337802) は、成功したmain push CI run 44856616630のProduction artifact 14687339036（source 2abdd76d16f2dcd24d88f2a6f8e43627caca599c）だけを取得し、Wrangler deployを1回実行した。Cloudflareのversion receipt 654d31d2-ab48-43e6-b940-67b55659ff4a とread-only APIのactive versionが一致したが、公開後readbackはPUBLIC_HTTP_OR_REDIRECTにより失敗した。元runを成功とは扱わず、deployCount=1、rollbackExecuted=false、verification=failedの記録を保持する。
+
+保存された非secret証跡には、全700対象のうち72件の観測がある。70件の本文・ヘッダーが一致し、`/editor/` の1件は想定するCloudflare Accessの302として認証境界を確認した。次の `/editor/assets/AstroReview-CIwfr59E.js` でもAccessの302を受けたが、旧`isEditorAccessChallenge`が `/editor/` だけを許可しており拒否された。未認証GETで `/editor/`・JS asset・`sw.js`・manifestの302について、チームホスト、login path、`redirect_url`が元pathと一致することを別に確認した。これは認証後のHTML/JS byte一致や全公開対象の受入れではない。
+
+対応実装では、成果物のtarget planに含まれる /editor/ および明示したCMSシェルのHTML・JS/CSS・woff2・manifest・SW・iconパスだけに、従来と同じ固定チーム/login URL/kid/meta/exact redirect_url照合を適用する。これらはbodyMatch=cloudflare-access-protectedであり、公開bytesのhash一致ではない。未知のeditorパス、/editor-api/*、その他の公開サイト、別チーム・別URL・不正なredirectは従来どおり拒否する。失敗runへの後付けPASSは行わず、改善後のreadback受入れを別操作で確認する。
+
+### 修正後の判定条件
+
+| 観測した応答 | 判定 |
+| --- | --- |
+| 成果物内のCMS静的パスが、固定Accessログイン先へ元pathと一致する302を返す | 認証保護の検証成功。本文のSHA一致とは区別して記録する |
+| 同じCMSパスを含む対象が200で読める | 本文サイズ・SHA-256・対象ヘッダーを照合する |
+| 一般公開ページの認証リダイレクト、別チーム・別pathへのリダイレクト、APIや未知パス | 失敗 |
+| 公開本文・ヘッダー・active Worker version・配備先の不一致 | 失敗 |
+| 対象一覧の件数が以前の配備から増減した | 件数だけでは失敗にしない。正規成果物から生成した対象一覧の全件成功と検証前後の不変性を要求する |
+
+再検証用の`cms-access-20261121.json`は、上記Production artifactと元配備のreceipt、証跡archiveの実bytes/digest、expected deployment/versionへ固定する。旧`robots-20261104.json`を暗黙に使わず、manual-only workflowで選択したGit内planとSHA-256を確認する。設定の追加・合成試験の成功は、既配備versionに対する新しい実readbackの完了を意味しない。
 
 ## 配備receipt後のversion反映待ち
 
@@ -57,7 +77,7 @@ Wranglerが新しいversionのreceiptを返してからCloudflareの読取りに
 
 `readback-only.mjs` は配信済みartifactを検証対象として扱う独立libraryです。通常のdeploy source parityやworkflow guardを変更しません。旧runのacknowledged receiptをreviewで固定したdigestの証跡ファイルと照合し、artifact selection、expected deployment/version/Worker identity、verifier SHAを別記します。canonical artifact adapterは既存PowerShell handoffと`readPublicTargets()`を再利用し、対象sourceのheld manifestをGit objectから読みます。正規Production取得済みoperation rootが先に必要です。
 
-provider/publicの成功portや配信portは受け取りません。既存のGET限定provider adapter/public readerを内部生成し、全126対象・headers・限定robots・alternate endpoint、provider前後snapshot、artifact/target/headerの不変性、final token identity/expiry evidenceを確認します。120秒phaseと既存のrequests/bytes/attempt予算を維持します。公開readbackにはalternate endpointの実statusも保存します。観測未完了と不一致を区別し、証跡は新しい`readback-only-<operation-id>.json`へ排他的に保存します。旧runのfailureを変更しません。
+provider/publicの成功portや配信portは受け取りません。既存のGET限定provider adapter/public readerを内部生成し、正規成果物の全対象・headers・限定robots・alternate endpoint、provider前後snapshot、artifact/target/headerの不変性、final token identity/expiry evidenceを確認します。件数を旧126件へ固定せず、canonical consumerが照合した成果物全体から対象一覧を再生成します。root・robots・必須security headersと件数/bytes予算の条件も維持します。120秒phaseと既存のrequests/bytes/attempt予算を維持します。公開readbackにはalternate endpointの実statusも保存します。観測未完了と不一致を区別し、証跡は新しい`readback-only-<operation-id>.json`へ排他的に保存します。旧runのfailureを変更しません。
 
 合成artifact/transport/clock/waitを使う結果は必ず`evidenceMode=synthetic`で、全stage通過も`READBACK_ONLY_CHECKS_PASSED`に留めます。`acceptance=false`はlive adapter使用時も維持し、人の受入れ判断を自動化しません。library import/handle作成だけでnetworkやcredential読取りは起きません。専用CLIとmanual-only workflowのlocal実装・合成試験を追加しましたが、実credentials供給・認可済みexecutorでの実行・live acceptanceは未実施です。[実行入口と未実施境界](readback-only-execution.md)に従い、exact revisionのreview、本人認可、既存Environment保護を通した新しいread-only operationとして扱います。
 

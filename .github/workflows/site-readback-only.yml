@@ -6,6 +6,14 @@ on:
         description: Review済みmain verifierの完全SHA
         required: true
         type: string
+      plan_file:
+        description: 検証する配備に対応したreview済みplan
+        required: true
+        type: choice
+        default: cms-access-20261121.json
+        options:
+          - cms-access-20261121.json
+          - robots-20261104.json
       plan_sha256:
         description: 固定readback planのreview済みSHA-256
         required: true
@@ -47,6 +55,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           READBACK_APPROVED: ${{ inputs.readback_approved }}
           READBACK_VERIFIER_SHA: ${{ inputs.verifier_sha }}
+          READBACK_PLAN_FILE: ${{ inputs.plan_file }}
           READBACK_PLAN_SHA256: ${{ inputs.plan_sha256 }}
           READBACK_OPERATION_ID: ${{ inputs.operation_id }}
           CLOUDFLARE_SITE_DEPLOY_CONTEXT_JSON: ${{ vars.CLOUDFLARE_SITE_DEPLOY_CONTEXT_JSON }}
