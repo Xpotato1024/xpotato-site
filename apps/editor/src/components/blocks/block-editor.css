@@ -263,7 +263,8 @@
 }
 .cms-mermaid-preview svg {
   display: block;
-  max-width: 100%;
+  /* Wide diagrams scroll in their own area instead of shrinking text to illegibility. */
+  max-width: none;
   height: auto;
   margin: 0 auto;
 }

@@ -168,6 +168,8 @@ export function MermaidPreview({ source }: { source: string }) {
         <div>
           <svg
             viewBox={"0 0 " + graph.width + " " + graph.height}
+            width={graph.width}
+            height={graph.height}
             role="img"
             aria-labelledby={markerId + "-title " + markerId + "-desc"}
           >

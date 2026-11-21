@@ -52,7 +52,12 @@ try {
   await palette.waitFor({ state: "visible" });
   await palette.locator(".cms-palette-choice").filter({ hasText: "Mermaid構成図" }).click();
   await page.getByRole("textbox", { name: "Mermaid構成図のソース" }).waitFor();
-  await page.locator(".cms-mermaid-preview svg").first().waitFor({ timeout: 30000 });
+  const diagramSvg = page.locator(".cms-mermaid-preview svg").first();
+  await diagramSvg.waitFor({ timeout: 30000 });
+  assert(
+    Number(await diagramSvg.getAttribute("height")) > 200,
+    "Diagram must remain readable on narrow viewports",
+  );
   const body = await readBody(page);
   const start = body.indexOf("先頭の文章。");
   const diagram = body.indexOf("flowchart TB");
