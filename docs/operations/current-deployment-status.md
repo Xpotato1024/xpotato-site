@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: operations
-last_verified: 2026-11-03
+last_verified: 2026-11-21
 canonical_for:
   - current repository deployment workflow status
 ---
@@ -35,6 +35,13 @@ PR140の新しい配信manifest・状態分離・診断方式とPR141の配置�
 
 修正後は**`/editor/` のみ**、固定済みのCloudflare Accessチームホスト（`xpotato1024.cloudflareaccess.com`）、ログイン用パス、必須クエリ項目、元の `redirect_url=/editor/` がすべて一致する302応答を認証境界として許容する。その観測は `bodyMatch=cloudflare-access-protected` と明示し、**HTMLのbyte一致を証明したとは扱わない**。配信元artifactの検証と同じWorker versionのreadbackは引き続き必須。未知のリダイレクトや一般ページを許容する例外ではない。他の公開ページは従来どおり本文とheadersの完全一致を要求し、一時的不一致の再観測でも固定の予算・回数・時間制限を維持する。
 
+## 2026-11-21 CMS静的ファイルのAccess境界と本番readback
+
+[manual deployment run 44859337802](https://github.com/Xpotato1024/xpotato-site/actions/runs/44859337802) は、成功したmain push CI run 44856616630のProduction artifact 14687339036（source 2abdd76d16f2dcd24d88f2a6f8e43627caca599c）だけを取得し、Wrangler deployを1回実行した。Cloudflareのversion receipt 654d31d2-ab48-43e6-b940-67b55659ff4a とread-only APIのactive versionが一致したが、公開後readbackはPUBLIC_HTTP_OR_REDIRECTにより失敗した。元runを成功とは扱わず、deployCount=1、rollbackExecuted=false、verification=failedの記録を保持する。
+
+保存された非secret証跡のreadbackは72件中71件を照合し、/editor/ は想定するCloudflare Accessの302として認証境界を確認した。次の /editor/assets/AstroReview-CIwfr59E.js でもAccessの302を受けたが、旧isEditorAccessChallengeが /editor/ だけを許可しており拒否された。未認証GETで /editor/・JS asset・sw.js・manifest の302について、チームホスト、login path、redirect_urlが元pathと一致することを別に確認した。これは認証後のHTML/JS byte一致や全公開対象の受入れではない。
+
+対応実装では、成果物のtarget planに含まれる /editor/ および明示したCMSシェルのHTML・JS/CSS・woff2・manifest・SW・iconパスだけに、従来と同じ固定チーム/login URL/kid/meta/exact redirect_url照合を適用する。これらはbodyMatch=cloudflare-access-protectedであり、公開bytesのhash一致ではない。未知のeditorパス、/editor-api/*、その他の公開サイト、別チーム・別URL・不正なredirectは従来どおり拒否する。失敗runへの後付けPASSは行わず、改善後のreadback受入れを別操作で確認する。
 ## 配備receipt後のversion反映待ち
 
 Wranglerが新しいversionのreceiptを返してからCloudflareの読取りに反映されるまで、最大15回・90秒、再観測の間隔4秒で確認します。各回でWorker identity、active deployment/version、bindings、domain/routes、endpoint抑止を含む完全なsnapshotを取得します。既知のpreimageと一致する旧versionだけを待機対象とし、第三者のversion、異なるdeployment、Worker identityや設定のdriftは停止します。receiptと一致しても期限を過ぎたsnapshotは成功にしません。

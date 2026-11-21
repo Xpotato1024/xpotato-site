@@ -23,11 +23,22 @@ const observationErrorCodes = new Set([
 ]);
 export const publicReadbackReport = (error) => reports.get(error);
 
-/** Cloudflare Access hides the CMS HTML from unauthenticated readback.
- * Accept only this single documented login boundary; do not call it an HTML byte match.
+/**
+ * Only static CMS shell paths that the signed artifact's public target plan
+ * already admitted can use Cloudflare Access as their observable readback.
+ * API routes, arbitrary editor paths and all other site assets remain exact.
  */
+function isEditorProtectedShellPath(path) {
+  return (
+    path === "/editor/" ||
+    /^\/editor\/(?:index\.html|manifest\.webmanifest|icon\.svg|sw\.js|assets\/[A-Za-z0-9_.-]+\.(?:js|css)|fonts\/[A-Za-z0-9_.-]+\.woff2)$/.test(
+      path,
+    )
+  );
+}
+/** Access is verified as an authentication boundary, never as an asset byte match. */
 function isEditorAccessChallenge(response, target) {
-  if (target?.path !== "/editor/" || response.status !== 302) return false;
+  if (!isEditorProtectedShellPath(target?.path) || response.status !== 302) return false;
   const location = response.headers.get("location");
   if (!location || !location.startsWith("https://")) return false;
   try {
@@ -261,7 +272,8 @@ export function createPublicReadback({
               headersSha256: headerHash(current.headers),
             };
             const exact = expected.bytes === actual.bytes && expected.sha256 === actual.sha256;
-            const accessProtected = current.accessProtected === true && target.path === "/editor/";
+            const accessProtected =
+              current.accessProtected === true && isEditorProtectedShellPath(target.path);
             const matches =
               accessProtected ||
               (expected.status === actual.status &&
