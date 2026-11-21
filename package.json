@@ -85,6 +85,7 @@
     "build:apps": "node ops/build/apps.mjs",
     "editor:check": "npm run editor:manifest:check && npm run typecheck --workspace @xpotato/editor && npm run typecheck --workspace @xpotato/editor-api",
     "editor:browser": "node ops/qa/editor-browser-smoke.mjs",
+    "editor:pwa:browser": "node ops/qa/editor-pwa-update-browser.mjs",
     "editor:charts": "node ops/qa/chart-editor-browser.mjs",
     "editor:integration": "tsx ops/qa/editor-integration-smoke.ts && node ops/qa/editor-start-selection-smoke.mjs",
     "editor:selection": "node ops/qa/editor-start-selection-smoke.mjs",

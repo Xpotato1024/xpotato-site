@@ -237,15 +237,18 @@ export default function App() {
     setNotice("");
     try {
       if (environment.updateReady) {
-        await environment.activateUpdate(workspace.persist);
+        const result = await environment.activateUpdate(workspace.persist);
+        if (result === "current") setNotice("更新はすでに適用されています。");
         return;
       }
       const result = await environment.checkForUpdate();
       if (result === "ready")
         setNotice("新しい編集アプリがあります。「保存して更新」で適用できます。");
       else if (result === "installing")
-        setNotice("新しい編集アプリを準備しています。完了すると更新できます。");
+        setNotice("アプリのキャッシュを準備中です。完了後に更新状態を確認してください。");
       else if (result === "current") setNotice("編集アプリは最新です。");
+      else if (result === "recovered")
+        setNotice("アプリの登録状態を確認し直しました。もう一度更新を確認してください。");
       else setNotice("この環境ではPWAの更新機能を利用できません。");
     } catch (failure) {
       setError(
@@ -531,7 +534,12 @@ export default function App() {
               <button
                 type="button"
                 disabled={busy || checkingUpdate}
-                onClick={() => void act(() => environment.activateUpdate(workspace.persist))}
+                onClick={() =>
+                  void act(async () => {
+                    const result = await environment.activateUpdate(workspace.persist);
+                    if (result === "current") setNotice("更新はすでに適用されています。");
+                  })
+                }
               >
                 保存して更新
               </button>

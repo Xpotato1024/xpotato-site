@@ -14,7 +14,7 @@ export function EditorUpdateButton({
   const label = checking
     ? "CMSアプリの更新を確認中"
     : ready
-      ? "CMSアプリの最新版を取得"
+      ? "CMSアプリの更新を適用"
       : "CMSアプリの更新を確認";
   return (
     <button

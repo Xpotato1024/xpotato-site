@@ -12,6 +12,8 @@ export function useEditorEnvironment() {
     void registerEditorWorker().catch(() => {});
     const network = () => setOnline(navigator.onLine);
     const update = () => setUpdateReady(true);
+    const controllerChanged = () => setUpdateReady(false);
+    navigator.serviceWorker?.addEventListener("controllerchange", controllerChanged);
     window.addEventListener("online", network);
     window.addEventListener("offline", network);
     window.addEventListener("editor-update-ready", update);
@@ -19,19 +21,21 @@ export function useEditorEnvironment() {
       window.removeEventListener("online", network);
       window.removeEventListener("offline", network);
       window.removeEventListener("editor-update-ready", update);
+      navigator.serviceWorker?.removeEventListener("controllerchange", controllerChanged);
     };
   }, []);
 
   async function checkForUpdate() {
     const status = await checkEditorUpdate();
-    if (status === "ready") setUpdateReady(true);
+    setUpdateReady(status === "ready");
     return status;
   }
 
-  return {
-    online,
-    updateReady,
-    checkForUpdate,
-    activateUpdate: activateEditorUpdate,
-  };
+  async function activateUpdate(persist: () => Promise<void>) {
+    const result = await activateEditorUpdate(persist);
+    if (result === "current") setUpdateReady(false);
+    return result;
+  }
+
+  return { online, updateReady, checkForUpdate, activateUpdate };
 }
