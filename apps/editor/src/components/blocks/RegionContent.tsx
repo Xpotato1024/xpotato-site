@@ -30,7 +30,9 @@ export function describeRegion(source: string) {
           ? "本文"
           : node?.type === "code" && node.lang === "math"
             ? "数式"
-            : (blockLabels[node?.type ?? ""] ?? "MDX"),
+            : node?.type === "code" && node.lang === "mermaid"
+              ? "Mermaid構成図"
+              : (blockLabels[node?.type ?? ""] ?? "MDX"),
       node,
       module,
       rich: canEditRich(source),

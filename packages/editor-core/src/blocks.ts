@@ -199,6 +199,7 @@ export const flowChildKinds: readonly string[] = Object.freeze([
   "table",
   "code",
   "math",
+  "mermaid",
   ...moduleNames.filter(
     (name) => !["Step", "DiagnosticItem", "ComparisonCase", "ArticleEndnote"].includes(name),
   ),
@@ -495,6 +496,8 @@ export const blockTemplates = Object.freeze({
   divider: "---",
   table: "| 項目 | 値 |\n| --- | --- |\n| サンプル | 0 |",
   code: "```text\nコードを入力\n```",
+  mermaid:
+    '```mermaid\nflowchart TB\n    accTitle: 工程の例\n    accDescr: 工程の開始から終了までの流れを示すサンプル構成図です\n    A["開始"]\n    B["終了"]\n    A --> B\n```',
   math: '```math label="式の説明"\n\\sigma = \\sqrt{\\frac{1}{N}\\sum_{i=1}^{N}(x_i-\\mu)^2}\n```',
   Figure: '<Figure asset="figure-1" alt="図の内容" />',
   Gallery:

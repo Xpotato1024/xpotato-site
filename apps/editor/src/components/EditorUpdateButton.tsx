@@ -11,17 +11,21 @@ export function EditorUpdateButton({
   disabled: boolean;
   onClick: () => void;
 }) {
-  const label = checking ? "更新を確認中" : ready ? "更新を適用" : "更新を確認";
+  const label = checking
+    ? "CMSアプリの更新を確認中"
+    : ready
+      ? "CMSアプリの最新版を取得"
+      : "CMSアプリの更新を確認";
   return (
     <button
       type="button"
       className="editor-update-button"
-      aria-label={"PWAの" + label}
-      title={"PWAの" + label}
+      aria-label={label}
+      title={label}
       disabled={disabled}
       onClick={onClick}
     >
-      <WorkspaceIcon name="refresh" />
+      <WorkspaceIcon name="appDownload" />
       <span>{label}</span>
     </button>
   );

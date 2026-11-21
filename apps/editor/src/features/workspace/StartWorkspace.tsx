@@ -6,6 +6,15 @@ import { WorkspaceIcon } from "../../components/WorkspaceIcon.js";
 import { parseLocalDraft, type DraftKind } from "../drafts/model.js";
 import type { BranchPlan, GitWorkspace } from "../git/useGitWorkspace.js";
 
+export const documentKindIcons = {
+  blog: "article",
+  notes: "note",
+  education: "series",
+  pages: "page",
+  tools: "code",
+  projects: "product",
+} as const satisfies Record<DraftKind, string>;
+
 export const catalogPageSize = 6;
 function CatalogPagination({
   label,
@@ -328,11 +337,7 @@ export function StartWorkspace({
                 aria-pressed={kind === item.id}
                 onClick={() => setKind(item.id)}
               >
-                <WorkspaceIcon
-                  name={
-                    item.id === "education" ? "series" : item.id === "tools" ? "code" : "library"
-                  }
-                />
+                <WorkspaceIcon name={documentKindIcons[item.id]} />
                 <strong>{item.label}</strong>
                 <span>{item.description}</span>
               </button>

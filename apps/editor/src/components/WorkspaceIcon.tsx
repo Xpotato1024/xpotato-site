@@ -26,11 +26,16 @@ const paths = {
   media: "M3 4h18v16H3z M3 16l5-5 4 4 3-3 6 6 M15 8h.01",
   review: "M4 3h16v14H9l-5 4z M8 7h8 M8 11h5",
   library: "M4 4h16v16H4z M8 8h8 M8 12h8 M8 16h5",
+  article: "M5 3h10l4 4v14H5z M14 3v5h5 M8 12h8 M8 16h8 M8 19h5",
+  note: "M4 3h16v13l-5 5H4z M15 16v5 M8 8h8 M8 12h6",
+  page: "M3 4h18v16H3z M3 9h18 M7 13h5 M7 17h10",
+  product: "M12 2 3 7v10l9 5 9-5V7z M3 7l9 5 9-5 M12 12v10",
   metadata: "M4 6h16 M4 12h16 M4 18h16 M9 3v6 M15 9v6 M8 15v6",
   series: "M9 5h12 M9 12h12 M9 19h12 M3 3v4 M2 7h3 M2 11h3l-3 3h3 M2 17h3v4H2",
   history: "M3 12a9 9 0 1 0 3-7 M3 3v5h5 M12 7v5l3 2",
   workflow: "M4 3h13l3 3v15H4z M8 3v6h8V3 M8 21v-8h8v8",
   refresh: "M20 7v5h-5 M4 17v-5h5 M5.5 9A7 7 0 0 1 18 6l2 1 M18.5 15A7 7 0 0 1 6 18l-2-1",
+  appDownload: "M12 3v12 m-5-5 5 5 5-5 M4 16v4h16v-4",
 } as const;
 
 export function WorkspaceIcon({ name }: { name: keyof typeof paths }) {

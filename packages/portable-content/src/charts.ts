@@ -160,11 +160,14 @@ export function renderLineChart(input: unknown): string {
       );
     })
     .join("");
-  const rows = data
+  // Formula samples are a transient drawing resolution, not authored measurements.
+  // Never expand hundreds of computed curve samples into the human-readable data table.
+  const authoredSeries = data.filter((item) => item.role !== "formula");
+  const rows = authoredSeries
     .flatMap((item) =>
       item.points.map(
         (point) =>
-          `<tr><th scope="row">${escape(item.label)}${item.role === "formula" ? "（理論式の計算値）" : item.role === "curve" ? "（計算済み曲線）" : ""}</th><td>${point.x}</td><td>${point.y}</td></tr>`,
+          `<tr><th scope="row">${escape(item.label)}${item.role === "curve" ? "（計算済み曲線）" : ""}</th><td>${point.x}</td><td>${point.y}</td></tr>`,
       ),
     )
     .join("");
@@ -195,17 +198,17 @@ export function renderLineChart(input: unknown): string {
     <figcaption class="article-line-chart__title">${escape(props.title)}</figcaption>
     ${props.description ? `<p class="article-line-chart__description">${escape(props.description)}</p>` : ""}
     <div class="article-line-chart__viewport" tabindex="0" role="region" aria-label="${escape(props.title)}のグラフ">
-      <svg class="article-line-chart__plot" viewBox="0 0 ${plot.width} ${plot.height}" role="img" aria-label="${escape(props.title)}。横軸${escape(props.xLabel)}、縦軸${escape(props.yLabel)}。各系列の値は後のデータ表でも確認できます。">
+      <svg class="article-line-chart__plot" viewBox="0 0 ${plot.width} ${plot.height}" role="img" aria-label="${escape(props.title)}。横軸${escape(props.xLabel)}、縦軸${escape(props.yLabel)}。${authoredSeries.length ? "入力データは後の表でも確認できます。" : "理論式と計算条件は後の詳細で確認できます。"}">
         ${grid}${ticks}<path class="article-line-chart__axis" d="M${plot.left} ${plot.top}V${plot.height - plot.bottom}H${plot.width - plot.right}"/>
         <svg class="article-line-chart__drawing" x="${plot.left}" y="${plot.top}" width="${plot.width - plot.left - plot.right}" height="${plot.height - plot.top - plot.bottom}" viewBox="${plot.left} ${plot.top} ${plot.width - plot.left - plot.right} ${plot.height - plot.top - plot.bottom}" overflow="hidden">${curves}</svg>
         <text class="article-line-chart__axis-title" x="${plot.width / 2}" y="${plot.height - 8}" text-anchor="middle">${escape(props.xLabel)}</text>
         <text class="article-line-chart__axis-title" transform="translate(20 ${plot.height / 2}) rotate(-90)" text-anchor="middle">${escape(props.yLabel)}</text>
       </svg>
     </div>
-    ${axisOffset ? `<p class="article-line-chart__axis-note">${axisOffset}データ表には元の値を表示します。</p>` : ""}
-    ${plot.cropped ? `<p class="article-line-chart__axis-note article-line-chart__range-note">表示範囲の外にある点や曲線はグラフに表示していません。データ表には全ての値を残しています。${fits.some(Boolean) ? "近似には全ての測定点を使っています。" : ""}</p>` : ""}
+    ${axisOffset ? `<p class="article-line-chart__axis-note">${axisOffset}${authoredSeries.length ? "データ表には入力値を表示します。" : "計算条件で理論式の定義域を確認できます。"}</p>` : ""}
+    ${plot.cropped ? `<p class="article-line-chart__axis-note article-line-chart__range-note">表示範囲の外にある点や曲線はグラフに表示していません。${authoredSeries.length ? "入力した点はデータ表に残しています。" : ""}${fits.some(Boolean) ? "近似には全ての測定点を使っています。" : ""}</p>` : ""}
     <ul class="article-line-chart__legend" aria-label="系列">${legend}</ul>
     ${details ? `<details class="article-line-chart__data article-line-chart__analysis"><summary class="disclosure-summary">${detailsLabel}</summary>${details}</details>` : ""}
-    <details class="article-line-chart__data"><summary class="disclosure-summary">データ表を見る</summary><div class="article-line-chart__table"><table><caption>${escape(props.title)}のデータ</caption><thead><tr><th scope="col">系列</th><th scope="col">${escape(props.xLabel)}</th><th scope="col">${escape(props.yLabel)}</th></tr></thead><tbody>${rows}</tbody></table></div></details>
+    ${rows ? `<details class="article-line-chart__data"><summary class="disclosure-summary">入力データ表を見る</summary><div class="article-line-chart__table"><table><caption>${escape(props.title)}の入力データ</caption><thead><tr><th scope="col">系列</th><th scope="col">${escape(props.xLabel)}</th><th scope="col">${escape(props.yLabel)}</th></tr></thead><tbody>${rows}</tbody></table></div></details>` : ""}
   </figure>`;
 }

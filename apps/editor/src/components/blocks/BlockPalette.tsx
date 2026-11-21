@@ -26,6 +26,12 @@ export const blockChoices: Choice[] = [
   { kind: "quote", label: "引用", description: "引用文と出典", group: "文章" },
   { kind: "divider", label: "区切り", description: "話題の切り替わり", group: "文章" },
   {
+    kind: "mermaid",
+    label: "Mermaid構成図",
+    description: "フローチャートのソースと図を確認",
+    group: "図表・コード",
+  },
+  {
     kind: "Figure",
     label: "画像・図",
     description: "画像、説明、出典",

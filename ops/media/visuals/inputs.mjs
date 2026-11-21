@@ -31,7 +31,7 @@ const keys = (value, allowed) => {
 /** Deliberately bounded Mermaid flowchart grammar; Mermaid performs the actual layout. */
 export function mermaidInput(source) {
   if (
-    Buffer.byteLength(source) > limits.inputBytes ||
+    new TextEncoder().encode(source).byteLength > limits.inputBytes ||
     /[<{}\x60;\\]|%%|https?:|file:|data:|javascript:|\/\//iu.test(source)
   )
     fail("Unsafe or oversized Mermaid source");

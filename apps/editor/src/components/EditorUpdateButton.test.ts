@@ -13,8 +13,8 @@ describe("editor update control", () => {
         onClick: vi.fn(),
       }),
     );
-    expect(html).toContain('aria-label="PWAの更新を適用"');
-    expect(html).toContain("更新を適用");
+    expect(html).toContain('aria-label="CMSアプリの最新版を取得"');
+    expect(html).toContain("CMSアプリの最新版を取得");
     expect(html).toContain('class="editor-update-button"');
   });
   it("indicates a check in progress and disables repeated actions", () => {
@@ -26,7 +26,7 @@ describe("editor update control", () => {
         onClick: vi.fn(),
       }),
     );
-    expect(html).toContain('aria-label="PWAの更新を確認中"');
+    expect(html).toContain('aria-label="CMSアプリの更新を確認中"');
     expect(html).toContain("disabled");
   });
 });

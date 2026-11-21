@@ -13,6 +13,7 @@ const paths: Record<string, string> = {
   ComparisonCase: "M4 4h16v16H4Z M8 8h8 M8 12h8 M8 16h5",
   code: "m8 6-6 6 6 6 M16 6l6 6-6 6 M14 4l-4 16",
   math: "M19 4H5l8 8-8 8h14",
+  mermaid: "M12 3v5 M12 8 5 14 M12 8l7 6 M5 14v7h7v-7H5z M15 14h7v7h-7z M9 3h6v5H9z",
   Group: "M8 3H3v5 M16 3h5v5 M3 16v5h5 M21 16v5h-5 M7 8h10 M7 12h10 M7 16h6",
   Callout: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z M12 10v7 M12 7h.01",
   Steps: "M3 3h5v5H3Z M3 16h5v5H3Z M5.5 8v8 M12 5h9 M12 18h9",
