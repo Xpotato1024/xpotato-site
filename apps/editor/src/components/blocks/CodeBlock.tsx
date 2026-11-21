@@ -1,6 +1,7 @@
 import { useId, useMemo, type Ref } from "react";
 import { blockTree } from "@xpotato/editor-core/blocks";
 import { MathPreview } from "./BlockPreview.js";
+import { MermaidPreview } from "./MermaidPreview.js";
 import { readMathMeta, writeMathMeta } from "./math-meta.js";
 export interface CodeFieldsProps {
   code: string;
@@ -22,6 +23,7 @@ export function CodeFields({
 }: CodeFieldsProps) {
   const id = useId();
   const math = language === "math";
+  const mermaid = language === "mermaid";
   const { label, printSource, valid: validMathMeta } = readMathMeta(meta);
   const updateLabel = (value: string, print = printSource) => onMeta(writeMathMeta(value, print));
   return (
@@ -51,6 +53,7 @@ export function CodeFields({
             "sql",
             "cpp",
             "math",
+            "mermaid",
             "tex",
             "latex",
           ].map((name) => (
@@ -74,13 +77,14 @@ export function CodeFields({
       <textarea
         ref={inputRef}
         className="cms-source-input"
-        aria-label={math ? "TeX数式" : "コード"}
+        aria-label={math ? "TeX数式" : mermaid ? "Mermaid構成図のソース" : "コード"}
         value={code}
         rows={Math.min(18, Math.max(3, code.split("\n").length))}
         spellCheck={false}
         wrap="soft"
         onChange={(event) => onCode(event.target.value)}
       />
+      {mermaid && <MermaidPreview source={code} />}
       {math && (
         <>
           <label className="cms-check-field">

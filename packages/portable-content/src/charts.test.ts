@@ -299,7 +299,8 @@ describe("theory formula rendering", () => {
     expect(html).toContain("理論式・計算条件を見る");
     expect(html).toContain("<msup><mi>x</mi><mn>2</mn></msup>");
     expect(html).toContain('<annotation data-search-exclude="true"');
-    expect(html).toContain("理論（理論式の計算値）");
+    expect(html).not.toContain("<tbody>");
+    expect(html).not.toContain("入力データ表を見る");
     expect(html).not.toContain("article-line-chart__point");
     expect(html).not.toContain("<dt>R²");
     expect(props.series).toBe(before);
@@ -342,6 +343,8 @@ describe("theory formula rendering", () => {
     expect(html).toContain("理論&lt;&amp;&gt;（理論式）");
     expect(html).toContain("測定（測定値）");
     expect(html).toContain("解析結果（計算済み曲線）");
+    expect(html).toContain("<td>2</td><td>5</td>");
+    expect(html).not.toContain('<th scope="row">理論&lt;&amp;&gt;');
     expect(html).toContain("理論式・近似式・計算条件を見る");
     expect(html).toContain("article-line-chart__fit");
     expect(html).toContain("article-line-chart__external-curve");

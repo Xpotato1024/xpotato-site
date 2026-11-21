@@ -601,6 +601,14 @@ export function BlockEditor({
                   className="cms-insert-after"
                   aria-label={info.label + "の後に挿入"}
                   disabled={composing}
+                  onPointerUp={(event) => {
+                    // iOS can focus the overlapping insertion control without dispatching
+                    // the synthetic click after the region re-stacks. Handle touch release
+                    // directly; the click handler remains for mouse and keyboard input.
+                    if (event.pointerType === "touch" || event.pointerType === "pen") {
+                      openPalette(index, event.currentTarget, false);
+                    }
+                  }}
                   onClick={(event) => openPalette(index, event.currentTarget, event.detail === 0)}
                 >
                   <BlockIcon name="plus" />

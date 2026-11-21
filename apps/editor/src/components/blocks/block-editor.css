@@ -58,6 +58,13 @@
 }
 .cms-editor-region:hover {
   border-color: var(--border-divider);
+  z-index: 1;
+}
+.cms-editor-region[data-active],
+.cms-editor-region:focus-within {
+  /* The between-block button overlaps the next region; keep it above that
+     region so touch hit-testing reaches the button rather than the article. */
+  z-index: 2;
 }
 .cms-editor-region[data-active] {
   border-color: var(--cms-accent-border);
@@ -245,6 +252,25 @@
   overflow-x: auto;
   max-width: 100%;
 }
+.cms-mermaid-preview {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0.75rem 0;
+}
+.cms-mermaid-preview > div {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.cms-mermaid-preview svg {
+  display: block;
+  /* Wide diagrams scroll in their own area instead of shrinking text to illegibility. */
+  max-width: none;
+  height: auto;
+  margin: 0 auto;
+}
+.cms-mermaid-preview figcaption {
+  margin-top: 0.5rem;
+}
 .cms-prose table {
   border-collapse: collapse;
   min-width: min(100%, 350px);
@@ -350,6 +376,15 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .cms-editor-region:hover:not(:has(.cms-editor-region:hover)) > .cms-insert-after {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+/* iOS can keep a region selected after keyboard focus moves elsewhere.
+   Make that region's insertion affordance tappable without displaying every
+   insertion button throughout a long article. */
+@media (hover: none), (pointer: coarse) {
+  .cms-editor-region[data-active] > .cms-insert-after {
     opacity: 1;
     pointer-events: auto;
   }

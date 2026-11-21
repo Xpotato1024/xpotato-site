@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { blockTree, type BlockNode } from "@xpotato/editor-core/blocks";
+import { MermaidPreview } from "./MermaidPreview.js";
 import {
   primaryReviewMark,
   reviewStateLabel,
@@ -211,6 +212,8 @@ function renderNode(node: BlockNode, index: number, review: PreviewReview): Reac
     case "code":
       return node.lang === "math" ? (
         <MathPreview key={index} value={node.value ?? ""} />
+      ) : node.lang === "mermaid" ? (
+        <MermaidPreview key={index} source={node.value ?? ""} />
       ) : (
         <pre key={index}>
           <code>{node.value}</code>

@@ -398,7 +398,7 @@ try {
     await frame.locator(".article-line-chart__plot .article-line-chart__external-curve").count(),
     1,
   );
-  await frame.getByText("データ表を見る", { exact: true }).click();
+  await frame.getByText("入力データ表を見る", { exact: true }).click();
   assert.equal(
     await frame.locator(".article-line-chart__data tbody tr").count(),
     finalSeries.reduce((count, series) => count + series.points.length, 0),
@@ -443,6 +443,10 @@ try {
     },
   ]);
   assert.equal(await chart.locator('.article-line-chart__plot g[data-role="formula"]').count(), 1);
+  assert.equal(
+    await chart.locator(".article-line-chart__data:not(.article-line-chart__analysis)").count(),
+    0,
+  );
   assert.equal(
     await chart.locator(".article-line-chart__plot .article-line-chart__point").count(),
     0,

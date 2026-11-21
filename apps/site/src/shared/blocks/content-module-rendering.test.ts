@@ -246,9 +246,12 @@ describe("public Astro numeric charts and CMS preview", () => {
     expect(classCount(html, "article-line-chart__formula-result")).toBe(1);
     expect(classCount(html, "article-line-chart__range-note")).toBe(1);
     expect(html).toContain("<msup><mi>x</mi><mn>2</mn></msup>");
-    expect(html).toContain("理論（理論式の計算値）");
-    expect(html).toContain("<td>4</td><td>8</td>");
+    expect(html).toContain("理論式・計算条件を見る");
+    expect(html).not.toContain("理論（理論式の計算値）");
+    expect(html).not.toContain("<td>4</td><td>8</td>");
     expect(html).toContain("<td>4</td><td>8.2</td>");
+    const rows = html.match(/<tbody>([\s\S]*?)<\/tbody>/u)?.[1] ?? "";
+    expect((rows.match(/<tr>/gu) ?? []).length).toBe(observed.points.length);
     expect(html).toContain(">9.84</text>");
     expect(html).not.toMatch(/<script|<canvas|astro-island| style=|NaN|Infinity/u);
     expect(input).toEqual(original);
