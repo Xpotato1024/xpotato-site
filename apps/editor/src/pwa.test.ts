@@ -16,6 +16,7 @@ function setup() {
   const registration = {
     waiting: null as WorkerMock | null,
     installing: null as WorkerMock | null,
+    active: { ...makeWorker(), state: "activated" } as WorkerMock | null,
     addEventListener: vi.fn((type: string, callback: () => void) => {
       if (type === "updatefound") updateEvents.push(callback);
     }),
@@ -24,7 +25,7 @@ function setup() {
   const serviceWorker = {
     controller: {} as object | null,
     register: vi.fn(async () => registration),
-    getRegistration: vi.fn(async () => registration),
+    getRegistration: vi.fn(async (): Promise<typeof registration | null> => registration),
     addEventListener: vi.fn((type: string, callback: () => void) => {
       if (type === "controllerchange") serviceEvents.push(callback);
     }),
@@ -122,7 +123,7 @@ describe("manual editor PWA update", () => {
       for (const callback of [...serviceEvents]) callback();
     });
     reload.mockImplementation(() => order.push("reload"));
-    await activateEditorUpdate(persist);
+    expect(await activateEditorUpdate(persist)).toBe("applied");
     expect(order).toEqual(["persist", "activate", "reload"]);
     expect(worker.postMessage).toHaveBeenCalledWith({ type: "ACTIVATE" });
     expect(serviceEvents).toHaveLength(0);
@@ -144,7 +145,7 @@ describe("manual editor PWA update", () => {
   it("will not save, activate or reload if no waiting version exists", async () => {
     const { reload } = setup();
     const persist = vi.fn(async () => {});
-    await expect(activateEditorUpdate(persist)).rejects.toThrow("適用できる更新");
+    await expect(activateEditorUpdate(persist)).resolves.toBe("current");
     expect(persist).not.toHaveBeenCalled();
     expect(reload).not.toHaveBeenCalled();
   });
@@ -161,5 +162,73 @@ describe("manual editor PWA update", () => {
     });
     await activateEditorUpdate(async () => {});
     expect(reload).toHaveBeenCalledOnce();
+  });
+});
+
+describe("registration lifecycle recovery", () => {
+  it("does not call update() while the first worker is installing", async () => {
+    const { registration } = setup();
+    registration.active = null;
+    registration.installing = makeWorker();
+    expect(await checkEditorUpdate()).toBe("installing");
+    expect(registration.update).not.toHaveBeenCalled();
+  });
+
+  it("repairs an empty registration before attempting to update it", async () => {
+    const { registration, serviceWorker } = setup();
+    registration.active = null;
+    expect(await checkEditorUpdate()).toBe("installing");
+    expect(serviceWorker.register).toHaveBeenCalledOnce();
+    expect(registration.update).not.toHaveBeenCalled();
+  });
+
+  it("registers a new worker when no registration exists", async () => {
+    const { registration, serviceWorker } = setup();
+    serviceWorker.getRegistration.mockResolvedValue(null);
+    registration.active = null;
+    registration.installing = makeWorker();
+    expect(await checkEditorUpdate()).toBe("installing");
+    expect(serviceWorker.register).toHaveBeenCalledOnce();
+  });
+  it("recovers the exact WebKit error without reporting a false success", async () => {
+    const { registration, serviceWorker } = setup();
+    registration.update.mockRejectedValue(
+      new Error("Cannot update a null/nonexistent service worker registration"),
+    );
+    expect(await checkEditorUpdate()).toBe("recovered");
+    expect(serviceWorker.register).toHaveBeenCalledOnce();
+  });
+
+  it("registers again when an InvalidStateError races with unregistration", async () => {
+    const { registration, serviceWorker } = setup();
+    const error = Object.assign(new Error("Registration was removed"), {
+      name: "InvalidStateError",
+    });
+    registration.update.mockRejectedValue(error);
+    serviceWorker.getRegistration.mockResolvedValueOnce(registration).mockResolvedValueOnce(null);
+    const replacement = { ...registration, active: null, installing: makeWorker() };
+    serviceWorker.register.mockResolvedValueOnce(replacement);
+    expect(await checkEditorUpdate()).toBe("installing");
+    expect(serviceWorker.register).toHaveBeenCalledOnce();
+  });
+  it("still reports genuine network update errors", async () => {
+    const { registration } = setup();
+    registration.update.mockRejectedValue(new TypeError("Failed to fetch /editor/sw.js"));
+    await expect(checkEditorUpdate()).rejects.toThrow("Failed to fetch");
+  });
+
+  it("handles a waiting worker that auto-activated before the user tapped", async () => {
+    const { registration, reload } = setup();
+    const persist = vi.fn(async () => {});
+    expect(await activateEditorUpdate(persist)).toBe("current");
+    expect(persist).not.toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
+    registration.waiting = makeWorker();
+    expect(
+      await activateEditorUpdate(async () => {
+        registration.waiting = null;
+      }),
+    ).toBe("current");
+    expect(reload).not.toHaveBeenCalled();
   });
 });
