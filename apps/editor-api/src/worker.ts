@@ -74,7 +74,7 @@ export function createHandler(ports: RuntimePorts = {}) {
       // 新しい業務routeも必ずこの所有者・CSRF検査の後へ置く。
       const current = await (ports.authenticate ?? session)(request, env, write);
       if (route === "/auth/logout" && request.method === "POST") {
-        return logout();
+        return await logout(request, env);
       }
       const repository =
         ports.git?.(current, env) ??

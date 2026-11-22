@@ -72,24 +72,179 @@ export function assertOrigin(request: Request, env: Environment) {
   if (request.headers.get("Origin") !== env.EDITOR_ORIGIN)
     throw new APIError("ORIGIN_REJECTED", 403);
 }
-export async function session(request: Request, env: Environment, write = false): Promise<Session> {
+// GitHub's refresh tokens are single-use. A conditional R2 lease prevents simultaneous
+// Worker requests from exchanging the same refresh token twice.
+const lifetimeSeconds = 14 * 24 * 60 * 60;
+const refreshWindowMs = 5 * 60 * 1000;
+const credentialPrefix = "internal/auth-sessions/v1/";
+interface Ticket {
+  sid: string;
+  login: string;
+  userId: string;
+  csrf: string;
+  issued: number;
+  expires: number;
+}
+interface Credentials {
+  token: string;
+  accessExpires: number;
+  refreshToken: string;
+  refreshExpires: number;
+  expires: number;
+  rotation?: { id: string; until: number };
+}
+const recordKey = (sid: string) => credentialPrefix + sid;
+const validSid = (sid: unknown): sid is string =>
+  typeof sid === "string" && /^[A-Za-z0-9_-]{32}$/u.test(sid);
+const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+function verifyTicket(ticket: Ticket, env: Environment, now: number): void {
+  if (
+    ticket.userId !== env.OWNER_GITHUB_ID ||
+    !ticket.csrf ||
+    !Number.isFinite(ticket.issued) ||
+    !Number.isFinite(ticket.expires) ||
+    ticket.issued > now + 60000 ||
+    ticket.expires <= now ||
+    ticket.expires - ticket.issued > lifetimeSeconds * 1000 + 60000
+  )
+    throw new APIError("AUTH_EXPIRED", 401);
+}
+async function refreshCredentials(
+  value: Credentials,
+  env: Environment,
+  fetcher: typeof fetch,
+): Promise<Credentials> {
+  if (!value.refreshToken || value.refreshExpires <= Date.now())
+    throw new APIError("AUTH_EXPIRED", 401);
+  const response = await oauthStage("REFRESH_EXCHANGE", () =>
+    fetcher("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: env.GITHUB_CLIENT_ID,
+        client_secret: env.GITHUB_CLIENT_SECRET,
+        grant_type: "refresh_token",
+        refresh_token: value.refreshToken,
+      }),
+      redirect: "manual",
+      signal: AbortSignal.timeout(15000),
+    }),
+  );
+  if (!response.ok) throw new APIError("AUTH_REFRESH_FAILED", 401);
+  const data = (await oauthStage("REFRESH_RESPONSE", () => response.json())) as {
+    access_token?: string;
+    expires_in?: number;
+    refresh_token?: string;
+    refresh_token_expires_in?: number;
+  };
+  if (
+    !data.access_token ||
+    !data.refresh_token ||
+    !Number.isFinite(data.expires_in) ||
+    (data.expires_in ?? 0) <= 0 ||
+    !Number.isFinite(data.refresh_token_expires_in) ||
+    (data.refresh_token_expires_in ?? 0) <= 0
+  )
+    throw new APIError("AUTH_REFRESH_FAILED", 401);
+  const now = Date.now();
+  return {
+    token: data.access_token,
+    accessExpires: now + data.expires_in! * 1000,
+    refreshToken: data.refresh_token,
+    refreshExpires: now + data.refresh_token_expires_in! * 1000,
+    expires: value.expires,
+  };
+}
+async function activeToken(sid: string, env: Environment, fetcher: typeof fetch): Promise<string> {
+  const keyName = recordKey(sid);
+  for (let attempt = 0; attempt < 110; attempt++) {
+    const object = await env.DRAFT_MEDIA.get(keyName);
+    if (!object) throw new APIError("AUTH_EXPIRED", 401);
+    const value = await unseal<Credentials>(await object.text(), env.SESSION_SECRET);
+    const now = Date.now();
+    if (
+      !value.token ||
+      !Number.isFinite(value.accessExpires) ||
+      !Number.isFinite(value.expires) ||
+      value.expires <= now
+    )
+      throw new APIError("AUTH_EXPIRED", 401);
+    if (value.rotation?.until && value.rotation.until > now) {
+      await pause(200);
+      continue;
+    }
+    if (value.accessExpires > now + refreshWindowMs) return value.token;
+    if (!value.refreshToken || value.refreshExpires <= now) {
+      if (value.accessExpires > now) return value.token;
+      throw new APIError("AUTH_EXPIRED", 401);
+    }
+    const leased: Credentials = {
+      ...value,
+      rotation: { id: nonce(), until: now + 20000 },
+    };
+    const lock = await env.DRAFT_MEDIA.put(keyName, await seal(leased, env.SESSION_SECRET), {
+      onlyIf: { etagMatches: object.etag },
+    });
+    if (!lock) continue;
+    let refreshed: Credentials;
+    try {
+      refreshed = await refreshCredentials(value, env, fetcher);
+    } catch (error) {
+      await env.DRAFT_MEDIA.put(keyName, await seal(value, env.SESSION_SECRET), {
+        onlyIf: { etagMatches: lock.etag },
+      }).catch(() => null);
+      throw error;
+    }
+    const saved = await env.DRAFT_MEDIA.put(keyName, await seal(refreshed, env.SESSION_SECRET), {
+      onlyIf: { etagMatches: lock.etag },
+    });
+    if (!saved) throw new APIError("AUTH_REFRESH_FAILED", 503);
+    return refreshed.token;
+  }
+  throw new APIError("AUTH_REFRESH_BUSY", 503);
+}
+
+export async function session(
+  request: Request,
+  env: Environment,
+  write = false,
+  fetcher: typeof fetch = fetch,
+): Promise<Session> {
   if (!configured(env)) throw new APIError("AUTH_NOT_CONFIGURED", 503);
   const value = cookies(request).get(cookieName);
   if (!value) throw new APIError("AUTH_REQUIRED", 401);
-  const result = await unseal<Session>(value, env.SESSION_SECRET);
-  if (
+  const result = await unseal<Session & Partial<Ticket>>(value, env.SESSION_SECRET);
+  const now = Date.now();
+  if (result.sid) {
+    verifyTicket(result as Ticket, env, now);
+  } else if (
     result.userId !== env.OWNER_GITHUB_ID ||
     !result.token ||
-    result.expires < Date.now() ||
-    result.issued > Date.now() + 60000
-  )
+    result.expires <= now ||
+    result.issued > now + 60000
+  ) {
     throw new APIError("AUTH_EXPIRED", 401);
+  }
   if (write) {
     assertOrigin(request, env);
     if (request.headers.get("X-CSRF-Token") !== result.csrf)
       throw new APIError("CSRF_REJECTED", 403);
   }
-  return result;
+  // Previously issued one-hour cookies remain valid until their original expiry.
+  if (!result.sid) {
+    if (!result.token) throw new APIError("AUTH_EXPIRED", 401);
+    return result;
+  }
+  if (!validSid(result.sid)) throw new APIError("AUTH_EXPIRED", 401);
+  const token = await activeToken(result.sid, env, fetcher);
+  return {
+    login: result.login,
+    userId: result.userId,
+    csrf: result.csrf,
+    issued: result.issued,
+    expires: result.expires,
+    token,
+  };
 }
 export async function login(request: Request, env: Environment): Promise<Response> {
   if (!configured(env)) throw new APIError("AUTH_NOT_CONFIGURED", 503);
@@ -168,6 +323,8 @@ export async function callback(
   const data = (await oauthStage("TOKEN_RESPONSE", () => exchange.json())) as {
     access_token?: string;
     expires_in?: number;
+    refresh_token?: string;
+    refresh_token_expires_in?: number;
   };
   if (!data.access_token) throw new APIError("OAUTH_EXCHANGE_FAILED", 401);
   const profile = await oauthStage("USER_LOOKUP", () =>
@@ -198,15 +355,49 @@ export async function callback(
   ) {
     throw new APIError("OAUTH_EXCHANGE_FAILED", 401);
   }
-  const maxAge = Math.min(3600, data.expires_in ?? 3600),
-    value: Session = {
-      userId: String(user.id),
-      login: user.login,
+  const renewable = Boolean(
+    data.refresh_token &&
+    Number.isFinite(data.refresh_token_expires_in) &&
+    (data.refresh_token_expires_in ?? 0) > 0 &&
+    Number.isFinite(data.expires_in) &&
+    (data.expires_in ?? 0) > 0,
+  );
+  const maxAge = renewable ? lifetimeSeconds : Math.min(3600, data.expires_in ?? 3600);
+  const now = Date.now();
+  const identity: Session = {
+    userId: String(user.id),
+    login: user.login,
+    token: data.access_token,
+    csrf: nonce(),
+    issued: now,
+    expires: now + maxAge * 1000,
+  };
+  let browserCookie: unknown = identity;
+  if (renewable) {
+    const sid = nonce();
+    const credentials: Credentials = {
       token: data.access_token,
-      csrf: nonce(),
-      issued: Date.now(),
-      expires: Date.now() + maxAge * 1000,
+      accessExpires: now + data.expires_in! * 1000,
+      refreshToken: data.refresh_token!,
+      refreshExpires: now + data.refresh_token_expires_in! * 1000,
+      expires: identity.expires,
     };
+    const saved = await env.DRAFT_MEDIA.put(
+      recordKey(sid),
+      await seal(credentials, env.SESSION_SECRET),
+      { onlyIf: { etagDoesNotMatch: "*" } },
+    );
+    if (!saved) throw new APIError("AUTH_SESSION_STORE_FAILED", 503);
+    const ticket: Ticket = {
+      sid,
+      userId: identity.userId,
+      login: identity.login,
+      csrf: identity.csrf,
+      issued: identity.issued,
+      expires: identity.expires,
+    };
+    browserCookie = ticket;
+  }
   const headers = new Headers({
     Location: env.EDITOR_ORIGIN + "/editor/",
     "Cache-Control": "no-store",
@@ -215,14 +406,19 @@ export async function callback(
     "Set-Cookie",
     makeCookie(
       cookieName,
-      await oauthStage("SESSION_COOKIE", () => seal(value, env.SESSION_SECRET)),
+      await oauthStage("SESSION_COOKIE", () => seal(browserCookie, env.SESSION_SECRET)),
       maxAge,
     ),
   );
   headers.append("Set-Cookie", makeCookie(stateCookie, "", 0));
   return new Response(null, { status: 303, headers });
 }
-export function logout() {
+export async function logout(request: Request, env: Environment) {
+  const value = cookies(request).get(cookieName);
+  if (value) {
+    const ticket = await unseal<Partial<Ticket>>(value, env.SESSION_SECRET);
+    if (validSid(ticket.sid)) await env.DRAFT_MEDIA.delete(recordKey(ticket.sid));
+  }
   return new Response(null, {
     status: 204,
     headers: { "Set-Cookie": makeCookie(cookieName, "", 0), "Cache-Control": "no-store" },
