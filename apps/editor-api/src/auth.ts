@@ -215,7 +215,16 @@ export async function session(
   if (!value) throw new APIError("AUTH_REQUIRED", 401);
   const result = await unseal<Session & Partial<Ticket>>(value, env.SESSION_SECRET);
   const now = Date.now();
-  verifyTicket(result as Ticket, env, now);
+  if (result.sid) {
+    verifyTicket(result as Ticket, env, now);
+  } else if (
+    result.userId !== env.OWNER_GITHUB_ID ||
+    !result.token ||
+    result.expires <= now ||
+    result.issued > now + 60000
+  ) {
+    throw new APIError("AUTH_EXPIRED", 401);
+  }
   if (write) {
     assertOrigin(request, env);
     if (request.headers.get("X-CSRF-Token") !== result.csrf)
