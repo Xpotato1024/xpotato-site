@@ -12,6 +12,7 @@ export type RegistryPullRequestResult = GitPullRequestResult;
 
 export interface LoginState {
   authenticated: boolean;
+  unavailable?: boolean;
   configured: boolean;
   user?: string;
   csrf?: string;
@@ -66,7 +67,12 @@ export async function loginState(): Promise<LoginState> {
     csrf = state.csrf ?? "";
     return state;
   } catch {
-    return { authenticated: false, configured: false, repository: "Xpotato1024/xpotato-site" };
+    return {
+      authenticated: false,
+      configured: true,
+      unavailable: true,
+      repository: "Xpotato1024/xpotato-site",
+    };
   }
 }
 export const query = (values: Record<string, string>) =>

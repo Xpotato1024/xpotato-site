@@ -86,17 +86,35 @@ export function useGitWorkspace(
   }, [draft.source, draft.path, draft.pendingRegistryChanges, baseTaxonomy, taxonomy]);
 
   useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
+    if (!hydrated) return;
     let active = true;
-    void loginState().then((state) => {
-      if (active) {
-        setAuth(state);
-      }
-    });
+    let checking = false;
+    let lastCheck = 0;
+    const refresh = () => {
+      if (!active || checking || Date.now() - lastCheck < 30000) return;
+      checking = true;
+      lastCheck = Date.now();
+      void loginState()
+        .then((state) => {
+          if (!active) return;
+          setAuth((current) => (state.unavailable ? { ...current, unavailable: true } : state));
+        })
+        .finally(() => {
+          checking = false;
+        });
+    };
+    const visible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    refresh();
+    window.addEventListener("pageshow", refresh);
+    window.addEventListener("online", refresh);
+    document.addEventListener("visibilitychange", visible);
     return () => {
       active = false;
+      window.removeEventListener("pageshow", refresh);
+      window.removeEventListener("online", refresh);
+      document.removeEventListener("visibilitychange", visible);
     };
   }, [hydrated]);
 
