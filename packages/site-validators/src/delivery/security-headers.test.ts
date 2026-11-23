@@ -47,6 +47,15 @@ const validArtifact = (): string =>
   renderSecurityHeaderArtifact(analyzeBuiltHtml(representativeBuild));
 
 describe("application-local security headers", () => {
+  it("excludes only the decorative LINE asset from image indexing", () => {
+    const artifact = validArtifact();
+    expect(validateSecurityHeaderArtifact(artifact)).toEqual([]);
+    const indexingRules = parseSecurityHeaderArtifact(artifact)
+      .filter((rule) => rule.headers.has("x-robots-tag"))
+      .map((rule) => [rule.route, rule.headers.get("x-robots-tag")]);
+    expect(indexingRules).toEqual([["/icon-share-line.png", "noindex"]]);
+  });
+
   it("adds immutable browser caching only for fingerprinted build assets and fonts", () => {
     const routes = parseSecurityHeaderArtifact(validArtifact());
     expect(routes.find((route) => route.route === "/*")!.headers.has("cache-control")).toBe(false);

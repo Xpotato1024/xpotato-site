@@ -230,6 +230,9 @@ export const renderSecurityHeaderArtifact = (
           "",
         ]
       : []),
+    "/icon-share-line.png",
+    "  X-Robots-Tag: noindex",
+    "",
     "/_astro/*",
     "  Cache-Control: public, max-age=31536000, immutable",
     "",
