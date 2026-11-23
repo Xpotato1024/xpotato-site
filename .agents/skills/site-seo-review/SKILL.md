@@ -1,6 +1,6 @@
 ---
 name: site-seo-review
-description: xpotato-siteの記事・固定ページ・ツールのSEO入力と実build出力を確認する。title/description、canonical、SNS、構造化データと一覧・検索・feedの整合を扱う。検索順位保証や無関係なSEO実装変更には使わない。
+description: xpotato-siteの記事・固定ページ・ツールのSEO入力と実build出力、AI回答の根拠として読める本文を確認する。title/description、canonical、SNS、構造化データと一覧・検索・feedの整合を扱う。検索順位・AI引用保証や無関係なSEO実装変更には使わない。
 ---
 
 # 公開ページのSEOを確認する
@@ -9,6 +9,7 @@ description: xpotato-siteの記事・固定ページ・ツールのSEO入力と�
 
 - 記事本文に対応するtitle/descriptionを編集する。title末尾のサイト名、canonical、OG/Twitter、JSON-LD、sitemap/RSS/searchは共通layout/derivationが所有し、frontmatterへ重複追加しない。
 - [初稿制作workflow](../japanese-technical-blog/references/first-draft-integrated-workflow.md)の検索意図を初稿で確認する。用語と別名を同じ読者の問いへ結び、例えば「3Dプリンタ 充填率 100 / 3Dプリンタ インフィル 100」を本文の自然な用語説明で扱う。別名の羅列やmeta keywordsは追加しない。
+- [AI回答での発見性](../../../docs/operations/answer-discoverability.md)に従い、代表的なユーザー質問と本文の回答・条件・根拠を対応させる。記事は検証可能な独自情報、ツールは用途・入出力・制約と実操作を確認する。主要な回答が通常の静的HTMLから読めることを見て、meta/JSON-LD/画像altだけに回答を閉じ込めない。AI回答の観測や引用は公開後の別評価とし、AIに渡していない非公開原稿を外部モデルでテスト済みと書かない。
 - H1は記事内の問い、検索titleは検索から選ぶ理由を担う。対象schemaが支持する場合のみ自然な`seo.titleOverride`を提案し、H1と異なる表現を選べる。同文でも役割を満たせばよく、違いを強制しない。固定semantic response schemaへ未対応fieldを追加しない。
 - authoritativeなページdescriptionは一つにし、詳細/一覧カード、meta description、OG/Twitter、WebPageとBlogPosting JSON-LDで再利用する。meta更新後に古いJSON-LD description等が残っていないか、入力だけでなく同じ候補の実renderを照合する。独立した複数descriptionを手入れしない。
 - 通常はfrontmatter `description`を正本として一度更新する。既存の`seo.descriptionOverride`や手書きの構造化データに古い説明があれば不一致として扱い、正規のmetadata所有者へ修正を戻す。override追加で一覧とdetailの説明を分岐させない。preview/draft/noindexで構造化データが意図どおり非出力なら、その不在を欠落扱いにせず、公開予定出力の確認とは分ける。

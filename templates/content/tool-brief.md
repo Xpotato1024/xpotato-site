@@ -7,6 +7,7 @@
 - 必要な状態（初期/処理中/結果/空/エラー/取消/再実行）と不要な機能：
 - core/UI/adapterの正本、既存source/採用版、変更対象外：
 - 掲載ページの名称・description・分類・技術/目的tag・使い方・実例・制約：
+- 自然なAI想定質問（用途・入出力・制約など）→掲載ページの回答・実coreの検証済み例→操作リンク：
 - 共通部品とtoken、必要な図/式/グラフ、PC/スマホ/focusの確認箇所：
 - 通信・保存・Worker/WASM等の必要capabilityと既存profile：
 - 新規/更新のinstaller、必要review、認可済みpreview、依頼の終了範囲：

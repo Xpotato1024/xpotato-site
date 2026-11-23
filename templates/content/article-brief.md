@@ -14,6 +14,7 @@
 - 比較の固定条件・変更条件・成功条件／失敗基準も含む観測／指標の定義が必要になる位置：
 - asset plan：承認済みoriginal heroの保持／source・delivery版/hash・ContentId／site palette/tokens／実証・模式・生成の役割：
 - H1／schema対応時だけ自然な別のseo.titleOverride／同義検索語と問い（例：3Dプリンタ 充填率 100 / 3Dプリンタ インフィル 100）：
+- 読者がAIに尋ねそうな代表的質問（任意の少数）→本文の回答箇所→根拠・重要条件／未検証・対象外：
 - 一つのauthoritative description／詳細・一覧・meta・OG・Twitter・WebPage/BlogPosting JSON-LDの実出力照合：
 - 結論の読者判断／本文に残す重要条件・安全／任意のArticleEndnote：必要性・内容・module利用可能/承認済みか：
 - 再現資料へ分ける方法・寸法・capture手順／本文に必要な条件との境界：

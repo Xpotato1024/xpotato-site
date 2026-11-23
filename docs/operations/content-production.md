@@ -73,7 +73,9 @@ npm run site -- article guide --job <job-id>
 
 Registryのarchive/indexableを確認し、実候補で詳細→タグ/分類一覧→詳細をたどる。割当済みタグのリンクと全タグ索引は共通実装を使う。draftを本番一覧へ出して確認せず、私有候補で表示・公開候補検査で最終discoveryを分担する。
 
-検索意図と自然な呼び方は構成設計で確認し、完成後に[site-seo-review](../../.agents/skills/site-seo-review/SKILL.md)で実HTMLを照合する。title/description/canonical、OG/Twitter、JSON-LD、hero、日付、内部リンク、公開対象のsitemap/feed/searchを確認する。検索順位は保証しない。
+検索意図と自然な呼び方に加え、[AI回答での発見性](answer-discoverability.md)に沿って読者がAIへ尋ねそうな代表的な問いを構成段階で考える。本文に答え・条件・根拠が存在するかを候補と実HTMLで確認し、記事では独自の根拠、ツールでは入力・結果・制約と操作導線を優先する。不要なFAQや質問数ノルマは設けない。
+
+完成後に[site-seo-review](../../.agents/skills/site-seo-review/SKILL.md)で実HTMLを照合する。title/description/canonical、OG/Twitter、JSON-LD、hero、日付、内部リンク、公開対象のsitemap/feed/searchを確認する。検索順位やAI回答での引用は保証しない。公開後のAI回答における言及・URL引用・回答の正確さは、実測条件とともに別指標として記録する。
 
 ## 完成ページQAと本人限定preview
 

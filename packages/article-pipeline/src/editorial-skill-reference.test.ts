@@ -211,4 +211,28 @@ describe("editorial Skill reference and regression corpus wiring (not semantic e
       "taxonomy未供給なら未検査",
     );
   });
+  it("wires answer discoverability into article, tool and SEO reviews without a new publication schema", async () => {
+    const guide = "docs/operations/answer-discoverability.md";
+    const guideText = await text(guide);
+    for (const term of ["公開前", "公開後", "静的HTML", "引用", "実測", "非公開"]) {
+      expect(guideText).toContain(term);
+    }
+    for (const path of [
+      "docs/operations/content-production.md",
+      "docs/content/editorial-policy.md",
+      ".agents/skills/japanese-technical-blog/SKILL.md",
+      ".agents/skills/create-browser-tool/SKILL.md",
+      ".agents/skills/site-seo-review/SKILL.md",
+      ".agents/skills/japanese-technical-blog/references/first-draft-integrated-workflow.md",
+    ]) {
+      expect(await text(path), path).toContain("answer-discoverability.md");
+    }
+    expect(await text("templates/content/article-brief.md")).toContain("AIに尋ねそうな");
+    expect(await text("templates/content/tool-brief.md")).toContain("AI想定質問");
+    expect(await text(gate)).toContain("AI想定質問");
+    expect(await text(".agents/skills/independent-article-audit/SKILL.md")).toContain(
+      "外部AIでの引用",
+    );
+    expect(guideText).toContain("新しいArticle Job state");
+  });
 });
