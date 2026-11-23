@@ -211,7 +211,9 @@ describe("editorial Skill reference and regression corpus wiring (not semantic e
       "taxonomy未供給なら未検査",
     );
   });
-  it("wires answer discoverability into article, tool and SEO reviews without a new publication schema", async () => {
+  it(
+    "wires answer discoverability into article, tool and SEO reviews without a new publication schema",
+    async () => {
     const guide = "docs/operations/answer-discoverability.md";
     const guideText = await text(guide);
     for (const term of ["公開前", "公開後", "静的HTML", "引用", "実測", "非公開"]) {
@@ -234,6 +236,6 @@ describe("editorial Skill reference and regression corpus wiring (not semantic e
       "外部AIでの引用",
     );
     expect(guideText).toContain("新しいArticle Job state");
-  });
-
+    },
+  );
 });
