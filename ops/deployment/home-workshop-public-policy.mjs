@@ -162,6 +162,58 @@ export function assertPrimeIconPublicObject(row) {
     stop("UNAPPROVED_RASTER");
   return expected;
 }
+// Fixed CMS identity controls; never a general raster or editor-path permission.
+export const editorIconPublicObjects = Object.freeze(
+  [
+    {
+      path: "/editor/xpotato-cms-16.png",
+      bytes: 403,
+      sha256: "465e068a54daf84221903675a529a3ce95e72bb188bb8b2a37144da92879f2e4",
+    },
+    {
+      path: "/editor/xpotato-cms-32.png",
+      bytes: 723,
+      sha256: "a039722343faa81c9a51467ff11ff7d93f2ba2e1760e8109476f4b6612d66b54",
+    },
+    {
+      path: "/editor/xpotato-cms-48.png",
+      bytes: 1083,
+      sha256: "39c428a0ba33354906fa0768bee3ff7860caec546301fb018cbce6bf45f41d15",
+    },
+    {
+      path: "/editor/xpotato-cms-180.png",
+      bytes: 3836,
+      sha256: "b03f88a30bbdeaf61171def603751b8ebb2c36a89457ee0c89a399bd13429547",
+    },
+    {
+      path: "/editor/xpotato-cms-192.png",
+      bytes: 4219,
+      sha256: "c724e18162b64739da09b0903fc0a9c8b2857019c956da7caa88a2d2baf0a978",
+    },
+    {
+      path: "/editor/xpotato-cms-512.png",
+      bytes: 13297,
+      sha256: "e2e9c929c5c8f748f38e027891d10617b104a796ce38f41b7f6eb11cb8cb0b00",
+    },
+    {
+      path: "/editor/xpotato-cms-maskable-512.png",
+      bytes: 11276,
+      sha256: "2610d49dbd5a444ffb56a9ea61fd3ec5301341e5ec96ee2225fce2d0690003e6",
+    },
+  ].map(Object.freeze),
+);
+const editorIcons = new Map(editorIconPublicObjects.map((row) => [row.path, row]));
+export function assertEditorIconPublicObject(row) {
+  const expected = row && editorIcons.get(row.path);
+  if (
+    !expected ||
+    Object.keys(row).sort().join("|") !== "bytes|path|sha256" ||
+    row.bytes !== expected.bytes ||
+    row.sha256 !== expected.sha256
+  )
+    stop("UNAPPROVED_RASTER");
+  return expected;
+}
 const siteIcons = new Map(siteIconPublicObjects.map((row) => [row.path, row]));
 export function assertSiteIconPublicObject(row) {
   const expected = row && siteIcons.get(row.path);
@@ -246,7 +298,10 @@ export function assertHomeWorkshopImageReferences(
     }
     if (!css && publicationMedia.has(value)) return; // Exact literal HTTPS URL only; no normalized aliases.
     const control =
-        controls.get(url.pathname) ?? siteIcons.get(url.pathname) ?? primeIcons.get(url.pathname),
+        controls.get(url.pathname) ??
+        siteIcons.get(url.pathname) ??
+        primeIcons.get(url.pathname) ??
+        editorIcons.get(url.pathname),
       asset = assets.get(url.pathname);
     if (
       value.includes("\\") ||

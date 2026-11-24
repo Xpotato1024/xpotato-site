@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { validateTouchIcon } from "./touch-icon.js";
+import { editorTouchIconPath, validateTouchIcon } from "./touch-icon.js";
 
 const png = readFileSync(
   new URL("../../../../apps/site/public/icon-apple-touch.png", import.meta.url),
@@ -11,6 +11,15 @@ const page = (head = link, body = "") =>
   `<!doctype html><html><head>${head}</head><body>${body}</body></html>`;
 
 describe("Apple touch icon", () => {
+  it("requires the CMS-specific icon for the editor and the original icon for other pages", () => {
+    const editorPng = readFileSync(
+      new URL("../../../../apps/editor/public/xpotato-cms-180.png", import.meta.url),
+    );
+    const editorPage = page(link.replace("/icon-apple-touch.png", editorTouchIconPath));
+    expect(validateTouchIcon(editorPage, editorPng, editorTouchIconPath)).toEqual([]);
+    expect(validateTouchIcon(page(), editorPng, editorTouchIconPath)).not.toEqual([]);
+    expect(validateTouchIcon(editorPage, png)).not.toEqual([]);
+  });
   it("accepts the committed opaque PNG", () => expect(validateTouchIcon(page(), png)).toEqual([]));
   it("rejects absent, duplicate, body-only, relative, wrong-size and SVG declarations", () => {
     for (const html of [

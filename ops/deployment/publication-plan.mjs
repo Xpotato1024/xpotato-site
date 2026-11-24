@@ -62,7 +62,7 @@ export function compilePublicationPlan({ files, sourceSha, media, headers, publi
       (path.startsWith("/_astro/") && /\.(css|js)$/.test(path)) ||
       (/\.(xml|json)$/.test(path) && !path.startsWith("/_")) ||
       path === "/robots.txt" ||
-      /^\/editor\/(?:assets\/[^/]+\.(?:css|js)|fonts\/[^/]+\.woff2|sw\.js|manifest\.webmanifest|icon\.svg)$/.test(
+      /^\/editor\/(?:assets\/[^/]+\.(?:css|js)|fonts\/[^/]+\.woff2|sw\.js|manifest\.webmanifest|icon\.svg|xpotato-cms(?:-(?:small|maskable))?\.svg|xpotato-cms-(?:16|32|48|180|192|512|maskable-512)\.png)$/.test(
         path,
       ) ||
       path === "/tools/prime-factorizer/sw.js" ||

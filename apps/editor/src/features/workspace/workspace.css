@@ -12,9 +12,6 @@
   min-height: 0;
   min-width: 0;
 }
-.workspace-header .editor-brand {
-  display: inline;
-}
 .connection-link {
   @apply cms-quiet-button;
 }

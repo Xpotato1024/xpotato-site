@@ -6,7 +6,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateHtmlFragments } from "./html-fragments.js";
 import { validateHomeSearchMetadata } from "./home-search-metadata.js";
-import { touchIconPath, validateTouchIcon } from "./touch-icon.js";
+import { editorTouchIconPath, touchIconPath, validateTouchIcon } from "./touch-icon.js";
 import { measureSharedMenuRuntime } from "./route-runtime.js";
 import {
   readBuiltHtml,
@@ -52,8 +52,19 @@ const builtSecurityHeaders = await readFile(join(dist, "_headers"), "utf8").catc
 if (builtSecurityHeaders === "") errors.push("built _headers is missing");
 const builtPages = await readBuiltHtml(dist);
 const touchIcon = await readFile(join(dist, touchIconPath.slice(1))).catch(() => Buffer.alloc(0));
-for (const page of builtPages)
-  errors.push(...validateTouchIcon(page.html, touchIcon).map((error) => `${page.path}: ${error}`));
+const editorTouchIcon = await readFile(join(dist, editorTouchIconPath.slice(1))).catch(() =>
+  Buffer.alloc(0),
+);
+for (const page of builtPages) {
+  const isEditor = page.path.replaceAll("\\", "/") === "editor/index.html";
+  errors.push(
+    ...validateTouchIcon(
+      page.html,
+      isEditor ? editorTouchIcon : touchIcon,
+      isEditor ? editorTouchIconPath : touchIconPath,
+    ).map((error) => `${page.path}: ${error}`),
+  );
+}
 errors.push(
   ...validateBuiltHtmlAgainstSecurityHeaders(
     builtSecurityHeaders,

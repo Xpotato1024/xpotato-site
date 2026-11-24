@@ -11,7 +11,7 @@ export async function editorShellInventory(dist) {
       if (entry.isDirectory()) await walk(join(directory, entry.name), name + "/");
       else if (entry.isFile() && name !== "sw.js") {
         if (
-          !/^(?:index\.html|manifest\.webmanifest|icon\.svg|assets\/[a-zA-Z0-9_.-]+\.(?:js|css)|fonts\/[a-zA-Z0-9_.-]+\.woff2)$/u.test(
+          !/^(?:index\.html|manifest\.webmanifest|icon\.svg|xpotato-cms(?:-(?:small|maskable))?\.svg|xpotato-cms-(?:16|32|48|180|192|512|maskable-512)\.png|assets\/[a-zA-Z0-9_.-]+\.(?:js|css)|fonts\/[a-zA-Z0-9_.-]+\.woff2)$/u.test(
             name,
           )
         )
