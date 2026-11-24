@@ -13,6 +13,7 @@ const deniedExtensions = new Set([
   ".tiff",
 ]);
 const allowedRasterControls = [
+  /^apps\/editor\/public\/xpotato-cms-(?:16|32|48|180|192|512|maskable-512)\.png$/u,
   /^apps\/site\/public\/(?:favicon|icon)-[^/]+\.png$/u,
   /^tests\/fixtures\/synthetic-media\/[^/]+\.png$/u,
 ];

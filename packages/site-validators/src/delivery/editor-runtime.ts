@@ -47,7 +47,7 @@ export function validateEditorShell(html: string): string[] {
     errors.push("Editor manifest missing");
   for (const link of links)
     if (
-      !/^\/editor\/(?:assets\/[a-zA-Z0-9_.-]+\.(?:css|js)|manifest\.webmanifest|icon\.svg)$/u.test(
+      !/^\/editor\/(?:assets\/[a-zA-Z0-9_.-]+\.(?:css|js)|manifest\.webmanifest|icon\.svg|xpotato-cms(?:-(?:small|maskable))?\.svg|xpotato-cms-(?:16|32|48|180|192|512|maskable-512)\.png)$/u.test(
         link.href,
       ) &&
       !(link.rel === "apple-touch-icon" && link.href === "/icon-apple-touch.png")

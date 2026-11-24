@@ -12,6 +12,7 @@ import type {
   ReviewComment,
 } from "@xpotato/editor-core/annotations";
 import { ConnectionStatus } from "./components/ConnectionStatus.js";
+import { EditorBrand } from "./components/EditorBrand.js";
 import { EditorHeader } from "./components/EditorHeader.js";
 import { EditorUpdateButton } from "./components/EditorUpdateButton.js";
 import { WorkspaceIcon } from "./components/WorkspaceIcon.js";
@@ -490,9 +491,7 @@ export default function App() {
             aria-label="ホームに戻る"
             onClick={() => navigation.navigate("home")}
           >
-            <span className="editor-brand">
-              <span className="brand-mark">X</span>potato
-            </span>
+            <EditorBrand />
           </button>
           <EditorUpdateButton
             ready={environment.updateReady}

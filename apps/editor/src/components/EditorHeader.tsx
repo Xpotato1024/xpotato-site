@@ -1,3 +1,4 @@
+import { EditorBrand } from "./EditorBrand.js";
 import { WorkspaceIcon } from "./WorkspaceIcon.js";
 import { EditorUpdateButton } from "./EditorUpdateButton.js";
 interface Props {
@@ -34,9 +35,7 @@ export function EditorHeader({
         aria-label="ホームに戻る"
       >
         <WorkspaceIcon name="back" />
-        <span className="editor-brand">
-          <span className="brand-mark">X</span>potato
-        </span>
+        <EditorBrand />
         <span className="mobile-library-label">ホーム</span>
       </button>
       <button

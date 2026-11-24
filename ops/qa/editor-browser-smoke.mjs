@@ -89,9 +89,61 @@ try {
       console.error(`Editor browser CSP console (${activePhase}):`, message.location(), text);
     }
   });
-  beginPhase("body-only highlighted MDX");
+  beginPhase("CMS brand assets and responsive headers");
   await page.goto(server.origin + "/editor/");
+  const manifestResponse = await page.request.get(server.origin + "/editor/manifest.webmanifest");
+  assert.equal(manifestResponse.status(), 200);
+  const manifest = await manifestResponse.json();
+  assert.equal(manifest.name, "Xpotato CMS");
+  assert.equal(manifest.scope, "/editor/");
+  assert.equal(manifest.start_url, "/editor/");
+  assert.deepEqual(
+    manifest.icons.map(({ src, sizes, purpose }) => ({ src, sizes, purpose })),
+    [
+      { src: "/editor/xpotato-cms-192.png", sizes: "192x192", purpose: "any" },
+      { src: "/editor/xpotato-cms-512.png", sizes: "512x512", purpose: "any" },
+      { src: "/editor/xpotato-cms-maskable-512.png", sizes: "512x512", purpose: "maskable" },
+    ],
+  );
+  for (const path of [
+    "/editor/xpotato-cms.svg",
+    "/editor/xpotato-cms-small.svg",
+    "/editor/xpotato-cms-maskable.svg",
+    "/editor/xpotato-cms-180.png",
+    "/editor/xpotato-cms-16.png",
+    "/editor/xpotato-cms-32.png",
+    "/editor/xpotato-cms-48.png",
+    ...manifest.icons.map((icon) => icon.src),
+  ]) {
+    assert.equal((await page.request.get(server.origin + path)).status(), 200, path);
+  }
+  assert.equal(
+    await page.locator('link[rel="apple-touch-icon"]').getAttribute("href"),
+    "/editor/xpotato-cms-180.png",
+  );
+  const checkBrand = async (width, phase) => {
+    await page.setViewportSize({ width, height: 900 });
+    const logo = page.locator(".editor-brand img");
+    await logo.waitFor({ state: "visible" });
+    await logo.evaluate((image) => image.decode());
+    assert.equal(await logo.getAttribute("src"), "/editor/xpotato-cms.svg");
+    assert.equal(await logo.evaluate((image) => image.naturalWidth), 512);
+    const header = page.locator(".editor-header");
+    assert(
+      await header.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+      `${phase} header overflows at ${width}px`,
+    );
+    if (width === 1365) {
+      assert(await page.locator(".editor-brand-name").isVisible());
+      assert.equal(await page.locator(".editor-brand-name").innerText(), "Xpotato CMS");
+    }
+    await header.screenshot({ path: resolve(out, `brand-${phase}-${width}.png`) });
+  };
+  for (const width of [320, 390, 1365]) await checkBrand(width, "home");
   await ensureEditing(page);
+  for (const width of [320, 390, 1365]) await checkBrand(width, "editor");
+  await page.setViewportSize({ width: 1365, height: 1000 });
+  beginPhase("body-only highlighted MDX");
   const title = page.getByRole("textbox", { name: "タイトル", exact: true });
   await title.waitFor();
   await title.fill("CMS 動作確認（合成データ）");

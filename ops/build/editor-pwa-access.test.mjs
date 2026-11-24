@@ -2,7 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash, webcrypto } from "node:crypto";
 import { runInNewContext } from "node:vm";
-import { editorWorkerSource } from "./editor-pwa.mjs";
+import { editorWorkerSource, editorShellInventory } from "./editor-pwa.mjs";
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const files = [
   { path: "/editor/index.html", sha256: "a".repeat(64), bytes: 128 },
@@ -94,4 +97,33 @@ test("preview font subsets load on demand and enter the same verified offline ca
     () => editorWorkerSource(inventory, { lazyFontPaths: ["/editor-api/draft"] }),
     /EDITOR_LAZY_ASSET_NOT_FONT/,
   );
+});
+
+test("precache includes approved CMS icon paths but rejects arbitrary raster", async () => {
+  const root = await mkdtemp(join(tmpdir(), "cms-brand-"));
+  try {
+    await writeFile(join(root, "index.html"), "shell");
+    const icons = [
+      "xpotato-cms.svg",
+      "xpotato-cms-small.svg",
+      "xpotato-cms-maskable.svg",
+      "xpotato-cms-16.png",
+      "xpotato-cms-32.png",
+      "xpotato-cms-48.png",
+      "xpotato-cms-180.png",
+      "xpotato-cms-192.png",
+      "xpotato-cms-512.png",
+      "xpotato-cms-maskable-512.png",
+    ];
+    for (const icon of icons) await writeFile(join(root, icon), "fixture");
+    const files = await editorShellInventory(root);
+    for (const icon of icons) {
+      assert.ok(files.some((entry) => entry.path === "/editor/" + icon));
+      assert.ok(editorWorkerSource(files).includes("/editor/" + icon));
+    }
+    await writeFile(join(root, "xpotato-cms-64.png"), "not approved");
+    await assert.rejects(() => editorShellInventory(root), /EDITOR_ASSET_NOT_ALLOWED/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

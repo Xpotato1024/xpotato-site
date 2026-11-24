@@ -31,7 +31,7 @@ export const publicReadbackReport = (error) => reports.get(error);
 function isEditorProtectedShellPath(path) {
   return (
     path === "/editor/" ||
-    /^\/editor\/(?:index\.html|manifest\.webmanifest|icon\.svg|sw\.js|assets\/[A-Za-z0-9_.-]+\.(?:js|css)|fonts\/[A-Za-z0-9_.-]+\.woff2)$/.test(
+    /^\/editor\/(?:index\.html|manifest\.webmanifest|icon\.svg|xpotato-cms(?:-(?:small|maskable))?\.svg|xpotato-cms-(?:16|32|48|180|192|512|maskable-512)\.png|sw\.js|assets\/[A-Za-z0-9_.-]+\.(?:js|css)|fonts\/[A-Za-z0-9_.-]+\.woff2)$/.test(
       path,
     )
   );

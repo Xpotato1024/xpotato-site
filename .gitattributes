@@ -30,3 +30,6 @@ vendor/browser-tools/prime-factorizer/*/src/site/mount.mjs whitespace=-blank-at-
 vendor/browser-tools/prime-factorizer/*/vendor/emscripten/EMSCRIPTEN-LICENSE.txt whitespace=-blank-at-eol,-blank-at-eof
 vendor/browser-tools/prime-factorizer/*/vendor/gmp-ecm/COPYING.LIB whitespace=-blank-at-eol
 vendor/browser-tools/prime-factorizer/*/vendor/gmp/COPYING.LESSERv3 whitespace=-blank-at-eol
+
+# Exact owner-reviewed CMS vector source bytes.
+apps/editor/public/xpotato-cms*.svg text eol=lf

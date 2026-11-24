@@ -73,8 +73,8 @@ export default defineConfig({
           source:
             JSON.stringify({
               id: "/editor/",
-              name: "Xpotato Editor",
-              short_name: "記事編集",
+              name: "Xpotato CMS",
+              short_name: "Xpotato CMS",
               start_url: "/editor/",
               scope: "/editor/",
               display: "standalone",
@@ -82,19 +82,26 @@ export default defineConfig({
               background_color: background,
               theme_color: color,
               icons: [
-                { src: "/editor/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
+                {
+                  src: "/editor/xpotato-cms-192.png",
+                  sizes: "192x192",
+                  type: "image/png",
+                  purpose: "any",
+                },
+                {
+                  src: "/editor/xpotato-cms-512.png",
+                  sizes: "512x512",
+                  type: "image/png",
+                  purpose: "any",
+                },
+                {
+                  src: "/editor/xpotato-cms-maskable-512.png",
+                  sizes: "512x512",
+                  type: "image/png",
+                  purpose: "maskable",
+                },
               ],
             }) + "\n",
-        });
-        this.emitFile({
-          type: "asset",
-          fileName: "icon.svg",
-          source:
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="' +
-            color +
-            '"/><path d="M54 142V49h56l28 28v65zM108 49v30h30M74 99h44M74 119h30" fill="none" stroke="' +
-            tokens.resolve("--on-accent") +
-            '" stroke-width="8"/></svg>',
         });
         for (const name of allFontNames)
           this.emitFile({

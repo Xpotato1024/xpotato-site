@@ -10,7 +10,13 @@ const attr = (node: Node, name: string) =>
   "attrs" in node ? node.attrs.find((a) => a.name === name)?.value : undefined;
 export const touchIconPath = "/icon-apple-touch.png";
 
-export function validateTouchIcon(html: string, png: Buffer): string[] {
+export const editorTouchIconPath = "/editor/xpotato-cms-180.png";
+
+export function validateTouchIcon(
+  html: string,
+  png: Buffer,
+  expectedPath = touchIconPath,
+): string[] {
   const errors: string[] = [];
   const head = elements(parse(html)).find((n) => "tagName" in n && n.tagName === "head");
   const links = head
@@ -20,7 +26,7 @@ export function validateTouchIcon(html: string, png: Buffer): string[] {
     : [];
   if (
     links.length !== 1 ||
-    attr(links[0]!, "href") !== touchIconPath ||
+    attr(links[0]!, "href") !== expectedPath ||
     attr(links[0]!, "type") !== "image/png" ||
     attr(links[0]!, "sizes") !== "180x180"
   ) {

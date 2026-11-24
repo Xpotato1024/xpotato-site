@@ -21,6 +21,8 @@ import {
   assertSiteIconPublicObject,
   primeIconPublicObjects,
   assertPrimeIconPublicObject,
+  editorIconPublicObjects,
+  assertEditorIconPublicObject,
 } from "./home-workshop-public-policy.mjs";
 export const hashBytes = (bytes) => createHash("sha256").update(bytes).digest("hex");
 export function requireManualRun(env) {
@@ -131,6 +133,9 @@ export async function readPublicArtifactTargets(staging, sourceSha, heldIds) {
         controlObjects.push(row);
       } else if (primeIconPublicObjects.some((icon) => icon.path === row.path)) {
         assertPrimeIconPublicObject(row);
+        controlObjects.push(row);
+      } else if (editorIconPublicObjects.some((icon) => icon.path === row.path)) {
+        assertEditorIconPublicObject(row);
         controlObjects.push(row);
       } else {
         assertHomeWorkshopPublicObject(row);
