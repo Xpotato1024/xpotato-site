@@ -357,7 +357,7 @@ try {
     page.on("pageerror", capturePageError);
     await page.goto(server.origin + "/editor/");
     await page.getByRole("button", { name: /^下書きの続き/u }).click();
-    await page.getByLabel("読み込み元", { exact: true }).selectOption(aiBranch);
+    await page.locator(".repository-panel").getByLabel("読み込み元").selectOption(aiBranch);
     await page.getByRole("button", { name: "一覧を取得", exact: true }).click();
     await page
       .locator(".repository-documents")

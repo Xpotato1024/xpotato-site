@@ -132,7 +132,7 @@ try {
     assert.ok(Math.abs(layout.left - layout.contentLeft) <= 1, "Navigation and page gutters align");
     for (const tab of layout.tabs) assert.deepEqual(tab, layout.tabs[0]);
     const updateControl = page.locator(".workspace-header .editor-update-button");
-    assert.equal(await updateControl.getAttribute("aria-label"), "PWAの更新を確認");
+    assert.equal(await updateControl.getAttribute("aria-label"), "CMSアプリの更新を確認");
     const updateRect = await updateControl.evaluate((button) => {
       const box = button.getBoundingClientRect();
       return { left: box.left, right: box.right, width: box.width, height: box.height };
@@ -377,7 +377,7 @@ try {
   });
   await prepared.getByLabel("添削から開く").check();
   await prepared.getByRole("button", { name: "編集を始める" }).click();
-  await page.locator(".document-workbench").waitFor();
+  await page.locator(".start-workspace").waitFor({ state: "hidden" });
   const openedBody = await readBody(page);
   assert.match(openedBody, /AIが同じブランチへ書いた確認用の本文。/u);
   assert.doesNotMatch(openedBody, /別ブランチの無関係な本文/u);
