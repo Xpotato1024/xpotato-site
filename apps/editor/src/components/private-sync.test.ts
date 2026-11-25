@@ -64,6 +64,7 @@ vi.mock("../data/storage.js", () => ({
 }));
 vi.mock("../media/optimize.js", () => ({ optimizeImage: vi.fn() }));
 vi.mock("../media/prepared.js", () => ({ importPreparedMedia: vi.fn() }));
+vi.mock("./MediaHandoffPanel.js", () => ({ MediaHandoffPanel: () => null }));
 
 const branchMessage = "同期するには、下書きの開始画面で作業ブランチを選んでください。";
 const flush = () => new Promise<void>((resolve) => setImmediate(resolve));
@@ -199,7 +200,9 @@ describe("private synchronization requires a bound working branch", () => {
     const draft = { ...draftFixture(), workingBranch: "content/work" };
     const media = mediaFixture(draft);
     mocks.media.mockResolvedValue([media]);
-    mocks.request.mockResolvedValue({ draft: { revision: 7 } });
+    mocks.find.mockResolvedValue({
+      draft: { id: draft.remoteDraftId, revision: 7, assets: { [media.assetId]: media.remoteId } },
+    });
     const { tree } = await mount(MediaPanel, mediaProps(draft));
     await click(tree, "棄却");
     expect(mocks.request).toHaveBeenCalledWith("/draft-state", {
@@ -207,7 +210,28 @@ describe("private synchronization requires a bound working branch", () => {
       body: { id: draft.remoteDraftId, revision: 7, action: "reject", assetId: media.assetId },
     });
     expect(mocks.deleteMedia).toHaveBeenCalledExactlyOnceWith(media.id);
-    expect(mocks.find).toHaveBeenCalledExactlyOnceWith(draft);
+    expect(mocks.find).toHaveBeenCalledWith(draft);
+  });
+
+  it("does not reject a newer image through a stale card", async () => {
+    const draft = { ...draftFixture(), workingBranch: "content/work" };
+    const media = mediaFixture(draft);
+    mocks.media.mockResolvedValue([media]);
+    mocks.find.mockResolvedValue({
+      draft: {
+        id: draft.remoteDraftId,
+        revision: 8,
+        assets: { [media.assetId]: "new-private-image" },
+      },
+    });
+    const props = mediaProps(draft);
+    const { tree } = await mount(MediaPanel, props);
+    await click(tree, "棄却");
+    expect(mocks.request).not.toHaveBeenCalled();
+    expect(mocks.deleteMedia).not.toHaveBeenCalled();
+    expect(props.onError).toHaveBeenCalledWith(
+      "画像が別の端末で変更されています。画像を取得して確認してください。",
+    );
   });
 
   it("cannot restore a previously displayed remote rejection after the branch is detached", async () => {

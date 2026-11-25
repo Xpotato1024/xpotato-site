@@ -16,6 +16,7 @@ import {
   type LocalDraft,
 } from "../data/storage.js";
 import { request } from "../data/api.js";
+import { MediaHandoffPanel } from "./MediaHandoffPanel.js";
 interface Props {
   draft: LocalDraft;
   authenticated: boolean;
@@ -55,6 +56,8 @@ export function MediaPanel({
   const altInputs = useRef(new Map<string, HTMLInputElement>());
   const captionInputs = useRef(new Map<string, HTMLTextAreaElement>());
   const mediaWrites = useRef<Promise<void>>(Promise.resolve());
+  const currentDraftId = useRef(draft.id);
+  currentDraftId.current = draft.id;
   const [invalidAlt, setInvalidAlt] = useState<string | null>(null);
   const [items, setItems] = useState<LocalMedia[]>([]),
     [kind, setKind] = useState<MediaKind>("photo"),
@@ -63,6 +66,7 @@ export function MediaPanel({
     [remoteSnapshot, setRemoteSnapshot] = useState<RemoteMediaSnapshot | null>(null);
   const reload = () =>
     localMedia(draft.id).then((values) => {
+      if (currentDraftId.current !== draft.id) return;
       setItems(values);
       window.dispatchEvent(
         new CustomEvent("editor-media-changed", { detail: { draftId: draft.id } }),
@@ -249,28 +253,34 @@ export function MediaPanel({
     }
   }
   async function remove(media: LocalMedia) {
-    if (media.remoteId && canSync) {
-      try {
-        const snapshot = await request<{ draft: { revision: number } }>(
-          "/draft?id=" + encodeURIComponent(draft.remoteDraftId ?? draft.id),
-        );
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (media.remoteId && canSync) {
+        const snapshot = await findMediaSnapshot(draft);
+        if (!snapshot || snapshot.draft.assets[media.assetId] !== media.remoteId) {
+          throw Error("画像が別の端末で変更されています。画像を取得して確認してください。");
+        }
         await request("/draft-state", {
           method: "POST",
           body: {
-            id: draft.remoteDraftId ?? draft.id,
+            id: snapshot.draft.id,
             revision: snapshot.draft.revision,
             action: "reject",
             assetId: media.assetId,
           },
         });
-      } catch (error) {
-        onError(error instanceof Error ? error.message : "棄却を同期できませんでした");
-        return;
       }
+      await deleteLocalMedia(media.id);
+      await reload();
+      if (canSync && currentDraftId.current === draft.id) {
+        setRemoteSnapshot(await findMediaSnapshot(draft));
+      }
+    } catch (error) {
+      onError(error instanceof Error ? error.message : "棄却を同期できませんでした");
+    } finally {
+      setBusy(false);
     }
-    await deleteLocalMedia(media.id);
-    await reload();
-    if (canSync) setRemoteSnapshot(await findMediaSnapshot(draft));
   }
   return (
     <section className="media-panel" aria-label="画像とGIF">
@@ -283,6 +293,15 @@ export function MediaPanel({
         別の端末で同期した画像を取得
       </button>
       {authenticated && !canSync && <p className="muted small">{syncUnavailableMessage}</p>}
+      <MediaHandoffPanel
+        draft={draft}
+        authenticated={authenticated}
+        busy={busy}
+        onBusy={setBusy}
+        onDraft={onDraft}
+        onImported={reload}
+        onError={onError}
+      />
       <label>
         画像の用途
         <select value={kind} onChange={(event) => setKind(event.target.value as MediaKind)}>
@@ -417,7 +436,7 @@ export function MediaPanel({
             >
               画像を同期
             </button>
-            <button type="button" onClick={() => void remove(media)}>
+            <button type="button" disabled={busy} onClick={() => void remove(media)}>
               棄却
             </button>
           </div>

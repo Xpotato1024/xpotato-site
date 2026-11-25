@@ -4,6 +4,7 @@ import { readFile, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 import { editorStaticServer } from "./editor-static-server.mjs";
+import { readBody } from "./editor-browser-helpers.mjs";
 
 const root = resolve(".");
 const [manifest, index, series] = await Promise.all([
@@ -11,14 +12,41 @@ const [manifest, index, series] = await Promise.all([
   readFile(resolve(root, "content/registry/editor-content-index.json"), "utf8").then(JSON.parse),
   readFile(resolve(root, "content/registry/series/series.json"), "utf8").then(JSON.parse),
 ]);
-const snapshot = { branch: "main", commit: "a".repeat(40) };
+const draftBranch = "content/ai-product-review-20261126";
+const otherBranch = "content/unrelated-article";
+const documentRequests = [];
 const sample = index.documents.map((item) => ({
   path: item.path,
   sha: "b".repeat(40),
   bytes: 300,
 }));
 const api = (req, res) => {
-  const pathname = new URL(req.url, "http://localhost").pathname;
+  const url = new URL(req.url, "http://localhost");
+  const { pathname } = url;
+  const branch = url.searchParams.get("branch") ?? "main";
+  if (pathname === "/editor-api/document") {
+    const path = url.searchParams.get("path");
+    const entry = index.documents.find((item) => item.path === path);
+    assert(entry);
+    documentRequests.push({ branch, path, commit: url.searchParams.get("commit") });
+    const source = [
+      "---",
+      "id: " + JSON.stringify(entry.contentId),
+      "title: " + JSON.stringify(entry.title),
+      'description: "同じ作業ブランチの引継ぎを確認する合成原稿"',
+      'category: "software"',
+      "tags: []",
+      "draft: true",
+      "---",
+      branch === draftBranch
+        ? "AIが同じブランチへ書いた確認用の本文。"
+        : "別ブランチの無関係な本文。",
+      "",
+    ].join("\n");
+    res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+    res.end(JSON.stringify({ source, path, blobSha: "c".repeat(40) }));
+    return;
+  }
   const payload =
     pathname === "/editor-api/session"
       ? {
@@ -28,14 +56,16 @@ const api = (req, res) => {
           csrf: "fixture",
         }
       : pathname === "/editor-api/branches"
-        ? ["main"]
+        ? ["main", draftBranch, otherBranch]
         : pathname === "/editor-api/snapshot"
-          ? snapshot
+          ? { branch, commit: "a".repeat(40) }
           : pathname === "/editor-api/manifest"
             ? { ...manifest, contentIndex: index.documents, seriesRegistry: series }
             : pathname === "/editor-api/documents"
               ? sample
-              : null;
+              : pathname === "/editor-api/drafts"
+                ? []
+                : null;
   res.writeHead(payload ? 200 : 404, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
@@ -194,6 +224,8 @@ try {
   assert.equal(await localRows.count(), 6);
   assert.match(await localRows.first().innerText(), /端末テスト8/u);
 
+  const sourceBranch = page.locator(".repository-panel").getByLabel("読み込み元");
+  await sourceBranch.selectOption(draftBranch);
   await page.getByRole("button", { name: "一覧を取得" }).click();
   const choices = page.locator(".repository-documents .draft-choice");
   const remotePager = page.getByRole("navigation", { name: "Gitの原稿のページ送り" });
@@ -229,6 +261,9 @@ try {
       "Inline action must retain primary styling",
     );
     assert.equal(await selection.getByRole("group", { name: "作業場所" }).count(), 1);
+    assert.equal(await selection.locator(".branch-value").innerText(), draftBranch);
+    assert.equal(await selection.getByRole("radio").count(), 0);
+    assert.equal(await selection.getByRole("combobox").count(), 0);
     assert.equal(
       await choice.evaluate(
         (row) =>
@@ -327,9 +362,32 @@ try {
   await firstDraft.waitFor();
   assert.equal(await archiveToggle.count(), 0);
 
+  await sourceBranch.selectOption(draftBranch);
+  await page.getByRole("button", { name: "一覧を取得" }).click();
+  const selectedRemote = choices.first();
+  await selectedRemote.locator(":scope > button").click();
+  const prepared = selectedRemote.locator(".start-selection-inline");
+  assert.equal(await prepared.locator(".branch-value").innerText(), draftBranch);
+  assert.equal(await prepared.getByRole("combobox").count(), 0);
+  await page.setViewportSize({ width: 320, height: 844 });
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+  await prepared.scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: resolve(".local/cms-validation/selection-inline/bound-draft-320.png"),
+  });
+  await prepared.getByLabel("添削から開く").check();
+  await prepared.getByRole("button", { name: "編集を始める" }).click();
+  await page.locator(".document-workbench").waitFor();
+  const openedBody = await readBody(page);
+  assert.match(openedBody, /AIが同じブランチへ書いた確認用の本文。/u);
+  assert.doesNotMatch(openedBody, /別ブランチの無関係な本文/u);
+  assert.equal(documentRequests.length, 1);
+  assert.equal(documentRequests[0].branch, draftBranch);
+  assert.equal(documentRequests[0].commit, "a".repeat(40));
+
   assert.deepEqual(errors, [], "No browser runtime errors");
   console.log(
-    "Editor paged catalogs, inline actions, navigation alignment, local archiving, deletion with media/revisions and scroll policy PASS",
+    "Editor paged catalogs, same-branch draft handoff, inline actions, navigation alignment, local archiving, deletion with media/revisions and scroll policy PASS",
   );
 } finally {
   await browser?.close();

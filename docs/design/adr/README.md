@@ -1,13 +1,15 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-11-19
+last_verified: 2026-11-26
 canonical_for:
   - ADR lifecycle index
   - frozen ADR adoption state
 ---
 
 # Architecture Decision Records
+
+- [ADR-0093: 下書きの再開先を固定し、AI原稿と私有画像を同じ制作単位で引き継ぐ](0093-draft-handoff-identity.md) — Proposed。読み込み元branchの継続、固定原稿とassetIdを持つ私有bundle、既存owner認証によるDraft登録と再実行。
 
 - [ADR-0091: 下書き編集と公開・コードCIの分離](0091-draft-editing-ci.md) — Proposed。未公開原稿と正規索引の意味判定、全体生成物検査、公開変更とmainの全体CI。
 
