@@ -194,6 +194,9 @@
 .branch-setup > p {
   margin: 0;
 }
+.branch-value {
+  overflow-wrap: anywhere;
+}
 .branch-setup > a {
   font-size: 0.8rem;
   display: inline-block;

@@ -8,11 +8,13 @@ import type { RemoteMediaSnapshot } from "../../data/media-sync.js";
 import type { DraftWorkspace } from "../drafts/useDraftWorkspace.js";
 import { createLocalDraft } from "../drafts/model.js";
 import { useGitWorkspace } from "./useGitWorkspace.js";
+import schema from "../../../../../content/registry/editor.json";
 
 const mocks = vi.hoisted(() => ({
   request: vi.fn(),
   find: vi.fn(),
   restore: vi.fn(),
+  missing: vi.fn(),
   media: vi.fn(),
   saveMedia: vi.fn(),
 }));
@@ -25,6 +27,7 @@ vi.mock("../../data/api.js", () => ({
 vi.mock("../../data/media-sync.js", () => ({
   findMediaSnapshot: mocks.find,
   restoreMediaSnapshot: mocks.restore,
+  missingDraftMedia: mocks.missing,
 }));
 vi.mock("../../data/storage.js", () => ({
   localMedia: mocks.media,
@@ -69,22 +72,39 @@ function fixture() {
   const restoredMedia: LocalMedia[] = [];
   const workspace = {
     draft: initial,
+    current: { current: initial },
     hydrated: false,
     persist: vi.fn(async () => {}),
     openLocal: vi.fn(async (draft: LocalDraft) => {
       opened.push(draft);
+      workspace.current.current = draft;
     }),
   } as unknown as DraftWorkspace;
   let git: ReturnType<typeof useGitWorkspace> | undefined;
+  const onError = vi.fn();
   function Probe() {
-    git = useGitWorkspace(workspace, vi.fn(), vi.fn());
+    git = useGitWorkspace(workspace, onError, vi.fn());
     return null;
   }
   renderToStaticMarkup(createElement(Probe));
   mocks.request.mockImplementation(async (route: string) => {
     if (route.startsWith("/document?")) return { source, path: initial.path };
     if (route.startsWith("/manifest?"))
-      return { contractVersion: 1, categories: {}, tags: [], modules: [] };
+      return {
+        contractVersion: 1,
+        categories: {},
+        tags: [],
+        modules: [],
+        contractHash: schema.contractHash,
+      };
+    if (route.startsWith("/snapshot?")) {
+      return {
+        branch: new URLSearchParams(route.split("?")[1]).get("branch"),
+        commit: "a".repeat(40),
+      };
+    }
+    if (route.startsWith("/documents?"))
+      return [{ path: initial.path, sha: "b".repeat(40), bytes: 100 }];
     throw Error("Unexpected API route: " + route);
   });
   mocks.restore.mockImplementation(async (local: LocalDraft, snapshot: RemoteMediaSnapshot) => {
@@ -117,92 +137,292 @@ function fixture() {
     restoredMedia.filter((item) => item.draftId === id),
   );
   mocks.saveMedia.mockResolvedValue(undefined);
-  return { git: git!, initial, source, remote, opened, restoredMedia };
+  mocks.missing.mockResolvedValue([]);
+  return { git: git!, initial, source, remote, opened, restoredMedia, workspace, onError };
 }
 
 describe("opening Git drafts into an explicit workspace", () => {
-  it("copies source-branch images and review into a fresh branch without carrying private synchronization IDs", async () => {
+  it("keeps source-branch text, images and review bound to the same working branch", async () => {
     const state = fixture();
     mocks.find.mockImplementation(async (draft: LocalDraft) =>
       draft.workingBranch === "content/source" ? state.remote : null,
     );
     await state.git.openDocument(
       state.initial.path,
-      { branch: "content/new", commit: "a".repeat(40) },
+      { branch: "content/source", commit: "a".repeat(40) },
       "content/source",
       "drafts",
     );
     expect(mocks.find.mock.calls.map(([draft]) => (draft as LocalDraft).workingBranch)).toEqual([
-      "content/new",
       "content/source",
     ]);
     const opened = state.opened[0]!;
-    expect(opened.workingBranch).toBe("content/new");
+    expect(opened.workingBranch).toBe("content/source");
     expect(opened.sourceBranch).toBe("content/source");
     expect(opened.baseCommit).toBe("a".repeat(40));
     expect(opened.source).toBe(state.source);
     expect(opened.annotations).toEqual(state.remote.draft.review!.comments);
-    expect(opened).not.toHaveProperty("remoteDraftId");
-    expect(opened).not.toHaveProperty("remoteRevision");
-    expect(opened).not.toHaveProperty("reviewRevision");
-    expect(mocks.saveMedia).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: state.restoredMedia[0]!.id,
-        draftId: opened.id,
-        assetId: "illustration",
-      }),
-    );
-    expect(mocks.saveMedia.mock.calls[0]![0]).not.toHaveProperty("remoteId");
+    expect(opened.remoteDraftId).toBe(state.remote.draft.id);
+    expect(opened.remoteRevision).toBe(7);
+    expect(opened.reviewRevision).toBe(3);
+    expect(mocks.saveMedia).not.toHaveBeenCalled();
     expect(state.remote.draft.branch).toBe("content/source");
     expect(state.restoredMedia[0]!.remoteId).toBe("remote-asset");
   });
 
-  it("opens a Git draft for this device with copied images and review but no original-branch mutation identity", async () => {
+  it("refuses to detach a Git draft from its branch while resuming it", async () => {
     const state = fixture();
     mocks.find.mockResolvedValue(state.remote);
+    await expect(
+      state.git.openDocument(
+        state.initial.path,
+        { branch: "content/source", commit: "a".repeat(40) },
+        "content/source",
+        "drafts",
+        true,
+      ),
+    ).rejects.toThrow("同じ作業ブランチ");
+    expect(state.opened).toHaveLength(0);
+    expect(mocks.request).not.toHaveBeenCalled();
+    expect(mocks.find).not.toHaveBeenCalled();
+  });
+
+  it("refuses another branch even if it contains an article at the same path", async () => {
+    const state = fixture();
+    state.remote.draft.branch = "content/target";
+    mocks.find.mockResolvedValue(state.remote);
+    await expect(
+      state.git.openDocument(
+        state.initial.path,
+        { branch: "content/target", commit: "a".repeat(40) },
+        "content/source",
+        "drafts",
+      ),
+    ).rejects.toThrow("同じ作業ブランチ");
+    expect(state.opened).toHaveLength(0);
+    expect(mocks.request).not.toHaveBeenCalled();
+    expect(mocks.find).not.toHaveBeenCalled();
+    expect(mocks.saveMedia).not.toHaveBeenCalled();
+  });
+
+  it("opens the exact listed commit without fetching a new head or another branch", async () => {
+    const state = fixture();
+    state.git.setSourceBranch("content/source");
+    const listed = await state.git.readBranch();
+    mocks.request.mockClear();
+    await state.git.openSelectedDocument(
+      state.initial.path,
+      { mode: "existing", sourceBranch: "content/source", targetBranch: "content/source" },
+      "drafts",
+      listed.snapshot,
+    );
+    const routes = mocks.request.mock.calls.map(([route]) => route as string);
+    expect(routes).toHaveLength(2);
+    expect(routes.every((route) => /branch=content%2Fsource&commit=a{40}/u.test(route))).toBe(true);
+    expect(
+      routes.some((route) => route.startsWith("/snapshot") || route.startsWith("/branch?")),
+    ).toBe(false);
+    expect(state.opened[0]!.workingBranch).toBe("content/source");
+    expect(state.opened[0]!.baseCommit).toBe(listed.snapshot.commit);
+    expect(state.opened[0]!.source).toBe(state.source);
+  });
+
+  it("reports referenced images missing from Draft storage while keeping the text editable", async () => {
+    const state = fixture();
+    mocks.missing.mockResolvedValue(["architecture-editor"]);
     await state.git.openDocument(
       state.initial.path,
       { branch: "content/source", commit: "a".repeat(40) },
       "content/source",
       "drafts",
+    );
+    expect(state.opened[0]!.source).toBe(state.source);
+    expect(state.onError).toHaveBeenCalledWith(
+      expect.stringContaining("未登録の画像があります: architecture-editor"),
+    );
+  });
+
+  it.each(["existing", "new", "local"] as const)(
+    "rejects a %s plan that would move a selected draft away from its source branch",
+    async (mode) => {
+      const state = fixture();
+      state.git.setSourceBranch("content/source");
+      const listed = await state.git.readBranch();
+      mocks.request.mockClear();
+      await expect(
+        state.git.openSelectedDocument(
+          state.initial.path,
+          { mode, sourceBranch: "content/source", targetBranch: "content/unrelated" },
+          "drafts",
+          listed.snapshot,
+        ),
+      ).rejects.toThrow("同じ作業ブランチ");
+      expect(mocks.request).not.toHaveBeenCalled();
+      expect(state.opened).toHaveLength(0);
+    },
+  );
+
+  it("rejects a previous selection after the source branch changes", async () => {
+    const state = fixture();
+    state.git.setSourceBranch("content/source");
+    const listed = await state.git.readBranch();
+    state.git.setSourceBranch("content/other");
+    mocks.request.mockClear();
+    await expect(
+      state.git.openSelectedDocument(
+        state.initial.path,
+        { mode: "existing", sourceBranch: "content/source", targetBranch: "content/source" },
+        "drafts",
+        listed.snapshot,
+      ),
+    ).rejects.toThrow("一覧の版が変わりました");
+    expect(mocks.request).not.toHaveBeenCalled();
+  });
+
+  it("discards an older branch response arriving after the new list", async () => {
+    const state = fixture();
+    const request = mocks.request.getMockImplementation()!;
+    let release!: (value: { branch: string; commit: string }) => void;
+    const delayed = new Promise<{ branch: string; commit: string }>((resolve) => {
+      release = resolve;
+    });
+    mocks.request.mockImplementation((route: string) =>
+      route === "/snapshot?branch=content%2Fsource" ? delayed : request(route),
+    );
+    state.git.setSourceBranch("content/source");
+    const first = state.git.readBranch();
+    const rejected = expect(first).rejects.toThrow("読み込み元が変わりました");
+    state.git.setSourceBranch("content/other");
+    const latest = await state.git.readBranch();
+    release({ branch: "content/source", commit: "a".repeat(40) });
+    await rejected;
+    await state.git.openSelectedDocument(
+      state.initial.path,
+      { mode: "existing", sourceBranch: "content/other", targetBranch: "content/other" },
+      "drafts",
+      latest.snapshot,
+    );
+    expect(state.opened[0]!.workingBranch).toBe("content/other");
+  });
+
+  it("keeps a saved local draft bound to its original branch even while disconnected", async () => {
+    const state = fixture();
+    const local = { ...state.initial, workingBranch: "content/source" };
+    await expect(
+      state.git.prepareLocalWorkspace(local, {
+        mode: "existing",
+        sourceBranch: "content/source",
+        targetBranch: "content/source",
+      }),
+    ).resolves.toEqual({});
+    expect(mocks.request).not.toHaveBeenCalled();
+    for (const mode of ["existing", "new", "local"] as const) {
+      await expect(
+        state.git.prepareLocalWorkspace(local, {
+          mode,
+          sourceBranch: "content/source",
+          targetBranch: "content/other",
+        }),
+      ).rejects.toThrow("元の作業ブランチ");
+    }
+    expect(mocks.request).not.toHaveBeenCalled();
+  });
+
+  it("does not replace a different document selected while the Git read is pending", async () => {
+    const state = fixture();
+    const request = mocks.request.getMockImplementation()!;
+    let release!: (value: { source: string; path: string }) => void;
+    const delayed = new Promise<{ source: string; path: string }>((resolve) => {
+      release = resolve;
+    });
+    mocks.request.mockImplementation((route: string) =>
+      route.startsWith("/document?") ? delayed : request(route),
+    );
+    const opening = state.git.openDocument(
+      state.initial.path,
+      { branch: "content/source", commit: "a".repeat(40) },
+      "content/source",
+      "drafts",
+    );
+    state.workspace.current.current = createLocalDraft();
+    release({ source: state.source, path: state.initial.path });
+    await expect(opening).rejects.toThrow("原稿が切り替わりました");
+    expect(state.opened).toHaveLength(0);
+  });
+
+  it("still opens a published article as a local revision with the same ContentId", async () => {
+    const state = fixture();
+    const published = updateDraft(state.source, { draft: false });
+    const request = mocks.request.getMockImplementation()!;
+    mocks.request.mockImplementation((route: string) =>
+      route.startsWith("/document?")
+        ? { source: published, path: state.initial.path }
+        : request(route),
+    );
+    await state.git.openDocument(
+      state.initial.path,
+      { branch: "main", commit: "a".repeat(40) },
+      "main",
+      "revise",
       true,
     );
     const opened = state.opened[0]!;
     expect(opened.workingBranch).toBe("");
-    expect(opened.sourceBranch).toBe("content/source");
-    expect(opened.baseCommit).toBe("a".repeat(40));
-    expect(opened.annotations).toEqual(state.remote.draft.review!.comments);
-    for (const key of [
-      "remoteDraftId",
-      "remoteRevision",
-      "reviewRevision",
-      "syncedCommit",
-      "syncedSource",
-    ])
-      expect(opened).not.toHaveProperty(key);
-    expect(mocks.find).toHaveBeenCalledTimes(1);
-    expect(mocks.media).toHaveBeenCalledWith(opened.id);
-    expect(mocks.saveMedia.mock.calls[0]![0]).not.toHaveProperty("remoteId");
-    expect(state.restoredMedia[0]!.draftId).toBe(opened.id);
-    expect(opened.id).not.toBe(state.remote.draft.id);
+    expect(opened.sourceBranch).toBe("main");
+    expect(parseDraft(opened.source).data.id).toBe(parseDraft(published).data.id);
+    expect(parseDraft(opened.source).data.draft).toBe(true);
   });
 
-  it("keeps an existing target branch's own private state without falling back to another branch", async () => {
+  it("refuses to replace the selected published article with a different revision at the same target path", async () => {
     const state = fixture();
-    state.remote.draft.branch = "content/target";
-    mocks.find.mockResolvedValue(state.remote);
+    const published = updateDraft(state.source, { draft: false });
+    const request = mocks.request.getMockImplementation()!;
+    mocks.request.mockImplementation((route: string) => {
+      if (route.startsWith("/document?")) {
+        return {
+          source:
+            new URLSearchParams(route.split("?")[1]).get("branch") === "main"
+              ? published
+              : updateDraft(state.source, { title: "別ブランチで先に改稿した原稿" }),
+          path: state.initial.path,
+        };
+      }
+      return request(route);
+    });
+    await expect(
+      state.git.openDocument(
+        state.initial.path,
+        { branch: "content/other", commit: "b".repeat(40) },
+        "main",
+        "revise",
+        false,
+        { branch: "main", commit: "a".repeat(40) },
+      ),
+    ).rejects.toThrow("選んだ原稿と作業ブランチの原稿が異なります");
+    expect(state.opened).toHaveLength(0);
+    expect(mocks.find).not.toHaveBeenCalled();
+  });
+
+  it("keeps revision into an existing branch when it contains the exact selected published source", async () => {
+    const state = fixture();
+    const published = updateDraft(state.source, { draft: false });
+    const request = mocks.request.getMockImplementation()!;
+    mocks.request.mockImplementation((route: string) =>
+      route.startsWith("/document?")
+        ? { source: published, path: state.initial.path }
+        : request(route),
+    );
     await state.git.openDocument(
       state.initial.path,
-      { branch: "content/target", commit: "a".repeat(40) },
-      "content/source",
-      "drafts",
+      { branch: "content/revision", commit: "b".repeat(40) },
+      "main",
+      "revise",
+      false,
+      { branch: "main", commit: "a".repeat(40) },
     );
-    const opened = state.opened[0]!;
-    expect(opened.workingBranch).toBe("content/target");
-    expect(opened.remoteDraftId).toBe(state.remote.draft.id);
-    expect(opened.reviewRevision).toBe(3);
-    expect(opened.annotations).toEqual(state.remote.draft.review!.comments);
-    expect(mocks.find).toHaveBeenCalledTimes(1);
-    expect(mocks.saveMedia).not.toHaveBeenCalled();
+    expect(state.opened[0]!.workingBranch).toBe("content/revision");
+    expect(state.opened[0]!.baseSource).toBe(published);
+    expect(state.opened[0]!.baseCommit).toBe("b".repeat(40));
+    expect(parseDraft(state.opened[0]!.source).data.id).toBe(parseDraft(published).data.id);
   });
 });

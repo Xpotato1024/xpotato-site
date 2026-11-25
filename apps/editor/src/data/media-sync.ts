@@ -2,13 +2,15 @@ import type { ReviewComment } from "@xpotato/editor-core/annotations";
 import { request, query, fetchPrivateMedia } from "./api.js";
 import { localMedia, saveLocalMedia, type LocalDraft, type LocalMedia } from "./storage.js";
 import { hashBlob } from "../media/optimize.js";
-import { parseDraft } from "@xpotato/editor-core/draft";
+import { draftPath, parseDraft } from "@xpotato/editor-core/draft";
 import { assertMediaBudget, type MediaKind } from "@xpotato/editor-core/policy";
+import { articleMediaReferences } from "@xpotato/portable-content/media";
 export interface RemoteDraft {
   id: string;
   contentId: string;
   branch: string;
   commit: string;
+  sourcePath?: string;
   revision: number;
   lastEditedAt: string;
   state: string;
@@ -40,30 +42,62 @@ export interface RemoteMediaSnapshot {
   draft: RemoteDraft;
   assets: RemoteAsset[];
 }
+export function assertRemoteMediaIdentity(local: LocalDraft, remote: RemoteMediaSnapshot): void {
+  if (
+    remote.draft.state === "deleted" ||
+    remote.draft.contentId !== parseDraft(local.source).data.id ||
+    remote.draft.branch !== (local.workingBranch || local.sourceBranch) ||
+    (remote.draft.sourcePath ?? draftPath(remote.draft.contentId)) !== local.path
+  ) {
+    throw Error("DRAFT_MEDIA_IDENTITY_MISMATCH");
+  }
+}
+
+export async function missingDraftMedia(draft: LocalDraft): Promise<string[]> {
+  const parsed = parseDraft(draft.source);
+  const referenced = new Set(articleMediaReferences(parsed.body));
+  if (typeof parsed.data.hero === "string" && parsed.data.hero) {
+    referenced.add(parsed.data.hero);
+  }
+  const available = new Set((await localMedia(draft.id)).map((item) => item.assetId));
+  return [...referenced].filter((assetId) => !available.has(assetId));
+}
+
 export async function findMediaSnapshot(draft: LocalDraft): Promise<RemoteMediaSnapshot | null> {
-  if (draft.remoteDraftId) return request("/draft" + query({ id: draft.remoteDraftId }));
+  if (draft.remoteDraftId) {
+    const remote = await request<RemoteMediaSnapshot>(
+      "/draft" + query({ id: draft.remoteDraftId }),
+    );
+    assertRemoteMediaIdentity(draft, remote);
+    return remote;
+  }
   const id = parseDraft(draft.source).data.id,
     branch = draft.workingBranch || draft.sourceBranch;
   const candidates = (await request<RemoteDraft[]>("/drafts")).filter(
     (item) => item.contentId === id && item.branch === branch && item.state !== "deleted",
   );
   if (candidates.length > 1) throw Error("DRAFT_MEDIA_AMBIGUOUS");
-  return candidates[0] ? request("/draft" + query({ id: candidates[0].id })) : null;
+  if (!candidates[0]) {
+    return null;
+  }
+  const remote = await request<RemoteMediaSnapshot>("/draft" + query({ id: candidates[0].id }));
+  assertRemoteMediaIdentity(draft, remote);
+  return remote;
 }
 export async function restoreMediaSnapshot(
   local: LocalDraft,
   remote: RemoteMediaSnapshot,
 ): Promise<{ draft: LocalDraft; missing: string[] }> {
-  if (
-    remote.draft.contentId !== parseDraft(local.source).data.id ||
-    remote.draft.branch !== (local.workingBranch || local.sourceBranch)
-  )
-    throw Error("DRAFT_MEDIA_IDENTITY_MISMATCH");
+  assertRemoteMediaIdentity(local, remote);
   const cached = await localMedia(local.id),
     missing: string[] = [];
   for (const [assetId, id] of Object.entries(remote.draft.assets)) {
     const asset = remote.assets.find(
-      (item) => item.id === id && item.assetId === assetId && item.status === "staged",
+      (item) =>
+        item.id === id &&
+        item.draftId === remote.draft.id &&
+        item.assetId === assetId &&
+        item.status === "staged",
     );
     if (!asset) {
       missing.push(assetId);
@@ -101,6 +135,6 @@ export async function restoreMediaSnapshot(
   }
   return {
     draft: { ...local, remoteDraftId: remote.draft.id, remoteRevision: remote.draft.revision },
-    missing,
+    missing: [...new Set([...missing, ...(await missingDraftMedia(local))])],
   };
 }

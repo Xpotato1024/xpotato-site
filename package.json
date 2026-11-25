@@ -90,6 +90,7 @@
     "editor:integration": "tsx ops/qa/editor-integration-smoke.ts && node ops/qa/editor-start-selection-smoke.mjs",
     "editor:selection": "node ops/qa/editor-start-selection-smoke.mjs",
     "editor:media": "tsx ops/media/prepare-editor-media.ts",
+    "editor:media:handoff": "tsx ops/media/prepare-editor-handoff.ts",
     "editor:review": "tsx ops/authoring/editor-astro-review.ts",
     "editor:review:browser": "node ops/qa/editor-review-browser.mjs",
     "tools:readiness": "tsx ops/qa/installed-tools.ts",

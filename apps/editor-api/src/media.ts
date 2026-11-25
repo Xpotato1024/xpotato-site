@@ -36,7 +36,27 @@ export async function createDraftRecord(
         (exists.sourcePath ?? draftPath(exists.contentId)) !== sourcePath
       )
         throw new APIError("CONTENT_ID_IMMUTABLE");
-      return exists;
+      if (exists.state === "deleted") {
+        throw new APIError("DRAFT_NOT_FOUND", 404);
+      }
+    }
+    const candidates = Object.values(state.drafts).filter(
+      (draft) =>
+        draft.contentId === input.contentId &&
+        draft.branch === input.branch &&
+        draft.state !== "deleted",
+    );
+    if (candidates.length > 1) {
+      throw new APIError("DRAFT_MEDIA_AMBIGUOUS", 409);
+    }
+    const candidate = candidates[0];
+    if (candidate) {
+      if ((candidate.sourcePath ?? draftPath(candidate.contentId)) !== sourcePath) {
+        throw new APIError("DRAFT_MEDIA_IDENTITY_MISMATCH", 409);
+      }
+      // Device-local UUIDs differ. Reuse the same branch's private state without rewinding
+      // the commit or revision advanced by another editor or the Git activity webhook.
+      return candidate;
     }
     const record: DraftRecord = {
       ...input,

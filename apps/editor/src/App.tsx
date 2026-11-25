@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ContentCollection } from "@xpotato/content-contracts/common";
 import { collectionFromPath, updateDraft } from "@xpotato/editor-core/draft";
+import type { GitSnapshot } from "@xpotato/editor-core/git";
 import { moduleSource, moduleInsertionOffset } from "@xpotato/editor-core/blocks";
 import {
   reconcileRegistryChanges,
@@ -337,20 +338,9 @@ export default function App() {
     plan: BranchPlan,
     intent: "revise" | "drafts",
     review: boolean,
+    selection: GitSnapshot,
   ) {
-    if (!git.snapshot) throw new Error("先に原稿一覧を取得してください。");
-    const prepared =
-      plan.mode === "local"
-        ? { snapshot: git.snapshot, sourceBranch: git.snapshot.branch }
-        : await git.prepareWorkspace(plan, plan.mode === "new" ? git.snapshot : undefined);
-    if (!prepared.snapshot) return;
-    await git.openDocument(
-      path,
-      prepared.snapshot,
-      prepared.sourceBranch,
-      intent,
-      plan.mode === "local",
-    );
+    await git.openSelectedDocument(path, plan, intent, selection);
     await workspace.persist();
     openEditor(review);
   }

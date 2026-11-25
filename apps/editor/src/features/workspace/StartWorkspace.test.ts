@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { StartWorkspace } from "./StartWorkspace.js";
+import { BranchSetup, initialBranchPlan, StartWorkspace } from "./StartWorkspace.js";
 import type { GitWorkspace } from "../git/useGitWorkspace.js";
+import { createLocalDraft } from "../drafts/model.js";
 
 const path = "content/articles/09wsw5yvd59gqrjaz5ee25y3mw.mdx";
 function html(withIndex: boolean) {
@@ -63,5 +64,45 @@ describe("Git document selection", () => {
     expect(result).toContain("題名を取得できません");
     expect(result).toContain("公開状態未取得");
     expect(result).toContain("articles/09wsw5yvd59gqrjaz5ee25y3mw.mdx");
+  });
+
+  it("shows the resumed branch without offering a different branch or local-only copy", () => {
+    const branch = "content/xpotato-site-product-20261126";
+    const draft = { ...createLocalDraft(), workingBranch: branch };
+    for (const authenticated of [true, false]) {
+      const plan = initialBranchPlan(authenticated, draft);
+      expect(plan.mode).toBe("existing");
+      expect(plan.targetBranch).toBe(branch);
+      const result = renderToStaticMarkup(
+        createElement(BranchSetup, {
+          plan,
+          onChange: () => {},
+          branches: ["main", branch, "content/unrelated"],
+          authenticated,
+          continuingBranch: draft.workingBranch,
+        }),
+      );
+      expect(result).toContain(branch);
+      expect(result).toContain("同じブランチで引き継ぎます");
+      expect(result).not.toContain("content/unrelated");
+      expect(result).not.toContain("<select");
+      expect(result).not.toContain('type="radio"');
+    }
+  });
+
+  it("retains branch creation and local work for new drafts", () => {
+    const plan = initialBranchPlan(true);
+    const result = renderToStaticMarkup(
+      createElement(BranchSetup, {
+        plan,
+        onChange: () => {},
+        branches: ["main", "content/other"],
+        authenticated: true,
+      }),
+    );
+    expect(result).toContain("新しいブランチ");
+    expect(result).toContain("既存のブランチ");
+    expect(result).toContain("この端末");
+    expect(result).toContain("作業ブランチ名");
   });
 });

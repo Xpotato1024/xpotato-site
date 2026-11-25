@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-11-19
+last_verified: 2026-11-26
 canonical_for:
   - CMSの本文・記事情報・編集状態の境界
   - 原稿を開く前の作業選択と記事に依存しない管理
@@ -13,7 +13,7 @@ canonical_for:
 
 CMSは、既存のportable Markdown/MDXとregistryを編集する。本文を独自JSONへ移し替えず、サイトと同じ内容契約を使う。人が直接書く原稿もAIが作った原稿も、同じ本文・添削・保存経路で扱う。
 
-この文書は2026-11-18の編集画面・連載実装と、2026-11-19のワークフロー再編を含む機能ブランチの契約である。mainへの採用、本番配信、GitHub App・R2の実環境接続を示すものではない。状態の区別は[CMS実装状態](../architecture/cms-implementation-status.md)、方式の判断は[ADR-0084](../design/adr/0084-source-preserving-rich-cms-editor.md)・[ADR-0086](../design/adr/0086-cms-workflow-and-independent-registries.md)に記録する。
+この文書は2026-11-18の編集画面・連載実装、2026-11-19のワークフロー再編、2026-11-26の下書き・媒体引継ぎの変更候補を含む契約である。mainへの採用、本番配信、GitHub App・R2の実環境接続を示すものではない。状態の区別は[CMS実装状態](../architecture/cms-implementation-status.md)、方式の判断は[ADR-0084](../design/adr/0084-source-preserving-rich-cms-editor.md)・[ADR-0086](../design/adr/0086-cms-workflow-and-independent-registries.md)・[ADR-0093](../design/adr/0093-draft-handoff-identity.md)に記録する。
 
 ## 正本と所有者
 
@@ -41,9 +41,11 @@ CMSの操作用CSSは`apps/editor/src/ui/controls.css`に共通定義を置く�
 
 初期画面はホームとし、新規作成、既存記事の改稿、下書きの再開を分ける。下書きは端末とGitの原稿から選び、AI下書きを含めて添削から開ける。原稿の検索と種別絞り込みは編集を開始する前に行う。公開・下書きの区別は固定commitの記事目録と本文を使い、旧目録に状態がないことを公開済みの根拠にしない。
 
-編集前に「新しいブランチ」「既存のブランチ」「この端末」の作業場所を選ぶ。Gitの作成元は取得したcommitに固定し、書込み先は`content/*`に限定する。公開原稿の改稿ではContentIdを維持して`draft:true`の編集用原稿を開き、元の公開本文をその場で変更しない。端末だけで作業を始める経路も残し、接続前にブランチを作ったようには表示しない。
+新規作成、公開原稿の改稿、Gitへ未接続の端末下書きでは、編集前に「新しいブランチ」「既存のブランチ」「この端末」の作業場所を選ぶ。Gitの作成元は取得したcommitに固定し、書込み先は`content/*`に限定する。公開原稿の改稿ではContentIdを維持して`draft:true`の編集用原稿を開き、元の公開本文をその場で変更しない。選んだ既存branchの同じpathに異なる本文があれば拒否し、選択した公開原稿の代わりにその本文を開いたり、上書きしたりしない。端末だけで作業を始める経路も残し、接続前にブランチを作ったようには表示しない。
 
-既存の端末下書きを同じ作業ブランチで再開する場合は、取得時のbaseCommitを勝手に最新headへ更新しない。別ブランチへ引き継ぐ場合は保存元の本文との一致を確認し、新しい端末下書きIDと媒体IDを持つコピーを作る。本文・ContentId・未保存入力・添削・画像bytesを保持し、旧ブランチの私有Draft ID・review revision・媒体同期ID・Git同期済み表示は引き継がない。コピーの原稿と画像は一つのIndexedDB transactionで保存し、元の原稿・画像を残す。
+Gitの下書き再開は、原稿を選んだ一覧のsnapshotにある`content/*`へ固定する。「添削から開く」の有無で保存先を変えず、別branch、新branch、端末への切替を再開操作に混ぜない。UIだけでなく原稿読込処理でも読み込み元・保存先の一致を検査する。開始時の選択項目が持つsnapshotを原稿・manifest取得へ渡し、その後の別branch選択や遅れた一覧応答で置き換えない。
+
+作業ブランチに結び付いた端末下書きも同じブランチで再開する。オフラインでもworkingBranch、取得時のbaseCommit、本文・未保存入力・添削・画像を保持し、再開だけでheadを最新化しない。Gitへまだ結び付いていない端末下書きを作業branchへ渡す場合は、本文との整合を確認し、新しい端末下書きIDと媒体IDを持つコピーを作る。旧私有Draft ID・review revision・媒体同期IDを移植せず、コピーの原稿と画像を一つのIndexedDB transactionで保存し、元データを残す。
 
 ホーム、分類・タグ、連載、接続は原稿を開かずに利用できる。これらの画面を開いただけでは空の原稿を端末へ保存しない。原稿一覧の再読込・管理画面への移動で、編集中の本文や未保存変更を別原稿に置き換えない。
 
@@ -146,6 +148,14 @@ Group追加でGallery・Steps等の子制約やArticleEndnoteのトップレベ�
 ### AIとの受け渡しの実装範囲
 
 現時点のCMSは、本文・未解決の指摘・応答形式をJSONで書き出し、返ってきた修正案JSONを検査して取り込める。AIと人は同じGit作業ブランチ・Draft PRで本文を引き継げる。
+
+AIの画像は、`editor:media:handoff`が準備する私有bundleから同じ原稿へ登録する。共有契約は`packages/editor-core/src/media-handoff.ts`、登録処理は`apps/editor/src/data/media-handoff.ts`が所有する。bundleはrepository、ContentId、branch、commit、原稿path、本文SHA-256、各assetIdと正規化済み画像bytes/hashを持つ。元端末の絶対pathや資格情報を含めず、Git・公開CI artifactへ保存しない。媒体の用途別制約は既存`mediaPolicy`、bundleの点数・合計容量は`mediaHandoffPolicy`を参照する。
+
+取り込み時は本文が要求するFigure・Markdown画像・heroの集合とbundleの集合を完全一致させ、全画像を検査してから保存へ進む。登録中も現在の原稿とGit headを照合し、途中の原稿切替・本文変更・別端末のGit更新を検出したら停止する。既存の所有者session・CSRF検査の後で、Draft作成/取得、容量予約、アップロード、実bytesの再取得を行う。headless認証、長期token、A/B/Cへの権限をこの経路へ追加しない。AIが認証済みブラウザーを利用できる場合も同じUIと登録処理を使う。
+
+同じassetId・hashの再実行は、保存済みbytesを確認して再利用する。異hashへの差替えはbundleの`expectedRemoteSha256`と現在の画像を照合し、媒体の更新には取得したDraft revisionを付ける。端末の未同期変更、古い旧hash、複数候補がある状態は黙って解消しない。途中までの成功を保持し、再実行で未完了分だけを登録する。最後に必要な全assetIdとhashが解決した場合だけ登録完了を示す。
+
+Draft画像と添削の置き場はContentId・branch・sourcePathで照合する。同じ組で新しい端末IDから作成要求が来た場合は既存recordを再利用し、並列作成もCAS内で一つへ収束させる。既存IDが別原稿を指す場合や、同一ContentId・branchに複数record/異pathがある旧状態は拒否する。復元時も明示remoteDraftIdを無条件に信頼せず、この組を照合する。Draft recordのcommitはGit activityで進む値なので、画像復元でlocalのbaseCommitと同値であることは要求しない。固定commitとの一致はbundle登録と正式Astroレビューがそれぞれ検査する。
 
 CMSの指摘登録を契機に、実際のAI providerやArticle Jobを自動起動する処理はまだ接続していない。自動呼出し、進捗通知、providerへの私有素材送信を実装済みとは扱わない。今後接続する際も、既存の[外部AI開示契約](external-ai-disclosure-contract.md)とArticle Jobの来歴・承認を通す。
 
