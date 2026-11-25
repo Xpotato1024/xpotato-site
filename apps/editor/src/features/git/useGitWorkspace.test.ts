@@ -7,6 +7,7 @@ import type { LocalDraft, LocalMedia } from "../../data/storage.js";
 import type { RemoteMediaSnapshot } from "../../data/media-sync.js";
 import type { DraftWorkspace } from "../drafts/useDraftWorkspace.js";
 import { createLocalDraft } from "../drafts/model.js";
+import { AstroReview } from "../../components/AstroReview.js";
 import { useGitWorkspace } from "./useGitWorkspace.js";
 import schema from "../../../../../content/registry/editor.json";
 
@@ -36,6 +37,12 @@ vi.mock("../../data/storage.js", () => ({
 }));
 
 beforeEach(() => vi.resetAllMocks());
+
+function astroReviewButton(draft: LocalDraft) {
+  const html = renderToStaticMarkup(createElement(AstroReview, { draft, authenticated: true }));
+  expect(html).toContain("Astroレビューを取得");
+  return html.match(/<button\b[^>]*>/u)?.[0];
+}
 
 function fixture() {
   const initial = createLocalDraft();
@@ -161,6 +168,9 @@ describe("opening Git drafts into an explicit workspace", () => {
     expect(opened.sourceBranch).toBe("content/source");
     expect(opened.baseCommit).toBe("a".repeat(40));
     expect(opened.source).toBe(state.source);
+    expect(opened.syncedCommit).toBe("a".repeat(40));
+    expect(opened.syncedSource).toBe(state.source);
+    expect(astroReviewButton(opened)).not.toContain("disabled");
     expect(opened.annotations).toEqual(state.remote.draft.review!.comments);
     expect(opened.remoteDraftId).toBe(state.remote.draft.id);
     expect(opened.remoteRevision).toBe(7);
@@ -169,6 +179,29 @@ describe("opening Git drafts into an explicit workspace", () => {
     expect(state.remote.draft.branch).toBe("content/source");
     expect(state.restoredMedia[0]!.remoteId).toBe("remote-asset");
   });
+
+  it.each([
+    { label: "a local copy", branch: "content/source", source: "content/source", local: true },
+    { label: "a new branch", branch: "content/copy", source: "content/source", local: false },
+    { label: "a non-content branch", branch: "main", source: "main", local: false },
+  ])(
+    "does not mark an unchanged draft opened as $label as saved for Astro review",
+    async (plan) => {
+      const state = fixture();
+      await state.git.openDocument(
+        state.initial.path,
+        { branch: plan.branch, commit: "a".repeat(40) },
+        plan.source,
+        undefined,
+        plan.local,
+      );
+      const opened = state.opened[0]!;
+      expect(opened.source).toBe(state.source);
+      expect(opened.syncedCommit).toBeUndefined();
+      expect(opened.syncedSource).toBeUndefined();
+      expect(astroReviewButton(opened)).toContain("disabled");
+    },
+  );
 
   it("refuses to detach a Git draft from its branch while resuming it", async () => {
     const state = fixture();
@@ -225,6 +258,9 @@ describe("opening Git drafts into an explicit workspace", () => {
     expect(state.opened[0]!.workingBranch).toBe("content/source");
     expect(state.opened[0]!.baseCommit).toBe(listed.snapshot.commit);
     expect(state.opened[0]!.source).toBe(state.source);
+    expect(state.opened[0]!.syncedCommit).toBe(listed.snapshot.commit);
+    expect(state.opened[0]!.syncedSource).toBe(state.source);
+    expect(astroReviewButton(state.opened[0]!)).not.toContain("disabled");
   });
 
   it("reports referenced images missing from Draft storage while keeping the text editable", async () => {
@@ -371,6 +407,9 @@ describe("opening Git drafts into an explicit workspace", () => {
     expect(opened.sourceBranch).toBe("main");
     expect(parseDraft(opened.source).data.id).toBe(parseDraft(published).data.id);
     expect(parseDraft(opened.source).data.draft).toBe(true);
+    expect(opened.syncedCommit).toBeUndefined();
+    expect(opened.syncedSource).toBeUndefined();
+    expect(astroReviewButton(opened)).toContain("disabled");
   });
 
   it("refuses to replace the selected published article with a different revision at the same target path", async () => {
@@ -424,5 +463,8 @@ describe("opening Git drafts into an explicit workspace", () => {
     expect(state.opened[0]!.baseSource).toBe(published);
     expect(state.opened[0]!.baseCommit).toBe("b".repeat(40));
     expect(parseDraft(state.opened[0]!.source).data.id).toBe(parseDraft(published).data.id);
+    expect(state.opened[0]!.syncedCommit).toBeUndefined();
+    expect(state.opened[0]!.syncedSource).toBeUndefined();
+    expect(astroReviewButton(state.opened[0]!)).toContain("disabled");
   });
 });
