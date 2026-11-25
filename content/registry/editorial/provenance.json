@@ -161,23 +161,628 @@
         "contentId": "325e1e0e-acd3-469f-a27d-476cf84b48fc",
         "origin": "manual",
         "content": {
-          "mdxSha256": "f28755513d2488d5c9561af9c89d1d79a63758577ced66ab4fb1527dbc7c2798",
-          "frontmatterSha256": "8cf5114cc9ba6722494d6683fe2ff944ae301f5e881a9670a164de62c77643ec",
+          "mdxSha256": "ccc12a87ef62b24c6843a5e1f2522de95c55a78ec323ef439b868f4b797bacd2",
+          "frontmatterSha256": "07d7816e1325912d4ce7d68d86a058e4dbbd7610e1263d91deb8e1c7fed4bced",
           "route": "/projects/xpotato-site/"
         },
         "sourceRefs": [
           {
+            "sourceId": "site-product-architecture-1",
             "kind": "github",
-            "sourceId": "xpotato-site",
-            "sourceRecordSha256": "5ec8c23d1795a573d16c475c913e87e89cb366c4eed51984aea669ff0cb64601",
             "repository": "Xpotato1024/xpotato-site",
-            "commitSha": "a8d45f659f67738295c083dfebe5b09f599f5f0f",
-            "path": "README.md",
-            "blobSha256": "f2583b1646a29c2e311653ce74ebcdb2986ca796cd83999918009b5d0889a861"
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/architecture/repository-layout.md",
+            "blobSha256": "376d2f347c1c40c32516e4e80b6741e8d949d13664dfecb79900cd3791bbe7f5",
+            "sourceRecordSha256": "feefcd42fb8b618a77a7475ca26cdb495efdfe4939605a47672504250f046514"
+          },
+          {
+            "sourceId": "site-product-static-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "apps/site/astro.config.mjs",
+            "blobSha256": "129e2eb5eb56ab68d94f2b607d338be963bf9adf3686508d5d484ca9f802dd00",
+            "sourceRecordSha256": "a5b6ef04cc168d4e9e2c78779e7c87e303631bf0ac6700093bf770242623c021"
+          },
+          {
+            "sourceId": "site-product-static-2",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/architecture/seo-discovery-policy.md",
+            "blobSha256": "fddf06f15b0b18d9b92b49fe649ab5643d340336e3bc57dc6ed8532505966117",
+            "sourceRecordSha256": "35ac94e579f5e7a55ac7ccf643ef78a5ddcf9ad92b74f82ba80c59db9948def0"
+          },
+          {
+            "sourceId": "site-product-editor-api-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "apps/editor-api/README.md",
+            "blobSha256": "4ef8fc574946a3fa64152e475b1046512df87b93f34cf63e31ac4d05487e8307",
+            "sourceRecordSha256": "3fbe01bd0998b8abd35851e559967d55bb1b42ef8f324de8f91456497cb8d4a2"
+          },
+          {
+            "sourceId": "site-product-editor-api-2",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/operations/current-deployment-status.md",
+            "blobSha256": "8278291b2eb8c863ab31435742e11b08f14d2251a14e0682661bf646718bf0fa",
+            "sourceRecordSha256": "14a2ff32e34c7761a6cb75906d32d8edb8c23ed118580eeade2dfd0eb528cdfa"
+          },
+          {
+            "sourceId": "site-product-cms-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/contracts/cms-workbench-contract.md",
+            "blobSha256": "35e00a1576697f01579c5df8d2a26babeb2353bca251e255e343a07eaf5fd204",
+            "sourceRecordSha256": "61ddfa60047450a70c3db3b7ed72d26165fcb580abeb9f2b862eb9ba23dfcaea"
+          },
+          {
+            "sourceId": "site-product-cms-2",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "apps/editor/src/data/storage.ts",
+            "blobSha256": "02984b6f6ef99f7ab97811f4e9bed421077fb13492f38c6462f07258662c5baa",
+            "sourceRecordSha256": "0520b0f5f71cba37c9455dd50ca3a746b77e368939daf52feba967a2db755892"
+          },
+          {
+            "sourceId": "site-product-handoff-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/operations/editor-workflow.md",
+            "blobSha256": "7e5ccbcaff7fb72867a2e19685d579824233b335b19a4ba228f6b4b410362611",
+            "sourceRecordSha256": "7f77631768c79593ee5693de67b7a0d393c76fc89ae75c3165401e2ac2ff0cd2"
+          },
+          {
+            "sourceId": "site-product-git-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "packages/editor-core/src/git.ts",
+            "blobSha256": "187f906939be5707339e074cd271be5467485fae6582ddd29190807aac6159a2",
+            "sourceRecordSha256": "72ca74cceaeddd11a363947bcee5f6cc71b3a71c5d2f989e62f81a7239669999"
+          },
+          {
+            "sourceId": "site-product-identity-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "AGENTS.md",
+            "blobSha256": "dc69641aa0ed30f836e0a66bf2fb4702a1a33cc8a968b42c737b376acdc8dd81",
+            "sourceRecordSha256": "688c6f06e7d6c5d29cd050a68e9bcb48c6e8dcf8fa446873b7578faee0ecd196"
+          },
+          {
+            "sourceId": "site-product-content-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/content/page-composition.md",
+            "blobSha256": "ba426a5ac43c41ab6e4d910bde6e25e10ac4f1b75edf2680cd4b9f9965bf7f87",
+            "sourceRecordSha256": "47477e763761955bdfe56663126821bca9d302bef92b6b0e664cdded50a024fd"
+          },
+          {
+            "sourceId": "site-product-content-2",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/architecture/content-discovery-architecture.md",
+            "blobSha256": "136d562135b209d2fa219079c437a6418ee9dc74b2177e7d18f335bdfdd91a4e",
+            "sourceRecordSha256": "fd30a89c46f5465a50e848900233a30e08d5ff1bed4a1ca95b6314e177787936"
+          },
+          {
+            "sourceId": "site-product-media-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/operations/article-media-publication-ci.md",
+            "blobSha256": "c7830b2e88e8e39adea90f9cde46be7c617224baceaa70308236191ba3dcba5f",
+            "sourceRecordSha256": "c838a77077488f144bdf88576116e7cfaa801498659b391749852cb63f73ea91"
+          },
+          {
+            "sourceId": "site-product-media-2",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/architecture/media-delivery-rendering.md",
+            "blobSha256": "67d69254d7467d1e48e543704b5b37b25b5803e60a9749bbdb2f611ffb2bbbd9",
+            "sourceRecordSha256": "5814e3e90f2f5005118eaafbd69936d47ea869d331bd45bbb5a06106504f3b91"
+          },
+          {
+            "sourceId": "site-product-media-3",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/contracts/media-ingest-contract.md",
+            "blobSha256": "8a41b1fadd9f1f6fca1b2adf09f6e520f1e425e58d54c8b68212ddef285b4d01",
+            "sourceRecordSha256": "40fce5032731f8f87cf9b04f29f4eb9488cc3c7e2ae937c0007cebc82db80d9e"
+          },
+          {
+            "sourceId": "site-product-media-4",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/contracts/media-recovery-contract.md",
+            "blobSha256": "884c31fff642ed09c37a08f6845a1ba09f0e4dc8db7978b7b86e5f6bf629a198",
+            "sourceRecordSha256": "e2191aa71ddb6d9d81ae5ad0bd07ef870a109687df59de9919e72cdcce1237c3"
+          },
+          {
+            "sourceId": "site-product-quality-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/operations/content-production.md",
+            "blobSha256": "6dce8c4f8688deaaa3357404f649296bbecc3b731206e6258718b05e45cfd426",
+            "sourceRecordSha256": "8d25a6bfaa98983c2f57a56e15b314704600a10be46dfb5f79b87bc5b0f7d3bd"
+          },
+          {
+            "sourceId": "site-product-skills-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": ".agents/skills/japanese-technical-blog/SKILL.md",
+            "blobSha256": "5d050cceca3a0b01f701dd971258572cc28632c8d34ce222423a876e31b75ed4",
+            "sourceRecordSha256": "52398ce02fc206ca4eb86a495cf3712f4c26f8cb542e1e5f0fe0bee6e8b9713d"
+          },
+          {
+            "sourceId": "site-product-deploy-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": ".github/workflows/deploy-site.yml",
+            "blobSha256": "c619f40d7f01556c01224fe66c985a2758a444ec99b27762c8cdc210bcb213e2",
+            "sourceRecordSha256": "fa4d139e80e45d23b51607f16ca76dd873d72f42ddedd300e1a9061ce7d781fb"
+          },
+          {
+            "sourceId": "site-product-product-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/product/product-context.md",
+            "blobSha256": "ecdb2815a5f47b4f8738264ff160ad5a5542a6856c816a9c0c46e8ad683973b6",
+            "sourceRecordSha256": "078517ab620814d82a90d6cd0e91f5244e6c1e84851e456d33d37370265a2c7a"
+          },
+          {
+            "sourceId": "site-product-status-1",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/architecture/cms-implementation-status.md",
+            "blobSha256": "8def06c6faffb36ce879771a63c0955799fb37176816ea146f9a5c4fa9f0fbab",
+            "sourceRecordSha256": "ff79705846c6ccf80c892e3f88ed848ccc1bf80ceb7e116551ea454093f27954"
+          },
+          {
+            "sourceId": "site-product-status-2",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "dd133023c5e7f051b94a6f9e81b63a5157095e82",
+            "path": "docs/operations/current-deployment-status.md",
+            "blobSha256": "8278291b2eb8c863ab31435742e11b08f14d2251a14e0682661bf646718bf0fa",
+            "sourceRecordSha256": "b8e729a8f4fcdde9bf052cf6225d8abbe801c33712509ad5354bec918d480697"
+          },
+          {
+            "sourceId": "site-product-revision-scope",
+            "kind": "user_supplied",
+            "publicDescription": "ポートフォリオに向けてXpotato Siteの紹介を拡充する依頼に基づき、この会話でAIが本文と構成図を作成した改稿下書き。実装の根拠は固定版の公開ソース。本文・図の本人承認、媒体公開、本番配信の完了を表す記録ではない。",
+            "sourceRecordSha256": "b3d271efa212d39f153cc269afb08d59e225350e5db732ac8acd8dbdc5a49109"
           }
         ],
-        "materialClaims": [],
-        "exportedAt": "2026-10-05T07:54:16.805Z"
+        "materialClaims": [
+          {
+            "claimId": "site-product-claim-01",
+            "statementSha256": "e5e0be4c1d5db92d9398d899de7879ca34fa9fca825204cb6486995c2da4970e",
+            "locator": {
+              "blockIndex": 3
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-01-evidence",
+                "propositionSummary": "サイトは、公開ページを生成するAstro、自作CMSのPWA、保存を受け付ける編集APIに分かれています。PWAはブラウザで動き、対応端末ではホーム画面などに追加できるWebアプリです。公開ページとCMSは型やデザインを共有し、それぞれの役割に必要な処理を持ちます。",
+                "propositionSha256": "b3fe864a671684c4117caac74f75cde8389ef561832677adba9900175086791e",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-architecture-1"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-02",
+            "statementSha256": "f3154b39e18f88c9c4b9a506855fe53b231faadefca4c7a62729fae4099294e0",
+            "locator": {
+              "blockIndex": 5
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-02-evidence",
+                "propositionSummary": "読者に届く本文は、ビルド時に生成した静的HTMLです。操作が必要な部分だけにJavaScriptを読み込み、記事を読むために編集画面の処理を動かす構成にはしていません。全文検索も事前に索引を作り、検索ページ側で処理します。",
+                "propositionSha256": "74e792faa7df476f05354a4fd695696c67280218d2e4e0f7bd25f5362c22b7c8",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-static-1",
+                  "site-product-static-2"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-03",
+            "statementSha256": "2eb3241324b95df14e5deb5fc901a9387495eb1dce47cb7a93e2cf2f2c04dda6",
+            "locator": {
+              "blockIndex": 6
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-03-evidence",
+                "propositionSummary": "一方、CMSの保存にはサーバー側の処理が必要です。専用のCloudflare Workers APIがGitHubとの認証・保存や下書き画像を扱います。CMSの入口はCloudflare Accessで保護し、編集APIでもGitHubの所有者確認、セッション、リクエストの検証を行います。公開用の配信Workerと、書込み権限を持つAPIを分けています。",
+                "propositionSha256": "0754e70a94851b96801ba8e92a990a54edb63b2c951ed36ec39f7fa526d6baa7",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-editor-api-1",
+                  "site-product-editor-api-2"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-04",
+            "statementSha256": "091029354daf36840c2cd6886f8141688e01adf55a763c3c669ca188fd294820",
+            "locator": {
+              "blockIndex": 8
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-04-evidence",
+                "propositionSummary": "本文の正本には専用CMSデータベースを用意せず、MDXとGitを使います。CMSの端末内には、下書きや履歴をIndexedDBで保存します。長く残す原稿を特定の編集画面から独立させる一方で、編集中の状態は扱いやすい場所に置く設計です。",
+                "propositionSha256": "0074289e2e3962232df416d2d61ddaa874c0cb3aeed508927bc554efc3523944",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-cms-1",
+                  "site-product-cms-2"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-05",
+            "statementSha256": "1565452b210079a2b1decfe89f377a22030f733a07ac081a773ba386bce72fd1",
+            "locator": {
+              "blockIndex": 10
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-05-evidence",
+                "propositionSummary": "CMSでは、記事情報と本文を分けて編集し、ブロック表示・MDX・プレビューを切り替えられます。本文中の位置に添削を付け、修正案と原文を対応させる機能もあります。図表、数式、比較、手順などの部品は、公開サイトと共有する形式で保存します。",
+                "propositionSha256": "5ee1cde197a967dc181d7facaf740fe5aee4c3ffbd28c77fa7b37cf7f92f9037",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-cms-1",
+                  "site-product-cms-2"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-06",
+            "statementSha256": "3bdf35457ce7d6fa8693b55d1ecca9c633615f117edc9150c11d2a7dff78dac4",
+            "locator": {
+              "blockIndex": 12
+            },
+            "claimType": "limitation",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-06-evidence",
+                "propositionSummary": "たとえば、AIが技術記事の下書きを作り、人がCMSで説明の不足を指摘し、AIが同じ作業ブランチ上で改稿できます。現在の引継ぎはGitの原稿や添削JSONを渡す方式です。CMSで指摘した瞬間にAIが起動し、自動で改稿する接続はまだありません。",
+                "propositionSha256": "0e6d59899940a3272bd4a00e86ee1408e5915222bb3821eec704b24326ea20b2",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-handoff-1"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-07",
+            "statementSha256": "69499c322ca50c2d97f0aa03fd10247f1b0de5a630f85ca0d39a59ff2f6eb738",
+            "locator": {
+              "blockIndex": 13
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-07-evidence",
+                "propositionSummary": "保存時には、編集を始めた時点のGitの状態と現在の状態を照合します。その間に別の変更が入っていた場合は競合として扱い、相手の原稿を黙って上書きしません。保存先は作業ブランチの下書きで、Draft PR（下書きの変更提案）を通して差分を確認できます。",
+                "propositionSha256": "ca44681c58d3f6ce420c72f264e9216f7c98b93f670a2cc160ea9402d40e4c1b",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-git-1"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-08",
+            "statementSha256": "c8f0995aae7c589fb376d2ca94e3bc00bcb845b0b9df9c8e69882d56b779695d",
+            "locator": {
+              "blockIndex": 16
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-08-evidence",
+                "propositionSummary": "長く運用すると、タイトル、URL、分類、画像形式を変えたくなります。そこで、記事にはURLやファイル名とは別のContentIdを持たせています。同じ記事の名前やURLを変えても、記事そのものの識別は維持し、必要に応じて旧URLから転送できます。",
+                "propositionSha256": "6b6658819b73a77f10c2b3ce0c2dddee4a9e6fc9cf6d3f2ffa5aced70cf2f8bb",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-identity-1"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-09",
+            "statementSha256": "c20dd20ea5c6c934a854153338506439bd1109e9e9ed3bb726746ff2a88e4014",
+            "locator": {
+              "blockIndex": 19
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-09-evidence",
+                "propositionSummary": "分類別の一覧、関連記事、検索用の索引、サイトマップを、本文と登録情報から生成します。書き手が記事ごとに表示や公開用メタデータを組み立てる負担を減らし、内容を直すことに集中できるようにしています。",
+                "propositionSha256": "b6e6af5b8ce3522bfd9eace5efe326e6d0b76c1239205762ebb072217dc04a72",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-content-1",
+                  "site-product-content-2"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-10",
+            "statementSha256": "ca585d8a158cc9d2797e1d00a8ad8bcbda0020390b37250530ad7a7d2f32ae80",
+            "locator": {
+              "blockIndex": 21
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-10-evidence",
+                "propositionSummary": "本文をGitで管理しても、大きな画像まで同じ場所へ蓄積すると扱いづらくなります。画像はR2に分け、本文からは保存先のURLを直接書かず、媒体のIDで参照します。さらに、制作途中の素材、再変換用の原本、配信用画像、復旧用のコピーを区別しています。",
+                "propositionSha256": "327dc2dbf63e5db52dc7ee466fe173cb551603cffca49b3d43229b0f783013f5",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-media-1",
+                  "site-product-media-2",
+                  "site-product-media-3",
+                  "site-product-media-4"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-11",
+            "statementSha256": "e6be941928357b9026eb3c49bafa7602daf62e40a1d6698497a0ea09b50374a6",
+            "locator": {
+              "blockIndex": 23
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-11-evidence",
+                "propositionSummary": "ここでいう原本は、撮影したファイルをそのまま残すという意味ではありません。向きや色空間をそろえ、位置情報などの不要なメタデータを除いた媒体を、再変換の基準として保存します。配信画像の形式やサイズを見直すときは、この原本を使えます。",
+                "propositionSha256": "7251082e66694cbe53b4c9febf70c2aa3735801281bdc5a5625ef16f880365ff",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-media-1",
+                  "site-product-media-2",
+                  "site-product-media-3",
+                  "site-product-media-4"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-12",
+            "statementSha256": "a9b12213d929aeed9613eba80343d29619f1809bd5769092386e0cfb9f62e680",
+            "locator": {
+              "blockIndex": 24
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-12-evidence",
+                "propositionSummary": "復旧用コピーには、実際に公開した画像と同じバイト列を保存します。再変換用の原本だけでは、将来のツール変更によって以前と完全に同じ出力を作れないことがあるためです。原本から配信形式を作り直すことと、公開当時の画像へ戻すことを別々に支えています。",
+                "propositionSha256": "a0aaa77bb586ebae7803a7a5b3fd08bdcf97e7d414c16c2b594968118feeecea",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-media-1",
+                  "site-product-media-2",
+                  "site-product-media-3",
+                  "site-product-media-4"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-13",
+            "statementSha256": "5d2d3726fec9abe9ddfe048c84f997f80170202b563a5dc3fa17ca7d25e656c4",
+            "locator": {
+              "blockIndex": 26
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-13-evidence",
+                "propositionSummary": "型が正しくても、説明が分かりやすいとは限りません。逆に、文章が自然でも、リンクや画像の参照が壊れていれば公開ページとして使えません。そのため、機械的な検証と内容のレビューを組み合わせています。",
+                "propositionSha256": "cbd3cd583832e51d88be22c8316b78bde0c6b37348fd472e269cf82d28838061",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-quality-1"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-14",
+            "statementSha256": "b43946c8dc1caf66a8696af24b5d67a4e04bfb03d6f5055609e5622b8fd8f5e5",
+            "locator": {
+              "blockIndex": 28
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-14-evidence",
+                "propositionSummary": "記事制作のスキルにも、読者の目的、必要な背景説明、図を置く位置、出典の扱い、完成ページの確認方法を残します。個別記事への指摘を、繰り返し使える編集基準や共通部品へ戻すためです。スキルに書いたことだけで品質を保証せず、実際の記事と表示で確かめます。",
+                "propositionSha256": "18d684486aaaed66d8b1fdca3bbd54c74b97e954e2b45f4446c0997339541954",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-skills-1"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-15",
+            "statementSha256": "80ca7bb6cbb59885f168b71a2050022d4660a7fd31425db9c249a7254fd7abcf",
+            "locator": {
+              "blockIndex": 29
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-15-evidence",
+                "propositionSummary": "CIが成功しただけで本番へ配信する構成にはしていません。配信用成果物を選び、本人の明示的な操作と所定の条件を満たして配信します。CMSで保存した下書きが、そのまま公開ページに置き換わることはありません。",
+                "propositionSha256": "7ccbef2b76f24f812cfdc809b7857b823245d0cc4a99a2187a35f5ec68ed0c0e",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-deploy-1"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-16",
+            "statementSha256": "a9d0242dadf58918e3b1107078f4a6c319599a87bb25f2fd95f3fadafaa8e8f5",
+            "locator": {
+              "blockIndex": 31
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-16-evidence",
+                "propositionSummary": "記事の掲載には、既存のCMSや小さな静的サイトを使う選択肢もあります。Xpotato Siteでは、技術記事、図表、ブラウザツール、人とAIの編集、画像の復旧を、同じ原稿形式と検証ルールで扱うことを優先しました。",
+                "propositionSha256": "437397a9fddb31f3740bba5e3c7a3a65ace481faa1a47653aab94297cf5524b1",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-product-1"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          },
+          {
+            "claimId": "site-product-claim-17",
+            "statementSha256": "4c8172ba6b83065ce52229254b77c2bb3e11cd4256fe8dab5a8b5b95e98c093a",
+            "locator": {
+              "blockIndex": 35
+            },
+            "claimType": "limitation",
+            "evidence": [
+              {
+                "evidenceId": "site-product-claim-17-evidence",
+                "propositionSummary": "ここで紹介したCMS、共通コンテンツ部品、静的サイト、編集API、検証・配信の処理は、2026年11月24日時点のmainブランチを基準に整理しています。公開サイトの配信と、CMSの入口をAccessで保護した実施記録があります。GitHub App・Draft R2を通した保存や、iPhone実機での受入れ完了は、本稿で参照した記録では確認できていません。",
+                "propositionSha256": "c456751fce16dbca5250975912398dfa91a60706e3e1c9b39741ffd97f7a78a3",
+                "interpretation": "explicit",
+                "sourceIds": [
+                  "site-product-status-1",
+                  "site-product-status-2"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "基準は2026-11-24の固定main。コード・設計文書の確認を、全機能の実環境受入れ完了と扱わない。"
+            ]
+          }
+        ],
+        "visualOrigins": [
+          "diagram"
+        ],
+        "exportedAt": "2026-11-25T17:07:45.313Z"
       }
     },
     {
@@ -377,7 +982,9 @@
                 "propositionSummary": "同一条件の実UI比較で216〜256bitの5入力は各2回ともrusqsieveより高速。192bitではrusqsieveが高速。",
                 "propositionSha256": "e9944a51f1c33a4294b89df8ba5056cc536632d6a76c25170749d526faa331f6",
                 "interpretation": "direct_observation",
-                "sourceIds": ["prime-ui-benchmark-20261110"],
+                "sourceIds": [
+                  "prime-ui-benchmark-20261110"
+                ],
                 "freshnessChecked": true
               }
             ],
