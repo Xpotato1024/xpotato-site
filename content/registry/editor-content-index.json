@@ -470,7 +470,7 @@
       "path": "content/projects/xpotato-site.mdx",
       "title": "Xpotato Site",
       "collection": "projects",
-      "draft": false,
+      "draft": true,
       "education": false
     },
     {
