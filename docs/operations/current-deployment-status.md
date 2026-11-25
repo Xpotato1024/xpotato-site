@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: operations
-last_verified: 2026-11-21
+last_verified: 2026-11-26
 canonical_for:
   - current repository deployment workflow status
 ---
@@ -20,6 +20,26 @@ canonical_for:
 旧設計時点の `if: ${{ false }}` hard blockは現行deploy workflowの説明としては失効しています。ADR、acceptance record、auditなどの当時の記録は履歴として残します。`site-integrity-monitor.yml` 等の別workflowのgateはこの訂正の対象ではありません。
 
 providerのexact counterpartと未成立条件は[Infrastructure Handoff](../architecture/infrastructure-handoff.md)、artifactのproducer/consumerは[Build Artifact Pipeline](build-artifact-pipeline.md)、権限の分担は[Deployment Boundary](deployment-boundary.md)を参照します。provider mutation、実記事公開、media永続化、旧44記事のhold解除、cutoverをこの文書やPRで認可しません。
+
+## 2026-11-26 CMSの下書き引継ぎ修正を本番へ反映
+
+[PR #247](https://github.com/Xpotato1024/xpotato-site/pull/247)のブランチ固定・私有画像の一括登録と、[PR #248](https://github.com/Xpotato1024/xpotato-site/pull/248)の保存済みGit下書きからのAstroレビュー取得を、所有者の明示認可に基づいて配備した。
+
+### 静的CMSシェルを含むSite
+
+[配信run 45719283922](https://github.com/Xpotato1024/xpotato-site/actions/runs/45719283922)はmain `536691b39c071fbd9f4d57dfcbe36d6655b28b40`の成功push CI [45718135308](https://github.com/Xpotato1024/xpotato-site/actions/runs/45718135308)、attempt 1から取得したProduction artifact `15070966992`（digest `sha256:fe625a39ab90c56650fec37ad961fe344226b725318544321d8b7eff5a67e6e9`）を使用した。再buildなし、配備1回で `DEPLOYED_READBACK_VERIFIED` となり、正規成果物の709対象の確認が完了した。内訳は本文・対象headerの一致292件、Access保護応答416件、固定robots policy 1件。
+
+receiptのversion `e693f362-a484-4d0c-8e1b-32cfacbf2bfa`はreadbackのactive versionと一致し、active deploymentは `1b586f47-c1da-42cd-be45-e3e9647ed230`。公開Siteのbindings 0、Site自身のroutes 0、workers.dev / preview URLs falseを確認した。非secret証跡は同runのartifact `15072260366`（digest `sha256:cb70c7f32a6591b4ead1e5f9faac84d201f418ea3c7bc8bd154205f4b8ab39c8`）に保存されている。CMS保護パスの302はAccess境界の確認であり、認証後のHTML/JSのbyte一致とは区別する。
+
+### CMS編集API
+
+APIは統合済みsource `7d73c0426c3497219cfd70ed3437085487f8009b`と、[固定CMS Server counterpart](../architecture/infrastructure-handoff.md#cms接続の固定counterpart)を使い、正式な `editor:connect check` → `connect` → `verify` で更新した。固定Node/npm/Wrangler、clean checkout、既存認証・Draft bucket・route・5 secretsを使用し、`connect`は1回、`connect` / `verify`はともに終了コード0だった。後続の静的releaseとの差分にAPI・editor-core・portable-content・接続CLIの変更はない。
+
+新active deploymentは `9c117868-238b-48a7-838e-c49e9e36059b`、versionは `c1ae310b-7cdd-43d9-9ec1-fdff3daa8031`（version 6、traffic 100%）。配備前のversionからの変化と、deployment / version一覧の一致をread-onlyで確認した。再検証ではsourceIsMerged、非公開bucket、Worker、route、GitHub secrets、connectionConfiguredがすべてtrue、GCはfalse。`/editor-api/session`は200、`/editor/`はAccessの302だった。
+
+### CMS内の実操作との区別
+
+この記録はコードの本番配備・provider/readbackの結果である。所有者CMSログインは未完了のため、今回のXpotato Site下書きの4図について、実Draft登録・新しい端末内下書きへの復元・認証後のAstro実表示は未実施。原稿と登録ファイルの準備、合成試験の成功をその実操作の完了とは扱わない。下書きの引継ぎと非公開Draftの常時R/W認可は[CMS制作手順](editor-workflow.md)に従う。
 
 ## 記録済みの実施状態
 
