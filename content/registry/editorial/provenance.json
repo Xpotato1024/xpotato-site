@@ -161,7 +161,7 @@
         "contentId": "325e1e0e-acd3-469f-a27d-476cf84b48fc",
         "origin": "manual",
         "content": {
-          "mdxSha256": "ccc12a87ef62b24c6843a5e1f2522de95c55a78ec323ef439b868f4b797bacd2",
+          "mdxSha256": "0cd8db75a5a94cc5692142ae3d7bf13a37131d53360b97a1755f987a0e6b9a98",
           "frontmatterSha256": "07d7816e1325912d4ce7d68d86a058e4dbbd7610e1263d91deb8e1c7fed4bced",
           "route": "/projects/xpotato-site/"
         },
@@ -447,7 +447,7 @@
             "claimId": "site-product-claim-04",
             "statementSha256": "091029354daf36840c2cd6886f8141688e01adf55a763c3c669ca188fd294820",
             "locator": {
-              "blockIndex": 8
+              "blockIndex": 9
             },
             "claimType": "source_fact",
             "evidence": [
@@ -471,7 +471,7 @@
             "claimId": "site-product-claim-05",
             "statementSha256": "1565452b210079a2b1decfe89f377a22030f733a07ac081a773ba386bce72fd1",
             "locator": {
-              "blockIndex": 10
+              "blockIndex": 11
             },
             "claimType": "source_fact",
             "evidence": [
@@ -495,7 +495,7 @@
             "claimId": "site-product-claim-06",
             "statementSha256": "3bdf35457ce7d6fa8693b55d1ecca9c633615f117edc9150c11d2a7dff78dac4",
             "locator": {
-              "blockIndex": 12
+              "blockIndex": 13
             },
             "claimType": "limitation",
             "evidence": [
@@ -518,7 +518,7 @@
             "claimId": "site-product-claim-07",
             "statementSha256": "69499c322ca50c2d97f0aa03fd10247f1b0de5a630f85ca0d39a59ff2f6eb738",
             "locator": {
-              "blockIndex": 13
+              "blockIndex": 14
             },
             "claimType": "source_fact",
             "evidence": [
@@ -541,7 +541,7 @@
             "claimId": "site-product-claim-08",
             "statementSha256": "c8f0995aae7c589fb376d2ca94e3bc00bcb845b0b9df9c8e69882d56b779695d",
             "locator": {
-              "blockIndex": 16
+              "blockIndex": 17
             },
             "claimType": "source_fact",
             "evidence": [
@@ -564,7 +564,7 @@
             "claimId": "site-product-claim-09",
             "statementSha256": "c20dd20ea5c6c934a854153338506439bd1109e9e9ed3bb726746ff2a88e4014",
             "locator": {
-              "blockIndex": 19
+              "blockIndex": 20
             },
             "claimType": "source_fact",
             "evidence": [
@@ -588,7 +588,7 @@
             "claimId": "site-product-claim-10",
             "statementSha256": "ca585d8a158cc9d2797e1d00a8ad8bcbda0020390b37250530ad7a7d2f32ae80",
             "locator": {
-              "blockIndex": 21
+              "blockIndex": 22
             },
             "claimType": "source_fact",
             "evidence": [
@@ -614,7 +614,7 @@
             "claimId": "site-product-claim-11",
             "statementSha256": "e6be941928357b9026eb3c49bafa7602daf62e40a1d6698497a0ea09b50374a6",
             "locator": {
-              "blockIndex": 23
+              "blockIndex": 24
             },
             "claimType": "source_fact",
             "evidence": [
@@ -640,7 +640,7 @@
             "claimId": "site-product-claim-12",
             "statementSha256": "a9b12213d929aeed9613eba80343d29619f1809bd5769092386e0cfb9f62e680",
             "locator": {
-              "blockIndex": 24
+              "blockIndex": 25
             },
             "claimType": "source_fact",
             "evidence": [
@@ -666,7 +666,7 @@
             "claimId": "site-product-claim-13",
             "statementSha256": "5d2d3726fec9abe9ddfe048c84f997f80170202b563a5dc3fa17ca7d25e656c4",
             "locator": {
-              "blockIndex": 26
+              "blockIndex": 27
             },
             "claimType": "source_fact",
             "evidence": [
@@ -689,7 +689,7 @@
             "claimId": "site-product-claim-14",
             "statementSha256": "b43946c8dc1caf66a8696af24b5d67a4e04bfb03d6f5055609e5622b8fd8f5e5",
             "locator": {
-              "blockIndex": 28
+              "blockIndex": 29
             },
             "claimType": "source_fact",
             "evidence": [
@@ -712,7 +712,7 @@
             "claimId": "site-product-claim-15",
             "statementSha256": "80ca7bb6cbb59885f168b71a2050022d4660a7fd31425db9c249a7254fd7abcf",
             "locator": {
-              "blockIndex": 29
+              "blockIndex": 30
             },
             "claimType": "source_fact",
             "evidence": [
@@ -735,7 +735,7 @@
             "claimId": "site-product-claim-16",
             "statementSha256": "a9d0242dadf58918e3b1107078f4a6c319599a87bb25f2fd95f3fadafaa8e8f5",
             "locator": {
-              "blockIndex": 31
+              "blockIndex": 32
             },
             "claimType": "source_fact",
             "evidence": [
@@ -758,7 +758,7 @@
             "claimId": "site-product-claim-17",
             "statementSha256": "4c8172ba6b83065ce52229254b77c2bb3e11cd4256fe8dab5a8b5b95e98c093a",
             "locator": {
-              "blockIndex": 35
+              "blockIndex": 36
             },
             "claimType": "limitation",
             "evidence": [
@@ -782,7 +782,7 @@
         "visualOrigins": [
           "diagram"
         ],
-        "exportedAt": "2026-11-25T17:07:45.313Z"
+        "exportedAt": "2026-11-25T17:16:19.915Z"
       }
     },
     {
