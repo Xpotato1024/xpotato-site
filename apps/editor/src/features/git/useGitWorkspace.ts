@@ -330,14 +330,18 @@ export function useGitWorkspace(
     if ((manifest as { contractHash?: string }).contractHash !== schema.contractHash) {
       throw new Error("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
     }
+    const openedSource = updateDraft(document.source, { draft: true });
     let opened: LocalDraft = {
       id: crypto.randomUUID(),
-      source: updateDraft(document.source, { draft: true }),
+      source: openedSource,
       path: file,
       sourceBranch: source ?? selected.branch,
       workingBranch: selected.branch.startsWith("content/") ? selected.branch : "",
       baseCommit: selected.commit,
       baseSource: document.source,
+      ...(intent === "drafts" && openedSource === document.source
+        ? { syncedCommit: selected.commit, syncedSource: document.source }
+        : {}),
       registrySnapshot: manifest,
       savedAt: new Date().toISOString(),
       producer: "mixed",
