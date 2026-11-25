@@ -1,0 +1,133 @@
+---
+"id": "325e1e0e-acd3-469f-a27d-476cf84b48fc"
+"title": "Xpotato Site"
+"description": "人とAIが同じMDX原稿を編集し、検証して公開する技術発信基盤。自作CMS、静的配信、画像の保存・復旧を分けた設計を紹介します。"
+"pubDate": "2026-03-12"
+"status": "active"
+"tags":
+  - "astro"
+  - "mdx"
+  - "github-actions"
+  - "engineering"
+"featured": true
+"featuredOrder": 1
+"links":
+  "demo": "https://xpotato.net/"
+  "repository": "https://github.com/Xpotato1024/xpotato-site"
+"sourceAvailability": "public"
+"draft": true
+"stack":
+  - "astro"
+  - "mdx"
+  - "tailwind-css"
+  - "typescript"
+"updatedDate": "2026-11-26"
+---
+
+Xpotato Siteは、技術記事、制作物、教育資料、ブラウザツールを公開する[Xpotato.net](https://xpotato.net/)のサイト基盤です。自作のXpotato CMSとAIによる制作手順を組み合わせ、原稿を書くところから、内容・図版の確認、公開後の更新までを一つの仕組みで扱います。
+
+中心に置いたのは、**人とAIが同じ原稿を扱い、編集と公開を分けること**です。文章は、Markdownに図表などの部品を記述できるMDXというテキスト形式で保存し、変更履歴はGitHubに残します。CMSを使う人も、コードから編集するAIも、この原稿を引き継げます。
+
+## 編集する仕組みと、読者に届ける仕組み
+
+サイトは、公開ページを生成するAstro、自作CMSのPWA、保存を受け付ける編集APIに分かれています。PWAはブラウザで動き、対応端末ではホーム画面などに追加できるWebアプリです。公開ページとCMSは型やデザインを共有し、それぞれの役割に必要な処理を持ちます。[^architecture]
+
+<Gallery layout="diagrams" label="Xpotato Siteの構成">
+  <Figure asset="architecture-editor" alt="CMSはAccessで入口を保護し、編集APIを介してGitHubの下書き原稿と非公開のDraft R2を扱う。" title="編集と保存" credit="本記事用に作成。GitHubロゴは公式配布素材。" />
+  <Figure asset="architecture-delivery" alt="GitHub ActionsとAstroが公開用成果物を検証・生成する。本人の配信指示を経たSite Workerと、公開用R2の画像を読者へ届ける。" title="検証と配信" credit="本記事用に作成。GitHub・Astroロゴは公式配布素材。" />
+</Gallery>
+
+読者に届く本文は、ビルド時に生成した静的HTMLです。操作が必要な部分だけにJavaScriptを読み込み、記事を読むために編集画面の処理を動かす構成にはしていません。全文検索も事前に索引を作り、検索ページ側で処理します。[^static]
+
+一方、CMSの保存にはサーバー側の処理が必要です。専用のCloudflare Workers APIがGitHubとの認証・保存や下書き画像を扱います。CMSの入口はCloudflare Accessで保護し、編集APIでもGitHubの所有者確認、セッション、リクエストの検証を行います。公開用の配信Workerと、書込み権限を持つAPIを分けています。[^editor-api]
+
+採用した技術は、次の役割を受け持っています。
+
+- **Astro**は、静的な記事・一覧・制作物ページを生成し、読むページに必要な処理を絞ります。
+- **MDXとGitHub**は、本文の保存、差分、レビューを支え、人とAIが同じ編集元を扱えるようにします。
+- **TypeScriptと共通スキーマ**は、本文部品やメタデータを検証し、CMSと公開ページの解釈をそろえます。
+- **Tailwind CSSと共通デザイン値**は、公開サイトとCMSの色、書体、部品の扱いを共有します。
+- **WorkersとR2**は、配信、編集API、用途別の画像保存を受け持ち、常駐サーバーの管理を減らします。
+
+本文の正本には専用CMSデータベースを用意せず、MDXとGitを使います。CMSの端末内には、下書きや履歴をIndexedDBで保存します。**長く残す原稿を特定の編集画面から独立させる**一方で、編集中の状態は扱いやすい場所に置く設計です。[^cms]
+
+## 人とAIが、同じ原稿を引き継ぐ
+
+CMSでは、記事情報と本文を分けて編集し、ブロック表示・MDX・プレビューを切り替えられます。本文中の位置に添削を付け、修正案と原文を対応させる機能もあります。図表、数式、比較、手順などの部品は、公開サイトと共有する形式で保存します。[^cms]
+
+<Figure asset="authoring-flow" alt="人のCMS編集とAIの執筆が同じMDX・作業ブランチに集まり、確認と改稿を繰り返す。候補の本人確認、正式保存とPR、別の公開判断へ進む。" title="原稿を共有し、確認を経て公開する" credit="本記事用に作成。GitHubロゴは公式配布素材。" width="compact" />
+
+たとえば、AIが技術記事の下書きを作り、人がCMSで説明の不足を指摘し、AIが同じ作業ブランチ上で改稿できます。現在の引継ぎはGitの原稿や添削JSONを渡す方式です。**CMSで指摘した瞬間にAIが起動し、自動で改稿する接続はまだありません。**[^handoff]
+
+保存時には、編集を始めた時点のGitの状態と現在の状態を照合します。その間に別の変更が入っていた場合は競合として扱い、相手の原稿を黙って上書きしません。保存先は作業ブランチの下書きで、Draft PR（下書きの変更提案）を通して差分を確認できます。[^git]
+
+下書きMDXとDraft PRは公開リポジトリに置くため、非公開情報を保管する場所ではありません。未公開記事の本文と、非公開の下書き画像・添削データは、公開範囲が異なります。
+
+## 記事を、編集画面や保存先に縛らない
+
+長く運用すると、タイトル、URL、分類、画像形式を変えたくなります。そこで、記事にはURLやファイル名とは別のContentIdを持たせています。同じ記事の名前やURLを変えても、記事そのものの識別は維持し、必要に応じて旧URLから転送できます。[^identity]
+
+本文の図、手順、比較、補足も、それぞれの意味を表す共通部品として記述します。記事ごとに画面用のコードを書き足すより、表示ルールをそろえやすく、CMSでも同じ部品として編集できます。
+
+- **手順・診断リスト**は、操作の順番や症状別の確認を示します。
+- **図・ギャラリー・比較部品**は、写真、構成図、複数条件の違いを扱います。
+- **数式とグラフ**は、KaTeXや折れ線・散布図などを使い、計算式、測定結果、理論曲線を示します。
+- **折りたたみ・注記**は、必要な読者だけが読む補足をまとめます。
+- **登録済みの対話部品**は、ブラウザで試せる計算やデモを本文につなぎます。
+
+分類別の一覧、関連記事、検索用の索引、サイトマップを、本文と登録情報から生成します。書き手が記事ごとに表示や公開用メタデータを組み立てる負担を減らし、内容を直すことに集中できるようにしています。[^content]
+
+## 画像は、再編集と復旧のために分けて保存する
+
+本文をGitで管理しても、大きな画像まで同じ場所へ蓄積すると扱いづらくなります。画像はR2に分け、本文からは保存先のURLを直接書かず、媒体のIDで参照します。さらに、制作途中の素材、再変換用の原本、配信用画像、復旧用のコピーを区別しています。[^media]
+
+<Figure asset="media-lifecycle" alt="制作途中の素材はDraftに置く。正式な保存では正規化済みの非公開原本Aから配信用Bを作り、公開した画像と同じバイト列を復旧用Cに保護する。" title="作り直すための原本と、戻すためのコピー" credit="Xpotato Siteの媒体設計から作成。" width="compact" />
+
+ここでいう原本は、撮影したファイルをそのまま残すという意味ではありません。向きや色空間をそろえ、位置情報などの不要なメタデータを除いた媒体を、再変換の基準として保存します。配信画像の形式やサイズを見直すときは、この原本を使えます。[^media]
+
+復旧用コピーには、実際に公開した画像と同じバイト列を保存します。再変換用の原本だけでは、将来のツール変更によって以前と完全に同じ出力を作れないことがあるためです。原本から配信形式を作り直すことと、公開当時の画像へ戻すことを別々に支えています。[^media]
+
+## 機械で確かめることと、人が判断すること
+
+型が正しくても、説明が分かりやすいとは限りません。逆に、文章が自然でも、リンクや画像の参照が壊れていれば公開ページとして使えません。そのため、機械的な検証と内容のレビューを組み合わせています。[^quality]
+
+- **形式と参照**は、共通スキーマと検証処理で確かめます。ID、分類、部品の入力、画像やリンクの参照が対象です。
+- **ビルドと必要な操作**は、GitHub Actionsと対象に応じた試験で確認します。
+- **説明・出典・図の内容**は、根拠を確認する制作手順と内容・図版の監査で見直します。
+- **可読性と図の配置**は、スマートフォンを含む完成ページで確認します。
+- **公開する内容と配信時期**は、候補の本人確認と別の配信操作で決めます。
+
+記事制作のスキルにも、読者の目的、必要な背景説明、図を置く位置、出典の扱い、完成ページの確認方法を残します。個別記事への指摘を、繰り返し使える編集基準や共通部品へ戻すためです。スキルに書いたことだけで品質を保証せず、実際の記事と表示で確かめます。[^skills]
+
+CIが成功しただけで本番へ配信する構成にはしていません。配信用成果物を選び、本人の明示的な操作と所定の条件を満たして配信します。CMSで保存した下書きが、そのまま公開ページに置き換わることはありません。[^deploy]
+
+## 自作CMSを持つ理由と、引き受ける負担
+
+記事の掲載には、既存のCMSや小さな静的サイトを使う選択肢もあります。Xpotato Siteでは、技術記事、図表、ブラウザツール、人とAIの編集、画像の復旧を、同じ原稿形式と検証ルールで扱うことを優先しました。[^product]
+
+自作CMSの役割は、MDXや共通部品を人が編集しやすくすることです。独立した別形式の原稿を増やさず、サイト側の表現や検証とつなげられます。一方で、編集UI、競合処理、認証、ブラウザ差、依存ライブラリの更新を保守する負担は増えます。この負担を上回るだけ、繰り返し使う制作工程をまとめられるかが判断基準になります。
+
+運用費用は利用量や各サービスの契約に左右されます。常駐サーバーの管理を減らした分も、GitHubやCloudflareとの連携、依存ライブラリの更新を継続して保守します。
+
+## 現在の到達点
+
+ここで紹介したCMS、共通コンテンツ部品、静的サイト、編集API、検証・配信の処理は、2026年11月24日時点のmainブランチを基準に整理しています。公開サイトの配信と、CMSの入口をAccessで保護した実施記録があります。GitHub App・Draft R2を通した保存や、iPhone実機での受入れ完了は、本稿で参照した記録では確認できていません。[^status]
+
+次に詰めるのは、CMSの指摘からAIへ作業を渡す接続と、端末や通信状態が変わっても編集を続けられるかという実運用の確認です。記事を書き、直し、読んでもらう過程で見つかった課題を、原稿だけでなく制作基盤にも戻していきます。
+
+Xpotato Siteで重視しているのは、ページを一度完成させることに加えて、**内容を増やしても、更新する人と読む人の負担を増やしにくくすること**です。そのために、原稿、編集画面、検証、配信の役割を分け、共通の形式でつないでいます。
+
+[^architecture]: [リポジトリの責務と依存関係](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/architecture/repository-layout.md)。
+[^static]: [Astroの静的出力設定](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/apps/site/astro.config.mjs)と[検索・発見性の設計](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/architecture/seo-discovery-policy.md)。
+[^editor-api]: [編集APIの構成](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/apps/editor-api/README.md)と[Accessを含む配信確認の記録](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/operations/current-deployment-status.md)。
+[^cms]: [CMSの編集画面と保存形式](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/contracts/cms-workbench-contract.md)、[端末内の保存処理](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/apps/editor/src/data/storage.ts)。
+[^handoff]: [CMSとAIの引継ぎ](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/operations/editor-workflow.md)。
+[^git]: [下書き・ブランチ競合・Draft PRの実装](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/packages/editor-core/src/git.ts)。
+[^identity]: [コンテンツIDの契約](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/AGENTS.md)。
+[^content]: [本文の共通構成と表現](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/content/page-composition.md)と[一覧・関連記事・検索の導出](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/architecture/content-discovery-architecture.md)。
+[^media]: [媒体の保存・公開・保護](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/operations/article-media-publication-ci.md)、[媒体IDと配信の設計](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/architecture/media-delivery-rendering.md)、[画像の正規化](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/contracts/media-ingest-contract.md)、[再変換と公開画像の復旧](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/contracts/media-recovery-contract.md)。
+[^quality]: [制作から配備準備までの手順](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/operations/content-production.md)。
+[^skills]: [記事制作スキル](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/.agents/skills/japanese-technical-blog/SKILL.md)。
+[^deploy]: [本番配信workflow](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/.github/workflows/deploy-site.yml)。
+[^product]: [プロダクトの目的と優先順位](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/product/product-context.md)。
+[^status]: [CMSの実装状態と受入れの範囲](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/architecture/cms-implementation-status.md)と[公開サイト・Accessの配信確認](https://github.com/Xpotato1024/xpotato-site/blob/dd133023c5e7f051b94a6f9e81b63a5157095e82/docs/operations/current-deployment-status.md)。
