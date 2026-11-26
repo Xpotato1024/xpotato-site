@@ -255,6 +255,7 @@ describe("referenced draft media", () => {
     expect((await restoreMediaSnapshot(local, remote)).missing).toEqual([]);
     expect(mocks.fetchMedia).toHaveBeenCalledWith("media-id");
     expect(mocks.saveMedia.mock.calls[0]![1]).toBe(cached);
+    expect(mocks.saveMedia.mock.calls[0]![2]).toBe(local);
     expect(await media[0]!.blob.text()).toBe("verified remote bytes");
     expect(media[0]!.id).toBe(cached.id);
     mocks.fetchMedia.mockClear();

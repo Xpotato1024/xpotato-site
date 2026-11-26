@@ -87,8 +87,16 @@ export async function findMediaSnapshot(draft: LocalDraft): Promise<RemoteMediaS
 export async function restoreMediaSnapshot(
   local: LocalDraft,
   remote: RemoteMediaSnapshot,
+  storageDraft: LocalDraft = local,
 ): Promise<{ draft: LocalDraft; missing: string[] }> {
   assertRemoteMediaIdentity(local, remote);
+  if (
+    storageDraft.id !== local.id ||
+    storageDraft.path !== local.path ||
+    parseDraft(storageDraft.source).data.id !== parseDraft(local.source).data.id
+  ) {
+    throw Error("DRAFT_MEDIA_IDENTITY_MISMATCH");
+  }
   const cached = await localMedia(local.id),
     missing: string[] = [];
   for (const [assetId, id] of Object.entries(remote.draft.assets)) {
@@ -146,7 +154,7 @@ export async function restoreMediaSnapshot(
         remoteId: asset.id,
         originalName: assetId,
         sourceRetained: asset.sourceRetained,
-      }, existing);
+      }, existing, storageDraft);
     } catch (error) {
       missing.push(
         error instanceof Error && error.message === "DRAFT_MEDIA_LOCAL_CONFLICT"

@@ -1,4 +1,5 @@
-import type { LocalMedia } from "./storage.js";
+import type { LocalDraft, LocalMedia } from "./storage.js";
+import { localDraftIdentity, matchingLocalDrafts } from "./draft-identity.js";
 
 export type StoredMedia = LocalMedia & {
   blobBytes: ArrayBuffer;
@@ -7,6 +8,18 @@ export type StoredMedia = LocalMedia & {
 };
 
 export type MediaVersion = Pick<LocalMedia, "id" | "sha256" | "remoteId">;
+
+export function assertMediaRestoreDraft(expected: LocalDraft, current: LocalDraft | undefined) {
+  const identity = localDraftIdentity(expected);
+  if (
+    !current ||
+    current.id !== expected.id ||
+    !identity ||
+    matchingLocalDrafts([current], identity).length !== 1
+  ) {
+    throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
+  }
+}
 
 export async function encodeStoredMedia(media: LocalMedia): Promise<StoredMedia> {
   const { blob, ...metadata } = media;

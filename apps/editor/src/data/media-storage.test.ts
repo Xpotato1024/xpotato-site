@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { decodeStoredMedia, encodeStoredMedia, mergeRestoredMedia } from "./media-storage.js";
-import type { LocalMedia } from "./storage.js";
+import {
+  assertMediaRestoreDraft,
+  decodeStoredMedia,
+  encodeStoredMedia,
+  mergeRestoredMedia,
+} from "./media-storage.js";
+import { createDraftForCollection, updateDraft } from "@xpotato/editor-core/draft";
+import type { LocalDraft, LocalMedia } from "./storage.js";
 
 function image(): LocalMedia {
   return {
@@ -80,6 +86,45 @@ describe("durable local media bytes", () => {
 });
 
 describe("restoring one asset into a local draft", () => {
+  const draft: LocalDraft = {
+    id: "local-draft",
+    source: createDraftForCollection({
+      collection: "projects",
+      id: "11111111-1111-4111-8111-111111111111",
+    }),
+    path: "content/projects/example.mdx",
+    sourceBranch: "content/example",
+    workingBranch: "content/example",
+    baseCommit: "a".repeat(40),
+    savedAt: "2026-11-26T00:00:00.000Z",
+    producer: "mixed",
+  };
+
+  it("requires the destination draft to remain active with the same content and branch", () => {
+    for (const current of [
+      undefined,
+      { ...draft, id: "other-local-draft" },
+      { ...draft, archived: true },
+      { ...draft, workingBranch: "content/other" },
+      { ...draft, path: "content/projects/other.mdx" },
+      {
+        ...draft,
+        source: createDraftForCollection({
+          collection: "projects",
+          id: "22222222-2222-4222-8222-222222222222",
+        }),
+      },
+    ]) {
+      expect(() => assertMediaRestoreDraft(draft, current)).toThrow("DRAFT_MEDIA_LOCAL_CONFLICT");
+    }
+    expect(() =>
+      assertMediaRestoreDraft(draft, {
+        ...draft,
+        source: updateDraft(draft.source, {}, "画像の取得中に加えた未同期の本文。"),
+      }),
+    ).not.toThrow();
+  });
+
   it("preserves notes edited while the image download was in flight", async () => {
     const previous = image();
     const { alt: _alt, caption: _caption, credit: _credit, creditUrl: _creditUrl, ...bare } =

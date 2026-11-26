@@ -6,6 +6,7 @@ import {
   decodeStoredMedia,
   encodeStoredMedia,
   mergeRestoredMedia,
+  assertMediaRestoreDraft,
   type MediaVersion,
   type StoredMedia,
 } from "./media-storage.js";
@@ -293,21 +294,35 @@ export async function localMedia(draftId: string): Promise<LocalMedia[]> {
 }
 
 /** Preserve edits made during a download and let concurrent restores share one media record. */
-export async function saveRestoredMedia(media: LocalMedia, expected?: MediaVersion) {
+export async function saveRestoredMedia(
+  media: LocalMedia,
+  expected: MediaVersion | undefined,
+  expectedDraft: LocalDraft,
+) {
+  if (media.draftId !== expectedDraft.id) throw Error("DRAFT_MEDIA_IDENTITY_MISMATCH");
   const incoming = await encodeStoredMedia(media);
   const db = await database();
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction("media", "readwrite");
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(["drafts", "media"], "readwrite");
     const store = tx.objectStore("media");
-    const request = store.index("draftId").getAll(media.draftId);
+    const draft = tx.objectStore("drafts").get(media.draftId);
     let failure: unknown;
-    request.onsuccess = () => {
+    draft.onsuccess = () => {
       try {
-        const matches = (request.result as (StoredMedia | LocalMedia)[]).filter(
-          (item) => item.assetId === media.assetId,
-        );
-        if (matches.length > 1) throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
-        store.put(mergeRestoredMedia(incoming, matches[0], expected));
+        assertMediaRestoreDraft(expectedDraft, draft.result as LocalDraft | undefined);
+        const request = store.index("draftId").getAll(media.draftId);
+        request.onsuccess = () => {
+          try {
+            const matches = (request.result as (StoredMedia | LocalMedia)[]).filter(
+              (item) => item.assetId === media.assetId,
+            );
+            if (matches.length > 1) throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
+            store.put(mergeRestoredMedia(incoming, matches[0], expected));
+          } catch (error) {
+            failure = error;
+            tx.abort();
+          }
+        };
       } catch (error) {
         failure = error;
         tx.abort();
@@ -322,6 +337,11 @@ export async function saveRestoredMedia(media: LocalMedia, expected?: MediaVersi
       reject(failure ?? tx.error ?? Error("LOCAL_SAVE_FAILED"));
     };
   });
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("editor-media-changed", { detail: { draftId: media.draftId } }),
+    );
+  }
 }
 export const deleteLocalMedia = (id: string) => transact("media", "readwrite", (s) => s.delete(id));
 export async function storageEstimate() {
