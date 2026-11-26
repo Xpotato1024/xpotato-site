@@ -21,6 +21,30 @@ canonical_for:
 
 providerのexact counterpartと未成立条件は[Infrastructure Handoff](../architecture/infrastructure-handoff.md)、artifactのproducer/consumerは[Build Artifact Pipeline](build-artifact-pipeline.md)、権限の分担は[Deployment Boundary](deployment-boundary.md)を参照します。provider mutation、実記事公開、media永続化、旧44記事のhold解除、cutoverをこの文書やPRで認可しません。
 
+## 2026-11-26 CMSの更新確認と脚注編集を本番へ反映
+
+[PR #252](https://github.com/Xpotato1024/xpotato-site/pull/252)をmain `eee6be7a4f8908a00ca5a66fa40ee4d529a45bce`（tree `0ed9ce06d64a049ea94d6a07f3fd507e87c0eea9`）へ統合した。[PR CI 45740677005](https://github.com/Xpotato1024/xpotato-site/actions/runs/45740677005)と[main push CI 45741563875](https://github.com/Xpotato1024/xpotato-site/actions/runs/45741563875)は、同じtreeで全必須ジョブが成功した。所有者の明示認可に基づき、成功mainのProduction artifact `15081876816`（digest `sha256:d5efe3d008bc709cfe553b544ba3481ba0729877e464954dc0e7bcd371eac0cc`、attempt 1）を[配信run 45742396319](https://github.com/Xpotato1024/xpotato-site/actions/runs/45742396319)へ渡した。
+
+配信runは配備1回・配備工程での再build 0回で`DEPLOYED_READBACK_VERIFIED`となった。`2026-11-26T02:29:51.604Z`（日本時間11:29）の読み戻しでは、receiptのversion `de40d8d1-d29a-4274-8b3d-30a3f1397bad`とactive versionが一致し、active deploymentは`0c9fe419-a597-41db-8d3f-c6ff1154e09b`だった。公開Siteのbindings 0・Site自身のroutes 0、workers.dev / preview URLs false、両代替endpointの404を確認した。
+
+全711対象の検査が1回の読み戻しで成功し、不一致は0件。内訳は本文・対象headerの完全一致292件、CMSのAccess保護応答418件、固定robots policy 1件だった。Access応答は認証境界の確認であり、認証後のCMSのHTML/JS byte一致を示さない。非secret証跡は同runのartifact `15082250456`（digest `sha256:63d5af058872614da94d2b51ad1504452c633e2c0dd1262911a22e2a25bb2333`）に保存されている。
+
+### 修正と検証
+
+PWAのHTML取得を正規URL `/editor/` へそろえ、既存のキャッシュキーとbytes/SHA-256検証を保つ。更新確認はインストールの完了・失敗・時間超過を判定し、更新適用中は入力を停止して媒体情報・管理情報・最新原稿の保存を待つ。保存に失敗した場合は編集へ戻る。脚注は専用ブロックと参照を保持する本文入力で編集し、即時プレビューの戻りリンクは公開Astroと同じSVGを使う。
+
+旧head `6ebb909a`の[CI 45739575383](https://github.com/Xpotato1024/xpotato-site/actions/runs/45739575383)は初期JSが1,001,234 bytesで上限1,000,000 bytesを超えたため失敗した。原稿選択・分類/連載管理の画面を必要時に読み込む修正後は985,408 bytes（gzip 304,664 bytes）となり、予算と測定方法を維持したまま成功した。遅延表示後に一覧が伸びた場合のスクロールも実DOMで確認した。
+
+固定Node 24.22.1 / npm 11.19.0・既存lockで対象90試験、型検査・整形・統合build・容量検査を確認し、同じ生成CMSとCSPをWindows Edgeで操作した。実Service Workerの準備失敗と再試行、保存待ち中の入力停止、保存失敗後の編集再開、更新後の原稿保持、オフライン再開が成功した。脚注ブロック・SVG・複数参照・ブランチ固定を含むCMS回帰も成功した。実記事の14脚注定義・17参照は無変更往復と部分編集で保持され、記事への書込みは0だった。独立レビューの更新中入力競合と遅延表示後のスクロールの指摘は修正し、追加差分のP0/P1は0件だった。
+
+### Draft画像・編集API・記事のCI
+
+`2026-11-26T02:23:19.727Z`のCLI `--verify-only`で、下記4図を実Draftから再取得した。`registered=0 / reused=4 / verified=true`、原稿head `5efb70af61c2e3b07a1a46dd12586c4e8d19549f`、Draft ID・revision 5と4図のbytes/SHA-256は初回登録記録と一致した。既存GitHub CLIの所有者認証を再利用した。
+
+今回の変更は静的CMSシェルの配信であり、編集APIは下記PR #250のversion `713e0abe-a42e-446d-ad31-f6e64ef8ee1d`の配備記録を参照する。[記事Draft PR #246](https://github.com/Xpotato1024/xpotato-site/pull/246)の改稿は引き続き未merge・未公開。公開用[CI 45667649426](https://github.com/Xpotato1024/xpotato-site/actions/runs/45667649426)は、作業ブランチで既存公開記事を`draft:true`にしたため、`article-regression`と`producer`が既存メモからの内部リンクを`Internal link exposes held article: /projects/xpotato-site/`で拒否している。同じheadの[CMS用Astroレビュー 45667649402](https://github.com/Xpotato1024/xpotato-site/actions/runs/45667649402)は成功している。CMS本体のCI成功を記事の公開適格性へ転用しない。
+
+認証後の本番CMS画面と実iPhoneは未観測。ローカル実ブラウザー・実Draftの読み戻し・Production readbackの各証拠を区別する。
+
 ## 2026-11-26 Draft画像CLIの本番反映と実画像登録
 
 [PR #250](https://github.com/Xpotato1024/xpotato-site/pull/250)をmain `a45f3594a5975cf63c46f6f1eb367d1fbccfca5d`（tree `d35d7260b660653bfaf3f84573b47f6e4a75bb8e`）へ統合し、所有者の明示認可に基づいて編集APIを配備した。[PR CI 45731946954](https://github.com/Xpotato1024/xpotato-site/actions/runs/45731946954)、対象213試験・後続31試験、型検査・整形検査が成功した。独立レビューはP0/P1が0件で、既存の放置された媒体予約の復旧制約1件をP2としてPR本文に残している。
@@ -31,7 +55,7 @@ providerのexact counterpartと未成立条件は[Infrastructure Handoff](../arc
 
 providerの読み戻しでactive deployment `9bfd1494-9782-4d4e-b165-33b58d327d59`、version `713e0abe-a42e-446d-ad31-f6e64ef8ee1d`（version 7、traffic 100%、作成時刻 `2026-11-26T01:04:44.610997Z`）を確認した。既存の非公開Draft bucket・binding・route・5 secrets、公開Siteのbindings 0、GC false、workers.dev / preview URLs falseを維持した。新CLI入口の無認証応答は401 / `CLI_AUTH_REQUIRED`、既存の `/editor/` はAccessの302、`/editor-api/session` は200で接続設定済みだった。
 
-静的CMSシェルを含むSiteは、下記PR #247/#248の配信済みsource `536691b39c071fbd9f4d57dfcbe36d6655b28b40`を継続し、このAPI更新に伴う静的Siteの再配備は行っていない。
+このAPI更新の実施時点では、静的CMSシェルを含むSiteは、下記PR #247/#248の配信済みsource `536691b39c071fbd9f4d57dfcbe36d6655b28b40`であり、API更新に伴う静的Siteの再配備は行わなかった。現在の静的Siteの配備は、上記PR #252の記録を参照する。
 
 ### 非公開Draftの4図
 
