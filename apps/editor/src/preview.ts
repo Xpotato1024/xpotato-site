@@ -11,6 +11,7 @@ import { articleRoute } from "@xpotato/content-contracts/article-route";
 import { seriesRegistrySchema, type SeriesRegistry } from "@xpotato/content-contracts/series";
 import { seriesForContent, type SeriesNavigation } from "@xpotato/portable-content/series";
 import { splitArticleLead } from "../../site/src/features/articles/model/article-lead.js";
+import { footnoteBackrefIconPath } from "../../site/src/shared/blocks/transforms/footnote-backlinks.mjs";
 import {
   seriesKindLabel,
   seriesStatusLabel,
@@ -136,6 +137,7 @@ export async function previewDocument(
   const definitions = new Map<string, Node>();
   const footnotes = new Map<string, Node>();
   const footnoteOrder: string[] = [];
+  const footnoteReferences = new Map<string, string[]>();
   const headings: ContentHeading[] = [];
   const textContent = (node: Node): string =>
     node.value ?? node.children?.map(textContent).join("") ?? "";
@@ -389,7 +391,11 @@ export async function previewDocument(
         if (!footnotes.has(id)) return escape(node.label ?? node.identifier);
         if (!footnoteOrder.includes(id)) footnoteOrder.push(id);
         const number = footnoteOrder.indexOf(id) + 1;
-        return `<sup><a href="#preview-footnote-${number}" id="preview-footnote-ref-${number}" aria-label="脚注${number}">${number}</a></sup>`;
+        const references = footnoteReferences.get(id) ?? [];
+        const referenceId = `preview-footnote-ref-${number}${references.length ? "-" + (references.length + 1) : ""}`;
+        references.push(referenceId);
+        footnoteReferences.set(id, references);
+        return `<sup><a href="#preview-footnote-${number}" id="${referenceId}" data-footnote-ref aria-label="脚注${number}">${number}</a></sup>`;
       }
       case "definition":
       case "footnoteDefinition":
@@ -416,8 +422,13 @@ export async function previewDocument(
     options.collection === undefined || options.collection === "blog"
       ? splitArticleLead(rendered)
       : { lead: "", body: rendered };
+  // Render note bodies before backlinks: a note can itself refer to another note.
+  const footnoteBodies: string[] = [];
+  for (let index = 0; index < footnoteOrder.length; index++)
+    footnoteBodies.push(children(footnotes.get(footnoteOrder[index]!)!));
+  const footnoteIcon = `<svg class="footnote-backref-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="${footnoteBackrefIconPath}"/></svg>`;
   const footnoteHtml = footnoteOrder.length
-    ? `<section class="footnotes" aria-label="脚注"><h2>脚注</h2><ol>${footnoteOrder.map((id, index) => `<li id="preview-footnote-${index + 1}">${children(footnotes.get(id)!)} <a href="#preview-footnote-ref-${index + 1}" aria-label="本文へ戻る">↩</a></li>`).join("")}</ol></section>`
+    ? `<section class="footnotes" aria-label="脚注"><h2>脚注</h2><ol>${footnoteOrder.map((id, index) => `<li id="preview-footnote-${index + 1}">${footnoteBodies[index]} ${(footnoteReferences.get(id) ?? []).map((referenceId, occurrence) => `<a href="#${referenceId}" data-footnote-backref aria-label="本文の脚注${index + 1}の参照${occurrence + 1}へ戻る">${footnoteIcon}${occurrence ? `<sup>${occurrence + 1}</sup>` : ""}</a>`).join(" ")}</li>`).join("")}</ol></section>`
     : "";
   const collectionLabels = {
     blog: "記事",

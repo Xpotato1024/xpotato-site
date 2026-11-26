@@ -1,9 +1,11 @@
-import { lazy, Suspense, useMemo, useState, type PointerEvent, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type PointerEvent, type ReactNode } from "react";
 import { blockTree, readModuleSource, moduleChildKinds } from "@xpotato/editor-core/blocks";
-import { BlockPreview, canEditRich } from "./BlockPreview.js";
+import { BlockPreview, canEditRich, canEditFootnoteText } from "./BlockPreview.js";
 import { blockChoices } from "./BlockPalette.js";
 import { CodeBlock } from "./CodeBlock.js";
 import { ModuleBlock, type EditorMedia, type EditorTool } from "./ModuleBlock.js";
+import { readFootnoteDefinition } from "@xpotato/editor-core/footnotes";
+import { FootnoteBlock } from "./FootnoteBlock.js";
 import type { LocatedReviewMark } from "../../features/review/review-marks.js";
 const RichTextBlock = lazy(() => import("./RichTextBlock.js"));
 export function hasNestedEditor(moduleName: string): boolean {
@@ -17,6 +19,7 @@ const blockLabels: Record<string, string> = {
   code: "コード",
   blockquote: "引用",
   thematicBreak: "区切り",
+  footnoteDefinition: "脚注",
 };
 export function describeRegion(source: string) {
   try {
@@ -36,9 +39,10 @@ export function describeRegion(source: string) {
       node,
       module,
       rich: canEditRich(source),
+      footnoteText: canEditFootnoteText(source),
     };
   } catch {
-    return { label: "MDX", node: undefined, module: null, rich: false };
+    return { label: "MDX", node: undefined, module: null, rich: false, footnoteText: false };
   }
 }
 function pointerTextOffset(event: PointerEvent<HTMLElement>): number | undefined {
@@ -95,10 +99,15 @@ export function RegionContent({
 }) {
   const info = useMemo(() => describeRegion(source), [source]);
   const [richError, setRichError] = useState("");
-  const textInput = () => (
+  const [footnoteEditing, setFootnoteEditing] = useState(false);
+  useEffect(() => {
+    if (!editing) setFootnoteEditing(false);
+    else if (info.footnoteText) setFootnoteEditing(true);
+  }, [editing, info.footnoteText]);
+  const textInput = (label = "ブロックのMDX") => (
     <textarea
       className="cms-source-input"
-      aria-label="ブロックのMDX"
+      aria-label={label}
       value={source}
       wrap="soft"
       spellCheck={false}
@@ -114,10 +123,14 @@ export function RegionContent({
       }}
     />
   );
+  if (!raw && !inlineOnly && readFootnoteDefinition(source))
+    return <FootnoteBlock source={source} onChange={onChange} onSelection={onSelection} />;
+  if (!raw && editing && (info.footnoteText || footnoteEditing))
+    return <><small>脚注の参照を保持して編集</small>{textInput("本文（脚注参照を含む）")}</>;
   if (
     raw ||
     richError ||
-    (!info.rich && !info.module) ||
+    (!info.rich && !info.module && !info.footnoteText) ||
     (inlineOnly && blockTree(source).children?.some((node) => node.type !== "paragraph"))
   )
     return (

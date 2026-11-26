@@ -20,6 +20,8 @@ export interface BlockNode {
   title?: string;
   lang?: string | null;
   meta?: string | null;
+  identifier?: string;
+  label?: string;
   align?: ("left" | "right" | "center" | null)[];
   children?: BlockNode[];
   attributes?: { type: string; name?: string; value?: unknown }[];
@@ -489,6 +491,7 @@ export function sourceSelection(source: string, quote: string, offset: number): 
 export const blockTemplates = Object.freeze({
   Group: "<Group>\n\n## 見出し\n\n本文を入力してください。\n\n</Group>",
   paragraph: "本文を入力してください。",
+  footnote: "[^note-1]: 脚注の内容を入力してください。",
   heading: "## 見出し",
   list: "- 項目1\n- 項目2",
   orderedList: "1. 最初の項目\n2. 次の項目",

@@ -322,6 +322,60 @@ try {
   );
   await page.getByRole("button", { name: "やり直す", exact: true }).click();
   assert.equal(await readBody(page), ungrouped, "Redo removes only the group boundary again");
+  beginPhase("footnote blocks, reference preservation and SVG backlinks");
+  const footnoteBody =
+    "本文[^architecture]。同じ脚注[^architecture]。\n\n[^architecture]: 設計の参照。\n";
+  await writeBody(page, footnoteBody);
+  await showBlocks(page);
+  const noteContent = blocks.getByRole("textbox", { name: "脚注の内容", exact: true });
+  await noteContent.waitFor();
+  assert.equal(
+    await blocks.getByRole("textbox", { name: "本文の参照記号", exact: true }).inputValue(),
+    "[^architecture]",
+  );
+  await noteContent.focus();
+  await title.click();
+  assert.equal(await readBody(page), footnoteBody, "Focusing a footnote preserves its original source");
+  await showBlocks(page);
+  assert.equal(await blocks.getByRole("textbox", { name: "ブロックのMDX", exact: true }).count(), 0);
+  await noteContent.fill("設計の参照。\n\n補足した根拠。");
+  await blocks.getByRole("button", { name: "段落を編集", exact: true }).click();
+  const noteParagraph = blocks.getByRole("textbox", { name: "本文（脚注参照を含む）", exact: true });
+  await noteParagraph.press("Control+End");
+  await page.keyboard.insertText("追記。");
+  const editedFootnotes = await readBody(page);
+  assert.match(editedFootnotes, /本文\[\^architecture\]。同じ脚注\[\^architecture\]。追記。/u);
+  assert.match(editedFootnotes, /\[\^architecture\]: 設計の参照。\n\n {4}補足した根拠。/u);
+  assert.doesNotMatch(editedFootnotes, /\\\[\^|\\\[\\\^/u, "Editing a paragraph must not escape its footnote references");
+  await page.getByRole("tab", { name: "プレビュー", exact: true }).click();
+  const notePreview = page.frameLocator("iframe").first();
+  await notePreview.locator(".footnotes a[data-footnote-backref] svg").first().waitFor();
+  assert.equal(await notePreview.locator(".footnotes a[data-footnote-backref] svg").count(), 2);
+  assert.doesNotMatch(await notePreview.locator(".footnotes").innerText(), /[↩\uFE0E\uFE0F]/u);
+  const referenceIds = await notePreview.locator("a[data-footnote-ref]").evaluateAll((links) => links.map((link) => link.id));
+  const backlinkTargets = await notePreview.locator("a[data-footnote-backref]").evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  assert.deepEqual(backlinkTargets, referenceIds.map((id) => "#" + id));
+  assert.equal(new Set(referenceIds).size, 2);
+  await showBlocks(page);
+  for (let added = 1; added <= 2; added++) {
+    await blocks.locator(":scope > .cms-append-block").click();
+    const notesPalette = page.getByRole("dialog", { name: "ブロックを挿入", exact: true });
+    await notesPalette.getByRole("searchbox", { name: "ブロックを検索", exact: true }).fill("脚注");
+    await notesPalette.getByRole("button", { name: "脚注 本文から参照する補足・出典", exact: true }).click();
+    assert.equal(await blocks.getByRole("textbox", { name: "脚注の内容", exact: true }).count(), added + 1);
+  }
+  const insertedFootnotes = await readBody(page);
+  assert.match(insertedFootnotes, /\[\^note-1\]:/u);
+  assert.match(insertedFootnotes, /\[\^note-2\]:/u);
+  assert(insertedFootnotes.startsWith(editedFootnotes.trimEnd()), "Inserting notes preserves the preceding article");
+  await showBlocks(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert(
+    await blocks.locator(".cms-footnote-block").evaluateAll((notes) => notes.every((note) => note.scrollWidth <= note.clientWidth + 1)),
+    "Footnote controls fit the mobile editor",
+  );
+  await blocks.screenshot({ path: resolve(out, "footnote-blocks-mobile.png") });
+  await page.setViewportSize({ width: 1365, height: 1000 });
   beginPhase("Gallery parent and child settings");
   const childSource =
     '  <Figure asset="first" alt="子の説明" caption="子の注釈" />\n  <Figure asset="second" alt="2枚目" />';
@@ -693,6 +747,7 @@ try {
           "heading/body/image grouping with pointer and keyboard movement",
           "group persistence, ungroup, undo and redo",
           "parent/child module props",
+          "footnote blocks, preserved references, unique insertion and SVG backlinks",
           "optional boolean props",
           "TeX and code language",
           "accessible table cells and row insertion",

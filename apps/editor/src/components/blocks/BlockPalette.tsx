@@ -24,6 +24,7 @@ export const blockChoices: Choice[] = [
     group: "文章",
   },
   { kind: "quote", label: "引用", description: "引用文と出典", group: "文章" },
+  { kind: "footnote", label: "脚注", description: "本文から参照する補足・出典", group: "文章" },
   { kind: "divider", label: "区切り", description: "話題の切り替わり", group: "文章" },
   {
     kind: "mermaid",
@@ -124,7 +125,7 @@ export function allowedBlockKinds(parent?: string): BlockKind[] {
     .filter(
       (item) =>
         !["Step", "DiagnosticItem", "ComparisonCase"].includes(item.kind) &&
-        (!parent || item.kind !== "ArticleEndnote"),
+        (!parent || !["ArticleEndnote", "footnote"].includes(item.kind)),
     )
     .map((item) => item.kind);
 }

@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
-import { blockTree, type BlockNode } from "@xpotato/editor-core/blocks";
+import type { BlockNode } from "@xpotato/editor-core/blocks";
+import { blockTreeWithFootnoteReferences } from "@xpotato/editor-core/footnotes";
 import { MermaidPreview } from "./MermaidPreview.js";
 import {
   primaryReviewMark,
@@ -83,7 +84,22 @@ export function canEditRich(source: string): boolean {
   try {
     const visit = (node: BlockNode): boolean =>
       richNodeTypes.has(node.type) && (node.children?.every(visit) ?? true);
-    return visit(blockTree(source));
+    return visit(blockTreeWithFootnoteReferences(source));
+  } catch {
+    return false;
+  }
+}
+export function canEditFootnoteText(source: string): boolean {
+  try {
+    let references = 0;
+    const visit = (node: BlockNode): boolean => {
+      if (node.type === "footnoteReference") {
+        references++;
+        return true;
+      }
+      return richNodeTypes.has(node.type) && (node.children?.every(visit) ?? true);
+    };
+    return visit(blockTreeWithFootnoteReferences(source)) && references > 0;
   } catch {
     return false;
   }
@@ -178,6 +194,8 @@ function renderNode(node: BlockNode, index: number, review: PreviewReview): Reac
       return <del key={index}>{children}</del>;
     case "inlineCode":
       return <code key={index}>{renderText(node, index, review)}</code>;
+    case "footnoteReference":
+      return <sup key={index} aria-label={"脚注 " + (node.label ?? node.identifier)}>[{node.label ?? node.identifier}]</sup>;
     case "link":
       return (
         <a key={index} title={node.title ?? node.url}>
@@ -261,7 +279,7 @@ export function BlockPreview({
 }) {
   const tree = useMemo(() => {
     try {
-      return blockTree(source);
+      return blockTreeWithFootnoteReferences(source);
     } catch {
       return null;
     }

@@ -22,6 +22,21 @@
   outline: var(--focus-ring-width) solid var(--focus);
   outline-offset: var(--cms-focus-offset);
 }
+.cms-footnote-block,
+.cms-footnote-block label {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.cms-footnote-reference {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.cms-footnote-reference label {
+  flex: 1 1 12rem;
+}
 .cms-sr-only {
   position: absolute;
   width: 1px;

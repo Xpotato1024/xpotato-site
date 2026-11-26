@@ -16,6 +16,7 @@ import {
   type BlockDocument,
   type BlockSelection,
 } from "@xpotato/editor-core/blocks";
+import { insertFootnote, readFootnoteDefinition } from "@xpotato/editor-core/footnotes";
 import {
   BlockPalette,
   allowedBlockKinds,
@@ -264,14 +265,16 @@ export function BlockEditor({
     onAnnounce: setAnnouncement,
   });
   const insert = (kind: BlockKind) => {
-    const next = insertRegion(
+    const after = paletteAfter ?? current.current.regions.length - 1;
+    const footnote = kind === "footnote" ? insertFootnote(current.current, after) : null;
+    const next = footnote?.document ?? insertRegion(
       current.current,
       blockTemplates[kind],
-      paletteAfter ?? current.current.regions.length - 1,
+      after,
     );
-    const position = Math.max(
+    const position = footnote?.index ?? Math.max(
       0,
-      Math.min(next.regions.length - 1, (paletteAfter ?? current.current.regions.length - 1) + 1),
+      Math.min(next.regions.length - 1, after + 1),
     );
     commit(next);
     setPaletteAfter(null);
@@ -526,7 +529,8 @@ export function BlockEditor({
                   raw={raw}
                   onMove={(direction) => move(index, index + direction)}
                   onDuplicate={() => {
-                    commit(insertRegion(current.current, region.source, index));
+                    const footnote = readFootnoteDefinition(region.source);
+                    commit(footnote ? insertFootnote(current.current, index, footnote.content).document : insertRegion(current.current, region.source, index));
                     setAnnouncement("複製しました。");
                   }}
                   onSource={() => {
