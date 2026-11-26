@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import sharp from "sharp";
+import { mediaAnimationSchema } from "@xpotato/content-contracts";
 import { contentIdSchema } from "@xpotato/content-contracts/common";
 import {
   mediaHandoffManifest,
@@ -190,11 +191,14 @@ async function checkedAssets(value: unknown) {
       if (!metadata.animation || !metadata.playbackSha256) {
         throw Error("MEDIA_HANDOFF_METADATA_MISMATCH");
       }
-      const animation = await inspectAnimationBytes(bytes, {
-        frameCount: metadata.animation.frameCount,
-        loop: metadata.animation.loop,
-        delaysMs: metadata.animation.delaysMs,
-      });
+      const animation = await inspectAnimationBytes(
+        bytes,
+        mediaAnimationSchema.parse({
+          frameCount: metadata.animation.frameCount,
+          loop: metadata.animation.loop,
+          delaysMs: metadata.animation.delaysMs,
+        }),
+      );
       if (
         animation.animation.frameCount !== inspection.frames ||
         metadata.animation.durationMs !== inspection.durationMs ||

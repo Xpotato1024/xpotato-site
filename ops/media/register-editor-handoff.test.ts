@@ -108,7 +108,7 @@ function memoryClient(bundle: MediaHandoff) {
     };
     return snapshot.draft;
   }
-  function seed(index: number, custom?: Uint8Array, id = randomUUID()): HandoffAsset {
+  function seed(index: number, custom?: Uint8Array, id: string = randomUUID()): HandoffAsset {
     const entry = bundle.assets[index]!;
     const metadata = entry.prepared.metadata;
     const bytes = custom ?? Buffer.from(entry.prepared.masterBase64, "base64");
@@ -204,6 +204,73 @@ describe("CLI private Draft registration", () => {
     expect(text).not.toContain("Authorization");
     if (process.platform !== "win32")
       expect((await lstat(join(f.root, ".local/receipt.json"))).mode & 0o777).toBe(0o600);
+  });
+
+  it("registers a real prepared animation with unequal frame delays and a finite loop", async () => {
+    const f = await fixture();
+    const pixels = Buffer.concat(
+      ["ff0000", "00ff00", "0000ff"].map((color) => Buffer.from(color.repeat(32 * 16), "hex")),
+    );
+    const original = await sharp(pixels, {
+      raw: { width: 32, height: 48, channels: 3, pageHeight: 16 },
+    })
+      .gif({ loop: 2, delay: [50, 120, 200] })
+      .toBuffer();
+    const prepared = await prepareDraftMedia(original, "animation");
+    f.bundle.assets = [
+      {
+        assetId: "motion",
+        prepared: {
+          schemaVersion: 1,
+          protocol: "xpotato-private-editor-media-v1",
+          originalName: "motion.webp",
+          metadata: { ...prepared.metadata, mime: "image/webp", sourceRetained: false },
+          masterBase64: prepared.master.toString("base64"),
+          previewBase64: prepared.preview.toString("base64"),
+        },
+      },
+    ];
+    await f.save();
+    const remote = memoryClient(f.bundle);
+    const result = await registerEditorHandoff(f, { client: remote.client });
+    expect(result).toMatchObject({ registered: 1, reused: 0, verified: true });
+    expect(prepared.metadata.animation).toEqual({
+      frameCount: 3,
+      delaysMs: [50, 120, 200],
+      loop: 2,
+      durationMs: 370,
+    });
+    expect(remote.snapshot.assets[0]).toMatchObject({
+      assetId: "motion",
+      kind: "animation",
+      frames: 3,
+      durationMs: 370,
+      sha256: prepared.metadata.sha256,
+    });
+    expect(Buffer.from(remote.objects.get(result.assets[0]!.remoteId)!)).toEqual(prepared.master);
+    expect(remote.client.read).toHaveBeenCalledTimes(2);
+    const verified = await registerEditorHandoff(
+      { ...f, verifyOnly: true },
+      { client: remote.client },
+    );
+    expect(verified).toMatchObject({ mode: "verify", registered: 0, reused: 1, verified: true });
+    expect(remote.client.reserve).toHaveBeenCalledTimes(1);
+    expect(remote.client.upload).toHaveBeenCalledTimes(1);
+    expect(remote.client.read).toHaveBeenCalledTimes(4);
+    const inspectionCount = remote.client.inspect.mock.calls.length;
+    const animation = f.bundle.assets[0]!.prepared.metadata.animation!;
+    animation.loop = 3;
+    await f.save();
+    await expect(registerEditorHandoff(f, { client: remote.client })).rejects.toThrow(
+      "ANIMATION_TIMING_CHANGED",
+    );
+    animation.loop = 2;
+    animation.delaysMs = [60, 110, 200];
+    await f.save();
+    await expect(registerEditorHandoff(f, { client: remote.client })).rejects.toThrow(
+      "ANIMATION_TIMING_CHANGED",
+    );
+    expect(remote.client.inspect).toHaveBeenCalledTimes(inspectionCount);
   });
 
   it("verify-only reads existing bytes without create, reserve or upload", async () => {
