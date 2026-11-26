@@ -114,21 +114,22 @@ describe("durable local media bytes", () => {
 });
 
 describe("retrying an aborted Blob storage write", () => {
-  const blobFailure = () => new DOMException(
-    "Error preparing Blob/File data to be stored in object store",
-    "UnknownError",
-  );
+  const blobFailure = () =>
+    new DOMException("Error preparing Blob/File data to be stored in object store", "UnknownError");
 
   it("recognizes Blob-specific engine failures without treating quota or generic clone failures as unsupported Blobs", () => {
     expect(isBlobStorageError(blobFailure())).toBe(true);
-    expect(isBlobStorageError(new DOMException("Blob could not be cloned", "DataCloneError"))).toBe(true);
+    expect(isBlobStorageError(new DOMException("Blob could not be cloned", "DataCloneError"))).toBe(
+      true,
+    );
     for (const error of [
       new DOMException("Blob exceeds storage quota", "QuotaExceededError"),
       new DOMException("Value could not be cloned", "DataCloneError"),
       new DOMException("Unknown database failure", "UnknownError"),
       new DOMException("Blob transaction aborted", "AbortError"),
       Error("DRAFT_MEDIA_LOCAL_CONFLICT"),
-    ]) expect(isBlobStorageError(error)).toBe(false);
+    ])
+      expect(isBlobStorageError(error)).toBe(false);
   });
 
   it("keeps the same identity and bytes and waits for confirmed abort before retrying once", async () => {
@@ -137,7 +138,10 @@ describe("retrying an aborted Blob storage write", () => {
     let aborted: (reason: unknown) => void = () => {};
     const result = withMediaBlobFallback(async (includeBlob) => {
       attempts.push(includeBlob);
-      if (includeBlob) return new Promise<typeof stored>((_resolve, reject) => { aborted = reject; });
+      if (includeBlob)
+        return new Promise<typeof stored>((_resolve, reject) => {
+          aborted = reject;
+        });
       return mediaWithoutCompatibilityBlob(stored);
     });
     await Promise.resolve();
@@ -154,7 +158,9 @@ describe("retrying an aborted Blob storage write", () => {
 
   it("does not retry a Blob error before abort is confirmed or a business conflict", async () => {
     for (const error of [blobFailure(), Error("DRAFT_MEDIA_LOCAL_CONFLICT")]) {
-      const write = vi.fn(async () => { throw error; });
+      const write = vi.fn(async () => {
+        throw error;
+      });
       await expect(withMediaBlobFallback(write)).rejects.toBe(error);
       expect(write).toHaveBeenCalledTimes(1);
     }
@@ -216,9 +222,9 @@ describe("restoring one asset into a local draft", () => {
     expect(() => assertMediaCopySource(draft, { ...draft, archived: true })).toThrow(
       "DRAFT_MEDIA_LOCAL_CONFLICT",
     );
-    expect(() => assertMediaCopySource(draft, { ...draft, workingBranch: "content/changed" })).toThrow(
-      "DRAFT_MEDIA_LOCAL_CONFLICT",
-    );
+    expect(() =>
+      assertMediaCopySource(draft, { ...draft, workingBranch: "content/changed" }),
+    ).toThrow("DRAFT_MEDIA_LOCAL_CONFLICT");
     const archived = { ...draft, archived: true };
     expect(() => assertMediaCopySource(archived, archived)).not.toThrow();
     expect(() => assertMediaCopySource(archived, draft)).toThrow("DRAFT_MEDIA_LOCAL_CONFLICT");
