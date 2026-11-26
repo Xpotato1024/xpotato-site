@@ -30,6 +30,9 @@ const [manifest, index, series] = await Promise.all([
   readFile(resolve(root, "content/registry/editor-content-index.json"), "utf8").then(JSON.parse),
   readFile(resolve(root, "content/registry/series/series.json"), "utf8").then(JSON.parse),
 ]);
+const draftDocuments = index.documents.filter((document) => document.draft === true);
+assert(draftDocuments.length >= 2, "The Git workflow fixture needs two distinct draft records");
+const [mediaDocument, concurrentDocument] = draftDocuments;
 const draftBranch = "content/ai-product-review-20261126";
 const otherBranch = "content/unrelated-article";
 const documentRequests = [];
@@ -43,10 +46,10 @@ const imageHash = createHash("sha256").update(imageBytes).digest("hex");
 const imageId = "44444444-4444-4444-8444-444444444444";
 const mediaDraft = {
   id: "33333333-3333-4333-8333-333333333333",
-  contentId: index.documents[0].contentId,
+  contentId: mediaDocument.contentId,
   branch: draftBranch,
   commit: "a".repeat(40),
-  sourcePath: index.documents[0].path,
+  sourcePath: mediaDocument.path,
   revision: 2,
   lastEditedAt: "2026-11-26T00:00:00.000Z",
   state: "active",
@@ -176,12 +179,16 @@ async function articleDrafts(page, path = mediaDraft.sourcePath) {
   );
 }
 
-async function selectGitArticle(page, documentIndex = 0) {
+async function selectGitArticle(page, document = mediaDocument) {
   await goHome(page);
   await page.getByRole("button", { name: "下書きの続き", exact: true }).click();
   await page.locator(".repository-panel").getByLabel("読み込み元").selectOption(draftBranch);
   await page.getByRole("button", { name: "一覧を取得", exact: true }).click();
-  const row = page.locator(".repository-documents .draft-choice").nth(documentIndex);
+  await page.locator(".repository-documents .draft-choice").first().waitFor();
+  await page.getByPlaceholder("原稿を検索").fill(document.path);
+  const row = page.locator(".repository-documents .draft-choice");
+  assert.equal(await row.count(), 1, "The selected Git path identifies one visible draft");
+  assert.equal(await row.locator(":scope > button > strong").innerText(), document.title);
   await row.locator(":scope > button").click();
   const selection = row.locator(".start-selection-inline");
   await selection.waitFor();
@@ -536,7 +543,11 @@ try {
 
   await sourceBranch.selectOption(draftBranch);
   await page.getByRole("button", { name: "一覧を取得" }).click();
-  const selectedRemote = choices.first();
+  await choices.first().waitFor();
+  await search.fill(mediaDocument.path);
+  const selectedRemote = choices;
+  assert.equal(await selectedRemote.count(), 1);
+  assert.equal(await selectedRemote.locator(":scope > button > strong").innerText(), mediaDocument.title);
   await selectedRemote.locator(":scope > button").click();
   const prepared = selectedRemote.locator(".start-selection-inline");
   assert.equal(await prepared.locator(".branch-value").innerText(), draftBranch);
@@ -745,7 +756,7 @@ try {
   );
   await goHome(page);
   await page.getByRole("button", { name: "下書きの続き", exact: true }).click();
-  await page.getByPlaceholder("原稿を検索").fill(index.documents[0].title);
+  await page.getByPlaceholder("原稿を検索").fill(mediaDocument.title);
   assert.equal(await page.locator(".draft-choice-local").count(), 2);
   await page.screenshot({
     path: resolve(".local/cms-validation/selection-inline/distinct-local-drafts-320.png"),
@@ -756,8 +767,8 @@ try {
     otherTab.on("pageerror", (error) => errors.push(error.message));
     await otherTab.goto(server.origin + "/editor/");
     const [firstSelection, secondSelection] = await Promise.all([
-      selectGitArticle(page, 1),
-      selectGitArticle(otherTab, 1),
+      selectGitArticle(page, concurrentDocument),
+      selectGitArticle(otherTab, concurrentDocument),
     ]);
     await Promise.all(
       [firstSelection, secondSelection].map((selection) =>
@@ -768,7 +779,7 @@ try {
       [page, otherTab].map((tab) => tab.locator(".start-workspace").waitFor({ state: "hidden" })),
     );
     assert.equal(
-      (await articleDrafts(page, index.documents[1].path)).length,
+      (await articleDrafts(page, concurrentDocument.path)).length,
       1,
       "Concurrent Git opens in separate tabs claim one local draft atomically",
     );
