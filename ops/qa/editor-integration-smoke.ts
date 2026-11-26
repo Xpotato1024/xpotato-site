@@ -193,7 +193,10 @@ try {
   if ((await articleTarget.getAttribute("aria-pressed")) !== "true") await articleTarget.click();
   await page.getByText("対象：記事全体（構成・方針・品質など）", { exact: true }).waitFor();
   await page.getByRole("textbox", { name: "指摘", exact: true }).fill("記事全体の構成を見直す");
-  await page.getByRole("button", { name: "指摘を追加", exact: true }).click();
+  await page
+    .getByRole("region", { name: "本文の添削" })
+    .getByRole("button", { name: "指摘を追加", exact: true })
+    .click();
   await page.getByRole("button", { name: "原稿と添削を保存", exact: true }).click();
   await page
     .locator(".message")
