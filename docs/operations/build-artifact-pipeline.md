@@ -137,9 +137,11 @@ handoff recordにはartifact ID、API digest、source SHA、workflow run/attempt
 
 rollbackは同じidentity規則で既存のimmutable releaseを選びます。旧revisionの再buildは新しいcandidateであり、過去の承認済みartifactの再現ではありません。rollbackもcurrent endpoint-suppression、exact config、credential、provider、明示authorization gateを満たす必要があります。適合するreleaseが見つからなければ停止し、lifecycleに沿って新しいrecovery candidateを用意します。
 
-### ホームのWebKit配布物検査
+### ホームとCMSのWebKit配布物検査
 
 producerは一回の公開buildと並行して固定PlaywrightのWebKitを一時runnerへ導入し、両方完了した後に `quality:home-webkit` で実HTMLがリンクする共有/ホームCSSを検査します。同じdistの最終public検査と並行しますが、両方の成功後だけ同attemptの独立ゲートとpackageへ進みます。再buildや検査の省略はしません。依存token欠落・computed style・NEW/JSなし・JST・モバイル/全幅・200%・focus・axeの失敗はblockingです。`home-design-webkit.json` と `home-webkit-*.png` をquality artifactへ保存します。これはheadless WebKitの証拠で、実iPhone受入れや全Safari版保証ではありません。
+
+同じWebKit laneの`quality:webkit:hosted`は、ホームの検査に続けて`editor:selection -- --browser webkit`を実行します。CMSではGitからの画像取得、端末保存後の再読込、ブロックと即時プレビューでの実画像decode、壊れた端末キャッシュの修復、同じ原稿の再開・複数コピーの選択・並列取得・取得中の削除を確認します。登録bytesのhash検査だけを表示成功の根拠にせず、ChromiumとWebKitで同じ操作回帰を実行します。検査用の合成原稿・小画像だけを使い、私有Draftの実画像・認証情報をCIへ渡しません。
 
 Hosted Linux jobは`ubuntu-24.04`へ固定します。WebKitのbrowser binaryだけをrunnerの一時pathへ復元し、keyをOS・architecture・固定Playwright版に結びます。prefix fallbackは使いません。cache hitでも`playwright install --with-deps webkit`と実WebKit検査は必須で、OS依存packageの導入や検査成功をcacheで代用しません。実検査に成功してからbinaryを保存します。saveの失敗だけは任意の高速化の失敗として扱い、検証済みreleaseを停止させません。cache復元、依存導入、検査の時間は分けて測定します。
 

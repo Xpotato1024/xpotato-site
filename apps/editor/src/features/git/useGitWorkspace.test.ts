@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
   missing: vi.fn(),
   media: vi.fn(),
   saveMedia: vi.fn(),
+  claim: vi.fn(),
+  updateDraft: vi.fn(),
 }));
 vi.mock("../../data/api.js", () => ({
   EditorApiError: class extends Error {},
@@ -31,9 +33,10 @@ vi.mock("../../data/media-sync.js", () => ({
   missingDraftMedia: mocks.missing,
 }));
 vi.mock("../../data/storage.js", () => ({
+  claimGitDraft: mocks.claim,
   localMedia: mocks.media,
   saveLocalMedia: mocks.saveMedia,
-  updateLocalDraft: vi.fn(),
+  updateLocalDraft: mocks.updateDraft,
 }));
 
 beforeEach(() => vi.resetAllMocks());
@@ -77,16 +80,58 @@ function fixture() {
   };
   const opened: LocalDraft[] = [];
   const restoredMedia: LocalMedia[] = [];
+  const savedDrafts = new Map<string, LocalDraft>();
+  const requiredDrafts = new Set<string>();
+  function requireActive(id: string) {
+    const draft = savedDrafts.get(id);
+    if (!draft || draft.archived)
+      throw Error(
+        "この端末の下書きは削除またはアーカイブされています。一覧から開き直してください。",
+      );
+  }
   const workspace = {
     draft: initial,
     current: { current: initial },
     hydrated: false,
-    persist: vi.fn(async () => {}),
-    openLocal: vi.fn(async (draft: LocalDraft) => {
+    persist: vi.fn(async () => {
+      const current = workspace.current.current;
+      if (requiredDrafts.has(current.id)) requireActive(current.id);
+      if (savedDrafts.has(current.id)) savedDrafts.set(current.id, current);
+    }),
+    refreshSaved: vi.fn(async () => {}),
+    requireExistingDraft: vi.fn((id: string) => {
+      requiredDrafts.add(id);
+    }),
+    setDraft: vi.fn((update: LocalDraft | ((current: LocalDraft) => LocalDraft)) => {
+      workspace.current.current =
+        typeof update === "function" ? update(workspace.current.current) : update;
+    }),
+    openLocal: vi.fn(async (draft: LocalDraft, options?: { requireExistingActive?: boolean }) => {
+      if (options?.requireExistingActive) requireActive(draft.id);
       opened.push(draft);
       workspace.current.current = draft;
     }),
   } as unknown as DraftWorkspace;
+  mocks.claim.mockImplementation(async (candidate: LocalDraft) => {
+    const existing = [...savedDrafts.values()].find(
+      (draft) => draft.path === candidate.path && draft.workingBranch === candidate.workingBranch,
+    );
+    if (!existing) savedDrafts.set(candidate.id, candidate);
+    return { draft: existing ?? candidate, created: !existing };
+  });
+  mocks.updateDraft.mockImplementation(
+    async (
+      id: string,
+      fallback: LocalDraft,
+      update: (current: LocalDraft) => LocalDraft,
+      options?: { requireExistingActive?: boolean },
+    ) => {
+      if (options?.requireExistingActive) requireActive(id);
+      const next = update(savedDrafts.get(id) ?? fallback);
+      savedDrafts.set(id, next);
+      return next;
+    },
+  );
   let git: ReturnType<typeof useGitWorkspace> | undefined;
   const onError = vi.fn();
   function Probe() {
@@ -145,10 +190,242 @@ function fixture() {
   );
   mocks.saveMedia.mockResolvedValue(undefined);
   mocks.missing.mockResolvedValue([]);
-  return { git: git!, initial, source, remote, opened, restoredMedia, workspace, onError };
+  return {
+    git: git!,
+    initial,
+    source,
+    remote,
+    opened,
+    restoredMedia,
+    workspace,
+    onError,
+    savedDrafts,
+  };
 }
 
 describe("opening Git drafts into an explicit workspace", () => {
+  it("reopens the same local ID and restores media again without adding another draft", async () => {
+    const state = fixture();
+    mocks.find.mockResolvedValue(state.remote);
+    const snapshot = { branch: "content/source", commit: "a".repeat(40) };
+    await state.git.openDocument(state.initial.path, snapshot, snapshot.branch, "drafts");
+    const id = state.workspace.current.current.id;
+    await state.git.openDocument(state.initial.path, snapshot, snapshot.branch, "drafts");
+    expect(state.workspace.current.current.id).toBe(id);
+    expect(state.savedDrafts.size).toBe(1);
+    expect(mocks.restore).toHaveBeenCalledTimes(2);
+    expect(mocks.restore.mock.calls.map(([draft]) => draft.id)).toEqual([id, id]);
+  });
+
+  it("keeps local text, review and registry changes when reopening newer Git content", async () => {
+    const state = fixture();
+    const local: LocalDraft = {
+      ...state.initial,
+      source: updateDraft(state.source, { title: "端末だけの追記" }),
+      sourceBranch: "content/source",
+      workingBranch: "content/source",
+      baseCommit: "b".repeat(40),
+      baseSource: state.source,
+      annotations: [],
+      pendingRegistryChanges: { taxonomy: [{ namespace: "tags", id: "new-tag", label: "未保存" }] },
+    };
+    state.savedDrafts.set(local.id, local);
+    state.workspace.current.current = local;
+    mocks.find.mockResolvedValue(state.remote);
+    await state.git.openDocument(
+      state.initial.path,
+      { branch: "content/source", commit: "a".repeat(40) },
+      "content/source",
+      "drafts",
+    );
+    expect(state.workspace.current.current).toMatchObject({
+      id: local.id,
+      source: local.source,
+      baseCommit: local.baseCommit,
+      annotations: [],
+      pendingRegistryChanges: local.pendingRegistryChanges,
+      remoteDraftId: state.remote.draft.id,
+    });
+    expect(state.savedDrafts.size).toBe(1);
+  });
+
+  it("recovers review that was never retrieved without replacing an existing local review", async () => {
+    const state = fixture();
+    const snapshot = { branch: "content/source", commit: "a".repeat(40) };
+    mocks.find.mockResolvedValueOnce(null).mockResolvedValue(state.remote);
+    await state.git.openDocument(state.initial.path, snapshot, snapshot.branch, "drafts");
+    const id = state.workspace.current.current.id;
+    expect(state.workspace.current.current.annotations).toBeUndefined();
+    await state.git.openDocument(state.initial.path, snapshot, snapshot.branch, "drafts");
+    expect(state.workspace.current.current.id).toBe(id);
+    expect(state.workspace.current.current.annotations).toEqual(
+      state.remote.draft.review!.comments,
+    );
+    state.workspace.current.current = { ...state.workspace.current.current, annotations: [] };
+    await state.git.openDocument(state.initial.path, snapshot, snapshot.branch, "drafts");
+    expect(state.workspace.current.current.annotations).toEqual([]);
+  });
+
+  it("updates an unchanged local source from Git while keeping its ID", async () => {
+    const state = fixture();
+    const local = {
+      ...state.initial,
+      source: state.source,
+      sourceBranch: "content/source",
+      workingBranch: "content/source",
+      baseSource: state.source,
+      baseCommit: "b".repeat(40),
+    };
+    state.savedDrafts.set(local.id, local);
+    state.workspace.current.current = local;
+    await state.git.openDocument(
+      state.initial.path,
+      { branch: "content/source", commit: "a".repeat(40) },
+      "content/source",
+      "drafts",
+    );
+    expect(state.workspace.current.current).toMatchObject({
+      id: local.id,
+      baseCommit: "a".repeat(40),
+      source: state.source,
+    });
+    expect(state.savedDrafts.size).toBe(1);
+  });
+
+  it("does not start a second import while the first Git read is pending", async () => {
+    const state = fixture();
+    const request = mocks.request.getMockImplementation()!;
+    let release!: (document: { source: string; path: string }) => void;
+    const delayed = new Promise<{ source: string; path: string }>((resolve) => {
+      release = resolve;
+    });
+    mocks.request.mockImplementation((route: string) =>
+      route.startsWith("/document?") ? delayed : request(route),
+    );
+    const snapshot = { branch: "content/source", commit: "a".repeat(40) };
+    const first = state.git.openDocument(state.initial.path, snapshot, snapshot.branch, "drafts");
+    await expect(
+      state.git.openDocument(state.initial.path, snapshot, snapshot.branch, "drafts"),
+    ).rejects.toThrow("読み込み中");
+    release({ source: state.source, path: state.initial.path });
+    await first;
+    expect(state.savedDrafts.size).toBe(1);
+    expect(mocks.claim).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not silently pick among old copies and forwards an explicitly selected identity", async () => {
+    const state = fixture();
+    mocks.claim.mockRejectedValueOnce(Error("同じ原稿の下書きが複数あります"));
+    const snapshot = { branch: "content/source", commit: "a".repeat(40) };
+    await expect(
+      state.git.openDocument(state.initial.path, snapshot, snapshot.branch, "drafts"),
+    ).rejects.toThrow("複数");
+    expect(state.opened).toHaveLength(0);
+    expect(mocks.restore).not.toHaveBeenCalled();
+    expect(state.workspace.refreshSaved).toHaveBeenCalled();
+    const chosen = crypto.randomUUID();
+    await state.git.openDocument(
+      state.initial.path,
+      snapshot,
+      snapshot.branch,
+      "drafts",
+      false,
+      undefined,
+      chosen,
+    );
+    expect(mocks.claim).toHaveBeenLastCalledWith(
+      expect.objectContaining({ path: state.initial.path, workingBranch: snapshot.branch }),
+      chosen,
+    );
+  });
+
+  for (const action of ["delete", "archive"] as const) {
+    it(`does not reopen or recreate a claimed draft after another tab ${action}s it during media download`, async () => {
+      const state = fixture();
+      mocks.find.mockResolvedValue(state.remote);
+      let release!: () => void;
+      let start!: () => void;
+      const pending = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const started = new Promise<void>((resolve) => {
+        start = resolve;
+      });
+      mocks.restore.mockImplementation(async (draft: LocalDraft) => {
+        start();
+        await pending;
+        return { draft, missing: [] };
+      });
+      const opening = state.git.openDocument(
+        state.initial.path,
+        { branch: "content/source", commit: "a".repeat(40) },
+        "content/source",
+        "drafts",
+      );
+      await started;
+      const claimed = [...state.savedDrafts.values()][0]!;
+      if (action === "delete") state.savedDrafts.delete(claimed.id);
+      else state.savedDrafts.set(claimed.id, { ...claimed, archived: true });
+      release();
+      await expect(opening).rejects.toThrow("削除またはアーカイブ");
+      expect(state.opened).toHaveLength(0);
+      expect(state.savedDrafts.get(claimed.id)).toEqual(
+        action === "delete" ? undefined : { ...claimed, archived: true },
+      );
+      expect(state.workspace.current.current.id).toBe(state.initial.id);
+      expect(state.workspace.refreshSaved).toHaveBeenCalled();
+    });
+  }
+
+  it("requires the claimed record to remain present when final activation reads it", async () => {
+    const state = fixture();
+    const update = mocks.updateDraft.getMockImplementation()!;
+    mocks.updateDraft.mockImplementation(async (...args: unknown[]) => {
+      const result = await update(...args);
+      state.savedDrafts.delete(result.id);
+      return result;
+    });
+    await expect(
+      state.git.openDocument(
+        state.initial.path,
+        { branch: "content/source", commit: "a".repeat(40) },
+        "content/source",
+        "drafts",
+      ),
+    ).rejects.toThrow("削除またはアーカイブ");
+    expect(state.opened).toHaveLength(0);
+    expect(state.savedDrafts.size).toBe(0);
+  });
+
+  it("keeps active unsaved input in memory without resurrecting its deleted Git draft", async () => {
+    const state = fixture();
+    const local = {
+      ...state.initial,
+      source: updateDraft(state.source, { title: "手元の未保存入力" }),
+      baseSource: state.source,
+      sourceBranch: "content/source",
+      workingBranch: "content/source",
+    };
+    state.savedDrafts.set(local.id, local);
+    state.workspace.current.current = local;
+    mocks.find.mockResolvedValue(state.remote);
+    mocks.restore.mockImplementation(async (draft: LocalDraft) => {
+      state.savedDrafts.delete(draft.id);
+      return { draft, missing: [] };
+    });
+    await expect(
+      state.git.openDocument(
+        state.initial.path,
+        { branch: "content/source", commit: "a".repeat(40) },
+        "content/source",
+        "drafts",
+      ),
+    ).rejects.toThrow("削除またはアーカイブ");
+    expect(state.workspace.current.current).toBe(local);
+    expect(state.savedDrafts.size).toBe(0);
+    expect(state.opened).toHaveLength(0);
+  });
+
   it("keeps source-branch text, images and review bound to the same working branch", async () => {
     const state = fixture();
     mocks.find.mockImplementation(async (draft: LocalDraft) =>

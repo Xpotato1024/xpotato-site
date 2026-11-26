@@ -4,9 +4,16 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { BranchSetup, initialBranchPlan, StartWorkspace } from "./StartWorkspace.js";
 import type { GitWorkspace } from "../git/useGitWorkspace.js";
 import { createLocalDraft } from "../drafts/model.js";
+import type { LocalDraft } from "../../data/storage.js";
+import { updateDraft } from "@xpotato/editor-core/draft";
+import { draftSavedTime } from "./DraftDetails.js";
 
 const path = "content/articles/09wsw5yvd59gqrjaz5ee25y3mw.mdx";
-function html(withIndex: boolean) {
+function html(
+  withIndex: boolean,
+  saved: LocalDraft[] = [],
+  intent: "revise" | "drafts" = "revise",
+) {
   const git = {
     auth: { authenticated: true },
     branches: ["main"],
@@ -32,9 +39,9 @@ function html(withIndex: boolean) {
   } as unknown as GitWorkspace;
   return renderToStaticMarkup(
     createElement(StartWorkspace, {
-      intent: "revise",
+      intent,
       git,
-      saved: [],
+      saved,
       busy: false,
       onNew: async () => {},
       onLocal: async () => {},
@@ -49,6 +56,29 @@ function html(withIndex: boolean) {
   );
 }
 describe("Git document selection", () => {
+  it("distinguishes old same-article copies by save time, changes and an actual comparison entry", () => {
+    const initial = createLocalDraft();
+    const first = {
+      ...initial,
+      workingBranch: "content/article",
+      baseSource: initial.source,
+      savedAt: "2026-11-26T00:20:01.000Z",
+    };
+    const second = {
+      ...first,
+      id: crypto.randomUUID(),
+      source: updateDraft(initial.source, { title: "端末で変更" }),
+      savedAt: "2026-11-26T00:21:02.000Z",
+    };
+    const result = html(true, [second, first], "drafts");
+    expect(result).toContain(draftSavedTime(first.savedAt));
+    expect(result).toContain(draftSavedTime(second.savedAt));
+    expect(result).toContain("本文にGit未保存の変更");
+    expect(result).toContain("本文はGit取得時と同じ");
+    expect(result).toContain("同じ原稿の下書きとの違い（2件）");
+    expect(result).toContain("同じ原稿の下書き 1 / 2");
+    expect(result).toContain("同じ原稿の下書き 2 / 2");
+  });
   it("shows article title, type and publication state from the exact branch index", () => {
     const result = html(true);
     expect(result).toContain("MuJoCo 4.0の新機能を画像で見る");

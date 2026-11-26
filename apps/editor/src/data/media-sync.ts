@@ -1,6 +1,6 @@
 import type { ReviewComment } from "@xpotato/editor-core/annotations";
 import { request, query, fetchPrivateMedia } from "./api.js";
-import { localMedia, saveLocalMedia, type LocalDraft, type LocalMedia } from "./storage.js";
+import { localMedia, saveRestoredMedia, type LocalDraft } from "./storage.js";
 import { hashBlob } from "../media/optimize.js";
 import { draftPath, parseDraft } from "@xpotato/editor-core/draft";
 import { assertMediaBudget, type MediaKind } from "@xpotato/editor-core/policy";
@@ -87,8 +87,16 @@ export async function findMediaSnapshot(draft: LocalDraft): Promise<RemoteMediaS
 export async function restoreMediaSnapshot(
   local: LocalDraft,
   remote: RemoteMediaSnapshot,
+  storageDraft: LocalDraft = local,
 ): Promise<{ draft: LocalDraft; missing: string[] }> {
   assertRemoteMediaIdentity(local, remote);
+  if (
+    storageDraft.id !== local.id ||
+    storageDraft.path !== local.path ||
+    parseDraft(storageDraft.source).data.id !== parseDraft(local.source).data.id
+  ) {
+    throw Error("DRAFT_MEDIA_IDENTITY_MISMATCH");
+  }
   const cached = await localMedia(local.id),
     missing: string[] = [];
   for (const [assetId, id] of Object.entries(remote.draft.assets)) {
@@ -103,34 +111,60 @@ export async function restoreMediaSnapshot(
       missing.push(assetId);
       continue;
     }
-    const existing = cached.find((item) => item.assetId === assetId);
+    const matches = cached.filter((item) => item.assetId === assetId);
+    if (matches.length > 1) {
+      missing.push(assetId + "（端末内の画像が重複）");
+      continue;
+    }
+    const existing = matches[0];
     if (existing && !existing.remoteId && existing.sha256 !== asset.sha256) {
       missing.push(assetId + "（端末内の変更と競合）");
       continue;
     }
-    if (existing?.sha256 === asset.sha256 && existing.remoteId === asset.id) continue;
+    if (existing?.sha256 === asset.sha256 && existing.remoteId === asset.id) {
+      try {
+        if (
+          existing.blob.size === asset.bytes &&
+          existing.blob.type === asset.mime &&
+          (await hashBlob(existing.blob)) === asset.sha256
+        ) {
+          continue;
+        }
+      } catch {
+        // Matching metadata does not prove that a legacy IndexedDB Blob is still readable.
+      }
+    }
     try {
       assertMediaBudget(asset.kind, asset.bytes);
-      const blob = await fetchPrivateMedia(asset.id);
+      const fetched = await fetchPrivateMedia(asset.id);
+      const blob = new Blob([await fetched.arrayBuffer()], { type: asset.mime });
       if (blob.size !== asset.bytes || (await hashBlob(blob)) !== asset.sha256)
         throw Error("MEDIA_HASH_MISMATCH");
-      await saveLocalMedia({
-        id: existing?.id ?? crypto.randomUUID(),
-        draftId: local.id,
-        assetId,
-        blob,
-        originalBytes: asset.sourceBytes,
-        sourceSha256: asset.sourceSha256,
-        sha256: asset.sha256,
-        kind: asset.kind,
-        transform: asset.transform,
-        createdAt: asset.createdAt,
-        remoteId: asset.id,
-        originalName: assetId,
-        sourceRetained: asset.sourceRetained,
-      });
-    } catch {
-      missing.push(assetId);
+      await saveRestoredMedia(
+        {
+          id: existing?.id ?? crypto.randomUUID(),
+          draftId: local.id,
+          assetId,
+          blob,
+          originalBytes: asset.sourceBytes,
+          sourceSha256: asset.sourceSha256,
+          sha256: asset.sha256,
+          kind: asset.kind,
+          transform: asset.transform,
+          createdAt: asset.createdAt,
+          remoteId: asset.id,
+          originalName: assetId,
+          sourceRetained: asset.sourceRetained,
+        },
+        existing,
+        storageDraft,
+      );
+    } catch (error) {
+      missing.push(
+        error instanceof Error && error.message === "DRAFT_MEDIA_LOCAL_CONFLICT"
+          ? assetId + "（端末内の変更と競合）"
+          : assetId,
+      );
     }
   }
   return {

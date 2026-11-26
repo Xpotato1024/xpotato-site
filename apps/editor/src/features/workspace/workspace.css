@@ -253,9 +253,17 @@
 }
 .draft-choice-local > button:first-child {
   min-width: 0;
-}
-.draft-choice-local > .start-selection-inline {
   grid-column: 1 / -1;
+}
+.draft-choice-local > .start-selection-inline,
+.draft-choice-local > .draft-comparison {
+  grid-column: 1 / -1;
+}
+.draft-choice-local > .draft-archive {
+  grid-column: 2;
+}
+.draft-choice-local > .draft-delete {
+  grid-column: 3;
 }
 .draft-choice-local > .draft-archive,
 .draft-choice-local > .draft-delete {
@@ -300,7 +308,58 @@
 .start-selection-inline .start-editing {
   width: auto;
 }
+.draft-comparison {
+  min-width: 0;
+  padding: 0.6rem;
+  border: 1px solid var(--border-divider);
+  border-radius: var(--cms-control-radius);
+}
+.draft-comparison summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.draft-comparison label {
+  margin-top: 0.8rem;
+}
+.draft-difference-text h3,
+.draft-difference-text h4 {
+  font-size: 0.8rem;
+  margin-block: 0.7rem 0.35rem;
+}
+.draft-difference-text > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+.draft-difference-text section {
+  min-width: 0;
+}
+.draft-difference-text pre {
+  max-height: 18rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 0.6rem;
+  border: 1px solid var(--border-divider);
+  font-size: 0.75rem;
+}
+.existing-draft-choice {
+  margin-block: 1rem;
+}
+.existing-draft-choice > span {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.existing-draft-choice > button,
+.existing-draft-choice > .draft-comparison {
+  margin-top: 0.7rem;
+}
 @media (max-width: 600px) {
+  .draft-difference-text > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .start-selection-inline .branch-fields {
     grid-template-columns: minmax(0, 1fr);
   }

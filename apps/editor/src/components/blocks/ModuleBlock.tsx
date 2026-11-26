@@ -10,6 +10,7 @@ import {
 import { semanticContentModuleJsonSchemas } from "@xpotato/content-contracts/content";
 import { ChartSeriesEditor } from "./ChartSeriesEditor.js";
 import { ChartAxisSettings, chartAxisFields } from "./ChartAxisSettings.js";
+import { MediaImage } from "../MediaImage.js";
 const LineChartPreview = lazy(async () => {
   const { LineChartPreview } = await import("./LineChartPreview.js");
   return { default: LineChartPreview };
@@ -547,7 +548,7 @@ export function ModuleBlock({
       {module.name === "Figure" && (
         <figure>
           {image?.src ? (
-            <img src={image.src} alt={value("alt")} />
+            <MediaImage src={image.src} alt={value("alt")} />
           ) : (
             <div className="cms-figure-placeholder">
               <BlockIcon name="Figure" />

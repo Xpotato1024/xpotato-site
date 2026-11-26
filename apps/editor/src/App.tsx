@@ -368,8 +368,9 @@ export default function App() {
     intent: "revise" | "drafts",
     review: boolean,
     selection: GitSnapshot,
+    selectedLocalId?: string,
   ) {
-    await git.openSelectedDocument(path, plan, intent, selection);
+    await git.openSelectedDocument(path, plan, intent, selection, selectedLocalId);
     await workspace.persist();
     openEditor(review);
   }

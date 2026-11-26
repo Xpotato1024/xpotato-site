@@ -3,9 +3,11 @@ import type { ContentCollection } from "@xpotato/content-contracts/common";
 import { collectionFromPath } from "@xpotato/editor-core/draft";
 import type { GitSnapshot } from "@xpotato/editor-core/git";
 import type { LocalDraft } from "../../data/storage.js";
+import { localDraftIdentity, matchingLocalDrafts } from "../../data/draft-identity.js";
 import { WorkspaceIcon } from "../../components/WorkspaceIcon.js";
 import { parseLocalDraft, type DraftKind } from "../drafts/model.js";
 import type { BranchPlan, GitWorkspace } from "../git/useGitWorkspace.js";
+import { DraftComparison, DraftSummary } from "./DraftDetails.js";
 
 export const documentKindIcons = {
   blog: "article",
@@ -204,6 +206,7 @@ interface Props {
     intent: "revise" | "drafts",
     review: boolean,
     selection: GitSnapshot,
+    selectedLocalId?: string,
   ) => Promise<void>;
   onImport: (file: File, collection?: ContentCollection) => Promise<LocalDraft>;
   run: (operation: () => Promise<void>) => void;
@@ -283,6 +286,20 @@ export function StartWorkspace({
     (visibleRemotePage - 1) * catalogPageSize,
     visibleRemotePage * catalogPageSize,
   );
+  const localGroups = new Map(
+    localPageItems.map((item) => {
+      const identity = localDraftIdentity(item);
+      const group = identity ? matchingLocalDrafts(saved, identity) : [item];
+      return [
+        item.id,
+        {
+          position: group.findIndex((other) => other.id === item.id) + 1,
+          count: group.length,
+          alternatives: group.filter((other) => other.id !== item.id),
+        },
+      ] as const;
+    }),
+  );
   function changePage(source: "local" | "remote", next: number) {
     if (source === "local") setLocalPage(next);
     else setRemotePage(next);
@@ -294,6 +311,51 @@ export function StartWorkspace({
     setReview(item.producer === "ai");
   }
   function selectionPanel(choice: NonNullable<typeof selected> | null) {
+    const contentId =
+      choice && "path" in choice ? indexByPath.get(choice.path)?.contentId : undefined;
+    const existing =
+      choice && "path" in choice && contentId
+        ? matchingLocalDrafts(saved, {
+            contentId,
+            path: choice.path,
+            workingBranch: plan.mode === "local" ? "" : plan.targetBranch,
+            sourceBranch: choice.snapshot.branch,
+          })
+        : [];
+    if (existing.length > 1) {
+      return (
+        <section className="start-selection start-selection-inline" aria-label="続ける下書きを選択">
+          <h2>同じ原稿の下書きが{existing.length}件あります</h2>
+          <p className="small">
+            違いを確認し、続ける下書きを選んでください。元の編集内容はそれぞれ保持しています。
+          </p>
+          {existing.map((item, index) => (
+            <div className="existing-draft-choice" key={item.id}>
+              <p>
+                <strong>下書き {index + 1}</strong>
+              </p>
+              <DraftSummary draft={item} />
+              <DraftComparison
+                draft={item}
+                alternatives={existing.filter((other) => other.id !== item.id)}
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  run(async () => {
+                    if (choice && "path" in choice && intent !== "new") {
+                      await onRemote(choice.path, plan, intent, review, choice.snapshot, item.id);
+                    }
+                  })
+                }
+              >
+                下書き {index + 1}を続ける
+              </button>
+            </div>
+          ))}
+        </section>
+      );
+    }
     const continuingBranch =
       choice && "local" in choice
         ? choice.local.workingBranch
@@ -305,6 +367,11 @@ export function StartWorkspace({
         className={"start-selection" + (choice ? " start-selection-inline" : "")}
         aria-label="編集の準備"
       >
+        {existing.length === 1 && (
+          <p className="small">
+            この端末の下書きを再開します。未保存の編集・添削・画像を引き継ぎます。
+          </p>
+        )}
         <BranchSetup
           plan={plan}
           onChange={setPlan}
@@ -439,11 +506,13 @@ export function StartWorkspace({
                         <strong>
                           {parseLocalDraft(item.source)?.data.title ?? "構文を編集中"}
                         </strong>
-                        <span>
-                          {item.producer === "ai" ? "AI下書き · " : ""}
-                          {item.workingBranch || "この端末"} ·{" "}
-                          {new Date(item.savedAt).toLocaleDateString("ja-JP")}
-                        </span>
+                        <DraftSummary draft={item} />
+                        {localGroups.get(item.id)!.count > 1 && (
+                          <span>
+                            同じ原稿の下書き {localGroups.get(item.id)!.position} /{" "}
+                            {localGroups.get(item.id)!.count}
+                          </span>
+                        )}
                       </button>
                       <button
                         type="button"
@@ -482,6 +551,10 @@ export function StartWorkspace({
                       >
                         削除
                       </button>
+                      <DraftComparison
+                        draft={item}
+                        alternatives={localGroups.get(item.id)!.alternatives}
+                      />
                       {selected &&
                         "local" in selected &&
                         selected.local.id === item.id &&

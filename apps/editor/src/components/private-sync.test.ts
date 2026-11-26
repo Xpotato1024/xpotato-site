@@ -167,7 +167,7 @@ describe("private synchronization requires a bound working branch", () => {
     mocks.media.mockResolvedValue([media]);
     const props = mediaProps(draft, binding.authenticated);
     const { tree } = await mount(MediaPanel, props);
-    for (const label of ["別の端末で同期した画像を取得", "画像を同期"]) {
+    for (const label of ["同期済みの画像を取得・修復", "画像を同期"]) {
       expect(button(tree, label).disabled).toBe(true);
       await click(tree, label);
     }
@@ -274,8 +274,8 @@ describe("private synchronization requires a bound working branch", () => {
     mocks.restore.mockResolvedValue({ draft, missing: [] });
     const props = mediaProps(draft);
     const panel = await mount(MediaPanel, props);
-    expect(button(panel.tree, "別の端末で同期した画像を取得").disabled).toBe(false);
-    await click(panel.tree, "別の端末で同期した画像を取得");
+    expect(button(panel.tree, "同期済みの画像を取得・修復").disabled).toBe(false);
+    await click(panel.tree, "同期済みの画像を取得・修復");
     const detached = panel.render({ draft: { ...draft, workingBranch: "" } });
     mocks.find.mockClear();
     mocks.request.mockClear();

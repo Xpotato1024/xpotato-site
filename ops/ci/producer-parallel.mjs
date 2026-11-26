@@ -3,7 +3,7 @@ import { runNpmScript } from "./ci-source.mjs";
 
 export const producerPhases = Object.freeze({
   prepare: Object.freeze(["release:build:hosted", "ci:browsers:prepare"]),
-  validate: Object.freeze(["quality:home-webkit:hosted", "ci:final:public"]),
+  validate: Object.freeze(["quality:webkit:hosted", "ci:final:public"]),
 });
 
 export async function runProducerPhase(
