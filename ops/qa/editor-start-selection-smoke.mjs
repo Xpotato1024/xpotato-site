@@ -547,7 +547,10 @@ try {
   await search.fill(mediaDocument.path);
   const selectedRemote = choices;
   assert.equal(await selectedRemote.count(), 1);
-  assert.equal(await selectedRemote.locator(":scope > button > strong").innerText(), mediaDocument.title);
+  assert.equal(
+    await selectedRemote.locator(":scope > button > strong").innerText(),
+    mediaDocument.title,
+  );
   await selectedRemote.locator(":scope > button").click();
   const prepared = selectedRemote.locator(".start-selection-inline");
   assert.equal(await prepared.locator(".branch-value").innerText(), draftBranch);
