@@ -19,10 +19,10 @@ describe("portable footnote blocks", () => {
     const region = document.regions[1]!;
     const note = readFootnoteDefinition(region.source)!;
     expect(note).toMatchObject({ identifier: "architecture", label: "Architecture", newline: "\r\n" });
-    expect(note.content).toBe("[設計](https://example.com/design)\n続き。\n\n別段落と **強調**。");
+    expect(note.content).toBe(" [設計](https://example.com/design)\n続き。\n\n別段落と **強調**。");
     expect(updateFootnoteContent(region.source, note.content)).toBe(region.source);
     const updated = writeBlockDocument(updateRegion(document, region.id, updateFootnoteContent(region.source, note.content.replace("続き。", "確認した続き。"))));
-    expect(updated).toBe(body.replace("[^Architecture]:  ", "[^Architecture]: ").replace("続き。", "確認した続き。"));
+    expect(updated).toBe(body.replace("続き。", "確認した続き。"));
     expect(blockTree(updated).children?.filter((node) => node.type === "footnoteDefinition")).toHaveLength(1);
     expect(updated.match(/\[\^Architecture\]/gu)).toHaveLength(3);
   });
@@ -35,6 +35,14 @@ describe("portable footnote blocks", () => {
     expect(readFootnoteDefinition(edited)?.content).toBe(content);
     expect(blockTree(edited).children?.[0]?.children?.map((node) => node.type)).toEqual(["paragraph", "paragraph", "code"]);
     expect(readFootnoteDefinition(updateFootnoteContent(source, ""))).not.toBeNull();
+  });
+
+  it("preserves extra leading indentation when a note starts with code", () => {
+    const source = "[^code]:     before()";
+    const note = readFootnoteDefinition(source)!;
+    const edited = updateFootnoteContent(source, note.content.replace("before", "after"));
+    expect(edited).toBe("[^code]:     after()");
+    expect(blockTree(edited).children?.[0]?.children?.map((node) => node.type)).toEqual(blockTree(source).children?.[0]?.children?.map((node) => node.type));
   });
 
   it("uses a free identifier for insertion and duplication, including unresolved references", () => {

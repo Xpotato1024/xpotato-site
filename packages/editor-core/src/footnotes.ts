@@ -17,6 +17,7 @@ export interface FootnoteDefinition {
   label: string;
   content: string;
   marker: string;
+  separator: string;
   newline: string;
 }
 
@@ -28,13 +29,14 @@ export function readFootnoteDefinition(source: string): FootnoteDefinition | nul
     if (nodes.length !== 1 || node?.type !== "footnoteDefinition" || !node.identifier)
       return null;
     const lines = source.split(/\r?\n/u);
-    const first = /^( {0,3}\[\^((?:\\.|[^\]\\])+)\]:)[ \t]*(.*)$/u.exec(lines[0] ?? "");
+    const first = /^( {0,3}\[\^((?:\\.|[^\]\\])+)\]:)([ \t]?)(.*)$/u.exec(lines[0] ?? "");
     if (!first) return null;
     return {
       identifier: node.identifier,
       label: node.label ?? first[2]!,
       marker: first[1]!,
-      content: [first[3]!, ...lines.slice(1).map((line) => line.replace(/^(?: {4}|\t)/u, ""))].join("\n"),
+      separator: first[3]!,
+      content: [first[4]!, ...lines.slice(1).map((line) => line.replace(/^(?: {4}|\t)/u, ""))].join("\n"),
       newline: source.includes("\r\n") ? "\r\n" : "\n",
     };
   } catch {
@@ -47,7 +49,7 @@ export function updateFootnoteContent(source: string, content: string): string {
   if (!note) throw Error("FOOTNOTE_SOURCE_UNSUPPORTED");
   if (note.content === content) return source;
   const lines = content.replace(/\r\n/gu, "\n").split("\n");
-  return note.marker + " " + lines.map((line, index) => (index && line ? "    " : "") + line).join(note.newline);
+  return note.marker + (note.separator || (lines[0] ? " " : "")) + lines.map((line, index) => (index && line ? "    " : "") + line).join(note.newline);
 }
 
 /** Reserve unresolved references too, so inserting a note cannot silently bind them. */
