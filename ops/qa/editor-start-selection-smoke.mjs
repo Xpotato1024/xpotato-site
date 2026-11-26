@@ -250,11 +250,19 @@ async function blobStorageSupport(page) {
         tx.oncomplete = () => resolve({ supported: true });
         tx.onabort = () => {
           const error = failure ?? tx.error;
-          resolve({ supported: false, name: error?.name ?? "UnknownError", message: error?.message ?? "The Blob transaction aborted without error details" });
+          resolve({
+            supported: false,
+            name: error?.name ?? "UnknownError",
+            message: error?.message ?? "The Blob transaction aborted without error details",
+          });
         };
         try {
-          const request = tx.objectStore("probe").put(new Blob([Uint8Array.from(bytes)], { type: "image/png" }), "image");
-          request.onerror = () => { failure = request.error; };
+          const request = tx
+            .objectStore("probe")
+            .put(new Blob([Uint8Array.from(bytes)], { type: "image/png" }), "image");
+          request.onerror = () => {
+            failure = request.error;
+          };
         } catch (error) {
           failure = error;
           tx.abort();
@@ -272,10 +280,17 @@ async function blobStorageSupport(page) {
   }, Array.from(imageBytes));
   if (!result.supported) {
     assert(
-      result.name === "DataCloneError" || (result.name === "UnknownError" && /blob|file/iu.test(result.message)),
+      result.name === "DataCloneError" ||
+        (result.name === "UnknownError" && /blob|file/iu.test(result.message)),
       "Unexpected IndexedDB probe failure: " + JSON.stringify(result),
     );
-    console.log("IndexedDB Blob storage unavailable: " + result.name + ": " + result.message + "; the application must persist and decode portable bytes");
+    console.log(
+      "IndexedDB Blob storage unavailable: " +
+        result.name +
+        ": " +
+        result.message +
+        "; the application must persist and decode portable bytes",
+    );
   }
   return result.supported;
 }
@@ -289,30 +304,48 @@ async function assertStoredImageFormat(page, draftId, supportsBlob) {
     });
     try {
       const images = await new Promise((resolve, reject) => {
-        const request = db.transaction("media", "readonly").objectStore("media").index("draftId").getAll(draftId);
+        const request = db
+          .transaction("media", "readonly")
+          .objectStore("media")
+          .index("draftId")
+          .getAll(draftId);
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error ?? Error("MEDIA_FORMAT_READ_FAILED"));
       });
-      return Promise.all(images.map(async (image) => ({
-        hasBytes: image.blobBytes instanceof ArrayBuffer,
-        bytes: image.blobBytes?.byteLength,
-        mime: image.blobType,
-        hash: image.blobBytes instanceof ArrayBuffer ? Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", image.blobBytes)), (byte) => byte.toString(16).padStart(2, "0")).join("") : "",
-        metadataHash: image.blobSha256,
-        hasBlob: image.blob instanceof Blob,
-      })));
+      return Promise.all(
+        images.map(async (image) => ({
+          hasBytes: image.blobBytes instanceof ArrayBuffer,
+          bytes: image.blobBytes?.byteLength,
+          mime: image.blobType,
+          hash:
+            image.blobBytes instanceof ArrayBuffer
+              ? Array.from(
+                  new Uint8Array(await crypto.subtle.digest("SHA-256", image.blobBytes)),
+                  (byte) => byte.toString(16).padStart(2, "0"),
+                ).join("")
+              : "",
+          metadataHash: image.blobSha256,
+          hasBlob: image.blob instanceof Blob,
+        })),
+      );
     } finally {
       db.close();
     }
   }, draftId);
-  assert.deepEqual(stored, [{
-    hasBytes: true,
-    bytes: imageBytes.length,
-    mime: mediaAsset.mime,
-    hash: imageHash,
-    metadataHash: imageHash,
-    hasBlob: supportsBlob,
-  }], "The app commits intact bytes and keeps compatibility Blobs only where storage supports them");
+  assert.deepEqual(
+    stored,
+    [
+      {
+        hasBytes: true,
+        bytes: imageBytes.length,
+        mime: mediaAsset.mime,
+        hash: imageHash,
+        metadataHash: imageHash,
+        hasBlob: supportsBlob,
+      },
+    ],
+    "The app commits intact bytes and keeps compatibility Blobs only where storage supports them",
+  );
 }
 
 let browser;
@@ -426,78 +459,86 @@ try {
     .getByRole("navigation", { name: "CMSの管理", exact: true })
     .getByRole("button", { name: "ホーム", exact: true })
     .click();
-  const firstId = await page.evaluate(async ({ bytes, sha256, mime }) => {
-    const opened = indexedDB.open("xpotato-editor-v1");
-    const db = await new Promise((resolve, reject) => {
-      opened.onsuccess = () => resolve(opened.result);
-      opened.onerror = () => reject(opened.error ?? Error("CATALOG_FIXTURE_DATABASE_OPEN_FAILED"));
-    });
-    const tx = db.transaction(["drafts", "media", "revisions"], "readwrite");
-    let activeId = "";
-    const now = Date.now();
-    for (let i = 0; i < 15; i++) {
-      const id = crypto.randomUUID();
-      if (i === 14) activeId = id;
-      const title = "端末テスト" + i;
-      const source = [
-        "---",
-        'id: "' + id + '"',
-        "title: " + JSON.stringify(title),
-        'description: "保存した下書き"',
-        'category: "software"',
-        "tags: []",
-        "draft: true",
-        "---",
-        "本文",
-      ].join("\n");
-      const savedAt = new Date(now - (14 - i) * 60_000).toISOString();
-      tx.objectStore("drafts").put({
-        id,
-        source,
-        path: "content/articles/device-" + i + ".mdx",
-        sourceBranch: "main",
-        workingBranch: "",
-        baseCommit: "",
-        savedAt,
-        producer: "human",
+  const firstId = await page.evaluate(
+    async ({ bytes, sha256, mime }) => {
+      const opened = indexedDB.open("xpotato-editor-v1");
+      const db = await new Promise((resolve, reject) => {
+        opened.onsuccess = () => resolve(opened.result);
+        opened.onerror = () =>
+          reject(opened.error ?? Error("CATALOG_FIXTURE_DATABASE_OPEN_FAILED"));
       });
-      tx.objectStore("media").put({
-        id: "media-" + i,
-        draftId: id,
-        assetId: "figure-" + i,
-        blobBytes: Uint8Array.from(bytes).buffer,
-        blobType: mime,
-        blobSha256: sha256,
-        sha256,
-        sourceSha256: sha256,
-        originalBytes: bytes.length,
-        kind: "technical",
-        transform: "identity-v1",
-        originalName: "fixture.png",
-        sourceRetained: true,
-        createdAt: savedAt,
-      });
-      tx.objectStore("revisions").put({
-        id: "rev-" + i,
-        draftId: id,
-        source,
-        savedAt,
-        label: "保存",
-      });
-    }
-    try {
-      await new Promise((resolve, reject) => {
-        let failure;
-        tx.oncomplete = resolve;
-        tx.onerror = (event) => { failure = event.target.error ?? tx.error; };
-        tx.onabort = () =>
-          reject(failure ?? tx.error ?? Error("CATALOG_FIXTURE_TRANSACTION_ABORTED_WITHOUT_ERROR"));
-      });
-    } finally {
-      db.close();
-    }
-    return activeId;
-  }, { bytes: Array.from(imageBytes), sha256: imageHash, mime: mediaAsset.mime });
+      const tx = db.transaction(["drafts", "media", "revisions"], "readwrite");
+      let activeId = "";
+      const now = Date.now();
+      for (let i = 0; i < 15; i++) {
+        const id = crypto.randomUUID();
+        if (i === 14) activeId = id;
+        const title = "端末テスト" + i;
+        const source = [
+          "---",
+          'id: "' + id + '"',
+          "title: " + JSON.stringify(title),
+          'description: "保存した下書き"',
+          'category: "software"',
+          "tags: []",
+          "draft: true",
+          "---",
+          "本文",
+        ].join("\n");
+        const savedAt = new Date(now - (14 - i) * 60_000).toISOString();
+        tx.objectStore("drafts").put({
+          id,
+          source,
+          path: "content/articles/device-" + i + ".mdx",
+          sourceBranch: "main",
+          workingBranch: "",
+          baseCommit: "",
+          savedAt,
+          producer: "human",
+        });
+        tx.objectStore("media").put({
+          id: "media-" + i,
+          draftId: id,
+          assetId: "figure-" + i,
+          blobBytes: Uint8Array.from(bytes).buffer,
+          blobType: mime,
+          blobSha256: sha256,
+          sha256,
+          sourceSha256: sha256,
+          originalBytes: bytes.length,
+          kind: "technical",
+          transform: "identity-v1",
+          originalName: "fixture.png",
+          sourceRetained: true,
+          createdAt: savedAt,
+        });
+        tx.objectStore("revisions").put({
+          id: "rev-" + i,
+          draftId: id,
+          source,
+          savedAt,
+          label: "保存",
+        });
+      }
+      try {
+        await new Promise((resolve, reject) => {
+          let failure;
+          tx.oncomplete = resolve;
+          tx.onerror = (event) => {
+            failure = event.target.error ?? tx.error;
+          };
+          tx.onabort = () =>
+            reject(
+              failure ?? tx.error ?? Error("CATALOG_FIXTURE_TRANSACTION_ABORTED_WITHOUT_ERROR"),
+            );
+        });
+      } finally {
+        db.close();
+      }
+      return activeId;
+    },
+    { bytes: Array.from(imageBytes), sha256: imageHash, mime: mediaAsset.mime },
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
   await page.getByRole("button", { name: "下書きの続き" }).click();
@@ -741,7 +782,9 @@ try {
           });
         };
         tx.oncomplete = resolve;
-        tx.onerror = (event) => { failure = event.target.error ?? tx.error; };
+        tx.onerror = (event) => {
+          failure = event.target.error ?? tx.error;
+        };
         tx.onabort = () => reject(failure ?? tx.error ?? Error("CORRUPTION_FIXTURE_FAILED"));
       });
       db.close();
@@ -818,7 +861,9 @@ try {
           savedAt: new Date(Date.now() + 1000).toISOString(),
         });
       tx.oncomplete = resolve;
-      tx.onerror = (event) => { failure = event.target.error ?? tx.error; };
+      tx.onerror = (event) => {
+        failure = event.target.error ?? tx.error;
+      };
       tx.onabort = () =>
         reject(failure ?? tx.error ?? Error("DUPLICATE_FIXTURE_TRANSACTION_ABORTED_WITHOUT_ERROR"));
     });
