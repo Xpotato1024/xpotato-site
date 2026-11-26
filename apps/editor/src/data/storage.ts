@@ -1,6 +1,7 @@
 import type { TaxonomySnapshot } from "@xpotato/editor-core/draft";
 import type { ReviewComment } from "@xpotato/editor-core/annotations";
 import type { EditorRegistryChanges } from "@xpotato/editor-core/registry";
+import { localDraftIdentity, matchingLocalDrafts } from "./draft-identity.js";
 
 export interface LocalDraft {
   id: string;
@@ -196,6 +197,45 @@ export async function updateLocalDraftArchive(
   if (!stored && !activeDraft) throw Error("端末に下書きが見つかりません。");
 }
 export const localDrafts = () => transact<LocalDraft[]>("drafts", "readonly", (s) => s.getAll());
+/** Select or create one Git workspace atomically, including requests from another tab. */
+export function claimGitDraft(candidate: LocalDraft, selectedId?: string): Promise<{ draft: LocalDraft; created: boolean }> {
+  const identity = localDraftIdentity(candidate);
+  if (!identity) return Promise.reject(Error("DRAFT_IDENTITY_REQUIRED"));
+  return queueDraftWrite(async () => {
+    const db = await database();
+    return new Promise<{ draft: LocalDraft; created: boolean }>((resolve, reject) => {
+      const tx = db.transaction("drafts", "readwrite");
+      const store = tx.objectStore("drafts");
+      const read = store.getAll();
+      let result: { draft: LocalDraft; created: boolean };
+      let failure: unknown;
+      read.onsuccess = () => {
+        try {
+          const matches = matchingLocalDrafts(read.result as LocalDraft[], identity);
+          const selected = selectedId ? matches.find((draft) => draft.id === selectedId) : undefined;
+          if (selectedId && !selected) throw Error("選択した下書きの保存先が変わりました。下書きを選び直してください。");
+          if (!selected && matches.length > 1) {
+            throw Error("同じ原稿の下書きが複数あります。下書きの違いを確認し、続けるものを選んでください。");
+          }
+          const existing = selected ?? matches[0];
+          result = { draft: existing ?? candidate, created: !existing };
+          if (!existing) store.add(candidate);
+        } catch (error) {
+          failure = error;
+          tx.abort();
+        }
+      };
+      tx.oncomplete = () => {
+        db.close();
+        resolve(result);
+      };
+      tx.onabort = tx.onerror = () => {
+        db.close();
+        reject(failure ?? tx.error ?? Error("LOCAL_SAVE_FAILED"));
+      };
+    });
+  });
+}
 export const readWorkspaceRecord = <T>(id: string) =>
   transact<T | undefined>("workspace", "readonly", (s) => s.get(id));
 export const writeWorkspaceRecord = <T extends { id: string }>(value: T) =>
