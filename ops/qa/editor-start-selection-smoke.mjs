@@ -234,6 +234,87 @@ async function assertArticleImages(page, phase) {
   );
 }
 
+async function blobStorageSupport(page) {
+  const result = await page.evaluate(async (bytes) => {
+    const name = "xpotato-editor-blob-storage-probe";
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open(name, 1);
+      request.onupgradeneeded = () => request.result.createObjectStore("probe");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error ?? Error("BLOB_PROBE_DATABASE_OPEN_FAILED"));
+    });
+    try {
+      return await new Promise((resolve) => {
+        const tx = db.transaction("probe", "readwrite");
+        let failure;
+        tx.oncomplete = () => resolve({ supported: true });
+        tx.onabort = () => {
+          const error = failure ?? tx.error;
+          resolve({ supported: false, name: error?.name ?? "UnknownError", message: error?.message ?? "The Blob transaction aborted without error details" });
+        };
+        try {
+          const request = tx.objectStore("probe").put(new Blob([Uint8Array.from(bytes)], { type: "image/png" }), "image");
+          request.onerror = () => { failure = request.error; };
+        } catch (error) {
+          failure = error;
+          tx.abort();
+        }
+      });
+    } finally {
+      db.close();
+      await new Promise((resolve, reject) => {
+        const request = indexedDB.deleteDatabase(name);
+        request.onsuccess = resolve;
+        request.onerror = () => reject(request.error ?? Error("BLOB_PROBE_CLEANUP_FAILED"));
+        request.onblocked = () => reject(Error("BLOB_PROBE_CLEANUP_BLOCKED"));
+      });
+    }
+  }, Array.from(imageBytes));
+  if (!result.supported) {
+    assert(
+      result.name === "DataCloneError" || (result.name === "UnknownError" && /blob|file/iu.test(result.message)),
+      "Unexpected IndexedDB probe failure: " + JSON.stringify(result),
+    );
+    console.log("IndexedDB Blob storage unavailable: " + result.name + ": " + result.message + "; the application must persist and decode portable bytes");
+  }
+  return result.supported;
+}
+
+async function assertStoredImageFormat(page, draftId, supportsBlob) {
+  const stored = await page.evaluate(async (draftId) => {
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("xpotato-editor-v1");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error ?? Error("MEDIA_FORMAT_DATABASE_OPEN_FAILED"));
+    });
+    try {
+      const images = await new Promise((resolve, reject) => {
+        const request = db.transaction("media", "readonly").objectStore("media").index("draftId").getAll(draftId);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error ?? Error("MEDIA_FORMAT_READ_FAILED"));
+      });
+      return Promise.all(images.map(async (image) => ({
+        hasBytes: image.blobBytes instanceof ArrayBuffer,
+        bytes: image.blobBytes?.byteLength,
+        mime: image.blobType,
+        hash: image.blobBytes instanceof ArrayBuffer ? Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", image.blobBytes)), (byte) => byte.toString(16).padStart(2, "0")).join("") : "",
+        metadataHash: image.blobSha256,
+        hasBlob: image.blob instanceof Blob,
+      })));
+    } finally {
+      db.close();
+    }
+  }, draftId);
+  assert.deepEqual(stored, [{
+    hasBytes: true,
+    bytes: imageBytes.length,
+    mime: mediaAsset.mime,
+    hash: imageHash,
+    metadataHash: imageHash,
+    hasBlob: supportsBlob,
+  }], "The app commits intact bytes and keeps compatibility Blobs only where storage supports them");
+}
+
 let browser;
 try {
   const executablePath = [
@@ -258,6 +339,7 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(server.origin + "/editor/");
+  const supportsBlob = await blobStorageSupport(page);
   const homeScreen = page.locator(".workspace-screen");
   await homeScreen.waitFor();
   await page.waitForTimeout(300);
@@ -344,11 +426,11 @@ try {
     .getByRole("navigation", { name: "CMSの管理", exact: true })
     .getByRole("button", { name: "ホーム", exact: true })
     .click();
-  const firstId = await page.evaluate(async () => {
-    const opened = indexedDB.open("xpotato-editor-v1", 3);
+  const firstId = await page.evaluate(async ({ bytes, sha256, mime }) => {
+    const opened = indexedDB.open("xpotato-editor-v1");
     const db = await new Promise((resolve, reject) => {
       opened.onsuccess = () => resolve(opened.result);
-      opened.onerror = () => reject(opened.error);
+      opened.onerror = () => reject(opened.error ?? Error("CATALOG_FIXTURE_DATABASE_OPEN_FAILED"));
     });
     const tx = db.transaction(["drafts", "media", "revisions"], "readwrite");
     let activeId = "";
@@ -383,7 +465,17 @@ try {
         id: "media-" + i,
         draftId: id,
         assetId: "figure-" + i,
-        blob: new Blob(["image"], { type: "image/png" }),
+        blobBytes: Uint8Array.from(bytes).buffer,
+        blobType: mime,
+        blobSha256: sha256,
+        sha256,
+        sourceSha256: sha256,
+        originalBytes: bytes.length,
+        kind: "technical",
+        transform: "identity-v1",
+        originalName: "fixture.png",
+        sourceRetained: true,
+        createdAt: savedAt,
       });
       tx.objectStore("revisions").put({
         id: "rev-" + i,
@@ -393,13 +485,19 @@ try {
         label: "保存",
       });
     }
-    await new Promise((resolve, reject) => {
-      tx.oncomplete = resolve;
-      tx.onerror = tx.onabort = () => reject(tx.error);
-    });
-    db.close();
+    try {
+      await new Promise((resolve, reject) => {
+        let failure;
+        tx.oncomplete = resolve;
+        tx.onerror = (event) => { failure = event.target.error ?? tx.error; };
+        tx.onabort = () =>
+          reject(failure ?? tx.error ?? Error("CATALOG_FIXTURE_TRANSACTION_ABORTED_WITHOUT_ERROR"));
+      });
+    } finally {
+      db.close();
+    }
     return activeId;
-  });
+  }, { bytes: Array.from(imageBytes), sha256: imageHash, mime: mediaAsset.mime });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
   await page.getByRole("button", { name: "下書きの続き" }).click();
@@ -586,6 +684,7 @@ try {
   assert.equal(initialDrafts.length, 1);
   const initialDraft = initialDrafts[0];
   assert.equal(mediaRequests.length, 1, "Opening Git fetches the private image bytes");
+  await assertStoredImageFormat(page, initialDraft.id, supportsBlob);
 
   await page.reload();
   await ensureEditing(page);
@@ -623,25 +722,27 @@ try {
       });
       await new Promise((resolve, reject) => {
         const tx = db.transaction("media", "readwrite");
+        let failure;
         const store = tx.objectStore("media");
         const request = store.index("draftId").getAll(draftId);
         request.onsuccess = () => {
           if (request.result.length !== 1) {
+            failure = Error("CORRUPTION_FIXTURE_EXPECTED_ONE_IMAGE_FOUND_" + request.result.length);
             tx.abort();
             return;
           }
-          const image = request.result[0];
+          const { blob: _compatibilityBlob, ...image } = request.result[0];
           const corrupt = new Uint8Array(length);
           store.put({
             ...image,
             blobBytes: corrupt.buffer,
-            blob: new Blob([corrupt], { type: "image/png" }),
             alt: "復元しても保持する説明",
             caption: "復元しても保持する注記",
           });
         };
         tx.oncomplete = resolve;
-        tx.onabort = tx.onerror = () => reject(tx.error ?? Error("CORRUPTION_FIXTURE_FAILED"));
+        tx.onerror = (event) => { failure = event.target.error ?? tx.error; };
+        tx.onabort = () => reject(failure ?? tx.error ?? Error("CORRUPTION_FIXTURE_FAILED"));
       });
       db.close();
     },
@@ -657,6 +758,7 @@ try {
   );
   await reopenGitArticle(page);
   await assertArticleImages(page, "Corrupt cache recovery");
+  await assertStoredImageFormat(page, initialDraft.id, supportsBlob);
   assert.equal(mediaRequests.length, 2, "Matching metadata cannot conceal corrupt cached bytes");
   const repaired = await page.evaluate(async (draftId) => {
     const db = await new Promise((resolve, reject) => {
@@ -705,6 +807,7 @@ try {
     });
     await new Promise((resolve, reject) => {
       const tx = db.transaction("drafts", "readwrite");
+      let failure;
       const store = tx.objectStore("drafts");
       const request = store.get(id);
       request.onsuccess = () =>
@@ -715,7 +818,9 @@ try {
           savedAt: new Date(Date.now() + 1000).toISOString(),
         });
       tx.oncomplete = resolve;
-      tx.onabort = tx.onerror = () => reject(tx.error);
+      tx.onerror = (event) => { failure = event.target.error ?? tx.error; };
+      tx.onabort = () =>
+        reject(failure ?? tx.error ?? Error("DUPLICATE_FIXTURE_TRANSACTION_ABORTED_WITHOUT_ERROR"));
     });
     db.close();
   }, initialDraft.id);
