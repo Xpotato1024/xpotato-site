@@ -1,13 +1,45 @@
 import type { LocalDraft, LocalMedia } from "./storage.js";
 import { localDraftIdentity, matchingLocalDrafts } from "./draft-identity.js";
 
-export type StoredMedia = LocalMedia & {
+export type StoredMedia = Omit<LocalMedia, "blob"> & {
+  blob?: Blob;
   blobBytes: ArrayBuffer;
   blobType: string;
   blobSha256: string;
 };
 
 export type MediaVersion = Pick<LocalMedia, "id" | "sha256" | "remoteId">;
+
+/** Only an aborted transaction may authorize the bytes-only retry. */
+export class MediaBlobWriteAborted extends Error {
+  constructor(cause: unknown) {
+    super("LOCAL_MEDIA_BLOB_WRITE_ABORTED", { cause });
+  }
+}
+
+export function isBlobStorageError(error: unknown): boolean {
+  return (
+    error instanceof DOMException &&
+    ["UnknownError", "DataCloneError"].includes(error.name) &&
+    /\bBlob(?:\/File)?\b/iu.test(error.message)
+  );
+}
+
+export async function withMediaBlobFallback<T>(
+  write: (includeCompatibilityBlob: boolean) => Promise<T>,
+): Promise<T> {
+  try {
+    return await write(true);
+  } catch (error) {
+    if (!(error instanceof MediaBlobWriteAborted)) throw error;
+    return write(false);
+  }
+}
+
+export function mediaWithoutCompatibilityBlob(stored: StoredMedia): StoredMedia {
+  const { blob: _blob, ...bytes } = stored;
+  return bytes;
+}
 
 export function assertMediaRestoreDraft(expected: LocalDraft, current: LocalDraft | undefined) {
   const identity = localDraftIdentity(expected);
@@ -31,7 +63,7 @@ export async function encodeStoredMedia(media: LocalMedia): Promise<StoredMedia>
     blobBytes: bytes,
     blobType: blob.type,
     blobSha256: media.sha256,
-    // Already-open older CMS tabs still expect this field. New readers use the bytes above.
+    // Older open tabs can read this field when their browser can persist Blobs.
     blob: new Blob([bytes], { type: blob.type }),
   };
 }
@@ -45,12 +77,15 @@ export async function decodeStoredMedia(stored: StoredMedia | LocalMedia): Promi
   try {
     return {
       ...metadata,
-      blob: new Blob([await stored.blob.arrayBuffer()], { type: stored.blob.type }),
+      blob: new Blob([await metadata.blob.arrayBuffer()], { type: metadata.blob.type }),
     };
   } catch {
     // Keep an unreadable legacy record's identity and annotations available. A restore
     // can replace its cache bytes; one bad image must not hide every other image.
-    return metadata;
+    return {
+      ...metadata,
+      blob: metadata.blob ?? new Blob([], blobType ? { type: blobType } : {}),
+    };
   }
 }
 

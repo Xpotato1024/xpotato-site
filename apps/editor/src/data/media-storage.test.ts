@@ -35,7 +35,7 @@ describe("durable local media bytes", () => {
     const media = image();
     const stored = await encodeStoredMedia(media);
     expect(stored.blob).not.toBe(media.blob);
-    expect(await stored.blob.arrayBuffer()).toEqual(await media.blob.arrayBuffer());
+    expect(await stored.blob!.arrayBuffer()).toEqual(await media.blob.arrayBuffer());
     expect(stored.blobBytes).toEqual(await media.blob.arrayBuffer());
     expect(stored.blobType).toBe("image/webp");
     const first = await decodeStoredMedia(structuredClone(stored));
@@ -152,7 +152,7 @@ describe("restoring one asset into a local draft", () => {
     expect(next.credit).toBe(current.credit);
     expect(next.creditUrl).toBe(current.creditUrl);
     expect((await decodeStoredMedia(next)).blob.size).toBe(8);
-    expect(await next.blob.text()).toBe("restored");
+    expect(await next.blob!.text()).toBe("restored");
   });
 
   it("reuses a concurrent identical restoration instead of adding another record", async () => {
