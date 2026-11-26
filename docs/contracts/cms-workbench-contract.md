@@ -151,7 +151,11 @@ Group追加でGallery・Steps等の子制約やArticleEndnoteのトップレベ�
 
 AIの画像は、`editor:media:handoff`が準備する私有bundleから同じ原稿へ登録する。共有契約は`packages/editor-core/src/media-handoff.ts`、登録処理は`apps/editor/src/data/media-handoff.ts`が所有する。bundleはrepository、ContentId、branch、commit、原稿path、本文SHA-256、各assetIdと正規化済み画像bytes/hashを持つ。元端末の絶対pathや資格情報を含めず、Git・公開CI artifactへ保存しない。媒体の用途別制約は既存`mediaPolicy`、bundleの点数・合計容量は`mediaHandoffPolicy`を参照する。
 
-取り込み時は本文が要求するFigure・Markdown画像・heroの集合とbundleの集合を完全一致させ、全画像を検査してから保存へ進む。登録中も現在の原稿とGit headを照合し、途中の原稿切替・本文変更・別端末のGit更新を検出したら停止する。既存の所有者session・CSRF検査の後で、Draft作成/取得、容量予約、アップロード、実bytesの再取得を行う。headless認証、長期token、A/B/Cへの権限をこの経路へ追加しない。AIが認証済みブラウザーを利用できる場合も同じUIと登録処理を使う。
+取り込み時は本文が要求するFigure・Markdown画像・heroの集合とbundleの集合を完全一致させ、全画像を検査してから保存へ進む。登録中も現在の原稿とGit headを照合し、途中の原稿切替・本文変更・別端末のGit更新を検出したら停止する。CMSは既存の所有者session・CSRF検査の後で、Draft作成/取得、容量予約、アップロード、実bytesの再取得を行う。AIが認証済みブラウザーを利用できる場合も同じUIと登録処理を使う。
+
+[ADR-0094](../design/adr/0094-owner-cli-draft-media.md)の登録CLIは、実行端末の既存GitHub認証を再利用する独立した入口とする。`/editor-api/cli/`ではBearerから所有者の数値IDと設定repositoryの権限を確認し、媒体manifestの照合、同じDraftの取得・作成、媒体予約・upload・readbackだけを許可する。Cookie fallback、汎用Git/分類/連載/GC操作、公開A/B/Cへの権限は追加しない。credentialはrequest処理中だけ使い、APIへ保存しない。
+
+CLIの小さいmanifestと一件ずつの画像uploadは同じDraft storeを使う。APIでも固定Git本文と全参照画像を照合し、sourceと旧画像hash条件を予約に保持する。予約時とupload完了時のCASでrevision・旧hashを照合し、通常のブラウザーuploadを使ってCLI予約のsource検査を省略できないようにする。GitとR2の原子性は主張せず、upload前後のGit head変更は未完了として扱う。
 
 同じassetId・hashの再実行は、保存済みbytesを確認して再利用する。異hashへの差替えはbundleの`expectedRemoteSha256`と現在の画像を照合し、媒体の更新には取得したDraft revisionを付ける。端末の未同期変更、古い旧hash、複数候補がある状態は黙って解消しない。途中までの成功を保持し、再実行で未完了分だけを登録する。最後に必要な全assetIdとhashが解決した場合だけ登録完了を示す。
 

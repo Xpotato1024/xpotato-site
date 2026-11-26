@@ -2,8 +2,11 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
   assertMediaHandoffSource,
+  mediaHandoffManifest,
+  mediaHandoffPolicy,
   mediaHandoffReferences,
   parseMediaHandoff,
+  parseMediaHandoffManifest,
   type MediaHandoff,
 } from "./media-handoff.js";
 
@@ -139,5 +142,96 @@ describe("AI媒体の下書き引継ぎ契約", () => {
     const lossy = fixture();
     lossy.assets[0]!.prepared.metadata.lossy = true;
     expect(() => parseMediaHandoff(lossy)).toThrow("MEDIA_HANDOFF_TECHNICAL_TRANSFORM_INVALID");
+  });
+});
+
+describe("CLI媒体の登録manifest", () => {
+  it("画像bytesや元ファイル名を送らず、原稿と置換前hashを固定する", async () => {
+    const bundle = fixture();
+    bundle.assets[0]!.expectedRemoteSha256 = "e".repeat(64);
+    const manifest = mediaHandoffManifest(bundle);
+    expect(manifest.source).toEqual(bundle.source);
+    expect(manifest.assets[0]).toEqual({
+      assetId: "architecture-editor",
+      metadata: bundle.assets[0]!.prepared.metadata,
+      expectedRemoteSha256: "e".repeat(64),
+    });
+    const json = JSON.stringify(manifest);
+    expect(json).not.toContain("masterBase64");
+    expect(json).not.toContain("previewBase64");
+    expect(json).not.toContain("originalName");
+    await expect(assertMediaHandoffSource(manifest, binding)).resolves.toBeUndefined();
+  });
+
+  it("同じsourceと画像参照の照合をAPI側でも使える", async () => {
+    const manifest = mediaHandoffManifest(fixture());
+    manifest.assets.pop();
+    await expect(assertMediaHandoffSource(manifest, binding)).rejects.toThrow(
+      "MEDIA_HANDOFF_REFERENCES_MISMATCH",
+    );
+    await expect(
+      assertMediaHandoffSource(mediaHandoffManifest(fixture()), {
+        ...binding,
+        source: source + "更新\n",
+      }),
+    ).rejects.toThrow("MEDIA_HANDOFF_SOURCE_HASH_MISMATCH");
+  });
+
+  it("manifestの重複IDと不正な画像hashを拒否する", () => {
+    const duplicate = mediaHandoffManifest(fixture());
+    duplicate.assets[1]!.assetId = duplicate.assets[0]!.assetId;
+    expect(() => parseMediaHandoffManifest(duplicate)).toThrow("MEDIA_HANDOFF_DUPLICATE_ASSET");
+    const invalid = mediaHandoffManifest(fixture());
+    invalid.assets[0]!.metadata.sha256 = "invalid";
+    expect(() => parseMediaHandoffManifest(invalid)).toThrow("MEDIA_HANDOFF_PREPARED_INVALID");
+  });
+
+  it("metadataの未知fieldを予約へ残さず、動画の時間と画素予算を検査する", () => {
+    const manifest = mediaHandoffManifest(fixture());
+    const animated = {
+      ...manifest.assets[0]!.metadata,
+      kind: "animation",
+      animation: { frameCount: 2, durationMs: 200, loop: 0, delaysMs: [100, 100], private: "drop" },
+      playbackSha256: "f".repeat(64),
+      private: "drop",
+      masterBase64: "YWJj",
+    };
+    const input = { ...manifest, assets: [{ assetId: "motion", metadata: animated }] };
+    const parsed = parseMediaHandoffManifest(input);
+    expect(parsed.assets[0]!.metadata).not.toHaveProperty("private");
+    expect(parsed.assets[0]!.metadata).not.toHaveProperty("masterBase64");
+    expect(parsed.assets[0]!.metadata.animation).toEqual({
+      frameCount: 2,
+      durationMs: 200,
+      loop: 0,
+      delaysMs: [100, 100],
+    });
+    animated.animation.durationMs = 300;
+    expect(() => parseMediaHandoffManifest(input)).toThrow("MEDIA_HANDOFF_ANIMATION_INVALID");
+    animated.animation.durationMs = 200;
+    animated.width = 8192;
+    animated.height = 8192;
+    expect(() => parseMediaHandoffManifest(input)).toThrow("MEDIA_HANDOFF_ANIMATION_INVALID");
+  });
+
+  it("本体画像の混入、巨大manifest、技術図の変換方針違反を拒否する", () => {
+    const bytes = mediaHandoffManifest(fixture());
+    expect(() =>
+      parseMediaHandoffManifest({
+        ...bytes,
+        assets: [{ ...bytes.assets[0], masterBase64: "YWJj" }],
+      }),
+    ).toThrow("MEDIA_HANDOFF_ASSET_INVALID");
+    expect(() =>
+      parseMediaHandoffManifest({
+        ...bytes,
+        padding: "x".repeat(mediaHandoffPolicy.manifestBytes),
+      }),
+    ).toThrow("MEDIA_HANDOFF_MANIFEST_BYTES_LIMIT");
+    const lossy = mediaHandoffManifest(fixture());
+    lossy.assets[0]!.metadata.lossy = true;
+    expect(() => parseMediaHandoffManifest(lossy)).toThrow(
+      "MEDIA_HANDOFF_TECHNICAL_TRANSFORM_INVALID",
+    );
   });
 });

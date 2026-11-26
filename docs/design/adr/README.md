@@ -9,6 +9,8 @@ canonical_for:
 
 # Architecture Decision Records
 
+- [ADR-0094: AIのDraft画像登録に既存GitHub認証を使うCLIを追加する](0094-owner-cli-draft-media.md) — Proposed。既存GitHub CLI認証、Draft媒体だけのAPI入口、source・旧hash・revision照合、実bytes再取得。
+
 - [ADR-0093: 下書きの再開先を固定し、AI原稿と私有画像を同じ制作単位で引き継ぐ](0093-draft-handoff-identity.md) — Proposed。読み込み元branchの継続、固定原稿とassetIdを持つ私有bundle、既存owner認証によるDraft登録と再実行。
 
 - [ADR-0091: 下書き編集と公開・コードCIの分離](0091-draft-editing-ci.md) — Proposed。未公開原稿と正規索引の意味判定、全体生成物検査、公開変更とmainの全体CI。

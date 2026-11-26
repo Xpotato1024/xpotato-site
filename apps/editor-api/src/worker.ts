@@ -13,10 +13,14 @@ import { collectDraftMedia, reconcileReservations } from "./media.js";
 import { json } from "./http.js";
 import { handleGitRoute } from "./routes/git.js";
 import { handleDraftRoute } from "./routes/drafts.js";
+import { authenticateCLI, type CLIPrincipal } from "./cli-auth.js";
+import { handleCLIMediaRoute, isCLIMediaRoute } from "./routes/cli-media.js";
 
 export interface RuntimePorts {
   authenticate?: (request: Request, env: Environment, write: boolean) => Promise<Session>;
   git?: (session: Session, env: Environment) => GitRepository;
+  cliAuthenticate?: (request: Request, env: Environment) => Promise<CLIPrincipal>;
+  cliGit?: (principal: CLIPrincipal, env: Environment) => GitRepository;
   now?: () => number;
 }
 
@@ -26,6 +30,28 @@ export function createHandler(ports: RuntimePorts = {}) {
       const url = new URL(request.url);
       const route = url.pathname.replace(/^\/editor-api(?=\/|$)/u, "") || "/";
       const write = !["GET", "HEAD", "OPTIONS"].includes(request.method);
+      if (route === "/cli" || route.startsWith("/cli/")) {
+        if (!isCLIMediaRoute(route, request.method)) {
+          return json({ error: "NOT_FOUND" }, 404);
+        }
+        const principal = await (ports.cliAuthenticate ?? authenticateCLI)(request, env);
+        if (!env.DRAFT_MEDIA) {
+          throw new APIError("DRAFT_STORAGE_NOT_CONFIGURED", 503);
+        }
+        const repository =
+          ports.cliGit?.(principal, env) ??
+          new GitRepository(
+            createGitHubTransport(principal.token, principal.repository),
+            principal.repository,
+          );
+        return await handleCLIMediaRoute({
+          request,
+          url,
+          route,
+          store: new DraftStore(env.DRAFT_MEDIA, ports.now ?? Date.now),
+          repository,
+        });
+      }
       if (request.method === "OPTIONS") {
         assertOrigin(request, env);
         return new Response(null, {
@@ -71,7 +97,7 @@ export function createHandler(ports: RuntimePorts = {}) {
           throw error;
         }
       }
-      // 新しい業務routeも必ずこの所有者・CSRF検査の後へ置く。
+      // Browser routes retain their owner cookie and same-origin CSRF boundary.
       const current = await (ports.authenticate ?? session)(request, env, write);
       if (route === "/auth/logout" && request.method === "POST") {
         return await logout(request, env);
