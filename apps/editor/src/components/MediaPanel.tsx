@@ -73,10 +73,14 @@ export function MediaPanel({
         new CustomEvent("editor-media-changed", { detail: { draftId: draft.id } }),
       );
     });
-  useEffect(() => registerEditorUpdatePreparation(async () => {
-    if (busy) throw Error("画像の処理が完了してから、アプリを更新してください。");
-    await mediaWrites.current;
-  }), [busy]);
+  useEffect(
+    () =>
+      registerEditorUpdatePreparation(async () => {
+        if (busy) throw Error("画像の処理が完了してから、アプリを更新してください。");
+        await mediaWrites.current;
+      }),
+    [busy],
+  );
   useEffect(() => {
     void reload();
   }, [draft.id]);

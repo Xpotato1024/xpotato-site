@@ -1,4 +1,12 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type PointerEvent, type ReactNode } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import { blockTree, readModuleSource, moduleChildKinds } from "@xpotato/editor-core/blocks";
 import { BlockPreview, canEditRich, canEditFootnoteText } from "./BlockPreview.js";
 import { blockChoices } from "./BlockPalette.js";
@@ -126,7 +134,12 @@ export function RegionContent({
   if (!raw && !inlineOnly && readFootnoteDefinition(source))
     return <FootnoteBlock source={source} onChange={onChange} onSelection={onSelection} />;
   if (!raw && editing && (info.footnoteText || footnoteEditing))
-    return <><small>脚注の参照を保持して編集</small>{textInput("本文（脚注参照を含む）")}</>;
+    return (
+      <>
+        <small>脚注の参照を保持して編集</small>
+        {textInput("本文（脚注参照を含む）")}
+      </>
+    );
   if (
     raw ||
     richError ||

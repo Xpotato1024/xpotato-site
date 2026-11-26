@@ -59,7 +59,11 @@ const editorSeries = (): EditorSeriesPreview => ({
 
 describe("site-style safe draft preview", () => {
   it("uses the site SVG for every footnote return link and keeps repeated references distinct", async () => {
-    const result = await previewDocument(draft("本文[^source]。もう一度[^source]。別の資料[^other]。\n\n[^source]: [設計資料](https://example.com/)\n\n[^other]: 補足。"));
+    const result = await previewDocument(
+      draft(
+        "本文[^source]。もう一度[^source]。別の資料[^other]。\n\n[^source]: [設計資料](https://example.com/)\n\n[^other]: 補足。",
+      ),
+    );
     const nodes = elements(result.html);
     const references = nodes.filter((node) => Object.hasOwn(node.props, "dataFootnoteRef"));
     const backlinks = nodes.filter((node) => Object.hasOwn(node.props, "dataFootnoteBackref"));
@@ -68,8 +72,14 @@ describe("site-style safe draft preview", () => {
     expect(new Set(ids).size).toBe(3);
     expect(backlinks).toHaveLength(3);
     expect(backlinks.map((node) => String(node.props.href).slice(1))).toEqual(ids);
-    expect(backlinks.map((node) => node.props.ariaLabel)).toEqual(["本文の脚注1の参照1へ戻る", "本文の脚注1の参照2へ戻る", "本文の脚注2の参照1へ戻る"]);
-    expect(nodes.filter((node) => node.tag === "path" && node.props.d === footnoteBackrefIconPath)).toHaveLength(3);
+    expect(backlinks.map((node) => node.props.ariaLabel)).toEqual([
+      "本文の脚注1の参照1へ戻る",
+      "本文の脚注1の参照2へ戻る",
+      "本文の脚注2の参照1へ戻る",
+    ]);
+    expect(
+      nodes.filter((node) => node.tag === "path" && node.props.d === footnoteBackrefIconPath),
+    ).toHaveLength(3);
     expect(result.html).toContain('class="footnote-backref-icon"');
     expect(result.html).toContain('data-preview-href="https://example.com/"');
     expect(result.html).not.toMatch(/[↩\uFE0E\uFE0F]|<script|<img/u);
@@ -77,10 +87,18 @@ describe("site-style safe draft preview", () => {
   });
 
   it("keeps return targets when a footnote refers to another note", async () => {
-    const result = await previewDocument(draft("本文[^first]。\n\n[^first]: 補足[^second]。\n\n[^second]: 別の補足。"));
+    const result = await previewDocument(
+      draft("本文[^first]。\n\n[^first]: 補足[^second]。\n\n[^second]: 別の補足。"),
+    );
     const nodes = elements(result.html);
     const ids = new Set(nodes.map((node) => node.props.id));
-    const targets = nodes.filter((node) => Object.hasOwn(node.props, "dataFootnoteRef") || Object.hasOwn(node.props, "dataFootnoteBackref")).map((node) => String(node.props.href).slice(1));
+    const targets = nodes
+      .filter(
+        (node) =>
+          Object.hasOwn(node.props, "dataFootnoteRef") ||
+          Object.hasOwn(node.props, "dataFootnoteBackref"),
+      )
+      .map((node) => String(node.props.href).slice(1));
     expect(targets).toHaveLength(4);
     for (const target of targets) expect(ids.has(target)).toBe(true);
   });

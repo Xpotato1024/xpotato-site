@@ -48,7 +48,7 @@ export async function editorStaticServer(root, api, beforeStatic) {
         res.end();
         return;
       }
-      if (beforeStatic && await beforeStatic(req, res)) return;
+      if (beforeStatic && (await beforeStatic(req, res))) return;
       // Match Static Assets HTML canonicalization so service-worker tests do not
       // accept a precache URL that only works on this local server.
       if (url.pathname === "/editor/index.html") {

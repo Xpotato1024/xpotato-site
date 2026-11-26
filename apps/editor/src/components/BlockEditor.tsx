@@ -267,15 +267,8 @@ export function BlockEditor({
   const insert = (kind: BlockKind) => {
     const after = paletteAfter ?? current.current.regions.length - 1;
     const footnote = kind === "footnote" ? insertFootnote(current.current, after) : null;
-    const next = footnote?.document ?? insertRegion(
-      current.current,
-      blockTemplates[kind],
-      after,
-    );
-    const position = footnote?.index ?? Math.max(
-      0,
-      Math.min(next.regions.length - 1, after + 1),
-    );
+    const next = footnote?.document ?? insertRegion(current.current, blockTemplates[kind], after);
+    const position = footnote?.index ?? Math.max(0, Math.min(next.regions.length - 1, after + 1));
     commit(next);
     setPaletteAfter(null);
     setActive(next.regions[position]!.id);
@@ -530,7 +523,11 @@ export function BlockEditor({
                   onMove={(direction) => move(index, index + direction)}
                   onDuplicate={() => {
                     const footnote = readFootnoteDefinition(region.source);
-                    commit(footnote ? insertFootnote(current.current, index, footnote.content).document : insertRegion(current.current, region.source, index));
+                    commit(
+                      footnote
+                        ? insertFootnote(current.current, index, footnote.content).document
+                        : insertRegion(current.current, region.source, index),
+                    );
                     setAnnouncement("複製しました。");
                   }}
                   onSource={() => {

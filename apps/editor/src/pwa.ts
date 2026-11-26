@@ -9,7 +9,9 @@ const updatePreparations = new Set<() => void | Promise<void>>();
 
 export function registerEditorUpdatePreparation(prepare: () => void | Promise<void>) {
   updatePreparations.add(prepare);
-  return () => { updatePreparations.delete(prepare); };
+  return () => {
+    updatePreparations.delete(prepare);
+  };
 }
 
 const installationFailure = () =>
@@ -83,14 +85,20 @@ async function settledStatus(
     };
     const timeout = window.setTimeout(() => {
       cleanup();
-      reject(Error("アプリの準備が完了しませんでした。通信状態を確認してから、更新をもう一度確認してください。"));
+      reject(
+        Error(
+          "アプリの準備が完了しませんでした。通信状態を確認してから、更新をもう一度確認してください。",
+        ),
+      );
     }, 15000);
     registration.addEventListener("updatefound", inspect);
     inspect();
   });
 }
 
-async function recoveredStatus(registration: ServiceWorkerRegistration): Promise<EditorUpdateCheck> {
+async function recoveredStatus(
+  registration: ServiceWorkerRegistration,
+): Promise<EditorUpdateCheck> {
   const status = await settledStatus(registration);
   // The registration was repaired but no successful update check took place.
   return status === "current" ? "recovered" : status;

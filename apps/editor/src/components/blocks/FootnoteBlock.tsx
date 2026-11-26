@@ -1,7 +1,11 @@
 import { readFootnoteDefinition, updateFootnoteContent } from "@xpotato/editor-core/footnotes";
 import { BlockPreview } from "./BlockPreview.js";
 
-export function FootnoteBlock({ source, onChange, onSelection }: {
+export function FootnoteBlock({
+  source,
+  onChange,
+  onSelection,
+}: {
   source: string;
   onChange: (source: string) => void;
   onSelection: (quote: string) => void;

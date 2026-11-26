@@ -11,7 +11,9 @@ describe("footnote authoring controls", () => {
   it("opens existing definitions as footnotes and exposes a fixed reference with editable content", () => {
     const source = "[^architecture]: [設計資料](https://example.com/)を確認。";
     const onChange = vi.fn();
-    const html = renderToStaticMarkup(createElement(FootnoteBlock, { source, onChange, onSelection: () => {} }));
+    const html = renderToStaticMarkup(
+      createElement(FootnoteBlock, { source, onChange, onSelection: () => {} }),
+    );
     expect(describeRegion(source).label).toBe("脚注");
     expect(html).toContain("本文の参照記号");
     expect(html).toContain('value="[^architecture]"');
@@ -38,7 +40,11 @@ describe("footnote authoring controls", () => {
   });
 
   it("keeps ordinary rich editing and treats escaped markers or inline code as literal text", () => {
-    for (const source of ["通常の **本文**。", "参照の書き方 `[^source]`。", "文字として\\[^source]を記載。"]){
+    for (const source of [
+      "通常の **本文**。",
+      "参照の書き方 `[^source]`。",
+      "文字として\\[^source]を記載。",
+    ]) {
       expect(canEditRich(source)).toBe(true);
       expect(canEditFootnoteText(source)).toBe(false);
     }
@@ -49,6 +55,10 @@ describe("footnote authoring controls", () => {
     expect(allowedBlockKinds()).toContain("footnote");
     expect(allowedBlockKinds("Gallery")).not.toContain("footnote");
     expect(allowedBlockKinds("Group")).not.toContain("footnote");
-    expect(buildDocumentOutline("本文[^source]。\n\n[^source]: 参考資料。").at(-1)).toMatchObject({ kind: "footnote", title: "参考資料。", detail: "脚注 · source" });
+    expect(buildDocumentOutline("本文[^source]。\n\n[^source]: 参考資料。").at(-1)).toMatchObject({
+      kind: "footnote",
+      title: "参考資料。",
+      detail: "脚注 · source",
+    });
   });
 });

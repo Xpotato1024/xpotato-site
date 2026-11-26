@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { activateEditorUpdate, checkEditorUpdate, registerEditorWorker, registerEditorUpdatePreparation } from "./pwa.js";
+import {
+  activateEditorUpdate,
+  checkEditorUpdate,
+  registerEditorWorker,
+  registerEditorUpdatePreparation,
+} from "./pwa.js";
 
 type WorkerMock = {
   state: string;
@@ -177,7 +182,9 @@ describe("manual editor PWA update", () => {
     const worker = makeWorker();
     registration.waiting = worker;
     let release = () => {};
-    const pending = new Promise<void>(resolve => { release = resolve; });
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     const removePreparation = registerEditorUpdatePreparation(() => pending);
     const persist = vi.fn(async () => {});
     worker.postMessage.mockImplementation(() => {
@@ -206,7 +213,9 @@ describe("manual editor PWA update", () => {
       throw Error("画像の情報を保存できませんでした。");
     });
     try {
-      await expect(activateEditorUpdate(persist)).rejects.toThrow("画像の情報を保存できませんでした");
+      await expect(activateEditorUpdate(persist)).rejects.toThrow(
+        "画像の情報を保存できませんでした",
+      );
       expect(persist).not.toHaveBeenCalled();
       expect(worker.postMessage).not.toHaveBeenCalled();
       expect(reload).not.toHaveBeenCalled();
@@ -288,7 +297,11 @@ describe("registration lifecycle recovery", () => {
     registration.update.mockRejectedValue(error);
     serviceWorker.getRegistration.mockResolvedValueOnce(registration).mockResolvedValueOnce(null);
     const worker = makeWorker();
-    const replacement = { ...registration, active: null as WorkerMock | null, installing: worker as WorkerMock | null };
+    const replacement = {
+      ...registration,
+      active: null as WorkerMock | null,
+      installing: worker as WorkerMock | null,
+    };
     serviceWorker.register.mockResolvedValueOnce(replacement);
     const checking = checkEditorUpdate();
     await vi.waitFor(() => expect(worker.addEventListener).toHaveBeenCalled());
@@ -324,10 +337,14 @@ describe("registration lifecycle recovery", () => {
     registration.active = null;
     const worker = makeWorker();
     registration.installing = worker;
-    const checking = expect(checkEditorUpdate()).rejects.toThrow("アプリの準備が完了しませんでした");
+    const checking =
+      expect(checkEditorUpdate()).rejects.toThrow("アプリの準備が完了しませんでした");
     await vi.advanceTimersByTimeAsync(15000);
     await checking;
-    expect(registration.removeEventListener).toHaveBeenCalledWith("updatefound", expect.any(Function));
+    expect(registration.removeEventListener).toHaveBeenCalledWith(
+      "updatefound",
+      expect.any(Function),
+    );
     expect(worker.removeEventListener).toHaveBeenCalledWith("statechange", expect.any(Function));
   });
 

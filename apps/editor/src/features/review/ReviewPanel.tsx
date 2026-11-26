@@ -55,9 +55,13 @@ export function ReviewPanel({
     : "同期するには、GitHubに接続してください。";
   const { instruction, followUps } = composerDraft;
   const [busy, setBusy] = useState(false);
-  useEffect(() => registerEditorUpdatePreparation(() => {
-    if (busy) throw Error("添削の同期が完了してから、アプリを更新してください。");
-  }), [busy]);
+  useEffect(
+    () =>
+      registerEditorUpdatePreparation(() => {
+        if (busy) throw Error("添削の同期が完了してから、アプリを更新してください。");
+      }),
+    [busy],
+  );
   const [showClosed, setShowClosed] = useState(false);
   const [notice, setNotice] = useState("");
   const { data, body } = parseDraft(draft.source);

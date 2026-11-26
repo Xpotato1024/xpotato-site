@@ -195,7 +195,11 @@ function renderNode(node: BlockNode, index: number, review: PreviewReview): Reac
     case "inlineCode":
       return <code key={index}>{renderText(node, index, review)}</code>;
     case "footnoteReference":
-      return <sup key={index} aria-label={"脚注 " + (node.label ?? node.identifier)}>[{node.label ?? node.identifier}]</sup>;
+      return (
+        <sup key={index} aria-label={"脚注 " + (node.label ?? node.identifier)}>
+          [{node.label ?? node.identifier}]
+        </sup>
+      );
     case "link":
       return (
         <a key={index} title={node.title ?? node.url}>

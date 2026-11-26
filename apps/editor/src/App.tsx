@@ -986,7 +986,9 @@ export default function App() {
         onCancel={(event) => event.preventDefault()}
       >
         <h2 id="editor-update-title">保存して更新しています</h2>
-        <p id="editor-update-description" role="status">原稿を保存してから、新しいアプリを開きます。</p>
+        <p id="editor-update-description" role="status">
+          原稿を保存してから、新しいアプリを開きます。
+        </p>
       </dialog>
     </div>
   );

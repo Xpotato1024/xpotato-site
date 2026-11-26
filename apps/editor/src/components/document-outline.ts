@@ -33,7 +33,11 @@ function excerpt(value: string): string {
 
 function describeNode(node: BlockNode, source: string, groupNumber: number) {
   if (node.type === "footnoteDefinition") {
-    return { kind: "footnote", title: excerpt(nodeText(node)) || "脚注", detail: "脚注 · " + (node.label ?? node.identifier ?? "") };
+    return {
+      kind: "footnote",
+      title: excerpt(nodeText(node)) || "脚注",
+      detail: "脚注 · " + (node.label ?? node.identifier ?? ""),
+    };
   }
   if (node.type === "mdxJsxFlowElement" && node.name && moduleNames.includes(node.name)) {
     const label = blockChoices.find((choice) => choice.kind === node.name)?.label ?? node.name;
