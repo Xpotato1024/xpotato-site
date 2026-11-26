@@ -249,7 +249,8 @@ try {
           headless: true,
           ...(executablePath ? { executablePath } : {}),
         });
-  const page = await browser.newPage({ viewport: { width: 390, height: 1600 }, locale: "ja-JP" });
+  const context = await browser.newContext({ viewport: { width: 390, height: 1600 }, locale: "ja-JP" });
+  const page = await context.newPage();
   page.setDefaultTimeout(15000);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -796,8 +797,9 @@ try {
     await otherTab.close();
   }
 
-  const pendingOpen = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  const deletingTab = await pendingOpen.context().newPage();
+  const pendingContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const pendingOpen = await pendingContext.newPage();
+  const deletingTab = await pendingContext.newPage();
   let releaseDownload;
   let downloadTimeout;
   const downloadStarted = new Promise((started) => {
