@@ -381,7 +381,7 @@ export function useGitWorkspace(
           sourceBranch: opened.sourceBranch,
           workingBranch: opened.workingBranch,
         };
-        if (claimed.created && remote.draft.review)
+        if (opened.annotations === undefined && opened.reviewRevision === undefined && remote.draft.review)
           opened = {
             ...opened,
             annotations: validateReviewComments(
@@ -439,7 +439,7 @@ export function useGitWorkspace(
           ),
         };
       }
-      if (claimed.created && !latest.annotations && restored.annotations) {
+      if (latest.annotations === undefined && latest.reviewRevision === undefined && restored.annotations) {
         next = {
           ...next,
           annotations: restored.annotations,

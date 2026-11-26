@@ -206,6 +206,21 @@ describe("opening Git drafts into an explicit workspace", () => {
     expect(state.savedDrafts.size).toBe(1);
   });
 
+  it("recovers review that was never retrieved without replacing an existing local review", async () => {
+    const state = fixture();
+    const snapshot = { branch: "content/source", commit: "a".repeat(40) };
+    mocks.find.mockResolvedValueOnce(null).mockResolvedValue(state.remote);
+    await state.git.openDocument(state.initial.path, snapshot, snapshot.branch, "drafts");
+    const id = state.workspace.current.current.id;
+    expect(state.workspace.current.current.annotations).toBeUndefined();
+    await state.git.openDocument(state.initial.path, snapshot, snapshot.branch, "drafts");
+    expect(state.workspace.current.current.id).toBe(id);
+    expect(state.workspace.current.current.annotations).toEqual(state.remote.draft.review!.comments);
+    state.workspace.current.current = { ...state.workspace.current.current, annotations: [] };
+    await state.git.openDocument(state.initial.path, snapshot, snapshot.branch, "drafts");
+    expect(state.workspace.current.current.annotations).toEqual([]);
+  });
+
   it("updates an unchanged local source from Git while keeping its ID", async () => {
     const state = fixture();
     const local = { ...state.initial, source: state.source, sourceBranch: "content/source", workingBranch: "content/source", baseSource: state.source, baseCommit: "b".repeat(40) };
