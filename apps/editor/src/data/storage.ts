@@ -7,6 +7,7 @@ import {
   encodeStoredMedia,
   mergeRestoredMedia,
   assertMediaRestoreDraft,
+  assertMediaCopySource,
   isBlobStorageError,
   MediaBlobWriteAborted,
   mediaWithoutCompatibilityBlob,
@@ -510,68 +511,71 @@ export function cloneLocalDraftForBranch(
       const media = await localMedia(original.id);
       const prepared = await Promise.all(media.map(encodeStoredMedia));
       const copied = createLocalDraftBranchCopy(original, target, prepared);
-      const sources = new Map(
-        prepared.map((image, index) => [image.id, { image, copy: copied.media[index]! }]),
-      );
+      const sources = new Map(prepared.map((image, index) => [
+        image.id,
+        { image, copy: copied.media[index]! },
+      ]));
       return withMediaBlobFallback(async (includeBlob) => {
-        const db = await database();
-        return new Promise<LocalDraft>((resolve, reject) => {
-          let tx: IDBTransaction;
+      const db = await database();
+      return new Promise<LocalDraft>((resolve, reject) => {
+        let tx: IDBTransaction;
+        try {
+          tx = db.transaction(["drafts", "media"], "readwrite");
+        } catch (error) {
+          db.close();
+          reject(error);
+          return;
+        }
+        let failure: unknown;
+        let writeFailure: unknown;
+        tx.oncomplete = () => {
+          db.close();
+          resolve(copied.draft);
+        };
+        tx.onabort = () => {
+          db.close();
+          const cause = failure ?? writeFailure ?? tx.error ?? Error("LOCAL_SAVE_FAILED");
+          reject(includeBlob && isBlobStorageError(cause) ? new MediaBlobWriteAborted(cause) : cause);
+        };
+        const images = tx.objectStore("media");
+        const parent = tx.objectStore("drafts").get(original.id);
+        parent.onsuccess = () => {
+        try {
+          assertMediaCopySource(original, parent.result as LocalDraft | undefined);
+        const read = images.index("draftId").getAll(original.id);
+        read.onsuccess = () => {
           try {
-            tx = db.transaction(["drafts", "media"], "readwrite");
-          } catch (error) {
-            db.close();
-            reject(error);
-            return;
-          }
-          let failure: unknown;
-          let writeFailure: unknown;
-          tx.oncomplete = () => {
-            db.close();
-            resolve(copied.draft);
-          };
-          tx.onabort = () => {
-            db.close();
-            const cause = failure ?? writeFailure ?? tx.error ?? Error("LOCAL_SAVE_FAILED");
-            reject(
-              includeBlob && isBlobStorageError(cause) ? new MediaBlobWriteAborted(cause) : cause,
-            );
-          };
-          const images = tx.objectStore("media");
-          const read = images.index("draftId").getAll(original.id);
-          read.onsuccess = () => {
-            try {
-              const current = read.result as (StoredMedia | LocalMedia)[];
-              if (current.length !== sources.size) throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
-              tx.objectStore("drafts").add(copied.draft);
-              for (const item of current) {
-                const source = sources.get(item.id);
-                if (
-                  !source ||
-                  source.image.assetId !== item.assetId ||
-                  source.image.sourceSha256 !== item.sourceSha256
-                )
-                  throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
-                const merged = mergeRestoredMedia(source.image, item, source.image);
-                const { remoteId: _remoteId, ...local } = merged;
-                const image = {
-                  ...local,
-                  id: source.copy.id,
-                  draftId: copied.draft.id,
-                };
-                const write = images.add(
-                  includeBlob ? image : mediaWithoutCompatibilityBlob(image),
-                );
-                write.onerror = () => {
-                  writeFailure ??= write.error;
-                };
-              }
-            } catch (error) {
-              failure = error;
-              tx.abort();
+            const current = read.result as (StoredMedia | LocalMedia)[];
+            if (current.length !== sources.size) throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
+            tx.objectStore("drafts").add(copied.draft);
+            for (const item of current) {
+              const source = sources.get(item.id);
+              if (
+                !source ||
+                source.image.assetId !== item.assetId ||
+                source.image.sourceSha256 !== item.sourceSha256
+              ) throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
+              const merged = mergeRestoredMedia(source.image, item, source.image);
+              const { remoteId: _remoteId, ...local } = merged;
+              const image = {
+                ...local,
+                id: source.copy.id,
+                draftId: copied.draft.id,
+              };
+              const write = images.add(includeBlob ? image : mediaWithoutCompatibilityBlob(image));
+              write.onerror = () => { writeFailure ??= write.error; };
             }
-          };
-        });
+          } catch (error) {
+            failure = error;
+            tx.abort();
+          }
+        };
+        } catch (error) {
+          failure = error;
+          tx.abort();
+        }
+        };
+      });
       });
     });
   saveQueue = next;

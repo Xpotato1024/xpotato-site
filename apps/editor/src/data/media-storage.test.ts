@@ -1,9 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   assertMediaRestoreDraft,
+  assertMediaCopySource,
   decodeStoredMedia,
   encodeStoredMedia,
   mergeRestoredMedia,
+  isBlobStorageError,
+  MediaBlobWriteAborted,
+  mediaWithoutCompatibilityBlob,
+  withMediaBlobFallback,
 } from "./media-storage.js";
 import { createDraftForCollection, updateDraft } from "@xpotato/editor-core/draft";
 import type { LocalDraft, LocalMedia } from "./storage.js";
@@ -57,6 +62,29 @@ describe("durable local media bytes", () => {
     expect({ ...restored, blob: undefined }).toEqual({ ...media, blob: undefined });
   });
 
+  it("reads exact bytes and MIME when the browser could not persist the compatibility Blob", async () => {
+    const media = image();
+    const stored = await encodeStoredMedia(media);
+    const bytesOnly = mediaWithoutCompatibilityBlob(stored);
+    expect(bytesOnly).not.toHaveProperty("blob");
+    expect(stored.blob).toBeInstanceOf(Blob);
+    const restored = await decodeStoredMedia(structuredClone(bytesOnly));
+    expect(restored.blob.type).toBe(media.blob.type);
+    expect(await restored.blob.arrayBuffer()).toEqual(await media.blob.arrayBuffer());
+    expect(restored.id).toBe(media.id);
+    expect(restored.remoteId).toBe(media.remoteId);
+    expect(restored).not.toHaveProperty("blobBytes");
+  });
+
+  it("keeps damaged byte-only cache metadata readable for remote repair", async () => {
+    const stored = mediaWithoutCompatibilityBlob(await encodeStoredMedia(image()));
+    const restored = await decodeStoredMedia({ ...stored, blobSha256: "c".repeat(64) });
+    expect(restored.id).toBe(stored.id);
+    expect(restored.sha256).toBe(stored.sha256);
+    expect(restored.blob).toBeInstanceOf(Blob);
+    expect(restored.blob.size).toBe(0);
+  });
+
   it("reads an older tab's changed Blob when its preserved byte copy belongs to the previous hash", async () => {
     const stored = await encodeStoredMedia(image());
     const edited = {
@@ -82,6 +110,64 @@ describe("durable local media bytes", () => {
     expect(restored[0]).toEqual(broken);
     expect(await restored[1]!.blob.arrayBuffer()).toEqual(await intact.blob.arrayBuffer());
     await expect(encodeStoredMedia(broken)).rejects.toThrow("backing file");
+  });
+});
+
+describe("retrying an aborted Blob storage write", () => {
+  const blobFailure = () => new DOMException(
+    "Error preparing Blob/File data to be stored in object store",
+    "UnknownError",
+  );
+
+  it("recognizes Blob-specific engine failures without treating quota or generic clone failures as unsupported Blobs", () => {
+    expect(isBlobStorageError(blobFailure())).toBe(true);
+    expect(isBlobStorageError(new DOMException("Blob could not be cloned", "DataCloneError"))).toBe(true);
+    for (const error of [
+      new DOMException("Blob exceeds storage quota", "QuotaExceededError"),
+      new DOMException("Value could not be cloned", "DataCloneError"),
+      new DOMException("Unknown database failure", "UnknownError"),
+      new DOMException("Blob transaction aborted", "AbortError"),
+      Error("DRAFT_MEDIA_LOCAL_CONFLICT"),
+    ]) expect(isBlobStorageError(error)).toBe(false);
+  });
+
+  it("keeps the same identity and bytes and waits for confirmed abort before retrying once", async () => {
+    const stored = await encodeStoredMedia(image());
+    const attempts: boolean[] = [];
+    let aborted: (reason: unknown) => void = () => {};
+    const result = withMediaBlobFallback(async (includeBlob) => {
+      attempts.push(includeBlob);
+      if (includeBlob) return new Promise<typeof stored>((_resolve, reject) => { aborted = reject; });
+      return mediaWithoutCompatibilityBlob(stored);
+    });
+    await Promise.resolve();
+    expect(attempts).toEqual([true]);
+    aborted(new MediaBlobWriteAborted(blobFailure()));
+    const saved = await result;
+    expect(attempts).toEqual([true, false]);
+    expect(saved.id).toBe(stored.id);
+    expect(saved.draftId).toBe(stored.draftId);
+    expect(saved.blobBytes).toEqual(stored.blobBytes);
+    expect(saved.blobType).toBe(stored.blobType);
+    expect(saved).not.toHaveProperty("blob");
+  });
+
+  it("does not retry a Blob error before abort is confirmed or a business conflict", async () => {
+    for (const error of [blobFailure(), Error("DRAFT_MEDIA_LOCAL_CONFLICT")]) {
+      const write = vi.fn(async () => { throw error; });
+      await expect(withMediaBlobFallback(write)).rejects.toBe(error);
+      expect(write).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it("stops when the bytes-only attempt fails, including a new destination conflict", async () => {
+    const conflict = Error("DRAFT_MEDIA_LOCAL_CONFLICT");
+    const write = vi.fn(async (includeBlob: boolean) => {
+      if (includeBlob) throw new MediaBlobWriteAborted(blobFailure());
+      throw conflict;
+    });
+    await expect(withMediaBlobFallback(write)).rejects.toBe(conflict);
+    expect(write.mock.calls).toEqual([[true], [false]]);
   });
 });
 
@@ -125,6 +211,19 @@ describe("restoring one asset into a local draft", () => {
     ).not.toThrow();
   });
 
+  it("requires a copy source to still exist with the same identity and archive state even without images", () => {
+    expect(() => assertMediaCopySource(draft, undefined)).toThrow("DRAFT_MEDIA_LOCAL_CONFLICT");
+    expect(() => assertMediaCopySource(draft, { ...draft, archived: true })).toThrow(
+      "DRAFT_MEDIA_LOCAL_CONFLICT",
+    );
+    expect(() => assertMediaCopySource(draft, { ...draft, workingBranch: "content/changed" })).toThrow(
+      "DRAFT_MEDIA_LOCAL_CONFLICT",
+    );
+    const archived = { ...draft, archived: true };
+    expect(() => assertMediaCopySource(archived, archived)).not.toThrow();
+    expect(() => assertMediaCopySource(archived, draft)).toThrow("DRAFT_MEDIA_LOCAL_CONFLICT");
+  });
+
   it("preserves notes edited while the image download was in flight", async () => {
     const previous = image();
     const {
@@ -160,6 +259,15 @@ describe("restoring one asset into a local draft", () => {
     const first = mergeRestoredMedia(incoming, undefined, undefined);
     const second = mergeRestoredMedia({ ...incoming, id: "second-download" }, first, undefined);
     expect(second.id).toBe(first.id);
+  });
+
+  it("does not reintroduce a failed compatibility Blob while preserving current image notes", async () => {
+    const current = await encodeStoredMedia(image());
+    const incoming = mediaWithoutCompatibilityBlob(current);
+    const saved = mergeRestoredMedia(incoming, { ...current, caption: "取得中の編集" }, current);
+    expect(saved).not.toHaveProperty("blob");
+    expect(saved.caption).toBe("取得中の編集");
+    expect(await (await decodeStoredMedia(saved)).blob.arrayBuffer()).toEqual(current.blobBytes);
   });
 
   it("refuses to overwrite a newly changed local image or resurrect a deleted one", async () => {

@@ -53,6 +53,15 @@ export function assertMediaRestoreDraft(expected: LocalDraft, current: LocalDraf
   }
 }
 
+export function assertMediaCopySource(expected: LocalDraft, current: LocalDraft | undefined) {
+  if (!current || Boolean(current.archived) !== Boolean(expected.archived)) {
+    throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
+  }
+  // An explicit copy may start in the archive. Changing its archive state during the
+  // operation is a conflict; an unchanged archive flag does not change article identity.
+  assertMediaRestoreDraft(expected, { ...current, archived: false });
+}
+
 export async function encodeStoredMedia(media: LocalMedia): Promise<StoredMedia> {
   const { blob, ...metadata } = media;
   const bytes = await blob.arrayBuffer();
