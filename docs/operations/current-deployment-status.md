@@ -21,7 +21,34 @@ canonical_for:
 
 providerのexact counterpartと未成立条件は[Infrastructure Handoff](../architecture/infrastructure-handoff.md)、artifactのproducer/consumerは[Build Artifact Pipeline](build-artifact-pipeline.md)、権限の分担は[Deployment Boundary](deployment-boundary.md)を参照します。provider mutation、実記事公開、media永続化、旧44記事のhold解除、cutoverをこの文書やPRで認可しません。
 
-## 2026-11-26 CMSの下書き引継ぎ修正を本番へ反映
+## 2026-11-26 Draft画像CLIの本番反映と実画像登録
+
+[PR #250](https://github.com/Xpotato1024/xpotato-site/pull/250)をmain `a45f3594a5975cf63c46f6f1eb367d1fbccfca5d`（tree `d35d7260b660653bfaf3f84573b47f6e4a75bb8e`）へ統合し、所有者の明示認可に基づいて編集APIを配備した。[PR CI 45731946954](https://github.com/Xpotato1024/xpotato-site/actions/runs/45731946954)、対象213試験・後続31試験、型検査・整形検査が成功した。独立レビューはP0/P1が0件で、既存の放置された媒体予約の復旧制約1件をP2としてPR本文に残している。
+
+### APIの配備と読み戻し
+
+固定Node 24.22.1 / npm 11.19.0 / Wrangler 4.151.3と[固定CMS Server counterpart](../architecture/infrastructure-handoff.md#cms接続の固定counterpart) `f37b677309de13597b442bb3a06d4e38da06b48f`を使い、既存Cloudflare認証で正式な `editor:connect check` → `connect` → `verify` を実行した。`connect`は1回、`connect` / `verify`はともに終了コード0だった。
+
+providerの読み戻しでactive deployment `9bfd1494-9782-4d4e-b165-33b58d327d59`、version `713e0abe-a42e-446d-ad31-f6e64ef8ee1d`（version 7、traffic 100%、作成時刻 `2026-11-26T01:04:44.610997Z`）を確認した。既存の非公開Draft bucket・binding・route・5 secrets、公開Siteのbindings 0、GC false、workers.dev / preview URLs falseを維持した。新CLI入口の無認証応答は401 / `CLI_AUTH_REQUIRED`、既存の `/editor/` はAccessの302、`/editor-api/session` は200で接続設定済みだった。
+
+静的CMSシェルを含むSiteは、下記PR #247/#248の配信済みsource `536691b39c071fbd9f4d57dfcbe36d6655b28b40`を継続し、このAPI更新に伴う静的Siteの再配備は行っていない。
+
+### 非公開Draftの4図
+
+統合済みCLIをUbuntu 24.04で実行し、既存GitHub CLIの所有者認証でXpotato Site下書きの4図を実Draftへ登録した。新しいログインや資格情報の発行は行っていない。登録receiptは `2026-11-26T01:06:16.120Z`、終了コード0、`registered=4 / reused=0 / verified=true`。Draft ID `1069b528-7eb2-4c2e-b644-9e905bd8d050`、revision 5へ保存された。
+
+対象はContentId `325e1e0e-acd3-469f-a27d-476cf84b48fc`、ブランチ `content/xpotato-site-product-20261126`、head `5efb70af61c2e3b07a1a46dd12586c4e8d19549f`の `content/projects/xpotato-site.mdx`。原稿のSHA-256は `0cd8db75a5a94cc5692142ae3d7bf13a37131d53360b97a1755f987a0e6b9a98` である。
+
+| 図 | bytes | SHA-256 |
+| --- | ---: | --- |
+| architecture-editor | 40,606 | `143a2213fe8a6181294e660c2130076f9572d04ff777a6b907e82ce87dbb7b9c` |
+| architecture-delivery | 50,014 | `b8321e1852a5a46f63e2cfa493a1f75bf91aea8c9e72d884d4836a3757dc3f93` |
+| authoring-flow | 56,952 | `4f630e1aa7301570a02a31137355430ef38574a0de4ac01956b28c1889e52083` |
+| media-lifecycle | 56,018 | `21f41bfe7ab42c1cd965af81c1e1d44fe4c3a359aad7da1f1b2fa36bc3365b3a` |
+
+登録時の実bytes照合に加え、別プロセスの `--verify-only` が `2026-11-26T01:07:04.544Z` に終了コード0、`registered=0 / reused=4 / verified=true` で完了した。同じ原稿・head・Draft ID・revisionと4図のremote ID・サイズ・SHA-256を再照合した。これは実R2からの読み戻しであり、認証後のCMS画面・AstroレビューやiPhoneでの画像表示は未観測である。同じGitブランチから開き直すか、そのブランチの画像を復元する手順は[CMS制作手順](editor-workflow.md)を参照する。[記事PR #246](https://github.com/Xpotato1024/xpotato-site/pull/246)はDraft・未公開のままで、公開用A/B/Cへの保存や記事公開は行っていない。
+
+## 2026-11-26 CMSの下書き引継ぎ修正を本番へ反映（PR #247/#248の記録）
 
 [PR #247](https://github.com/Xpotato1024/xpotato-site/pull/247)のブランチ固定・私有画像の一括登録と、[PR #248](https://github.com/Xpotato1024/xpotato-site/pull/248)の保存済みGit下書きからのAstroレビュー取得を、所有者の明示認可に基づいて配備した。
 
@@ -39,7 +66,7 @@ APIは統合済みsource `7d73c0426c3497219cfd70ed3437085487f8009b`と、[固定
 
 ### CMS内の実操作との区別
 
-この記録はコードの本番配備・provider/readbackの結果である。所有者CMSログインは未完了のため、今回のXpotato Site下書きの4図について、実Draft登録・新しい端末内下書きへの復元・認証後のAstro実表示は未実施。原稿と登録ファイルの準備、合成試験の成功をその実操作の完了とは扱わない。下書きの引継ぎと非公開Draftの常時R/W認可は[CMS制作手順](editor-workflow.md)に従う。
+このPR #247/#248の配備時点では、所有者CMSログイン、Xpotato Site下書きの4図の実Draft登録、新しい端末内下書きへの復元、認証後のAstro実表示は未実施だった。実Draft登録と別プロセスからの実bytes再取得は、上記PR #250のCLIによる実施記録で更新された。認証後の画面表示・端末への復元の未観測状態は維持し、下書きの引継ぎと非公開Draftの常時R/W認可は[CMS制作手順](editor-workflow.md)に従う。
 
 ## 記録済みの実施状態
 

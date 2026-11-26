@@ -90,6 +90,8 @@ CLIは`origin/content/*`の取得済みrefを優先し、なければ同名の�
 
 実行端末の既存GitHub CLI認証を使用する。認証済みならCMSをブラウザーで開く必要はなく、毎回のログインや新しいtokenの作成を要求しない。`gh auth status --hostname github.com`で状態を確認できる。CLIは認証profileやscopeを自動変更しない。
 
+認証は実行環境ごとに確認する。同じ端末でもWindowsと各WSL distributionの状態は別である。2026-11-26には、LLM-01の`Ubuntu-24.04`で実登録に使える既存の所有者認証を確認した。あるshellが未認証という理由だけで新しい認証を要求せず、接続済み環境を選ぶ。実施結果は[現行配信状態](current-deployment-status.md)へ記録する。
+
 ```sh
 npm run editor:media:register -- --input .local/draft-media-handoff.json --receipt .local/draft-media-receipt.json
 npm run editor:media:register -- --input .local/draft-media-handoff.json --verify-only
