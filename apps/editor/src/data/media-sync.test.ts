@@ -23,7 +23,7 @@ vi.mock("./api.js", () => ({
 }));
 vi.mock("./storage.js", () => ({
   localMedia: mocks.media,
-  saveLocalMedia: mocks.saveMedia,
+  saveRestoredMedia: mocks.saveMedia,
 }));
 
 const contentId = "11111111-1111-4111-8111-111111111111";
@@ -188,6 +188,82 @@ describe("referenced draft media", () => {
       remoteId: "media-id",
     });
     expect(new Uint8Array(await media[0]!.blob.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
+    mocks.fetchMedia.mockClear();
+    mocks.saveMedia.mockClear();
+    expect((await restoreMediaSnapshot(local, remote)).missing).toEqual([]);
+    expect(mocks.fetchMedia).not.toHaveBeenCalled();
+    expect(mocks.saveMedia).not.toHaveBeenCalled();
+
+    const cached = media[0]!;
+    const corrupted = { ...cached, blob: new Blob(["bad"], { type: "image/png" }) };
+    media[0] = corrupted;
+    expect((await restoreMediaSnapshot(local, remote)).missing).toEqual([]);
+    expect(mocks.fetchMedia).toHaveBeenCalledWith("media-id");
+    expect(mocks.saveMedia.mock.calls[0]![1]).toBe(corrupted);
+    expect(new Uint8Array(await media[0]!.blob.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
+  });
+
+  it("repairs an unreadable legacy cache even when its hash metadata and remote ID still match", async () => {
+    const local = localDraft();
+    local.source = updateDraft(local.source, {}, '\n<Figure asset="diagram" alt="図" />\n');
+    const remote = snapshot(local);
+    const blob = new Blob(["verified remote bytes"], { type: "image/webp" });
+    const sha = await hashBlob(blob);
+    remote.draft.assets.diagram = "media-id";
+    remote.assets = [{
+      id: "media-id",
+      draftId: remote.draft.id,
+      assetId: "diagram",
+      sha256: sha,
+      sourceSha256: sha,
+      bytes: blob.size,
+      sourceBytes: blob.size,
+      mime: blob.type,
+      kind: "technical",
+      createdAt: remote.draft.lastEditedAt,
+      status: "staged",
+      transform: "identity-v1",
+      sourceRetained: true,
+      width: 1,
+      height: 1,
+      frames: 1,
+      durationMs: 0,
+    }];
+    const broken = new Blob(["verified remote bytes"], { type: "image/webp" });
+    Object.defineProperty(broken, "arrayBuffer", {
+      value: async () => { throw new DOMException("Unavailable", "NotReadableError"); },
+    });
+    const cached: LocalMedia = {
+      id: "cached-image",
+      draftId: local.id,
+      assetId: "diagram",
+      blob: broken,
+      originalBytes: blob.size,
+      sourceSha256: sha,
+      sha256: sha,
+      kind: "technical",
+      transform: "identity-v1",
+      createdAt: remote.draft.lastEditedAt,
+      remoteId: "media-id",
+      originalName: "diagram.webp",
+      sourceRetained: true,
+      alt: "端末内の説明",
+      caption: "端末内の注記",
+    };
+    media.push(cached);
+    mocks.fetchMedia.mockResolvedValue(blob);
+    expect((await restoreMediaSnapshot(local, remote)).missing).toEqual([]);
+    expect(mocks.fetchMedia).toHaveBeenCalledWith("media-id");
+    expect(mocks.saveMedia.mock.calls[0]![1]).toBe(cached);
+    expect(await media[0]!.blob.text()).toBe("verified remote bytes");
+    expect(media[0]!.id).toBe(cached.id);
+    mocks.fetchMedia.mockClear();
+    media[0] = { ...cached, blob: new Blob(["unsubmitted edit"]), sha256: "d".repeat(64) };
+    delete media[0]!.remoteId;
+    expect((await restoreMediaSnapshot(local, remote)).missing).toContain(
+      "diagram（端末内の変更と競合）",
+    );
+    expect(mocks.fetchMedia).not.toHaveBeenCalled();
   });
 
   it("does not fetch an asset belonging to a different remote draft", async () => {

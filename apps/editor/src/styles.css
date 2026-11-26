@@ -717,6 +717,14 @@ h3 {
   border-bottom: 1px solid var(--border-divider);
   padding: 1rem 0;
 }
+.cms-image-error {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px dashed var(--border-control);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
 .media-card img {
   width: 100%;
   max-height: 180px;

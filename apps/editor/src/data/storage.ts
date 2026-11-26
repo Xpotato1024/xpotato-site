@@ -2,6 +2,13 @@ import type { TaxonomySnapshot } from "@xpotato/editor-core/draft";
 import type { ReviewComment } from "@xpotato/editor-core/annotations";
 import type { EditorRegistryChanges } from "@xpotato/editor-core/registry";
 import { localDraftIdentity, matchingLocalDrafts } from "./draft-identity.js";
+import {
+  decodeStoredMedia,
+  encodeStoredMedia,
+  mergeRestoredMedia,
+  type MediaVersion,
+  type StoredMedia,
+} from "./media-storage.js";
 
 export interface LocalDraft {
   id: string;
@@ -274,10 +281,48 @@ export function deleteLocalDraft(id: string): Promise<void> {
     });
   });
 }
-export const saveLocalMedia = (media: LocalMedia) =>
-  transact("media", "readwrite", (s) => s.put(media));
-export const localMedia = (draftId: string) =>
-  transact<LocalMedia[]>("media", "readonly", (s) => s.index("draftId").getAll(draftId));
+export async function saveLocalMedia(media: LocalMedia) {
+  const stored = await encodeStoredMedia(media);
+  return transact("media", "readwrite", (s) => s.put(stored));
+}
+export async function localMedia(draftId: string): Promise<LocalMedia[]> {
+  const records = await transact<(StoredMedia | LocalMedia)[]>("media", "readonly", (s) =>
+    s.index("draftId").getAll(draftId),
+  );
+  return Promise.all(records.map(decodeStoredMedia));
+}
+
+/** Preserve edits made during a download and let concurrent restores share one media record. */
+export async function saveRestoredMedia(media: LocalMedia, expected?: MediaVersion) {
+  const incoming = await encodeStoredMedia(media);
+  const db = await database();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction("media", "readwrite");
+    const store = tx.objectStore("media");
+    const request = store.index("draftId").getAll(media.draftId);
+    let failure: unknown;
+    request.onsuccess = () => {
+      try {
+        const matches = (request.result as (StoredMedia | LocalMedia)[]).filter(
+          (item) => item.assetId === media.assetId,
+        );
+        if (matches.length > 1) throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
+        store.put(mergeRestoredMedia(incoming, matches[0], expected));
+      } catch (error) {
+        failure = error;
+        tx.abort();
+      }
+    };
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    tx.onabort = tx.onerror = () => {
+      db.close();
+      reject(failure ?? tx.error ?? Error("LOCAL_SAVE_FAILED"));
+    };
+  });
+}
 export const deleteLocalMedia = (id: string) => transact("media", "readwrite", (s) => s.delete(id));
 export async function storageEstimate() {
   return navigator.storage?.estimate ? await navigator.storage.estimate() : {};

@@ -17,6 +17,7 @@ import {
 } from "../data/storage.js";
 import { request } from "../data/api.js";
 import { MediaHandoffPanel } from "./MediaHandoffPanel.js";
+import { MediaImage } from "./MediaImage.js";
 import { registerEditorUpdatePreparation } from "../pwa.js";
 interface Props {
   draft: LocalDraft;
@@ -38,7 +39,7 @@ function Thumbnail({ media }: { media: LocalMedia }) {
     setUrl(value);
     return () => URL.revokeObjectURL(value);
   }, [media.blob]);
-  return <img src={url} alt={media.assetId} loading="lazy" />;
+  return <MediaImage src={url} alt={media.assetId} loading="lazy" />;
 }
 export function MediaPanel({
   draft,
@@ -299,7 +300,7 @@ export function MediaPanel({
       </div>
       <p className="muted">画像は先に端末内で処理します。同期先は非公開の下書き領域です。</p>
       <button type="button" disabled={!canSync || busy} onClick={() => void restoreRemote()}>
-        別の端末で同期した画像を取得
+        同期済みの画像を取得・修復
       </button>
       {authenticated && !canSync && <p className="muted small">{syncUnavailableMessage}</p>}
       <MediaHandoffPanel
