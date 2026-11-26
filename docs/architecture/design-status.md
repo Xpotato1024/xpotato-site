@@ -40,7 +40,7 @@ last_verified: 2026-11-19
 2026-11-26の追加実装は[ADR-0094](../design/adr/0094-owner-cli-draft-media.md)のDraft画像登録CLIである。既存GitHub CLIの所有者認証を再利用し、媒体専用APIからCMSと同じDraft storeへ登録・再取得する。ブラウザーのApp認証・Cookie・CSRFと公開媒体の境界は維持する。コード・CI・本番API反映・実画像登録の状態は対応PRと[現行配信状態](../operations/current-deployment-status.md)で区別する。
 
 - 既存公開サイトの配信状況は[現行配信状態](../operations/current-deployment-status.md)だけを参照します。本整理は本番デプロイではありません。
-- CMSのGitHub App owner installation、secret、Draft専用R2/Worker route、実iPhone、実課金・Free枠CPUの受入れは未完了です。Issue #220で追跡します。GCは接続・保持/復元の受入れまで無効です。
+- CMSの接続資源・APIとDraft媒体の実保存状況は[現行配信状態](../operations/current-deployment-status.md)を参照します。GitHub Appでの本人ログイン、実iPhone、実課金・Free枠CPUの受入れは別に確認し、Issue #220で追跡します。GCは保持・復元の受入れまで無効です。
 - 公開用A/B/CとDraftの権限を分離します。記事の正式export・媒体公開・本番配信は既存のowner/main/manual/Environmentとreadbackを維持します。
 - 公開サイトのツール表示をShadow DOMで隔離する変更はIssue #218へ延期しています。CMSのSourceEditor内にあるopen ShadowRootはCodeMirrorのテーマをCSPに沿って適用するための局所的な実装であり、Issue #218の対応を意味しません。人気記事・privateプレスサイトの実装も本変更に含みません。
 

@@ -1,12 +1,20 @@
 ---
 status: canonical
 owner: development
-last_verified: 2026-11-20
+last_verified: 2026-11-26
 ---
 
 # CMS基盤実装の状態
 
-この文書はPR #217/#219でmainへ採用済みのCMS基盤、現在の機能ブランチで追加した編集画面、未完了の実環境接続を区別する。既存サイトの本番配信、GitHub App登録、R2 resource作成、認証API activation、記事の公開を実施した記録ではない。
+この文書はCMSの実装、各時点の検証、実環境での受入れを区別する。現行の配備version・接続資源・Draft媒体の実保存状況は[現行配信状態](../operations/current-deployment-status.md)を正本とし、以下の過去の未接続記録を現在の状態へ適用しない。
+
+## 2026-11-26 Draft画像CLIの採用と実保存
+
+[PR #250](https://github.com/Xpotato1024/xpotato-site/pull/250)はmain `a45f3594a5975cf63c46f6f1eb367d1fbccfca5d`へ統合済み。既存GitHub CLIの所有者認証を使うDraft画像専用CLI/APIを追加し、CMSと同じDraft storeへ登録・再取得する。ブラウザーのApp認証・Cookie・CSRF、原稿の同一性・revision・競合、公開用A/B/Cとの分離を維持する。判断の記録は[ADR-0094](../design/adr/0094-owner-cli-draft-media.md)、操作は[CMS制作手順](../operations/editor-workflow.md)を参照する。
+
+編集APIの本番更新と、Xpotato Site下書きの4図の実Draft登録・別プロセスによる実bytes再取得が完了した。対象原稿・画像hash・Draft revision・API version・検証結果は[実施記録](../operations/current-deployment-status.md#2026-11-26-draft画像cliの本番反映と実画像登録)へ集約する。記事PR #246はDraft・未公開であり、今回の保存は記事公開や公開用A/B/Cへの媒体保存ではない。
+
+認証後のCMS画面・Astroレビュー・iPhoneでの画像表示は今回未観測。実R2の読み戻しを画面操作の受入れへ転用せず、GCは保持・復元の受入れまで無効とする。以下の日付付き実装・試験記録は、それぞれの対象revisionと当時の範囲を示す。
 
 ## 2026-11-18 編集画面・連載の実装
 
@@ -105,9 +113,9 @@ CodeMirrorはCMS内の編集テーマをCSPに沿って適用するためopen Sh
 
 PR #217/#219のCMS基盤はmainへ採用済みであり、実環境の有効化はIssue #220で追跡する。冒頭の新しい編集画面・連載機能は機能ブランチの実装として区別する。固定commitとCIの結果、残る設定依存、実操作の未検証箇所はPRへ記録する。Secretsや私有媒体をCI artifactへ含めない。
 
-## 外部環境に必要な準備
+## 外部接続の構成と受入れ
 
-GitHub Appのclient ID/secretと所有者限定installation、callback URL、署名付きpush webhook、およびCloudflareのDraft専用bucket/binding/API routeを実環境へ設定する必要がある。これらはGitに秘密値を置かず、専用のEnvironment/secret設定を利用する。
+接続はGitHub Appのclient ID/secretと所有者限定installation、callback URL、署名付きpush webhook、およびCloudflareのDraft専用bucket/binding/API routeで構成する。秘密値はGitに置かず、専用のEnvironment/secret設定を利用する。設定済み資源と実Draft保存の確認範囲は[現行配信状態](../operations/current-deployment-status.md)に従い、本人のブラウザーログインや端末での復元は別に確認する。
 
 所有者のGitHub user IDは公開プロフィールで確認した190472511。許可対象repoはXpotato1024/xpotato-site。無認証アクセス、未知repo、mainへの直接書込み、公開媒体バケットへの操作は拒否する。GCは認証・activity同期・保持/復元の実環境確認まで無効とする。
 
@@ -142,4 +150,4 @@ CMSのJavaScriptは専用の `/editor/` と `/editor/assets/` に限定する。
 
 初回設定を標準GitHub App ManifestとWranglerへ接続するCLI、App/所有者/対象repositoryの照合、認証後のGit/R2接続状態表示を追加。Serverがprovider値と限定readbackを所有する。操作方法は[接続手順](../operations/editor-connection.md)。
 
-初回接続の検証時点ではWrangler未認証、公開/editor/と/editor-api/sessionは404と観測した。この観測を新しい編集画面の実環境配信確認とは扱わない。実App登録・R2作成・公開Site配信は未実施。これらが完了するまでIssue #220を閉じない。
+2026-11-18の初回接続検証時点ではWrangler未認証、公開/editor/と/editor-api/sessionは404と観測し、実App登録・R2作成・公開Site配信は未実施だった。これは当時の記録であり、現在の配備・接続・実保存状況は冒頭の実施記録を参照する。Issue #220には本人のブラウザーログイン、実iPhoneなど残る受入れを区別して追跡する。
