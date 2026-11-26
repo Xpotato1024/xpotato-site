@@ -33,7 +33,10 @@ export function changedSourceRange(left: string, right: string) {
     endA--;
     endB--;
   }
-  return { line: start + 1, left: a.slice(start, endA).join("\n"), right: b.slice(start, endB).join("\n") };
+  const excerpt = (lines: string[]) => lines.length > 0 && lines.every((line) => line === "")
+    ? `（空行 ${lines.length}行）`
+    : lines.join("\n");
+  return { line: start + 1, left: excerpt(a.slice(start, endA)), right: excerpt(b.slice(start, endB)) };
 }
 
 function TextDifference({ label, left, right }: { label: string; left: string; right: string }) {

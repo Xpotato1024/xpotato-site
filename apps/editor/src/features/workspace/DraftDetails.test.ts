@@ -25,4 +25,8 @@ describe("distinguishing local drafts", () => {
   it("shows an insertion without pretending the unchanged neighboring line differs", () => {
     expect(changedSourceRange("先頭\n末尾", "先頭\n追記\n末尾")).toEqual({ line: 2, left: "", right: "追記" });
   });
+
+  it("distinguishes a trailing empty line from an absent range", () => {
+    expect(changedSourceRange("本文", "本文\n")).toEqual({ line: 2, left: "", right: "（空行 1行）" });
+  });
 });
