@@ -401,6 +401,10 @@ export function useGitWorkspace(
               parseDraft(opened.source).data.id,
             ),
             reviewRevision: remote.draft.review.revision,
+            syncedAnnotations: validateReviewComments(
+              remote.draft.review.comments,
+              parseDraft(opened.source).data.id,
+            ),
           };
         if (restored.missing.length) {
           mediaWarning =
@@ -423,6 +427,7 @@ export function useGitWorkspace(
         remoteDraftId: _remoteDraftId,
         remoteRevision: _remoteRevision,
         reviewRevision: _reviewRevision,
+        syncedAnnotations: _syncedAnnotations,
         syncedCommit: _syncedCommit,
         syncedSource: _syncedSource,
         ...local
@@ -462,6 +467,7 @@ export function useGitWorkspace(
         next = {
           ...next,
           annotations: restored.annotations,
+          ...(restored.syncedAnnotations ? { syncedAnnotations: restored.syncedAnnotations } : {}),
           ...(restored.reviewRevision !== undefined
             ? { reviewRevision: restored.reviewRevision }
             : {}),

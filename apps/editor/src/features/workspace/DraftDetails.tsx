@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { hasLocalSourceChanges, hasPendingRegistryChanges } from "../../data/draft-identity.js";
+import {
+  hasLocalSourceChanges,
+  hasPendingRegistryChanges,
+  hasUnsyncedReview,
+} from "../../data/draft-identity.js";
 import { localMedia, type LocalDraft, type LocalMedia } from "../../data/storage.js";
 import { hashBlob } from "../../media/optimize.js";
 
@@ -27,7 +31,7 @@ export function DraftSummary({ draft }: { draft: LocalDraft }) {
       </span>
       <span>
         {hasLocalSourceChanges(draft) ? "本文にGit未保存の変更" : "本文はGit取得時と同じ"}
-        {" · "}添削 {draft.annotations?.length ?? 0}件
+        {" · "}添削 {draft.annotations?.length ?? 0}件{hasUnsyncedReview(draft) ? "（未同期）" : ""}
         {hasPendingRegistryChanges(draft) ? " · 分類・連載に未保存の変更" : ""}
       </span>
     </>

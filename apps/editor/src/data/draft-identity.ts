@@ -49,6 +49,13 @@ export function hasPendingRegistryChanges(draft: LocalDraft): boolean {
   );
 }
 
+export function hasUnsyncedReview(draft: LocalDraft): boolean {
+  if (draft.annotations === undefined) return false;
+  if (draft.syncedAnnotations === undefined)
+    return draft.annotations.length > 0 || draft.reviewRevision !== undefined;
+  return JSON.stringify(draft.annotations) !== JSON.stringify(draft.syncedAnnotations);
+}
+
 export function hasLocalSourceChanges(draft: LocalDraft): boolean {
   const saved = draft.syncedSource ?? draft.baseSource;
   if (saved === undefined) return true;
