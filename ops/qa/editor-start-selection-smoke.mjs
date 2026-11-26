@@ -249,7 +249,10 @@ try {
           headless: true,
           ...(executablePath ? { executablePath } : {}),
         });
-  const context = await browser.newContext({ viewport: { width: 390, height: 1600 }, locale: "ja-JP" });
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 1600 },
+    locale: "ja-JP",
+  });
   const page = await context.newPage();
   page.setDefaultTimeout(15000);
   const errors = [];
