@@ -24,6 +24,7 @@ const draftBranch = "content/ai-product-review-20261126";
 const otherBranch = "content/unrelated-article";
 const documentRequests = [];
 const mediaRequests = [];
+let mediaDownloadGate;
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWOoCJj2HwAFAAJeoZPDtAAAAABJRU5ErkJggg==",
   "base64",
@@ -65,12 +66,18 @@ const sample = index.documents.map((item) => ({
   sha: "b".repeat(40),
   bytes: 300,
 }));
-const api = (req, res) => {
+const api = async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   const { pathname } = url;
   const branch = url.searchParams.get("branch") ?? "main";
   if (pathname === "/editor-api/media/" + imageId) {
     mediaRequests.push(pathname);
+    if (mediaDownloadGate) {
+      const gate = mediaDownloadGate;
+      mediaDownloadGate = undefined;
+      gate.started();
+      await gate.released;
+    }
     res.writeHead(200, {
       "Content-Type": mediaAsset.mime,
       "Content-Length": String(imageBytes.length),
@@ -721,6 +728,66 @@ try {
     assert.match(await readBody(otherTab), /AIが同じブランチへ書いた確認用の本文。/u);
   } finally {
     await otherTab.close();
+  }
+
+  const pendingOpen = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const deletingTab = await pendingOpen.context().newPage();
+  let releaseDownload;
+  let downloadTimeout;
+  const downloadStarted = new Promise((started) => {
+    mediaDownloadGate = {
+      started,
+      released: new Promise((resolve) => { releaseDownload = resolve; }),
+    };
+  });
+  try {
+    for (const tab of [pendingOpen, deletingTab]) {
+      tab.on("pageerror", (error) => errors.push(error.message));
+    }
+    await pendingOpen.goto(server.origin + "/editor/");
+    const pendingSelection = await selectGitArticle(pendingOpen);
+    await pendingSelection.getByRole("button", { name: "編集を始める", exact: true }).click();
+    try {
+      await Promise.race([
+        downloadStarted,
+        new Promise((_, reject) => {
+          downloadTimeout = setTimeout(() => reject(Error("MEDIA_DOWNLOAD_NOT_STARTED")), 15000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(downloadTimeout);
+    }
+    assert.equal((await articleDrafts(pendingOpen)).length, 1, "The in-flight open owns a claimed draft");
+    await deletingTab.goto(server.origin + "/editor/");
+    await deletingTab.getByRole("button", { name: "下書きの続き", exact: true }).click();
+    const claimedRow = deletingTab.locator(".draft-choice-local");
+    await claimedRow.waitFor();
+    assert.equal(await claimedRow.count(), 1);
+    deletingTab.once("dialog", (dialog) => dialog.accept());
+    await claimedRow.getByRole("button", { name: /削除/u }).click();
+    await deletingTab.getByRole("heading", { name: /この端末（0件）/u }).waitFor();
+    releaseDownload();
+    await pendingOpen.locator(".workspace-messages .message.error").filter({ hasText: /削除/u }).waitFor();
+    assert.deepEqual(await articleDrafts(pendingOpen), [], "A completed download cannot recreate a deleted draft");
+    const orphanMediaCount = await pendingOpen.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open("xpotato-editor-v1");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const count = await new Promise((resolve, reject) => {
+        const request = db.transaction("media", "readonly").objectStore("media").count();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return count;
+    });
+    assert.equal(orphanMediaCount, 0, "Deleting the claimed draft also prevents orphaned image writes");
+  } finally {
+    releaseDownload();
+    mediaDownloadGate = undefined;
+    await pendingOpen.context().close();
   }
 
   assert.deepEqual(errors, [], "No browser runtime errors");
