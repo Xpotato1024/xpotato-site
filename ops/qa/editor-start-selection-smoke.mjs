@@ -2,9 +2,17 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { readFile, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
+import { createHash } from "node:crypto";
 import { chromium } from "playwright";
 import { editorStaticServer } from "./editor-static-server.mjs";
-import { readBody } from "./editor-browser-helpers.mjs";
+import {
+  ensureEditing,
+  goHome,
+  readBody,
+  savedDraft,
+  showBlocks,
+  writeBody,
+} from "./editor-browser-helpers.mjs";
 
 const root = resolve(".");
 const [manifest, index, series] = await Promise.all([
@@ -15,6 +23,43 @@ const [manifest, index, series] = await Promise.all([
 const draftBranch = "content/ai-product-review-20261126";
 const otherBranch = "content/unrelated-article";
 const documentRequests = [];
+const mediaRequests = [];
+const imageBytes = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWOoCJj2HwAFAAJeoZPDtAAAAABJRU5ErkJggg==",
+  "base64",
+);
+const imageHash = createHash("sha256").update(imageBytes).digest("hex");
+const imageId = "44444444-4444-4444-8444-444444444444";
+const mediaDraft = {
+  id: "33333333-3333-4333-8333-333333333333",
+  contentId: index.documents[0].contentId,
+  branch: draftBranch,
+  commit: "a".repeat(40),
+  sourcePath: index.documents[0].path,
+  revision: 2,
+  lastEditedAt: "2026-11-26T00:00:00.000Z",
+  state: "active",
+  assets: { "restored-diagram": imageId },
+};
+const mediaAsset = {
+  id: imageId,
+  draftId: mediaDraft.id,
+  assetId: "restored-diagram",
+  sha256: imageHash,
+  sourceSha256: imageHash,
+  bytes: imageBytes.length,
+  sourceBytes: imageBytes.length,
+  mime: "image/png",
+  kind: "technical",
+  createdAt: mediaDraft.lastEditedAt,
+  status: "staged",
+  transform: "identity-v1",
+  sourceRetained: true,
+  width: 1,
+  height: 1,
+  frames: 1,
+  durationMs: 0,
+};
 const sample = index.documents.map((item) => ({
   path: item.path,
   sha: "b".repeat(40),
@@ -24,6 +69,19 @@ const api = (req, res) => {
   const url = new URL(req.url, "http://localhost");
   const { pathname } = url;
   const branch = url.searchParams.get("branch") ?? "main";
+  if (pathname === "/editor-api/media/" + imageId) {
+    mediaRequests.push(pathname);
+    res.writeHead(200, {
+      "Content-Type": mediaAsset.mime,
+      "Content-Length": String(imageBytes.length),
+      "Cache-Control": "private, no-store",
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; sandbox",
+      "Content-Disposition": "inline",
+    });
+    res.end(imageBytes);
+    return;
+  }
   if (pathname === "/editor-api/document") {
     const path = url.searchParams.get("path");
     const entry = index.documents.find((item) => item.path === path);
@@ -42,6 +100,9 @@ const api = (req, res) => {
         ? "AIが同じブランチへ書いた確認用の本文。"
         : "別ブランチの無関係な本文。",
       "",
+      ...(path === mediaDraft.sourcePath
+        ? ['<Figure asset="restored-diagram" alt="同期確認の画像" title="同期した図" />', ""]
+        : []),
     ].join("\n");
     res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
     res.end(JSON.stringify({ source, path, blobSha: "c".repeat(40) }));
@@ -64,8 +125,10 @@ const api = (req, res) => {
             : pathname === "/editor-api/documents"
               ? sample
               : pathname === "/editor-api/drafts"
-                ? []
-                : null;
+                ? [mediaDraft]
+                : pathname === "/editor-api/draft" && url.searchParams.get("id") === mediaDraft.id
+                  ? { draft: mediaDraft, assets: [mediaAsset] }
+                  : null;
   res.writeHead(payload ? 200 : 404, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
@@ -73,6 +136,71 @@ const api = (req, res) => {
   res.end(JSON.stringify(payload ?? { error: "NOT_FOUND" }));
 };
 const server = await editorStaticServer(root, api);
+async function articleDrafts(page, path = mediaDraft.sourcePath) {
+  return page.evaluate(async ({ path, branch }) => {
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("xpotato-editor-v1");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    try {
+      const drafts = await new Promise((resolve, reject) => {
+        const request = db.transaction("drafts", "readonly").objectStore("drafts").getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      return drafts.filter((draft) => draft.path === path && draft.workingBranch === branch);
+    } finally {
+      db.close();
+    }
+  }, { path, branch: draftBranch });
+}
+
+async function selectGitArticle(page, documentIndex = 0) {
+  await goHome(page);
+  await page.getByRole("button", { name: "下書きの続き", exact: true }).click();
+  await page.locator(".repository-panel").getByLabel("読み込み元").selectOption(draftBranch);
+  await page.getByRole("button", { name: "一覧を取得", exact: true }).click();
+  const row = page.locator(".repository-documents .draft-choice").nth(documentIndex);
+  await row.locator(":scope > button").click();
+  const selection = row.locator(".start-selection-inline");
+  await selection.waitFor();
+  return selection;
+}
+
+async function reopenGitArticle(page) {
+  const selection = await selectGitArticle(page);
+  await selection.getByRole("button", { name: "編集を始める", exact: true }).click();
+  await page.locator(".start-workspace").waitFor({ state: "hidden" });
+}
+
+async function assertImageDecoded(image, message) {
+  await image.waitFor({ state: "attached" });
+  const decoded = await image.evaluate(async (element) => {
+    await element.decode();
+    return {
+      complete: element.complete,
+      width: element.naturalWidth,
+      height: element.naturalHeight,
+      local: element.currentSrc.startsWith("blob:"),
+    };
+  });
+  assert.deepEqual(decoded, { complete: true, width: 1, height: 1, local: true }, message);
+}
+
+async function assertArticleImages(page, phase) {
+  await showBlocks(page);
+  await assertImageDecoded(
+    page.locator('.cms-module-figure img[alt="同期確認の画像"]'),
+    phase + ": block image decodes from its restored bytes",
+  );
+  await page.getByRole("tab", { name: "プレビュー", exact: true }).click();
+  await assertImageDecoded(
+    page.frameLocator(".cms-preview-frame").locator('img[alt="同期確認の画像"]'),
+    phase + ": scriptless preview image decodes under the production CSP",
+  );
+}
+
 let browser;
 try {
   const executablePath = [
@@ -405,10 +533,199 @@ try {
   assert.equal(documentRequests.length, 1);
   assert.equal(documentRequests[0].branch, draftBranch);
   assert.equal(documentRequests[0].commit, "a".repeat(40));
+  assert.equal(documentRequests[0].path, mediaDraft.sourcePath);
+  await assertArticleImages(page, "First Git open");
+  const initialDrafts = await articleDrafts(page);
+  assert.equal(initialDrafts.length, 1);
+  const initialDraft = initialDrafts[0];
+  assert.equal(mediaRequests.length, 1, "Opening Git fetches the private image bytes");
+
+  await page.reload();
+  await ensureEditing(page);
+  await assertArticleImages(page, "Reload from IndexedDB");
+  assert.equal((await articleDrafts(page))[0].id, initialDraft.id);
+  await reopenGitArticle(page);
+  await assertArticleImages(page, "Repeated Git open");
+  assert.deepEqual(
+    (await articleDrafts(page)).map((draft) => draft.id),
+    [initialDraft.id],
+    "Repeated Git open resumes the same local draft without creating another copy",
+  );
+  assert.equal(mediaRequests.length, 1, "Verified cached images are reused");
+
+  const editedBody = openedBody + "\n\n端末だけに保存した編集を保持します。";
+  const headerEnd = initialDraft.source.indexOf("\n---\n") + 5;
+  assert(headerEnd >= 5, "The synthetic source has a frontmatter closing delimiter");
+  const editedSource = initialDraft.source.slice(0, headerEnd) + editedBody;
+  await writeBody(page, editedBody);
+  await savedDraft(page, { source: editedSource });
+  await reopenGitArticle(page);
+  assert.match(await readBody(page), /端末だけに保存した編集を保持します。/u);
+  assert.deepEqual(
+    (await articleDrafts(page)).map((draft) => ({ id: draft.id, source: draft.source })),
+    [{ id: initialDraft.id, source: editedSource }],
+    "Git reopening preserves the exact unsynced local source and identity",
+  );
+
+  await page.evaluate(async ({ draftId, length }) => {
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("xpotato-editor-v1");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction("media", "readwrite");
+      const store = tx.objectStore("media");
+      const request = store.index("draftId").getAll(draftId);
+      request.onsuccess = () => {
+        if (request.result.length !== 1) {
+          tx.abort();
+          return;
+        }
+        const image = request.result[0];
+        const corrupt = new Uint8Array(length);
+        store.put({
+          ...image,
+          blobBytes: corrupt.buffer,
+          blob: new Blob([corrupt], { type: "image/png" }),
+          alt: "復元しても保持する説明",
+          caption: "復元しても保持する注記",
+        });
+      };
+      tx.oncomplete = resolve;
+      tx.onabort = tx.onerror = () => reject(tx.error ?? Error("CORRUPTION_FIXTURE_FAILED"));
+    });
+    db.close();
+  }, { draftId: initialDraft.id, length: imageBytes.length });
+  await page.reload();
+  await showBlocks(page);
+  await page.locator(".cms-module-figure .cms-image-error").waitFor();
+  assert.match(
+    await page.locator(".cms-module-figure .cms-image-error").innerText(),
+    /画像を表示できません/u,
+    "Unreadable image bytes produce a visible recovery message",
+  );
+  await reopenGitArticle(page);
+  await assertArticleImages(page, "Corrupt cache recovery");
+  assert.equal(mediaRequests.length, 2, "Matching metadata cannot conceal corrupt cached bytes");
+  const repaired = await page.evaluate(async (draftId) => {
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("xpotato-editor-v1");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const images = await new Promise((resolve, reject) => {
+      const request = db.transaction("media", "readonly").objectStore("media")
+        .index("draftId").getAll(draftId);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    db.close();
+    return images.map((image) => ({ alt: image.alt, caption: image.caption, sha256: image.sha256 }));
+  }, initialDraft.id);
+  assert.deepEqual(repaired, [{
+    alt: "復元しても保持する説明",
+    caption: "復元しても保持する注記",
+    sha256: imageHash,
+  }], "Repair keeps one media record and preserves local presentation edits");
+  assert.deepEqual(
+    (await articleDrafts(page)).map((draft) => ({ id: draft.id, source: draft.source })),
+    [{ id: initialDraft.id, source: editedSource }],
+    "Image repair does not alter unsynced text or create another draft",
+  );
+
+  await page.evaluate(async (id) => {
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("xpotato-editor-v1");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction("drafts", "readwrite");
+      const store = tx.objectStore("drafts");
+      const request = store.get(id);
+      request.onsuccess = () => store.add({
+        ...request.result,
+        id: crypto.randomUUID(),
+        source: request.result.source + "\n\n別コピーだけに存在する内容。",
+        savedAt: new Date(Date.now() + 1000).toISOString(),
+      });
+      tx.oncomplete = resolve;
+      tx.onabort = tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  }, initialDraft.id);
+  await page.reload();
+  const duplicateSelection = await selectGitArticle(page);
+  assert.equal(await duplicateSelection.getAttribute("aria-label"), "続ける下書きを選択");
+  assert.match(await duplicateSelection.innerText(), /同じ原稿の下書きが2件あります/u);
+  assert.equal(
+    await duplicateSelection.getByRole("button", { name: "編集を始める", exact: true }).count(),
+    0,
+    "Ambiguous existing drafts require choosing a specific saved copy",
+  );
+  const candidates = duplicateSelection.locator(".existing-draft-choice");
+  assert.equal(await candidates.count(), 2);
+  const candidate = candidates.first();
+  assert.match(await candidate.innerText(), /端末保存.*\d{2}:\d{2}:\d{2}/u);
+  assert.match(await candidate.innerText(), /本文にGit未保存の変更/u);
+  await candidate.locator(".draft-comparison > summary").click();
+  await candidate.locator(".draft-difference-text").waitFor();
+  assert.match(
+    await candidate.locator(".draft-difference-text").innerText(),
+    /別コピーだけに存在する内容。/u,
+    "The visible comparison identifies the actual source difference between copies",
+  );
+  const preservedDrafts = await articleDrafts(page);
+  const selectedTime = await candidate.locator("time").first().getAttribute("datetime");
+  const selectedDraft = preservedDrafts.find((draft) => draft.savedAt === selectedTime);
+  assert(selectedDraft, "The visible saved time identifies the selected fixture draft");
+  await candidate.getByRole("button", { name: "下書き 1を続ける", exact: true }).click();
+  await page.locator(".start-workspace").waitFor({ state: "hidden" });
+  const selectedBody = await readBody(page);
+  assert.equal(selectedBody.includes("別コピーだけに存在する内容。"),
+    selectedDraft.source.includes("別コピーだけに存在する内容。"));
+  const contentIdentity = (draft) => ({ id: draft.id, source: draft.source });
+  const byId = (left, right) => left.id.localeCompare(right.id);
+  assert.deepEqual(
+    (await articleDrafts(page)).map(contentIdentity).sort(byId),
+    preservedDrafts.map(contentIdentity).sort(byId),
+    "Choosing one old duplicate preserves both copies and creates no third draft",
+  );
+  await goHome(page);
+  await page.getByRole("button", { name: "下書きの続き", exact: true }).click();
+  await page.getByPlaceholder("原稿を検索").fill(index.documents[0].title);
+  assert.equal(await page.locator(".draft-choice-local").count(), 2);
+  await page.screenshot({
+    path: resolve(".local/cms-validation/selection-inline/distinct-local-drafts-320.png"),
+  });
+
+  const otherTab = await page.context().newPage();
+  try {
+    otherTab.on("pageerror", (error) => errors.push(error.message));
+    await otherTab.goto(server.origin + "/editor/");
+    const [firstSelection, secondSelection] = await Promise.all([
+      selectGitArticle(page, 1),
+      selectGitArticle(otherTab, 1),
+    ]);
+    await Promise.all([firstSelection, secondSelection].map((selection) =>
+      selection.getByRole("button", { name: "編集を始める", exact: true }).click()));
+    await Promise.all([page, otherTab].map((tab) =>
+      tab.locator(".start-workspace").waitFor({ state: "hidden" })));
+    assert.equal(
+      (await articleDrafts(page, index.documents[1].path)).length,
+      1,
+      "Concurrent Git opens in separate tabs claim one local draft atomically",
+    );
+    assert.match(await readBody(page), /AIが同じブランチへ書いた確認用の本文。/u);
+    assert.match(await readBody(otherTab), /AIが同じブランチへ書いた確認用の本文。/u);
+  } finally {
+    await otherTab.close();
+  }
 
   assert.deepEqual(errors, [], "No browser runtime errors");
   console.log(
-    "Editor paged catalogs, same-branch draft handoff, inline actions, navigation alignment, local archiving, deletion with media/revisions and scroll policy PASS",
+    "Editor paged catalogs, same-branch draft handoff, decoded media persistence and repair, idempotent draft reopening, visible duplicate comparison, local archiving/deletion and scroll policy PASS",
   );
 } finally {
   await browser?.close();
