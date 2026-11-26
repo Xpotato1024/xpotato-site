@@ -31,6 +31,11 @@ export interface LocalDraft {
   pendingRegistryChanges?: EditorRegistryChanges | undefined;
   reviewRevision?: number;
 }
+export interface LocalDraftWriteOptions {
+  requireExistingActive?: boolean;
+}
+export const missingActiveDraftMessage =
+  "この端末の下書きは削除またはアーカイブされています。一覧から開き直してください。";
 export interface LocalMedia {
   id: string;
   draftId: string;
@@ -186,7 +191,11 @@ function writeDraftRecord(
     }),
   );
 }
-export async function saveLocalDraft(draft: LocalDraft): Promise<IDBValidKey> {
+export async function saveLocalDraft(draft: LocalDraft, options: LocalDraftWriteOptions = {}): Promise<IDBValidKey> {
+  if (options.requireExistingActive) {
+    await updateLocalDraft(draft.id, draft, () => draft, options);
+    return draft.id;
+  }
   // Another tab may have archived or restored this draft since it was opened here.
   await writeDraftRecord(draft.id, (stored) =>
     stored?.archived === undefined ? draft : { ...draft, archived: stored.archived },
@@ -381,6 +390,7 @@ export function updateLocalDraft(
   id: string,
   fallback: LocalDraft,
   update: (latest: LocalDraft) => LocalDraft,
+  options: LocalDraftWriteOptions = {},
 ): Promise<LocalDraft> {
   const next = saveQueue
     .catch(() => {})
@@ -393,7 +403,11 @@ export function updateLocalDraft(
         let result: LocalDraft;
         read.onsuccess = () => {
           try {
-            result = update((read.result as LocalDraft | undefined) ?? fallback);
+            const stored = read.result as LocalDraft | undefined;
+            if (options.requireExistingActive && (!stored || stored.archived)) {
+              throw Error(missingActiveDraftMessage);
+            }
+            result = update(stored ?? fallback);
             if (result.id !== id) throw Error("DRAFT_ID_MISMATCH");
             store.put(result);
           } catch (error) {

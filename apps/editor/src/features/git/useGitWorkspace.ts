@@ -22,7 +22,7 @@ import {
   updateLocalDraft,
   type LocalDraft,
 } from "../../data/storage.js";
-import { hasLocalSourceChanges, hasPendingRegistryChanges, mergeGitReopen } from "../../data/draft-identity.js";
+import { hasLocalSourceChanges, hasPendingRegistryChanges, localDraftIdentity, matchingLocalDrafts, mergeGitReopen } from "../../data/draft-identity.js";
 import { errorLabel } from "../../shared/messages.js";
 import { acceptGitSaveResult } from "../drafts/model.js";
 import type { DraftWorkspace } from "../drafts/useDraftWorkspace.js";
@@ -190,6 +190,7 @@ export function useGitWorkspace(
     setSnapshot(null);
     setDocuments([]);
     await workspace.persist();
+    await workspace.refreshSaved();
     const selected = await request<GitSnapshot>("/snapshot" + query({ branch }));
     const [manifest, files] = await Promise.all([
       request<TaxonomySnapshot>("/manifest" + query({ ...selected })),
@@ -361,6 +362,7 @@ export function useGitWorkspace(
     assertOpeningCurrent();
     const incoming = opened;
     const claimed = await claimGitDraft(incoming, selectedLocalId);
+    workspace.requireExistingDraft(claimed.draft.id);
     opened = mergeGitReopen(claimed.draft, incoming);
     let detachPrivateState = localOnly;
     let mediaWarning: string | undefined;
@@ -375,7 +377,7 @@ export function useGitWorkspace(
         detachPrivateState = true;
       }
       if (remote) {
-        const restored = await restoreMediaSnapshot(restoredFrom, remote);
+        const restored = await restoreMediaSnapshot(restoredFrom, remote, opened);
         opened = {
           ...restored.draft,
           sourceBranch: opened.sourceBranch,
@@ -428,6 +430,9 @@ export function useGitWorkspace(
     assertOpeningCurrent();
     const restored = opened;
     const merge = (latest: LocalDraft): LocalDraft => {
+      if (!matchingLocalDrafts([latest], localDraftIdentity(incoming)!).length) {
+        throw Error("準備中に下書きの保存先が変わりました。一覧から開き直してください。");
+      }
       let next = mergeGitReopen(latest, incoming);
       if (restored.remoteDraftId && !detachPrivateState) {
         next = {
@@ -448,12 +453,12 @@ export function useGitWorkspace(
       }
       return next;
     };
-    opened = await updateLocalDraft(opened.id, opened, merge);
+    opened = await updateLocalDraft(opened.id, opened, merge, { requireExistingActive: true });
     assertOpeningCurrent();
     if (workspace.current.current.id === opened.id) {
       workspace.setDraft(merge);
     } else {
-      await workspace.openLocal(opened);
+      await workspace.openLocal(opened, { requireExistingActive: true });
     }
     if (workspace.current.current.id !== opened.id) {
       throw new Error("準備中に原稿が切り替わりました。開く原稿を選び直してください。");
@@ -476,6 +481,9 @@ export function useGitWorkspace(
     documentOpening.current = true;
     try {
       await performOpenDocument(...args);
+    } catch (error) {
+      await workspace.refreshSaved().catch(() => {});
+      throw error;
     } finally {
       documentOpening.current = false;
     }
