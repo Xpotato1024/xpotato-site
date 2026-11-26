@@ -29,15 +29,16 @@ describe("portable footnote blocks", () => {
 
   it("keeps the marker and multiline Markdown semantics when editing note content", () => {
     const source = "[^出典]: 説明。";
-    const content = "[公式資料](https://example.com/)\n\n次の段落。\n\n    code()";
+    const content = "[公式資料](https://example.com/)\n\n次の段落。\n\n```text\ncode()\n```";
     const edited = updateFootnoteContent(source, content);
-    expect(edited).toBe("[^出典]: [公式資料](https://example.com/)\n\n    次の段落。\n\n        code()");
+    expect(edited).toBe("[^出典]: [公式資料](https://example.com/)\n\n    次の段落。\n\n    ```text\n    code()\n    ```");
     expect(readFootnoteDefinition(edited)?.content).toBe(content);
     expect(blockTree(edited).children?.[0]?.children?.map((node) => node.type)).toEqual(["paragraph", "paragraph", "code"]);
+    expect(blockTree(edited).children?.[0]?.children?.[2]?.value).toBe("code()");
     expect(readFootnoteDefinition(updateFootnoteContent(source, ""))).not.toBeNull();
   });
 
-  it("preserves extra leading indentation when a note starts with code", () => {
+  it("preserves extra leading indentation when editing a note", () => {
     const source = "[^code]:     before()";
     const note = readFootnoteDefinition(source)!;
     const edited = updateFootnoteContent(source, note.content.replace("before", "after"));
