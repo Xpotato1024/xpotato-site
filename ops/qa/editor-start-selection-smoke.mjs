@@ -691,9 +691,12 @@ try {
     "The visible comparison identifies the actual source difference between copies",
   );
   const preservedDrafts = await articleDrafts(page);
-  const selectedTime = await candidate.locator("time").first().getAttribute("datetime");
-  const selectedDraft = preservedDrafts.find((draft) => draft.savedAt === selectedTime);
-  assert(selectedDraft, "The visible saved time identifies the selected fixture draft");
+  const chosenDifference = await candidate.locator(".draft-difference-text").first()
+    .locator("pre").first().innerText();
+  const selectedDraft = preservedDrafts.find((draft) =>
+    draft.source.includes("別コピーだけに存在する内容。") ===
+    chosenDifference.includes("別コピーだけに存在する内容。"));
+  assert(selectedDraft, "The visible source difference identifies the selected fixture draft");
   await candidate.getByRole("button", { name: "下書き 1を続ける", exact: true }).click();
   await page.locator(".start-workspace").waitFor({ state: "hidden" });
   const selectedBody = await readBody(page);
