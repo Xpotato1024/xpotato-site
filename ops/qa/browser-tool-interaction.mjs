@@ -8,6 +8,14 @@ import {
   parseStaticHeaderRules,
 } from "../../packages/site-validators/src/delivery/static-headers.mjs";
 
+export function closeBrowserToolFixtureServer(server) {
+  return new Promise((resolveClose, reject) => {
+    server.close((error) => (error ? reject(error) : resolveClose()));
+    // Stop accepting connections before dropping unfinished browser preconnects.
+    server.closeAllConnections();
+  });
+}
+
 export function assertToolQuiet(
   events,
   serverRequests,
@@ -327,6 +335,6 @@ export async function verifyBrowserToolInteraction({
     if (preload)
       await send("Page.removeScriptToEvaluateOnNewDocument", { identifier: preload.identifier });
     socket.removeEventListener("message", listener);
-    await new Promise((resolveClose) => server.close(resolveClose));
+    await closeBrowserToolFixtureServer(server);
   }
 }
