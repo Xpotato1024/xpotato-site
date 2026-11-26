@@ -180,6 +180,12 @@ async function articleDrafts(page, path = mediaDraft.sourcePath) {
 }
 
 async function selectGitArticle(page, document = mediaDocument) {
+  await page
+    .locator(
+      ".editor-header:not(.workspace-header):visible, .workspace-home:visible, .start-workspace:visible, .registry-workspace:visible",
+    )
+    .first()
+    .waitFor({ state: "visible" });
   await goHome(page);
   await page.getByRole("button", { name: "下書きの続き", exact: true }).click();
   await page.locator(".repository-panel").getByLabel("読み込み元").selectOption(draftBranch);
@@ -724,19 +730,17 @@ try {
   assert.match(await candidate.innerText(), /端末保存.*\d{2}:\d{2}:\d{2}/u);
   assert.match(await candidate.innerText(), /本文にGit未保存の変更/u);
   await candidate.locator(".draft-comparison > summary").click();
-  await candidate.locator(".draft-difference-text").waitFor();
+  const sourceDifference = candidate.locator(".draft-difference-text").filter({
+    has: page.getByRole("heading", { name: "本文・記事情報の違い", exact: true }),
+  });
+  await sourceDifference.waitFor();
   assert.match(
-    await candidate.locator(".draft-difference-text").innerText(),
+    await sourceDifference.innerText(),
     /別コピーだけに存在する内容。/u,
     "The visible comparison identifies the actual source difference between copies",
   );
   const preservedDrafts = await articleDrafts(page);
-  const chosenDifference = await candidate
-    .locator(".draft-difference-text")
-    .first()
-    .locator("pre")
-    .first()
-    .innerText();
+  const chosenDifference = await sourceDifference.locator("pre").first().innerText();
   const selectedDraft = preservedDrafts.find(
     (draft) =>
       draft.source.includes("別コピーだけに存在する内容。") ===
