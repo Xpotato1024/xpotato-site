@@ -32,8 +32,6 @@ import type { EditorSeriesPreview } from "./preview.js";
 import { useWorkspaceNavigation } from "./features/workspace/navigation.js";
 import { useRegistryWorkspace } from "./features/workspace/useRegistryWorkspace.js";
 import { WorkspaceHome, WorkspaceNavigation } from "./features/workspace/WorkspaceHome.js";
-import { StartWorkspace } from "./features/workspace/StartWorkspace.js";
-import { RegistryWorkspace } from "./features/workspace/RegistryWorkspace.js";
 import { reviewCommentSelection } from "./features/review/review-actions.js";
 import { useReviewComposerDrafts } from "./features/review/useReviewComposerDrafts.js";
 import {
@@ -42,6 +40,14 @@ import {
   saveLocalMedia,
   type LocalDraft,
 } from "./data/storage.js";
+const StartWorkspace = lazy(() =>
+  import("./features/workspace/StartWorkspace.js").then((m) => ({ default: m.StartWorkspace })),
+);
+const RegistryWorkspace = lazy(() =>
+  import("./features/workspace/RegistryWorkspace.js").then((m) => ({
+    default: m.RegistryWorkspace,
+  })),
+);
 const DocumentEditor = lazy(() =>
   import("./features/editing/DocumentEditor.js").then((m) => ({ default: m.DocumentEditor })),
 );
@@ -577,31 +583,39 @@ export default function App() {
               />
             )}
             {(page === "new" || page === "revise" || page === "drafts") && (
-              <StartWorkspace
-                key={page + git.auth.authenticated}
-                intent={page}
-                git={git}
-                saved={workspace.saved}
-                busy={busy}
-                onNew={newDocument}
-                onLocal={openLocalDocument}
-                onDeleteLocal={(draft) => workspace.removeFromDevice(draft.id)}
-                onArchiveLocal={archiveLocalDraft}
-                onRemote={openRemoteDocument}
-                onImport={importFile}
-                run={(operation) => void act(operation)}
-              />
+              <div>
+                <Suspense fallback={<p role="status">画面を開いています…</p>}>
+                  <StartWorkspace
+                    key={page + git.auth.authenticated}
+                    intent={page}
+                    git={git}
+                    saved={workspace.saved}
+                    busy={busy}
+                    onNew={newDocument}
+                    onLocal={openLocalDocument}
+                    onDeleteLocal={(draft) => workspace.removeFromDevice(draft.id)}
+                    onArchiveLocal={archiveLocalDraft}
+                    onRemote={openRemoteDocument}
+                    onImport={importFile}
+                    run={(operation) => void act(operation)}
+                  />
+                </Suspense>
+              </div>
             )}
             {(page === "taxonomy" || page === "series") && (
-              <RegistryWorkspace
-                key={page + git.auth.authenticated}
-                kind={page}
-                git={git}
-                registry={registry}
-                busy={busy}
-                run={(operation) => void act(operation)}
-                onError={setError}
-              />
+              <div>
+                <Suspense fallback={<p role="status">管理画面を開いています…</p>}>
+                  <RegistryWorkspace
+                    key={page + git.auth.authenticated}
+                    kind={page}
+                    git={git}
+                    registry={registry}
+                    busy={busy}
+                    run={(operation) => void act(operation)}
+                    onError={setError}
+                  />
+                </Suspense>
+              </div>
             )}
             {page === "connection" && (
               <section className="workspace-connection">

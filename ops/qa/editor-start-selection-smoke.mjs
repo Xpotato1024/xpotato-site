@@ -155,6 +155,27 @@ try {
     /編集アプリは最新|新しい編集アプリ/,
     "Manual PWA check must report the version state without reloading",
   );
+  await page.setViewportSize({ width: 390, height: 1000 });
+  await page.getByRole("button", { name: "下書きの続き" }).click();
+  await page.getByRole("heading", { name: "下書きの続き", exact: true }).waitFor();
+  await page.locator('.workspace-screen[data-scrollable="false"]').waitFor();
+  await page.locator(".repository-panel").getByLabel("読み込み元").selectOption(draftBranch);
+  await page.getByRole("button", { name: "一覧を取得" }).click();
+  await page.locator(".repository-documents .draft-choice").first().waitFor();
+  await page.locator('.workspace-screen[data-scrollable="true"]').waitFor();
+  const loadedList = await page.locator(".workspace-screen").evaluate((element) => ({
+    overflows: element.scrollHeight > element.clientHeight,
+    overflowY: getComputedStyle(element).overflowY,
+  }));
+  assert.deepEqual(
+    loadedList,
+    { overflows: true, overflowY: "auto" },
+    "A lazily opened workspace becomes scrollable when its list grows without a viewport change",
+  );
+  await page
+    .getByRole("navigation", { name: "CMSの管理", exact: true })
+    .getByRole("button", { name: "ホーム", exact: true })
+    .click();
   const firstId = await page.evaluate(async () => {
     const opened = indexedDB.open("xpotato-editor-v1", 3);
     const db = await new Promise((resolve, reject) => {
