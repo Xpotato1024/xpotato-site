@@ -84,7 +84,8 @@ test("both preparation lanes finish before the parallel final consumers and pack
     1,
   );
   assert.ok(!validation.some((c) => /astro build|npm run build/u.test(c)));
-  assert.deepEqual(validation.slice(1), expanded("ci:final:public"));
+  assert.equal(validation[1], "npm run editor:selection -- --browser webkit");
+  assert.deepEqual(validation.slice(2), expanded("ci:final:public"));
   assert.ok(
     ![...preparation, ...validation].some((c) => /ci-hosted-gate|release-package-cli/u.test(c)),
   );
