@@ -191,7 +191,10 @@ function writeDraftRecord(
     }),
   );
 }
-export async function saveLocalDraft(draft: LocalDraft, options: LocalDraftWriteOptions = {}): Promise<IDBValidKey> {
+export async function saveLocalDraft(
+  draft: LocalDraft,
+  options: LocalDraftWriteOptions = {},
+): Promise<IDBValidKey> {
   if (options.requireExistingActive) {
     await updateLocalDraft(draft.id, draft, () => draft, options);
     return draft.id;
@@ -215,7 +218,10 @@ export async function updateLocalDraftArchive(
 }
 export const localDrafts = () => transact<LocalDraft[]>("drafts", "readonly", (s) => s.getAll());
 /** Select or create one Git workspace atomically, including requests from another tab. */
-export function claimGitDraft(candidate: LocalDraft, selectedId?: string): Promise<{ draft: LocalDraft; created: boolean }> {
+export function claimGitDraft(
+  candidate: LocalDraft,
+  selectedId?: string,
+): Promise<{ draft: LocalDraft; created: boolean }> {
   const identity = localDraftIdentity(candidate);
   if (!identity) return Promise.reject(Error("DRAFT_IDENTITY_REQUIRED"));
   return queueDraftWrite(async () => {
@@ -229,10 +235,15 @@ export function claimGitDraft(candidate: LocalDraft, selectedId?: string): Promi
       read.onsuccess = () => {
         try {
           const matches = matchingLocalDrafts(read.result as LocalDraft[], identity);
-          const selected = selectedId ? matches.find((draft) => draft.id === selectedId) : undefined;
-          if (selectedId && !selected) throw Error("選択した下書きの保存先が変わりました。下書きを選び直してください。");
+          const selected = selectedId
+            ? matches.find((draft) => draft.id === selectedId)
+            : undefined;
+          if (selectedId && !selected)
+            throw Error("選択した下書きの保存先が変わりました。下書きを選び直してください。");
           if (!selected && matches.length > 1) {
-            throw Error("同じ原稿の下書きが複数あります。下書きの違いを確認し、続けるものを選んでください。");
+            throw Error(
+              "同じ原稿の下書きが複数あります。下書きの違いを確認し、続けるものを選んでください。",
+            );
           }
           const existing = selected ?? matches[0];
           result = { draft: existing ?? candidate, created: !existing };

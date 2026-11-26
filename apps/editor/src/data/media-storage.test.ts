@@ -127,8 +127,13 @@ describe("restoring one asset into a local draft", () => {
 
   it("preserves notes edited while the image download was in flight", async () => {
     const previous = image();
-    const { alt: _alt, caption: _caption, credit: _credit, creditUrl: _creditUrl, ...bare } =
-      previous;
+    const {
+      alt: _alt,
+      caption: _caption,
+      credit: _credit,
+      creditUrl: _creditUrl,
+      ...bare
+    } = previous;
     const incoming = await encodeStoredMedia({
       ...bare,
       id: "downloaded-copy",

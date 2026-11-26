@@ -6,7 +6,11 @@ import { changedSourceRange, DraftSummary, draftSavedTime } from "./DraftDetails
 
 describe("distinguishing local drafts", () => {
   it("shows save time to the second, work branch, source state and review count", () => {
-    const draft = { ...createLocalDraft(), workingBranch: "content/article", savedAt: "2026-11-26T01:23:45.000Z" };
+    const draft = {
+      ...createLocalDraft(),
+      workingBranch: "content/article",
+      savedAt: "2026-11-26T01:23:45.000Z",
+    };
     const html = renderToStaticMarkup(createElement(DraftSummary, { draft }));
     expect(html).toContain("content/article");
     expect(html).toContain(draftSavedTime(draft.savedAt));
@@ -19,14 +23,27 @@ describe("distinguishing local drafts", () => {
   });
 
   it("retains all differing ranges, not just a title or a leading excerpt", () => {
-    expect(changedSourceRange("共通\n古い文\n共通の中間\n追記あり\n末尾", "共通\n新しい文\n共通の中間\n末尾")).toEqual({ line: 2, left: "古い文\n共通の中間\n追記あり", right: "新しい文\n共通の中間" });
+    expect(
+      changedSourceRange(
+        "共通\n古い文\n共通の中間\n追記あり\n末尾",
+        "共通\n新しい文\n共通の中間\n末尾",
+      ),
+    ).toEqual({ line: 2, left: "古い文\n共通の中間\n追記あり", right: "新しい文\n共通の中間" });
   });
 
   it("shows an insertion without pretending the unchanged neighboring line differs", () => {
-    expect(changedSourceRange("先頭\n末尾", "先頭\n追記\n末尾")).toEqual({ line: 2, left: "", right: "追記" });
+    expect(changedSourceRange("先頭\n末尾", "先頭\n追記\n末尾")).toEqual({
+      line: 2,
+      left: "",
+      right: "追記",
+    });
   });
 
   it("distinguishes a trailing empty line from an absent range", () => {
-    expect(changedSourceRange("本文", "本文\n")).toEqual({ line: 2, left: "", right: "（空行 1行）" });
+    expect(changedSourceRange("本文", "本文\n")).toEqual({
+      line: 2,
+      left: "",
+      right: "（空行 1行）",
+    });
   });
 });

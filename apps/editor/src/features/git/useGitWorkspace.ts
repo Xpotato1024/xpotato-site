@@ -22,7 +22,13 @@ import {
   updateLocalDraft,
   type LocalDraft,
 } from "../../data/storage.js";
-import { hasLocalSourceChanges, hasPendingRegistryChanges, localDraftIdentity, matchingLocalDrafts, mergeGitReopen } from "../../data/draft-identity.js";
+import {
+  hasLocalSourceChanges,
+  hasPendingRegistryChanges,
+  localDraftIdentity,
+  matchingLocalDrafts,
+  mergeGitReopen,
+} from "../../data/draft-identity.js";
 import { errorLabel } from "../../shared/messages.js";
 import { acceptGitSaveResult } from "../drafts/model.js";
 import type { DraftWorkspace } from "../drafts/useDraftWorkspace.js";
@@ -383,7 +389,11 @@ export function useGitWorkspace(
           sourceBranch: opened.sourceBranch,
           workingBranch: opened.workingBranch,
         };
-        if (opened.annotations === undefined && opened.reviewRevision === undefined && remote.draft.review)
+        if (
+          opened.annotations === undefined &&
+          opened.reviewRevision === undefined &&
+          remote.draft.review
+        )
           opened = {
             ...opened,
             annotations: validateReviewComments(
@@ -444,11 +454,17 @@ export function useGitWorkspace(
           ),
         };
       }
-      if (latest.annotations === undefined && latest.reviewRevision === undefined && restored.annotations) {
+      if (
+        latest.annotations === undefined &&
+        latest.reviewRevision === undefined &&
+        restored.annotations
+      ) {
         next = {
           ...next,
           annotations: restored.annotations,
-          ...(restored.reviewRevision !== undefined ? { reviewRevision: restored.reviewRevision } : {}),
+          ...(restored.reviewRevision !== undefined
+            ? { reviewRevision: restored.reviewRevision }
+            : {}),
         };
       }
       return next;
@@ -466,7 +482,8 @@ export function useGitWorkspace(
     setRepositoryManifest(manifest);
     if (!claimed.created) {
       onNotice(
-        hasLocalSourceChanges(workspace.current.current) || hasPendingRegistryChanges(workspace.current.current)
+        hasLocalSourceChanges(workspace.current.current) ||
+          hasPendingRegistryChanges(workspace.current.current)
           ? "この端末の下書きを再開しました。Git未保存の編集を保持しています。"
           : "この端末の下書きを最新のGit原稿で再開しました。",
       );
@@ -506,7 +523,15 @@ export function useGitWorkspace(
         throw new Error("下書きは読み込み元と同じ作業ブランチで続けてください。");
       }
       // 一覧で選んだ版を開く。別ブランチの同じ path や最新 head に差し替えない。
-      await openDocument(file, selected, selected.branch, intent, false, undefined, selectedLocalId);
+      await openDocument(
+        file,
+        selected,
+        selected.branch,
+        intent,
+        false,
+        undefined,
+        selectedLocalId,
+      );
       return;
     }
     const prepared =

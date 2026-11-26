@@ -37,7 +37,8 @@ export async function encodeStoredMedia(media: LocalMedia): Promise<StoredMedia>
 }
 
 export async function decodeStoredMedia(stored: StoredMedia | LocalMedia): Promise<LocalMedia> {
-  const { blobBytes, blobType, blobSha256, ...metadata } = stored as Partial<StoredMedia> & LocalMedia;
+  const { blobBytes, blobType, blobSha256, ...metadata } = stored as Partial<StoredMedia> &
+    LocalMedia;
   if (blobBytes instanceof ArrayBuffer && blobType !== undefined && blobSha256 === stored.sha256) {
     return { ...metadata, blob: new Blob([blobBytes], { type: blobType }) };
   }
@@ -69,7 +70,8 @@ export function mergeRestoredMedia(
     current.remoteId === expected.remoteId;
   const alreadyRestored =
     Boolean(incoming.remoteId) &&
-    current.remoteId === incoming.remoteId && current.sha256 === incoming.sha256;
+    current.remoteId === incoming.remoteId &&
+    current.sha256 === incoming.sha256;
   if (!unchanged && !alreadyRestored) throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
   return {
     ...incoming,

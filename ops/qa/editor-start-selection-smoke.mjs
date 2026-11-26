@@ -16,7 +16,12 @@ import {
 
 const root = resolve(".");
 const browserArgs = process.argv.slice(2);
-if (browserArgs.length && (browserArgs.length !== 2 || browserArgs[0] !== "--browser" || !["chromium", "webkit"].includes(browserArgs[1]))) {
+if (
+  browserArgs.length &&
+  (browserArgs.length !== 2 ||
+    browserArgs[0] !== "--browser" ||
+    !["chromium", "webkit"].includes(browserArgs[1]))
+) {
   throw Error("Expected --browser chromium or --browser webkit");
 }
 const browserName = browserArgs[1] ?? "chromium";
@@ -149,23 +154,26 @@ const api = async (req, res) => {
 };
 const server = await editorStaticServer(root, api);
 async function articleDrafts(page, path = mediaDraft.sourcePath) {
-  return page.evaluate(async ({ path, branch }) => {
-    const db = await new Promise((resolve, reject) => {
-      const request = indexedDB.open("xpotato-editor-v1");
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    try {
-      const drafts = await new Promise((resolve, reject) => {
-        const request = db.transaction("drafts", "readonly").objectStore("drafts").getAll();
+  return page.evaluate(
+    async ({ path, branch }) => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open("xpotato-editor-v1");
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
-      return drafts.filter((draft) => draft.path === path && draft.workingBranch === branch);
-    } finally {
-      db.close();
-    }
-  }, { path, branch: draftBranch });
+      try {
+        const drafts = await new Promise((resolve, reject) => {
+          const request = db.transaction("drafts", "readonly").objectStore("drafts").getAll();
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+        return drafts.filter((draft) => draft.path === path && draft.workingBranch === branch);
+      } finally {
+        db.close();
+      }
+    },
+    { path, branch: draftBranch },
+  );
 }
 
 async function selectGitArticle(page, documentIndex = 0) {
@@ -221,12 +229,13 @@ try {
     "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
     chromium.executablePath(),
   ].find((candidate) => candidate && existsSync(candidate));
-  browser = browserName === "webkit"
-    ? await webkit.launch({ headless: true })
-    : await chromium.launch({
-      headless: true,
-      ...(executablePath ? { executablePath } : {}),
-    });
+  browser =
+    browserName === "webkit"
+      ? await webkit.launch({ headless: true })
+      : await chromium.launch({
+          headless: true,
+          ...(executablePath ? { executablePath } : {}),
+        });
   const page = await browser.newPage({ viewport: { width: 390, height: 1600 }, locale: "ja-JP" });
   page.setDefaultTimeout(15000);
   const errors = [];
@@ -581,36 +590,39 @@ try {
     "Git reopening preserves the exact unsynced local source and identity",
   );
 
-  await page.evaluate(async ({ draftId, length }) => {
-    const db = await new Promise((resolve, reject) => {
-      const request = indexedDB.open("xpotato-editor-v1");
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction("media", "readwrite");
-      const store = tx.objectStore("media");
-      const request = store.index("draftId").getAll(draftId);
-      request.onsuccess = () => {
-        if (request.result.length !== 1) {
-          tx.abort();
-          return;
-        }
-        const image = request.result[0];
-        const corrupt = new Uint8Array(length);
-        store.put({
-          ...image,
-          blobBytes: corrupt.buffer,
-          blob: new Blob([corrupt], { type: "image/png" }),
-          alt: "復元しても保持する説明",
-          caption: "復元しても保持する注記",
-        });
-      };
-      tx.oncomplete = resolve;
-      tx.onabort = tx.onerror = () => reject(tx.error ?? Error("CORRUPTION_FIXTURE_FAILED"));
-    });
-    db.close();
-  }, { draftId: initialDraft.id, length: imageBytes.length });
+  await page.evaluate(
+    async ({ draftId, length }) => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open("xpotato-editor-v1");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction("media", "readwrite");
+        const store = tx.objectStore("media");
+        const request = store.index("draftId").getAll(draftId);
+        request.onsuccess = () => {
+          if (request.result.length !== 1) {
+            tx.abort();
+            return;
+          }
+          const image = request.result[0];
+          const corrupt = new Uint8Array(length);
+          store.put({
+            ...image,
+            blobBytes: corrupt.buffer,
+            blob: new Blob([corrupt], { type: "image/png" }),
+            alt: "復元しても保持する説明",
+            caption: "復元しても保持する注記",
+          });
+        };
+        tx.oncomplete = resolve;
+        tx.onabort = tx.onerror = () => reject(tx.error ?? Error("CORRUPTION_FIXTURE_FAILED"));
+      });
+      db.close();
+    },
+    { draftId: initialDraft.id, length: imageBytes.length },
+  );
   await page.reload();
   await showBlocks(page);
   await page.locator(".cms-module-figure .cms-image-error").waitFor();
@@ -629,19 +641,32 @@ try {
       request.onerror = () => reject(request.error);
     });
     const images = await new Promise((resolve, reject) => {
-      const request = db.transaction("media", "readonly").objectStore("media")
-        .index("draftId").getAll(draftId);
+      const request = db
+        .transaction("media", "readonly")
+        .objectStore("media")
+        .index("draftId")
+        .getAll(draftId);
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
     db.close();
-    return images.map((image) => ({ alt: image.alt, caption: image.caption, sha256: image.sha256 }));
+    return images.map((image) => ({
+      alt: image.alt,
+      caption: image.caption,
+      sha256: image.sha256,
+    }));
   }, initialDraft.id);
-  assert.deepEqual(repaired, [{
-    alt: "復元しても保持する説明",
-    caption: "復元しても保持する注記",
-    sha256: imageHash,
-  }], "Repair keeps one media record and preserves local presentation edits");
+  assert.deepEqual(
+    repaired,
+    [
+      {
+        alt: "復元しても保持する説明",
+        caption: "復元しても保持する注記",
+        sha256: imageHash,
+      },
+    ],
+    "Repair keeps one media record and preserves local presentation edits",
+  );
   assert.deepEqual(
     (await articleDrafts(page)).map((draft) => ({ id: draft.id, source: draft.source })),
     [{ id: initialDraft.id, source: editedSource }],
@@ -658,12 +683,13 @@ try {
       const tx = db.transaction("drafts", "readwrite");
       const store = tx.objectStore("drafts");
       const request = store.get(id);
-      request.onsuccess = () => store.add({
-        ...request.result,
-        id: crypto.randomUUID(),
-        source: request.result.source + "\n\n別コピーだけに存在する内容。",
-        savedAt: new Date(Date.now() + 1000).toISOString(),
-      });
+      request.onsuccess = () =>
+        store.add({
+          ...request.result,
+          id: crypto.randomUUID(),
+          source: request.result.source + "\n\n別コピーだけに存在する内容。",
+          savedAt: new Date(Date.now() + 1000).toISOString(),
+        });
       tx.oncomplete = resolve;
       tx.onabort = tx.onerror = () => reject(tx.error);
     });
@@ -691,17 +717,25 @@ try {
     "The visible comparison identifies the actual source difference between copies",
   );
   const preservedDrafts = await articleDrafts(page);
-  const chosenDifference = await candidate.locator(".draft-difference-text").first()
-    .locator("pre").first().innerText();
-  const selectedDraft = preservedDrafts.find((draft) =>
-    draft.source.includes("別コピーだけに存在する内容。") ===
-    chosenDifference.includes("別コピーだけに存在する内容。"));
+  const chosenDifference = await candidate
+    .locator(".draft-difference-text")
+    .first()
+    .locator("pre")
+    .first()
+    .innerText();
+  const selectedDraft = preservedDrafts.find(
+    (draft) =>
+      draft.source.includes("別コピーだけに存在する内容。") ===
+      chosenDifference.includes("別コピーだけに存在する内容。"),
+  );
   assert(selectedDraft, "The visible source difference identifies the selected fixture draft");
   await candidate.getByRole("button", { name: "下書き 1を続ける", exact: true }).click();
   await page.locator(".start-workspace").waitFor({ state: "hidden" });
   const selectedBody = await readBody(page);
-  assert.equal(selectedBody.includes("別コピーだけに存在する内容。"),
-    selectedDraft.source.includes("別コピーだけに存在する内容。"));
+  assert.equal(
+    selectedBody.includes("別コピーだけに存在する内容。"),
+    selectedDraft.source.includes("別コピーだけに存在する内容。"),
+  );
   const contentIdentity = (draft) => ({ id: draft.id, source: draft.source });
   const byId = (left, right) => left.id.localeCompare(right.id);
   assert.deepEqual(
@@ -725,10 +759,14 @@ try {
       selectGitArticle(page, 1),
       selectGitArticle(otherTab, 1),
     ]);
-    await Promise.all([firstSelection, secondSelection].map((selection) =>
-      selection.getByRole("button", { name: "編集を始める", exact: true }).click()));
-    await Promise.all([page, otherTab].map((tab) =>
-      tab.locator(".start-workspace").waitFor({ state: "hidden" })));
+    await Promise.all(
+      [firstSelection, secondSelection].map((selection) =>
+        selection.getByRole("button", { name: "編集を始める", exact: true }).click(),
+      ),
+    );
+    await Promise.all(
+      [page, otherTab].map((tab) => tab.locator(".start-workspace").waitFor({ state: "hidden" })),
+    );
     assert.equal(
       (await articleDrafts(page, index.documents[1].path)).length,
       1,
@@ -747,7 +785,9 @@ try {
   const downloadStarted = new Promise((started) => {
     mediaDownloadGate = {
       started,
-      released: new Promise((resolve) => { releaseDownload = resolve; }),
+      released: new Promise((resolve) => {
+        releaseDownload = resolve;
+      }),
     };
   });
   try {
@@ -767,7 +807,11 @@ try {
     } finally {
       clearTimeout(downloadTimeout);
     }
-    assert.equal((await articleDrafts(pendingOpen)).length, 1, "The in-flight open owns a claimed draft");
+    assert.equal(
+      (await articleDrafts(pendingOpen)).length,
+      1,
+      "The in-flight open owns a claimed draft",
+    );
     await deletingTab.goto(server.origin + "/editor/");
     await deletingTab.getByRole("button", { name: "下書きの続き", exact: true }).click();
     const claimedRow = deletingTab.locator(".draft-choice-local");
@@ -777,8 +821,15 @@ try {
     await claimedRow.getByRole("button", { name: /削除/u }).click();
     await deletingTab.getByRole("heading", { name: /この端末（0件）/u }).waitFor();
     releaseDownload();
-    await pendingOpen.locator(".workspace-messages .message.error").filter({ hasText: /削除/u }).waitFor();
-    assert.deepEqual(await articleDrafts(pendingOpen), [], "A completed download cannot recreate a deleted draft");
+    await pendingOpen
+      .locator(".workspace-messages .message.error")
+      .filter({ hasText: /削除/u })
+      .waitFor();
+    assert.deepEqual(
+      await articleDrafts(pendingOpen),
+      [],
+      "A completed download cannot recreate a deleted draft",
+    );
     const orphanMediaCount = await pendingOpen.evaluate(async () => {
       const db = await new Promise((resolve, reject) => {
         const request = indexedDB.open("xpotato-editor-v1");
@@ -793,7 +844,11 @@ try {
       db.close();
       return count;
     });
-    assert.equal(orphanMediaCount, 0, "Deleting the claimed draft also prevents orphaned image writes");
+    assert.equal(
+      orphanMediaCount,
+      0,
+      "Deleting the claimed draft also prevents orphaned image writes",
+    );
   } finally {
     releaseDownload();
     mediaDownloadGate = undefined;

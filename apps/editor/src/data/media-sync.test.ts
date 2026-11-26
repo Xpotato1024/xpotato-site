@@ -210,28 +210,32 @@ describe("referenced draft media", () => {
     const blob = new Blob(["verified remote bytes"], { type: "image/webp" });
     const sha = await hashBlob(blob);
     remote.draft.assets.diagram = "media-id";
-    remote.assets = [{
-      id: "media-id",
-      draftId: remote.draft.id,
-      assetId: "diagram",
-      sha256: sha,
-      sourceSha256: sha,
-      bytes: blob.size,
-      sourceBytes: blob.size,
-      mime: blob.type,
-      kind: "technical",
-      createdAt: remote.draft.lastEditedAt,
-      status: "staged",
-      transform: "identity-v1",
-      sourceRetained: true,
-      width: 1,
-      height: 1,
-      frames: 1,
-      durationMs: 0,
-    }];
+    remote.assets = [
+      {
+        id: "media-id",
+        draftId: remote.draft.id,
+        assetId: "diagram",
+        sha256: sha,
+        sourceSha256: sha,
+        bytes: blob.size,
+        sourceBytes: blob.size,
+        mime: blob.type,
+        kind: "technical",
+        createdAt: remote.draft.lastEditedAt,
+        status: "staged",
+        transform: "identity-v1",
+        sourceRetained: true,
+        width: 1,
+        height: 1,
+        frames: 1,
+        durationMs: 0,
+      },
+    ];
     const broken = new Blob(["verified remote bytes"], { type: "image/webp" });
     Object.defineProperty(broken, "arrayBuffer", {
-      value: async () => { throw new DOMException("Unavailable", "NotReadableError"); },
+      value: async () => {
+        throw new DOMException("Unavailable", "NotReadableError");
+      },
     });
     const cached: LocalMedia = {
       id: "cached-image",

@@ -140,21 +140,25 @@ export async function restoreMediaSnapshot(
       const blob = new Blob([await fetched.arrayBuffer()], { type: asset.mime });
       if (blob.size !== asset.bytes || (await hashBlob(blob)) !== asset.sha256)
         throw Error("MEDIA_HASH_MISMATCH");
-      await saveRestoredMedia({
-        id: existing?.id ?? crypto.randomUUID(),
-        draftId: local.id,
-        assetId,
-        blob,
-        originalBytes: asset.sourceBytes,
-        sourceSha256: asset.sourceSha256,
-        sha256: asset.sha256,
-        kind: asset.kind,
-        transform: asset.transform,
-        createdAt: asset.createdAt,
-        remoteId: asset.id,
-        originalName: assetId,
-        sourceRetained: asset.sourceRetained,
-      }, existing, storageDraft);
+      await saveRestoredMedia(
+        {
+          id: existing?.id ?? crypto.randomUUID(),
+          draftId: local.id,
+          assetId,
+          blob,
+          originalBytes: asset.sourceBytes,
+          sourceSha256: asset.sourceSha256,
+          sha256: asset.sha256,
+          kind: asset.kind,
+          transform: asset.transform,
+          createdAt: asset.createdAt,
+          remoteId: asset.id,
+          originalName: assetId,
+          sourceRetained: asset.sourceRetained,
+        },
+        existing,
+        storageDraft,
+      );
     } catch (error) {
       missing.push(
         error instanceof Error && error.message === "DRAFT_MEDIA_LOCAL_CONFLICT"

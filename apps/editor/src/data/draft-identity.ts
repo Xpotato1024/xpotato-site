@@ -44,7 +44,8 @@ export function matchingLocalDrafts(
 
 export function hasPendingRegistryChanges(draft: LocalDraft): boolean {
   return Object.entries(draft.pendingRegistryChanges ?? {}).some(
-    ([key, value]) => key !== "seriesBase" && (Array.isArray(value) ? value.length > 0 : value != null),
+    ([key, value]) =>
+      key !== "seriesBase" && (Array.isArray(value) ? value.length > 0 : value != null),
   );
 }
 

@@ -9,7 +9,11 @@ import { updateDraft } from "@xpotato/editor-core/draft";
 import { draftSavedTime } from "./DraftDetails.js";
 
 const path = "content/articles/09wsw5yvd59gqrjaz5ee25y3mw.mdx";
-function html(withIndex: boolean, saved: LocalDraft[] = [], intent: "revise" | "drafts" = "revise") {
+function html(
+  withIndex: boolean,
+  saved: LocalDraft[] = [],
+  intent: "revise" | "drafts" = "revise",
+) {
   const git = {
     auth: { authenticated: true },
     branches: ["main"],
@@ -54,8 +58,18 @@ function html(withIndex: boolean, saved: LocalDraft[] = [], intent: "revise" | "
 describe("Git document selection", () => {
   it("distinguishes old same-article copies by save time, changes and an actual comparison entry", () => {
     const initial = createLocalDraft();
-    const first = { ...initial, workingBranch: "content/article", baseSource: initial.source, savedAt: "2026-11-26T00:20:01.000Z" };
-    const second = { ...first, id: crypto.randomUUID(), source: updateDraft(initial.source, { title: "端末で変更" }), savedAt: "2026-11-26T00:21:02.000Z" };
+    const first = {
+      ...initial,
+      workingBranch: "content/article",
+      baseSource: initial.source,
+      savedAt: "2026-11-26T00:20:01.000Z",
+    };
+    const second = {
+      ...first,
+      id: crypto.randomUUID(),
+      source: updateDraft(initial.source, { title: "端末で変更" }),
+      savedAt: "2026-11-26T00:21:02.000Z",
+    };
     const result = html(true, [second, first], "drafts");
     expect(result).toContain(draftSavedTime(first.savedAt));
     expect(result).toContain(draftSavedTime(second.savedAt));
