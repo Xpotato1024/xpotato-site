@@ -1,10 +1,43 @@
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 import { editorStaticServer } from "./editor-static-server.mjs";
 
-const server = await editorStaticServer(resolve("."));
+const root = resolve(".");
+const swPath = ["apps/site/dist/editor/sw.js", "apps/editor/dist/sw.js"]
+  .map((path) => resolve(root, path))
+  .find(existsSync);
+if (!swPath) throw Error("Build the editor before checking its PWA lifecycle");
+const realWorker = await readFile(swPath, "utf8");
+let failPrecache = false,
+  nextVersion = false,
+  failedShellRequests = 0,
+  observedFailure;
+const precacheRequests = [];
+const server = await editorStaticServer(root, undefined, async (request, response) => {
+  const path = new URL(request.url, "http://127.0.0.1").pathname;
+  if (request.headers["sec-fetch-dest"] === "empty" && path.startsWith("/editor/"))
+    precacheRequests.push(path);
+  if (failPrecache && path === "/editor/" && request.headers["sec-fetch-dest"] === "empty") {
+    failedShellRequests++;
+    response.writeHead(200, { "Content-Type": "text/html", "Cache-Control": "no-store" });
+    response.end("Synthetic expired session response");
+    observedFailure?.();
+    return true;
+  }
+  if (nextVersion && path === "/editor/sw.js") {
+    response.writeHead(200, {
+      "Content-Type": "text/javascript",
+      "Cache-Control": "no-cache",
+      "Service-Worker-Allowed": "/editor/",
+    });
+    response.end(realWorker.replace("xpotato-editor-", "xpotato-editor-qa-next-"));
+    return true;
+  }
+  return false;
+});
 let browser;
 try {
   const executable = [
@@ -23,7 +56,7 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   // Keep the real editor and DOM, but inject reproducible browser SW states.
-  // The lifecycle and shell-cache integrity are covered by separate PWA tests.
+  // Real registration, installation failure, retry and cache replacement follow below.
   await page.addInitScript(() => {
     const registration = new EventTarget();
     Object.assign(registration, {
@@ -80,7 +113,203 @@ try {
   assert.equal(await page.getByRole("alert").count(), 0);
   assert.deepEqual(errors, []);
   await context.close();
-  console.log("PASS: PWA update check, invalid registration recovery and stale activation UI.");
+
+  const liveContext = await browser.newContext({ locale: "ja-JP" });
+  liveContext.setDefaultTimeout(25000);
+  const livePage = await liveContext.newPage();
+  const liveErrors = [];
+  livePage.on("pageerror", (error) => liveErrors.push(error.message));
+  failPrecache = true;
+  await livePage.goto(server.origin + "/editor/");
+  const liveUpdate = livePage.getByRole("button", { name: "CMSアプリの更新を確認" });
+  await liveUpdate.waitFor();
+  if (!failedShellRequests)
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(Error("The real worker did not request its shell")),
+        12000,
+      );
+      observedFailure = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+    });
+  await livePage.waitForFunction(
+    async () => !(await navigator.serviceWorker.getRegistration("/editor/"))?.installing,
+  );
+  await liveUpdate.click();
+  await livePage
+    .getByRole("alert")
+    .filter({ hasText: /アプリの準備(?:に失敗|が完了しません)/u })
+    .waitFor();
+  assert.equal(
+    await livePage.getByRole("status").filter({ hasText: "編集アプリは最新です" }).count(),
+    0,
+  );
+  failPrecache = false;
+  await liveUpdate.click();
+  await livePage
+    .getByRole("status")
+    .filter({ hasText: /登録状態を確認し直しました|編集アプリは最新です/u })
+    .waitFor();
+  await livePage.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+  await liveUpdate.click();
+  await livePage.getByRole("status").filter({ hasText: "編集アプリは最新です" }).waitFor();
+  assert(precacheRequests.includes("/editor/"));
+  assert(!precacheRequests.includes("/editor/index.html"));
+  const canonicalRedirect = await liveContext.request.get(server.origin + "/editor/index.html", {
+    maxRedirects: 0,
+  });
+  assert.equal(canonicalRedirect.status(), 307);
+  const before = await livePage.evaluate(async () =>
+    (await caches.keys()).filter((key) => key.startsWith("xpotato-editor-")),
+  );
+  assert.equal(before.length, 1);
+
+  await livePage.getByRole("button", { name: "操作サンプルを開く" }).click();
+  const title = livePage.getByRole("textbox", { name: "タイトル", exact: true });
+  await title.waitFor();
+  await livePage.getByRole("tab", { name: "MDX", exact: true }).click();
+  const source = livePage.locator(".source-editor .cm-content").first();
+  await source.waitFor();
+  nextVersion = true;
+  await liveUpdate.click();
+  const liveApply = livePage.getByRole("button", { name: "CMSアプリの更新を適用" });
+  await liveApply.waitFor();
+
+  // Delay the real IndexedDB completion callback, so persist remains pending
+  // while the browser attempts keyboard/pointer edits behind the modal.
+  await livePage.evaluate(() => {
+    const descriptor = Object.getOwnPropertyDescriptor(IDBTransaction.prototype, "oncomplete");
+    if (!descriptor?.set) throw Error("Missing IndexedDB completion descriptor");
+    const gate = {
+      enabled: true,
+      pending: [],
+      release(fail) {
+        this.enabled = false;
+        for (const complete of this.pending.splice(0)) complete(fail);
+      },
+    };
+    window.__editorUpdateSaveGate = gate;
+    Object.defineProperty(IDBTransaction.prototype, "oncomplete", {
+      ...descriptor,
+      set(handler) {
+        descriptor.set.call(
+          this,
+          typeof handler !== "function"
+            ? handler
+            : function (event) {
+                if (
+                  !gate.enabled ||
+                  this.mode !== "readwrite" ||
+                  !this.objectStoreNames.contains("drafts")
+                ) {
+                  handler.call(this, event);
+                  return;
+                }
+                gate.pending.push((fail) => {
+                  if (fail) this.onerror?.call(this, new Event("error"));
+                  else handler.call(this, event);
+                });
+              },
+        );
+      },
+    });
+  });
+  await title.fill("更新中も保全する下書き");
+  await source.click();
+  await source.press("Control+a");
+  await livePage.keyboard.insertText("# 更新直前の本文\n\n350msの自動保存を待たずに適用する。\n");
+  await liveApply.click();
+  const lock = livePage.getByRole("dialog", { name: "保存して更新しています" });
+  await lock.waitFor();
+  await livePage.waitForFunction(() => window.__editorUpdateSaveGate.pending.length > 0);
+  const lockedSource = await source.innerText();
+  await source.focus();
+  await livePage.keyboard.insertText("保存中に追加できてはいけない本文");
+  assert.equal(await source.innerText(), lockedSource);
+  await title.focus();
+  await livePage.keyboard.insertText("変更してはいけないタイトル");
+  assert.equal(await title.inputValue(), "更新中も保全する下書き");
+  await livePage.keyboard.press("Escape");
+  assert(await lock.isVisible());
+  let blocked = false;
+  try {
+    await livePage.getByRole("button", { name: "画像を開く", exact: true }).click({ timeout: 300 });
+  } catch {
+    blocked = true;
+  }
+  assert(blocked, "Media actions must remain blocked while applying an update");
+  await livePage.evaluate(() => window.__editorUpdateSaveGate.release(true));
+  await lock.waitFor({ state: "hidden" });
+  assert((await livePage.getByRole("alert").count()) > 0);
+  assert(
+    await livePage.evaluate(async () =>
+      Boolean((await navigator.serviceWorker.getRegistration("/editor/"))?.waiting),
+    ),
+  );
+
+  await source.click();
+  await source.press("Control+a");
+  const recoveredBody = "# 更新前の本文\n\n保存失敗後も編集でき、その内容を保持する。\n";
+  await livePage.keyboard.insertText(recoveredBody);
+  await livePage.evaluate(() => {
+    window.__editorUpdateSaveGate.enabled = true;
+  });
+  await livePage.getByRole("button", { name: "保存して更新", exact: true }).click();
+  await lock.waitFor();
+  await livePage.waitForFunction(() => window.__editorUpdateSaveGate.pending.length > 0);
+  await Promise.all([
+    livePage.waitForEvent("load"),
+    livePage.evaluate(() => window.__editorUpdateSaveGate.release(false)),
+  ]);
+  await liveUpdate.waitFor();
+  await livePage.waitForFunction(async () => {
+    const keys = (await caches.keys()).filter((key) => key.startsWith("xpotato-editor-"));
+    return keys.length === 1 && keys[0].startsWith("xpotato-editor-qa-next-");
+  });
+  const cached = await livePage.evaluate(async () => {
+    const keys = (await caches.keys()).filter((key) => key.startsWith("xpotato-editor-"));
+    return {
+      keys,
+      paths: (await (await caches.open(keys[0])).keys()).map(
+        (request) => new URL(request.url).pathname,
+      ),
+    };
+  });
+  assert(!cached.keys.some((key) => before.includes(key)));
+  assert(cached.paths.includes("/editor/index.html"));
+  assert(cached.paths.length > 5);
+  assert(cached.paths.every((path) => path.startsWith("/editor/") && !path.includes("editor-api")));
+  const savedDrafts = await livePage.evaluate(
+    () =>
+      new Promise((resolve, reject) => {
+        const open = indexedDB.open("xpotato-editor-v1", 3);
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const db = open.result,
+            tx = db.transaction("drafts", "readonly");
+          const request = tx.objectStore("drafts").getAll();
+          tx.oncomplete = () => {
+            db.close();
+            resolve(request.result);
+          };
+          tx.onerror = () => {
+            db.close();
+            reject(tx.error);
+          };
+        };
+      }),
+  );
+  assert(savedDrafts.some((draft) => draft.source.includes(recoveredBody)));
+  await liveContext.setOffline(true);
+  await livePage.reload();
+  await liveUpdate.waitFor();
+  assert.deepEqual(liveErrors, []);
+  await liveContext.close();
+  console.log(
+    "PASS: PWA update UI, real registration failure/retry, canonical shell, editing lock until durable save, unlock after failure, verified cache replacement and offline reopening.",
+  );
 } finally {
   await browser?.close();
   await server.close();

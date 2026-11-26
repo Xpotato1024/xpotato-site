@@ -16,7 +16,7 @@ const types = {
   ".webmanifest": "application/manifest+json",
   ".png": "image/png",
 };
-export async function editorStaticServer(root, api) {
+export async function editorStaticServer(root, api, beforeStatic) {
   const integrated = resolve(root, "apps/site/dist/editor"),
     dist = existsSync(join(integrated, "index.html"))
       ? integrated
@@ -45,6 +45,14 @@ export async function editorStaticServer(root, api) {
       }
       if (!["GET", "HEAD"].includes(req.method)) {
         res.writeHead(405);
+        res.end();
+        return;
+      }
+      if (beforeStatic && (await beforeStatic(req, res))) return;
+      // Match Static Assets HTML canonicalization so service-worker tests do not
+      // accept a precache URL that only works on this local server.
+      if (url.pathname === "/editor/index.html") {
+        res.writeHead(307, { Location: "/editor/", "Cache-Control": "no-store" });
         res.end();
         return;
       }

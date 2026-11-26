@@ -1,3 +1,5 @@
+export const footnoteBackrefIconPath = "m9 5-5 5 5 5M4 10h11a5 5 0 0 1 0 10h-3";
+
 /** Replace only the generated return glyph, preserving GFM targets, labels and repeat counts. */
 export function rehypeFootnoteBacklinks() {
   return (tree) => {
@@ -35,7 +37,7 @@ export function rehypeFootnoteBacklinks() {
                       {
                         type: "element",
                         tagName: "path",
-                        properties: { d: "m9 5-5 5 5 5M4 10h11a5 5 0 0 1 0 10h-3" },
+                        properties: { d: footnoteBackrefIconPath },
                         children: [],
                       },
                     ],

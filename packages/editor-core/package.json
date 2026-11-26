@@ -6,6 +6,7 @@
     ".": "./src/index.ts",
     "./draft": "./src/draft.ts",
     "./blocks": "./src/blocks.ts",
+    "./footnotes": "./src/footnotes.ts",
     "./policy": "./src/policy.ts",
     "./git": "./src/git.ts",
     "./retention": "./src/retention.ts",

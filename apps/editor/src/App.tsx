@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import type { ContentCollection } from "@xpotato/content-contracts/common";
 import { collectionFromPath, updateDraft } from "@xpotato/editor-core/draft";
 import type { GitSnapshot } from "@xpotato/editor-core/git";
@@ -31,8 +32,6 @@ import type { EditorSeriesPreview } from "./preview.js";
 import { useWorkspaceNavigation } from "./features/workspace/navigation.js";
 import { useRegistryWorkspace } from "./features/workspace/useRegistryWorkspace.js";
 import { WorkspaceHome, WorkspaceNavigation } from "./features/workspace/WorkspaceHome.js";
-import { StartWorkspace } from "./features/workspace/StartWorkspace.js";
-import { RegistryWorkspace } from "./features/workspace/RegistryWorkspace.js";
 import { reviewCommentSelection } from "./features/review/review-actions.js";
 import { useReviewComposerDrafts } from "./features/review/useReviewComposerDrafts.js";
 import {
@@ -41,6 +40,14 @@ import {
   saveLocalMedia,
   type LocalDraft,
 } from "./data/storage.js";
+const StartWorkspace = lazy(() =>
+  import("./features/workspace/StartWorkspace.js").then((m) => ({ default: m.StartWorkspace })),
+);
+const RegistryWorkspace = lazy(() =>
+  import("./features/workspace/RegistryWorkspace.js").then((m) => ({
+    default: m.RegistryWorkspace,
+  })),
+);
 const DocumentEditor = lazy(() =>
   import("./features/editing/DocumentEditor.js").then((m) => ({ default: m.DocumentEditor })),
 );
@@ -121,6 +128,7 @@ export default function App() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const updateDialog = useRef<HTMLDialogElement>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
   const [reviewSelectionRequest, setReviewSelectionRequest] = useState(0);
@@ -239,15 +247,36 @@ export default function App() {
     setNotice("");
     try {
       if (environment.updateReady) {
-        const result = await environment.activateUpdate(workspace.persist);
-        if (result === "current") setNotice("更新はすでに適用されています。");
+        const dialog = updateDialog.current;
+        if (!dialog) throw Error("更新画面を開けませんでした。");
+        try {
+          // A modal makes every other control inert, including portals and Shadow DOM.
+          // Commit blur/composition handlers before capturing the durable draft.
+          flushSync(() => {
+            let active = document.activeElement;
+            while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+            if (active instanceof HTMLElement) active.blur();
+            dialog.showModal();
+          });
+          await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+          const result = await environment.activateUpdate(async () => {
+            await registry.persist();
+            await workspace.persist();
+          });
+          if (result === "current") {
+            dialog.close();
+            setNotice("更新はすでに適用されています。");
+          }
+          // Keep the modal open until navigation when activation succeeded.
+        } catch (failure) {
+          dialog.close();
+          throw failure;
+        }
         return;
       }
       const result = await environment.checkForUpdate();
       if (result === "ready")
         setNotice("新しい編集アプリがあります。「保存して更新」で適用できます。");
-      else if (result === "installing")
-        setNotice("アプリのキャッシュを準備中です。完了後に更新状態を確認してください。");
       else if (result === "current") setNotice("編集アプリは最新です。");
       else if (result === "recovered")
         setNotice("アプリの登録状態を確認し直しました。もう一度更新を確認してください。");
@@ -523,12 +552,7 @@ export default function App() {
               <button
                 type="button"
                 disabled={busy || checkingUpdate}
-                onClick={() =>
-                  void act(async () => {
-                    const result = await environment.activateUpdate(workspace.persist);
-                    if (result === "current") setNotice("更新はすでに適用されています。");
-                  })
-                }
+                onClick={() => void requestPwaUpdate()}
               >
                 保存して更新
               </button>
@@ -559,31 +583,39 @@ export default function App() {
               />
             )}
             {(page === "new" || page === "revise" || page === "drafts") && (
-              <StartWorkspace
-                key={page + git.auth.authenticated}
-                intent={page}
-                git={git}
-                saved={workspace.saved}
-                busy={busy}
-                onNew={newDocument}
-                onLocal={openLocalDocument}
-                onDeleteLocal={(draft) => workspace.removeFromDevice(draft.id)}
-                onArchiveLocal={archiveLocalDraft}
-                onRemote={openRemoteDocument}
-                onImport={importFile}
-                run={(operation) => void act(operation)}
-              />
+              <div>
+                <Suspense fallback={<p role="status">画面を開いています…</p>}>
+                  <StartWorkspace
+                    key={page + git.auth.authenticated}
+                    intent={page}
+                    git={git}
+                    saved={workspace.saved}
+                    busy={busy}
+                    onNew={newDocument}
+                    onLocal={openLocalDocument}
+                    onDeleteLocal={(draft) => workspace.removeFromDevice(draft.id)}
+                    onArchiveLocal={archiveLocalDraft}
+                    onRemote={openRemoteDocument}
+                    onImport={importFile}
+                    run={(operation) => void act(operation)}
+                  />
+                </Suspense>
+              </div>
             )}
             {(page === "taxonomy" || page === "series") && (
-              <RegistryWorkspace
-                key={page + git.auth.authenticated}
-                kind={page}
-                git={git}
-                registry={registry}
-                busy={busy}
-                run={(operation) => void act(operation)}
-                onError={setError}
-              />
+              <div>
+                <Suspense fallback={<p role="status">管理画面を開いています…</p>}>
+                  <RegistryWorkspace
+                    key={page + git.auth.authenticated}
+                    kind={page}
+                    git={git}
+                    registry={registry}
+                    busy={busy}
+                    run={(operation) => void act(operation)}
+                    onError={setError}
+                  />
+                </Suspense>
+              </div>
             )}
             {page === "connection" && (
               <section className="workspace-connection">
@@ -960,6 +992,18 @@ export default function App() {
           </footer>
         </div>
       )}
+      <dialog
+        ref={updateDialog}
+        className="editor-update-dialog"
+        aria-labelledby="editor-update-title"
+        aria-describedby="editor-update-description"
+        onCancel={(event) => event.preventDefault()}
+      >
+        <h2 id="editor-update-title">保存して更新しています</h2>
+        <p id="editor-update-description" role="status">
+          原稿を保存してから、新しいアプリを開きます。
+        </p>
+      </dialog>
     </div>
   );
 }

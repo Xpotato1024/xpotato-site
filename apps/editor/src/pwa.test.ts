@@ -1,13 +1,35 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { activateEditorUpdate, checkEditorUpdate, registerEditorWorker } from "./pwa.js";
+import {
+  activateEditorUpdate,
+  checkEditorUpdate,
+  registerEditorWorker,
+  registerEditorUpdatePreparation,
+} from "./pwa.js";
 
 type WorkerMock = {
   state: string;
   postMessage: ReturnType<typeof vi.fn>;
   addEventListener: ReturnType<typeof vi.fn>;
+  removeEventListener: ReturnType<typeof vi.fn>;
+  changeState: (state: string) => void;
 };
-function makeWorker(): WorkerMock {
-  return { state: "installing", postMessage: vi.fn(), addEventListener: vi.fn() };
+function makeWorker(state = "installing"): WorkerMock {
+  const callbacks = new Set<() => void>();
+  const worker = {
+    state,
+    postMessage: vi.fn(),
+    addEventListener: vi.fn((type: string, callback: () => void) => {
+      if (type === "statechange") callbacks.add(callback);
+    }),
+    removeEventListener: vi.fn((type: string, callback: () => void) => {
+      if (type === "statechange") callbacks.delete(callback);
+    }),
+    changeState: (next: string) => {
+      worker.state = next;
+      for (const callback of [...callbacks]) callback();
+    },
+  };
+  return worker;
 }
 
 function setup() {
@@ -16,9 +38,15 @@ function setup() {
   const registration = {
     waiting: null as WorkerMock | null,
     installing: null as WorkerMock | null,
-    active: { ...makeWorker(), state: "activated" } as WorkerMock | null,
+    active: makeWorker("activated") as WorkerMock | null,
     addEventListener: vi.fn((type: string, callback: () => void) => {
       if (type === "updatefound") updateEvents.push(callback);
+    }),
+    removeEventListener: vi.fn((type: string, callback: () => void) => {
+      if (type === "updatefound") {
+        const i = updateEvents.indexOf(callback);
+        if (i !== -1) updateEvents.splice(i, 1);
+      }
     }),
     update: vi.fn(async () => {}),
   };
@@ -50,6 +78,7 @@ function setup() {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -79,21 +108,19 @@ describe("manual editor PWA update", () => {
     );
   });
 
-  it("does not mistake an installing worker for the latest installed app", async () => {
+  it("waits for an installing update and reports ready when the shell finishes", async () => {
     const { registration, updateEvents, dispatchEvent } = setup();
     const worker = makeWorker();
-    const changeCallbacks: Array<() => void> = [];
-    worker.addEventListener.mockImplementation((type: string, callback: () => void) => {
-      if (type === "statechange") changeCallbacks.push(callback);
-    });
     registration.update.mockImplementation(async () => {
       registration.installing = worker;
       for (const callback of updateEvents) callback();
     });
-    expect(await checkEditorUpdate()).toBe("installing");
+    const checking = checkEditorUpdate();
+    await vi.waitFor(() => expect(worker.addEventListener).toHaveBeenCalled());
     registration.waiting = worker;
-    worker.state = "installed";
-    for (const callback of changeCallbacks) callback();
+    registration.installing = null;
+    worker.changeState("installed");
+    expect(await checking).toBe("ready");
     expect(dispatchEvent).toHaveBeenCalledWith(
       expect.objectContaining({ type: "editor-update-ready" }),
     );
@@ -150,6 +177,53 @@ describe("manual editor PWA update", () => {
     expect(reload).not.toHaveBeenCalled();
   });
 
+  it("waits for pending blur saves before persisting the draft and activating", async () => {
+    const { registration, serviceWorker, serviceEvents } = setup();
+    const worker = makeWorker();
+    registration.waiting = worker;
+    let release = () => {};
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const removePreparation = registerEditorUpdatePreparation(() => pending);
+    const persist = vi.fn(async () => {});
+    worker.postMessage.mockImplementation(() => {
+      serviceWorker.controller = worker;
+      for (const callback of [...serviceEvents]) callback();
+    });
+    try {
+      const applying = activateEditorUpdate(persist);
+      await Promise.resolve();
+      expect(persist).not.toHaveBeenCalled();
+      expect(worker.postMessage).not.toHaveBeenCalled();
+      release();
+      await expect(applying).resolves.toBe("applied");
+      expect(persist).toHaveBeenCalledOnce();
+    } finally {
+      removePreparation();
+    }
+  });
+
+  it("does not reload when an editor still has a pending operation or a blur save failed", async () => {
+    const { registration, reload } = setup();
+    const worker = makeWorker();
+    registration.waiting = worker;
+    const persist = vi.fn(async () => {});
+    const removePreparation = registerEditorUpdatePreparation(() => {
+      throw Error("画像の情報を保存できませんでした。");
+    });
+    try {
+      await expect(activateEditorUpdate(persist)).rejects.toThrow(
+        "画像の情報を保存できませんでした",
+      );
+      expect(persist).not.toHaveBeenCalled();
+      expect(worker.postMessage).not.toHaveBeenCalled();
+      expect(reload).not.toHaveBeenCalled();
+    } finally {
+      removePreparation();
+    }
+  });
+
   it("will not reload for a different controllerchange", async () => {
     const { registration, serviceWorker, reload, serviceEvents } = setup();
     const worker = makeWorker();
@@ -166,18 +240,28 @@ describe("manual editor PWA update", () => {
 });
 
 describe("registration lifecycle recovery", () => {
-  it("does not call update() while the first worker is installing", async () => {
+  it("waits for the first worker to activate without calling update() on an incomplete registration", async () => {
     const { registration } = setup();
     registration.active = null;
-    registration.installing = makeWorker();
-    expect(await checkEditorUpdate()).toBe("installing");
+    const worker = makeWorker();
+    registration.installing = worker;
+    const checking = checkEditorUpdate();
+    await vi.waitFor(() => expect(worker.addEventListener).toHaveBeenCalled());
     expect(registration.update).not.toHaveBeenCalled();
+    registration.installing = null;
+    registration.active = worker;
+    worker.changeState("activated");
+    expect(await checking).toBe("current");
   });
 
   it("repairs an empty registration before attempting to update it", async () => {
     const { registration, serviceWorker } = setup();
     registration.active = null;
-    expect(await checkEditorUpdate()).toBe("installing");
+    serviceWorker.register.mockImplementation(async () => {
+      registration.active = makeWorker("activated");
+      return registration;
+    });
+    expect(await checkEditorUpdate()).toBe("recovered");
     expect(serviceWorker.register).toHaveBeenCalledOnce();
     expect(registration.update).not.toHaveBeenCalled();
   });
@@ -186,8 +270,14 @@ describe("registration lifecycle recovery", () => {
     const { registration, serviceWorker } = setup();
     serviceWorker.getRegistration.mockResolvedValue(null);
     registration.active = null;
-    registration.installing = makeWorker();
-    expect(await checkEditorUpdate()).toBe("installing");
+    const worker = makeWorker();
+    registration.installing = worker;
+    const checking = checkEditorUpdate();
+    await vi.waitFor(() => expect(worker.addEventListener).toHaveBeenCalled());
+    registration.installing = null;
+    registration.active = worker;
+    worker.changeState("activated");
+    expect(await checking).toBe("recovered");
     expect(serviceWorker.register).toHaveBeenCalledOnce();
   });
   it("recovers the exact WebKit error without reporting a false success", async () => {
@@ -206,15 +296,56 @@ describe("registration lifecycle recovery", () => {
     });
     registration.update.mockRejectedValue(error);
     serviceWorker.getRegistration.mockResolvedValueOnce(registration).mockResolvedValueOnce(null);
-    const replacement = { ...registration, active: null, installing: makeWorker() };
+    const worker = makeWorker();
+    const replacement = {
+      ...registration,
+      active: null as WorkerMock | null,
+      installing: worker as WorkerMock | null,
+    };
     serviceWorker.register.mockResolvedValueOnce(replacement);
-    expect(await checkEditorUpdate()).toBe("installing");
+    const checking = checkEditorUpdate();
+    await vi.waitFor(() => expect(worker.addEventListener).toHaveBeenCalled());
+    replacement.installing = null;
+    replacement.active = worker;
+    worker.changeState("activated");
+    expect(await checking).toBe("recovered");
     expect(serviceWorker.register).toHaveBeenCalledOnce();
   });
   it("still reports genuine network update errors", async () => {
     const { registration } = setup();
     registration.update.mockRejectedValue(new TypeError("Failed to fetch /editor/sw.js"));
     await expect(checkEditorUpdate()).rejects.toThrow("Failed to fetch");
+  });
+
+  it("reports a failed installation instead of claiming that the older active app is current", async () => {
+    const { registration, updateEvents } = setup();
+    const worker = makeWorker();
+    registration.update.mockImplementation(async () => {
+      registration.installing = worker;
+      for (const callback of [...updateEvents]) callback();
+      registration.installing = null;
+      worker.changeState("redundant");
+    });
+    await expect(checkEditorUpdate()).rejects.toThrow("アプリの準備に失敗しました");
+    registration.update.mockImplementation(async () => {});
+    expect(await checkEditorUpdate()).toBe("current");
+  });
+
+  it("reports a stalled installation after a bounded wait and removes its listeners", async () => {
+    vi.useFakeTimers();
+    const { registration } = setup();
+    registration.active = null;
+    const worker = makeWorker();
+    registration.installing = worker;
+    const checking =
+      expect(checkEditorUpdate()).rejects.toThrow("アプリの準備が完了しませんでした");
+    await vi.advanceTimersByTimeAsync(15000);
+    await checking;
+    expect(registration.removeEventListener).toHaveBeenCalledWith(
+      "updatefound",
+      expect.any(Function),
+    );
+    expect(worker.removeEventListener).toHaveBeenCalledWith("statechange", expect.any(Function));
   });
 
   it("handles a waiting worker that auto-activated before the user tapped", async () => {

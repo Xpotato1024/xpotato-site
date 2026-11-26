@@ -14,7 +14,10 @@ const files = [
 
 test("Access-protected editor precache includes same-origin credentials", () => {
   const worker = editorWorkerSource(files);
-  assert.match(worker, /new Request\(path,\{cache:'reload',credentials:'include'\}\)/);
+  assert.match(
+    worker,
+    /new Request\(requestPath\(path\),\{cache:'reload',credentials:'include'\}\)/,
+  );
   assert.doesNotMatch(worker, /credentials:'omit'/);
 });
 
@@ -67,7 +70,7 @@ test("preview font subsets load on demand and enter the same verified offline ca
       fetch: async (request) => {
         const path = request.path ?? new URL(request.url).pathname;
         fetched.push(path);
-        return new Response(bodies.get(path));
+        return new Response(bodies.get(path === "/editor/" ? "/editor/index.html" : path));
       },
     },
   );
@@ -78,7 +81,7 @@ test("preview font subsets load on demand and enter the same verified offline ca
     },
   });
   await installed;
-  assert.deepEqual(fetched, ["/editor/index.html", "/editor/fonts/core.woff2"]);
+  assert.deepEqual(fetched, ["/editor/", "/editor/fonts/core.woff2"]);
   let received;
   listeners.get("fetch")({
     request: {
@@ -97,6 +100,92 @@ test("preview font subsets load on demand and enter the same verified offline ca
     () => editorWorkerSource(inventory, { lazyFontPaths: ["/editor-api/draft"] }),
     /EDITOR_LAZY_ASSET_NOT_FONT/,
   );
+});
+
+async function installShell(responseFor) {
+  const bodies = new Map([
+    ["/editor/index.html", "exact shell"],
+    ["/editor/assets/editor.js", "exact app"],
+  ]);
+  const inventory = [...bodies].map(([path, body]) => ({
+    path,
+    bytes: Buffer.byteLength(body),
+    sha256: createHash("sha256").update(body).digest("hex"),
+  }));
+  const listeners = new Map(),
+    stored = new Map(),
+    fetched = [],
+    deleted = [];
+  runInNewContext(editorWorkerSource(inventory), {
+    crypto: webcrypto,
+    URL,
+    Response,
+    Request: class {
+      constructor(path, options) {
+        this.path = path;
+        this.options = options;
+      }
+    },
+    self: { addEventListener: (type, handler) => listeners.set(type, handler) },
+    caches: {
+      has: async () => false,
+      open: async () => ({
+        put: async (path, response) => stored.set(path, await response.text()),
+      }),
+      delete: async (key) => {
+        deleted.push(key);
+        return true;
+      },
+    },
+    fetch: async (request) => {
+      fetched.push(request);
+      const body = bodies.get(request.path === "/editor/" ? "/editor/index.html" : request.path);
+      return responseFor(request.path, body);
+    },
+  });
+  let completed;
+  listeners.get("install")({
+    waitUntil: (task) => {
+      completed = task;
+    },
+  });
+  return { completed, stored, fetched, deleted };
+}
+
+test("canonical shell URL installs behind Static Assets redirects without weakening exact-byte checks", async () => {
+  const run = await installShell((path, body) => {
+    if (path === "/editor/index.html")
+      return Response.redirect("https://xpotato.test/editor/", 307);
+    return new Response(body);
+  });
+  await run.completed;
+  assert.deepEqual(
+    run.fetched.map((request) => request.path),
+    ["/editor/", "/editor/assets/editor.js"],
+  );
+  for (const request of run.fetched) {
+    assert.equal(request.options.credentials, "include");
+    assert.equal(request.options.cache, "reload");
+  }
+  assert.equal(run.stored.get("/editor/index.html"), "exact shell");
+  assert.equal(run.stored.get("/editor/assets/editor.js"), "exact app");
+  assert.equal(run.deleted.length, 0);
+});
+
+test("login redirects and changed shell bytes still reject installation and discard the partial cache", async () => {
+  for (const fault of ["redirect", "body"]) {
+    const run = await installShell((path, body) => {
+      const response = new Response(
+        path === "/editor/" && fault === "body" ? "sign-in page" : body,
+      );
+      if (path === "/editor/" && fault === "redirect")
+        Object.defineProperty(response, "redirected", { value: true });
+      return response;
+    });
+    await assert.rejects(run.completed, /EDITOR_SHELL_HASH_MISMATCH/);
+    assert.equal(run.stored.size, 0);
+    assert.equal(run.deleted.length, 1);
+  }
 });
 
 test("precache includes approved CMS icon paths but rejects arbitrary raster", async () => {
