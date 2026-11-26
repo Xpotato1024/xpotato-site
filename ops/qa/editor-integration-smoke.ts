@@ -189,6 +189,8 @@ try {
   assert.equal(git.pulls[0]!.base.ref, "main");
   // Article-level review is private and must not produce an empty Git commit.
   await panel(page, "添削を開く", page.getByRole("region", { name: "本文の添削" }));
+  const articleTarget = page.getByRole("button", { name: "記事全体への指摘", exact: true });
+  if ((await articleTarget.getAttribute("aria-pressed")) !== "true") await articleTarget.click();
   await page.getByText("対象：記事全体（構成・方針・品質など）", { exact: true }).waitFor();
   await page.getByRole("textbox", { name: "指摘", exact: true }).fill("記事全体の構成を見直す");
   await page.getByRole("button", { name: "指摘を追加", exact: true }).click();
