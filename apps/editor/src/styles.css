@@ -64,6 +64,20 @@ h3 {
 [hidden] {
   display: none !important;
 }
+.editor-update-dialog {
+  width: min(90vw, 28rem);
+  padding: 1.5rem;
+  border: 1px solid var(--border-divider);
+  border-radius: 0.75rem;
+  color: var(--text-primary);
+  background: var(--surface);
+}
+.editor-update-dialog::backdrop {
+  background: rgb(0 0 0 / 35%);
+}
+.editor-update-dialog p {
+  margin-bottom: 0;
+}
 .editor-app {
   position: fixed;
   inset-inline: 0;

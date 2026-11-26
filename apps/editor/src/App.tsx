@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import type { ContentCollection } from "@xpotato/content-contracts/common";
 import { collectionFromPath, updateDraft } from "@xpotato/editor-core/draft";
 import type { GitSnapshot } from "@xpotato/editor-core/git";
@@ -121,6 +122,7 @@ export default function App() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const updateDialog = useRef<HTMLDialogElement>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
   const [reviewSelectionRequest, setReviewSelectionRequest] = useState(0);
@@ -239,8 +241,31 @@ export default function App() {
     setNotice("");
     try {
       if (environment.updateReady) {
-        const result = await environment.activateUpdate(workspace.persist);
-        if (result === "current") setNotice("更新はすでに適用されています。");
+        const dialog = updateDialog.current;
+        if (!dialog) throw Error("更新画面を開けませんでした。");
+        try {
+          // A modal makes every other control inert, including portals and Shadow DOM.
+          // Commit blur/composition handlers before capturing the durable draft.
+          flushSync(() => {
+            let active = document.activeElement;
+            while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+            if (active instanceof HTMLElement) active.blur();
+            dialog.showModal();
+          });
+          await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+          const result = await environment.activateUpdate(async () => {
+            await registry.persist();
+            await workspace.persist();
+          });
+          if (result === "current") {
+            dialog.close();
+            setNotice("更新はすでに適用されています。");
+          }
+          // Keep the modal open until navigation when activation succeeded.
+        } catch (failure) {
+          dialog.close();
+          throw failure;
+        }
         return;
       }
       const result = await environment.checkForUpdate();
@@ -521,12 +546,7 @@ export default function App() {
               <button
                 type="button"
                 disabled={busy || checkingUpdate}
-                onClick={() =>
-                  void act(async () => {
-                    const result = await environment.activateUpdate(workspace.persist);
-                    if (result === "current") setNotice("更新はすでに適用されています。");
-                  })
-                }
+                onClick={() => void requestPwaUpdate()}
               >
                 保存して更新
               </button>
@@ -958,6 +978,16 @@ export default function App() {
           </footer>
         </div>
       )}
+      <dialog
+        ref={updateDialog}
+        className="editor-update-dialog"
+        aria-labelledby="editor-update-title"
+        aria-describedby="editor-update-description"
+        onCancel={(event) => event.preventDefault()}
+      >
+        <h2 id="editor-update-title">保存して更新しています</h2>
+        <p id="editor-update-description" role="status">原稿を保存してから、新しいアプリを開きます。</p>
+      </dialog>
     </div>
   );
 }

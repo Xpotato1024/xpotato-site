@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { activateEditorUpdate, checkEditorUpdate, registerEditorWorker } from "./pwa.js";
+import { activateEditorUpdate, checkEditorUpdate, registerEditorWorker, registerEditorUpdatePreparation } from "./pwa.js";
 
 type WorkerMock = {
   state: string;
@@ -170,6 +170,49 @@ describe("manual editor PWA update", () => {
     await expect(activateEditorUpdate(persist)).resolves.toBe("current");
     expect(persist).not.toHaveBeenCalled();
     expect(reload).not.toHaveBeenCalled();
+  });
+
+  it("waits for pending blur saves before persisting the draft and activating", async () => {
+    const { registration, serviceWorker, serviceEvents } = setup();
+    const worker = makeWorker();
+    registration.waiting = worker;
+    let release = () => {};
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    const removePreparation = registerEditorUpdatePreparation(() => pending);
+    const persist = vi.fn(async () => {});
+    worker.postMessage.mockImplementation(() => {
+      serviceWorker.controller = worker;
+      for (const callback of [...serviceEvents]) callback();
+    });
+    try {
+      const applying = activateEditorUpdate(persist);
+      await Promise.resolve();
+      expect(persist).not.toHaveBeenCalled();
+      expect(worker.postMessage).not.toHaveBeenCalled();
+      release();
+      await expect(applying).resolves.toBe("applied");
+      expect(persist).toHaveBeenCalledOnce();
+    } finally {
+      removePreparation();
+    }
+  });
+
+  it("does not reload when an editor still has a pending operation or a blur save failed", async () => {
+    const { registration, reload } = setup();
+    const worker = makeWorker();
+    registration.waiting = worker;
+    const persist = vi.fn(async () => {});
+    const removePreparation = registerEditorUpdatePreparation(() => {
+      throw Error("画像の情報を保存できませんでした。");
+    });
+    try {
+      await expect(activateEditorUpdate(persist)).rejects.toThrow("画像の情報を保存できませんでした");
+      expect(persist).not.toHaveBeenCalled();
+      expect(worker.postMessage).not.toHaveBeenCalled();
+      expect(reload).not.toHaveBeenCalled();
+    } finally {
+      removePreparation();
+    }
   });
 
   it("will not reload for a different controllerchange", async () => {

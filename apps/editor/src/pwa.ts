@@ -5,6 +5,12 @@ type WorkerStatus = "current" | "installing" | "ready";
 const workerScope = "/editor/";
 const observedRegistrations = new WeakSet<ServiceWorkerRegistration>();
 const failedInstallations = new WeakSet<ServiceWorkerRegistration>();
+const updatePreparations = new Set<() => void | Promise<void>>();
+
+export function registerEditorUpdatePreparation(prepare: () => void | Promise<void>) {
+  updatePreparations.add(prepare);
+  return () => { updatePreparations.delete(prepare); };
+}
 
 const installationFailure = () =>
   Error("アプリの準備に失敗しました。接続を確認してから、更新をもう一度確認してください。");
@@ -159,6 +165,7 @@ export async function activateEditorUpdate(
   if (!registration || !waiting) return "current";
 
   // Never replace an editor session before the current draft is durable.
+  await Promise.all([...updatePreparations].map((prepare) => Promise.resolve().then(prepare)));
   await persist();
   if (registration.waiting !== waiting) return "current";
 
