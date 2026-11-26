@@ -222,9 +222,7 @@ export function createEditorHandoffClient(
         throw Error("EDITOR_CLI_API_REQUEST_FAILED");
       }
       throw Error(
-        typeof code === "string" && safeCodes.has(code)
-          ? code
-          : "EDITOR_CLI_API_REQUEST_FAILED",
+        typeof code === "string" && safeCodes.has(code) ? code : "EDITOR_CLI_API_REQUEST_FAILED",
       );
     }
     return response;

@@ -88,10 +88,7 @@ function findDraft(state: DraftState, manifest: MediaHandoffManifest): DraftReco
     throw new APIError("DRAFT_NOT_FOUND", 404);
   }
   const draft = active[0] ?? null;
-  if (
-    draft &&
-    (draft.sourcePath ?? draftPath(draft.contentId)) !== manifest.source.path
-  ) {
+  if (draft && (draft.sourcePath ?? draftPath(draft.contentId)) !== manifest.source.path) {
     throw new APIError("DRAFT_MEDIA_IDENTITY_MISMATCH", 409);
   }
   return draft;
@@ -135,7 +132,9 @@ function handoffSnapshot(state: DraftState, manifest: MediaHandoffManifest) {
     source: manifest.source,
     draft,
     assets: draft
-      ? Object.values(state.assets).filter((asset) => asset.draftId === draft.id).map(publicAsset)
+      ? Object.values(state.assets)
+          .filter((asset) => asset.draftId === draft.id)
+          .map(publicAsset)
       : [],
   };
 }

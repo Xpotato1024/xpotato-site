@@ -337,8 +337,11 @@ export function parseMediaHandoffManifest(value: unknown): MediaHandoffManifest 
       item.assetId.length > 100 ||
       !assetId.test(item.assetId) ||
       (item.expectedRemoteSha256 !== undefined &&
-        (typeof item.expectedRemoteSha256 !== "string" || !sha256.test(item.expectedRemoteSha256))) ||
-      Object.keys(item).some((key) => !["assetId", "metadata", "expectedRemoteSha256"].includes(key))
+        (typeof item.expectedRemoteSha256 !== "string" ||
+          !sha256.test(item.expectedRemoteSha256))) ||
+      Object.keys(item).some(
+        (key) => !["assetId", "metadata", "expectedRemoteSha256"].includes(key),
+      )
     ) {
       throw Error("MEDIA_HANDOFF_ASSET_INVALID");
     }

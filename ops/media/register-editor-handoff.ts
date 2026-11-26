@@ -97,7 +97,11 @@ async function privateInput(path: string): Promise<Uint8Array> {
 
 function decodeBase64(encoded: string, size: number, expectedHash: string): Uint8Array {
   const bytes = Buffer.from(encoded, "base64");
-  if (bytes.toString("base64") !== encoded || bytes.length !== size || hash(bytes) !== expectedHash) {
+  if (
+    bytes.toString("base64") !== encoded ||
+    bytes.length !== size ||
+    hash(bytes) !== expectedHash
+  ) {
     throw Error("MEDIA_HANDOFF_IMAGE_HASH_MISMATCH");
   }
   return bytes;
@@ -213,7 +217,9 @@ function assertSnapshot(snapshot: HandoffSnapshot, manifest: MediaHandoffManifes
     !object(snapshot.source) ||
     !Array.isArray(snapshot.assets) ||
     ["contentId", "branch", "commit", "path", "sha256"].some(
-      (key) => snapshot.source[key as keyof typeof snapshot.source] !== manifest.source[key as keyof typeof manifest.source],
+      (key) =>
+        snapshot.source[key as keyof typeof snapshot.source] !==
+        manifest.source[key as keyof typeof manifest.source],
     )
   ) {
     throw Error("MEDIA_HANDOFF_SOURCE_MISMATCH");
@@ -269,7 +275,11 @@ function assertPreimages(snapshot: HandoffSnapshot, manifest: MediaHandoffManife
   }
 }
 
-function assertAsset(asset: HandoffAsset | undefined, expected: CheckedAsset, draftId: string): asserts asset is HandoffAsset {
+function assertAsset(
+  asset: HandoffAsset | undefined,
+  expected: CheckedAsset,
+  draftId: string,
+): asserts asset is HandoffAsset {
   if (
     !asset ||
     !contentIdSchema.safeParse(asset.id).success ||
@@ -328,7 +338,10 @@ export async function registerEditorHandoff(
   const client = ports.client ?? createEditorHandoffClient();
   let snapshot = await client.inspect(manifest, "inspect");
   assertPreimages(snapshot, manifest);
-  if (options.verifyOnly && assets.some((entry) => activeAsset(snapshot, entry.assetId)?.sha256 !== entry.metadata.sha256)) {
+  if (
+    options.verifyOnly &&
+    assets.some((entry) => activeAsset(snapshot, entry.assetId)?.sha256 !== entry.metadata.sha256)
+  ) {
     throw Error("MEDIA_HANDOFF_IMAGES_MISSING");
   }
   if (!snapshot.draft) {
@@ -357,7 +370,11 @@ export async function registerEditorHandoff(
       if (asset?.id !== remoteId) {
         throw Error("MEDIA_HANDOFF_REMOTE_CONFLICT");
       }
-      assertAsset(asset, assets.find((entry) => entry.assetId === assetId)!, draftId);
+      assertAsset(
+        asset,
+        assets.find((entry) => entry.assetId === assetId)!,
+        draftId,
+      );
     }
     return latest;
   };
@@ -445,7 +462,11 @@ export function parseRegistrationArguments(args: string[]) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
-    console.log(JSON.stringify(await registerEditorHandoff(parseRegistrationArguments(process.argv.slice(2)))));
+    console.log(
+      JSON.stringify(
+        await registerEditorHandoff(parseRegistrationArguments(process.argv.slice(2))),
+      ),
+    );
   } catch (error) {
     console.error(registrationFailureCode(error));
     process.exitCode = 1;

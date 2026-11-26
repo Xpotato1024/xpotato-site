@@ -201,7 +201,10 @@ describe("CLI媒体の登録manifest", () => {
     expect(parsed.assets[0]!.metadata).not.toHaveProperty("private");
     expect(parsed.assets[0]!.metadata).not.toHaveProperty("masterBase64");
     expect(parsed.assets[0]!.metadata.animation).toEqual({
-      frameCount: 2, durationMs: 200, loop: 0, delaysMs: [100, 100],
+      frameCount: 2,
+      durationMs: 200,
+      loop: 0,
+      delaysMs: [100, 100],
     });
     animated.animation.durationMs = 300;
     expect(() => parseMediaHandoffManifest(input)).toThrow("MEDIA_HANDOFF_ANIMATION_INVALID");

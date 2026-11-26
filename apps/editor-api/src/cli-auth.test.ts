@@ -113,11 +113,12 @@ describe("CLI owner authentication has an independent, request-only credential b
     [403, "CLI_AUTH_REJECTED", 401],
     [500, "CLI_AUTH_UNAVAILABLE", 503],
   ])("does not follow or disclose an upstream %s response", async (status, code, resultStatus) => {
-    const fetcher = vi.fn(async () =>
-      new Response(token, {
-        status: Number(status),
-        headers: { Location: "https://other.example/" + token },
-      }),
+    const fetcher = vi.fn(
+      async () =>
+        new Response(token, {
+          status: Number(status),
+          headers: { Location: "https://other.example/" + token },
+        }),
     );
     await expect(authenticateCLI(request(), environment(), fetcher)).rejects.toMatchObject({
       code,
