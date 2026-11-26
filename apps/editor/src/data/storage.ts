@@ -35,7 +35,7 @@ export interface LocalDraftWriteOptions {
   requireExistingActive?: boolean;
 }
 export const missingActiveDraftMessage =
-  "この端末の下書きは削除またはアーカイブされています。一覧から開き直してください。";
+  "この端末の下書きは削除またはアーカイブされています。手元の入力は保持しています。必要な原稿を書き出してから画面を読み込み直してください。";
 export interface LocalMedia {
   id: string;
   draftId: string;
