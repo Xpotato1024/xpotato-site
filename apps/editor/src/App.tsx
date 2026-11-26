@@ -246,8 +246,6 @@ export default function App() {
       const result = await environment.checkForUpdate();
       if (result === "ready")
         setNotice("新しい編集アプリがあります。「保存して更新」で適用できます。");
-      else if (result === "installing")
-        setNotice("アプリのキャッシュを準備中です。完了後に更新状態を確認してください。");
       else if (result === "current") setNotice("編集アプリは最新です。");
       else if (result === "recovered")
         setNotice("アプリの登録状態を確認し直しました。もう一度更新を確認してください。");
