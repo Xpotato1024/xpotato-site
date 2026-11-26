@@ -21,6 +21,46 @@ canonical_for:
 
 providerのexact counterpartと未成立条件は[Infrastructure Handoff](../architecture/infrastructure-handoff.md)、artifactのproducer/consumerは[Build Artifact Pipeline](build-artifact-pipeline.md)、権限の分担は[Deployment Boundary](deployment-boundary.md)を参照します。provider mutation、実記事公開、media永続化、旧44記事のhold解除、cutoverをこの文書やPRで認可しません。
 
+## 2026-11-26 CMSの画像復元と下書き再開を本番へ反映
+
+[PR #254](https://github.com/Xpotato1024/xpotato-site/pull/254)をmain `e922a77c338b9d3f415cef6e8bc5e245bd724e67`（tree `c9e3cede242f5e3dc4e3b7c3041f3bb295daf6ad`）へ統合した。ローカルCMS検証候補は`9843eb5dbab84137c40c49d282c9c60eb3909e67`（tree `5b19dd8b178cf7a42d357dfb51fe57df51165da4`）。最終PR head `893ab09cf42f3cc445ea648285c4aadb38bdf817`（tree `c9e3cede242f5e3dc4e3b7c3041f3bb295daf6ad`）の[PR CI 45758858432](https://github.com/Xpotato1024/xpotato-site/actions/runs/45758858432)は`success`、[main push CI 45759624320](https://github.com/Xpotato1024/xpotato-site/actions/runs/45759624320)（attempt 1、開始 `2026-11-26T05:08:33Z`）は`success`だった。所有者の明示認可に基づき、成功mainのProduction artifact `15089951349`（digest `sha256:bb05061484f11a86b3e4f5b94eaf3971ac995bc843d21515f05868532b2fad84`、producer attempt `1`）を[配信run 45760630124](https://github.com/Xpotato1024/xpotato-site/actions/runs/45760630124)へ渡した。
+
+配信結果は`DEPLOYED_READBACK_VERIFIED`、配備`1`回・配備工程での再build `0`回。`2026-11-26T05:21:52.945Z`（日本時間`2026-11-26 14:21:52`）の読み戻しで、receipt version `e7fd540d-0ba9-4693-bd7b-19cbdbfe3af2`とactive version `e7fd540d-0ba9-4693-bd7b-19cbdbfe3af2`、active deployment `6c32f3dc-bc35-4e34-a576-c1376f0bedcb`を照合した。公開Siteのbindings `0`・Site自身のroutes `0`、workers.dev `false` / preview URLs `false`、代替endpointの応答`workers.dev 404 / preview URL 404`を確認した。
+
+readbackは全`712`対象、`1`回、不一致`0`件。内訳は本文・対象headerの完全一致`292`件、CMSのAccess保護応答`419`件、固定robots policy `1`件だった。非secret証跡は同runのartifact `15090116457`（digest `sha256:1851ff89901259e275725a8d7305d4df76e4740eaaf3fcced0a5c56f16f9d3f8`）へ保存した。Access保護応答は認証境界の確認であり、認証後のCMSのHTML/JS byte一致や画像表示を示さない。
+
+### 修正と検証
+
+画像復元では、端末cacheの保存済みhashとremote IDが同じでも実bytesを再検査し、破損・読取不能なら同じDraftの画像を再取得する。IndexedDBへ画像bytesとMIMEを保存し、表示用Blobを復元する。通常は旧CMS用Blobも保存するが、Blobの保存に固有のDOMExceptionで失敗した場合は、transactionのabort完了を確認してから互換Blobを含まないArrayBuffer保存を1回だけ試す。復元とブランチコピーの再試行では、新しいtransactionで親原稿の存在・同一性と媒体CASを再検査する。画像が0件でも削除済みの原稿からコピーを作らない。
+
+DB versionは3を維持し、旧CMSの本文保存とアプリ更新経路を保つ。ただしArrayBufferだけで保存した画像recordは旧CMSの画像パネルと互換性がないため、新CMSの適用が必要である。新CMSは旧Blob recordも読める。取得中に編集した画像・説明・クレジットを保護し、保存後は同じ下書きIDの表示へ変更を通知する。
+
+Gitからの再開はContentId・path・作業ブランチで既存の端末下書きを使い、同じIndexedDB transactionで既存確認と作成を行う。未保存の本文・添削・分類変更を保持し、以前にできた複数コピーは削除・統合せず比較と明示選択を用意した。一覧には秒までの保存時刻、未保存状態、同じ原稿のコピー番号を示す。取得中に別タブで下書きを削除・アーカイブした場合、媒体保存・最終更新・画面切替・後続の自動保存から復活させない。
+
+初回head `f4aa1fbfd0bbd344aa93c6a256d93a78f884e187`の[CI 45752264268](https://github.com/Xpotato1024/xpotato-site/actions/runs/45752264268)は、新しく追加したWebKitの実ブラウザー検査でIndexedDBへのBlob書込みに失敗した。この結果を保持し、上記の保存再試行を含む修正後のCI結果と区別する。また、DocumentEditorのResizeObserver内で直接高さを変更する処理をrequestAnimationFrameへ移し、cleanup時は予約処理を取り消す。
+
+次のhead `9843eb5d`の[CI 45756936618](https://github.com/Xpotato1024/xpotato-site/actions/runs/45756936618)ではWebKit laneが111,904 msで成功し、CMSの既存の統合回帰も成功した。一方、別の`ci:final:public` tools suiteで2回目のSynthetic Tool検査が成功した後、QAサーバーの`server.close()`が未完了TCP接続を待ち続けた。検査の成功通知は04:48:36 UTC、runは04:55:14 UTC（日本時間13:55）に取り消した。このrun全体を成功とは扱わない。
+
+最終headでは終了処理を`server.close()`開始後に`closeAllConnections()`で所有する未完了TCP接続を閉じる形に修正した。preconnectと未完了HTTPを実TCPで再現する追加2試験は、Node 24.22.3で旧実装がともにtimeout、新実装がともに成功し、固定Node 24.22.1でも2試験・整形検査が成功した。`9843eb5d`からの差分は`ops/qa`の実装・試験2ファイルと`package.json`の試験入口だけで、CMSソースと依存lockは変わらない。このため下記のローカルCMS・実画像の検証結果を再利用し、最終headの必須CIも別に確認した。
+
+最終PR CI `45758858432`は全体で成功した。producer job `139703921120`ではWebKit laneが87,359 ms、public laneが177,900 msで成功し、2回目のSynthetic Tool検査も終了処理を含む8,026 msで`END`まで完了した。Windows consumerと最終result jobも成功し、前runの終了待ちが解消したことを確認した。
+
+上記ローカル候補を固定Node 24.22.1 / npm 11.19.0・既存lockで検査し、対象91試験（8ファイル）とCI graph関連21試験、型検査、整形、統合build・容量検査が成功した。buildは38 routes、publication検査712件、媒体検査153件。CMS初期JSは993,578 bytes（gzip 307,089 bytes）で、上限1,000,000 bytesを維持した。
+
+ローカルCMS検証候補の生成物とCSPを使う全体の実ブラウザー検証は、WebKitが`成功`、Chromiumが`成功（Windows Edge）`だった（対象source `9843eb5dbab84137c40c49d282c9c60eb3909e67`、実行環境・証拠`Windows、fixture media-reopen-browser-v4、media-reopen-v2-webkit.log / media-reopen-v2-chromium.log`）。画像decode、再読込、破損cacheの再取得、本文と画像説明の未保存変更保持、同じIDでの再開、既存コピーの比較、2タブ同時取得、削除後に下書き・画像が復活しないことを検査対象とした。
+
+実Draftの4図（WebP）を使う専用のWebKit fixtureでは、取込み・再読込・Gitからの再開を通じて、ブロック表示と即時プレビューiframeで4点すべてを正しい寸法でdecodeする厳格検査が成功した。寸法は1080×1632、1080×1986、1080×2238、1080×1794 px、画像取得は4回、未処理例外は0件だった（対象source `9843eb5dbab84137c40c49d282c9c60eb3909e67`、Windows WebKit、`media-reopen-v2-actual-webp-webkit.log`）。これはローカル生成CMSで実画像を検証した結果である。
+
+撮影時のCSP警告はPlaywright 1.65のWebKit撮影処理が一時的なstyleを挿入する際に発生し、撮影を除くと0件だった。撮影補助処理とアプリの動作を切り分け、アプリのCSPは緩和していない。
+
+### 実Draftの再確認と観測範囲
+
+`2026-11-26T03:29:02.420Z`（日本時間12:29）のCLI `--verify-only`は、既存GitHub CLIの所有者認証で`registered=0 / reused=4 / verified=true`となった。対象は`content/xpotato-site-product-20261126`のhead `5efb70af61c2e3b07a1a46dd12586c4e8d19549f`、Draft ID `1069b528-7eb2-4c2e-b644-9e905bd8d050`、revision 5。4図のbytes・SHA-256は下記初回登録記録と一致し、追加登録は行っていない。
+
+今回の配信対象は静的CMSシェルを含むSiteであり、編集APIは再配備していない。編集APIの直近の配備記録は[PR #250](https://github.com/Xpotato1024/xpotato-site/pull/250)、source `a45f3594a5975cf63c46f6f1eb367d1fbccfca5d`、version `713e0abe-a42e-446d-ad31-f6e64ef8ee1d`を参照する。[記事Draft PR #246](https://github.com/Xpotato1024/xpotato-site/pull/246)は未merge・未公開のままであり、記事公開や公開用A/B/Cへの媒体保存は今回の変更に含まない。
+
+実Draftの読み戻し、実画像を使うローカルCMSの表示、Production readbackは別の証拠である。認証後の本番CMS画面と実iPhoneでの表示は未観測であり、ローカルfixtureの成功や未認証Access応答を実iPhoneでの復旧確認へ転用しない。
+
 ## 2026-11-26 CMSの更新確認と脚注編集を本番へ反映
 
 [PR #252](https://github.com/Xpotato1024/xpotato-site/pull/252)をmain `eee6be7a4f8908a00ca5a66fa40ee4d529a45bce`（tree `0ed9ce06d64a049ea94d6a07f3fd507e87c0eea9`）へ統合した。[PR CI 45740677005](https://github.com/Xpotato1024/xpotato-site/actions/runs/45740677005)と[main push CI 45741563875](https://github.com/Xpotato1024/xpotato-site/actions/runs/45741563875)は、同じtreeで全必須ジョブが成功した。所有者の明示認可に基づき、成功mainのProduction artifact `15081876816`（digest `sha256:d5efe3d008bc709cfe553b544ba3481ba0729877e464954dc0e7bcd371eac0cc`、attempt 1）を[配信run 45742396319](https://github.com/Xpotato1024/xpotato-site/actions/runs/45742396319)へ渡した。
@@ -55,7 +95,7 @@ PWAのHTML取得を正規URL `/editor/` へそろえ、既存のキャッシュ�
 
 providerの読み戻しでactive deployment `9bfd1494-9782-4d4e-b165-33b58d327d59`、version `713e0abe-a42e-446d-ad31-f6e64ef8ee1d`（version 7、traffic 100%、作成時刻 `2026-11-26T01:04:44.610997Z`）を確認した。既存の非公開Draft bucket・binding・route・5 secrets、公開Siteのbindings 0、GC false、workers.dev / preview URLs falseを維持した。新CLI入口の無認証応答は401 / `CLI_AUTH_REQUIRED`、既存の `/editor/` はAccessの302、`/editor-api/session` は200で接続設定済みだった。
 
-このAPI更新の実施時点では、静的CMSシェルを含むSiteは、下記PR #247/#248の配信済みsource `536691b39c071fbd9f4d57dfcbe36d6655b28b40`であり、API更新に伴う静的Siteの再配備は行わなかった。現在の静的Siteの配備は、上記PR #252の記録を参照する。
+このAPI更新の実施時点では、静的CMSシェルを含むSiteは、下記PR #247/#248の配信済みsource `536691b39c071fbd9f4d57dfcbe36d6655b28b40`であり、API更新に伴う静的Siteの再配備は行わなかった。現在の静的Siteの配備は、上記PR #254の記録を参照する。
 
 ### 非公開Draftの4図
 
