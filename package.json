@@ -91,6 +91,7 @@
     "editor:selection": "node ops/qa/editor-start-selection-smoke.mjs",
     "editor:media": "tsx ops/media/prepare-editor-media.ts",
     "editor:media:handoff": "tsx ops/media/prepare-editor-handoff.ts",
+    "editor:media:register": "npm run toolchain:check && tsx ops/media/register-editor-handoff.ts",
     "editor:review": "tsx ops/authoring/editor-astro-review.ts",
     "editor:review:browser": "node ops/qa/editor-review-browser.mjs",
     "tools:readiness": "tsx ops/qa/installed-tools.ts",

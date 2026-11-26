@@ -55,11 +55,11 @@ npm run editor:media -- --input /path/to/simulation.gif --output .local/editor-m
 
 ## AIが作った原稿と画像をCMSへ渡す
 
-この節の一括登録とブランチ固定は[ADR-0093](../design/adr/0093-draft-handoff-identity.md)の変更候補である。同じrevisionのCMSを使い、実環境への反映状況と対象の検証結果は対応PRで確認する。
+一括登録とブランチ固定は[ADR-0093](../design/adr/0093-draft-handoff-identity.md)、所有者の既存GitHub認証を使う登録CLIは[ADR-0094](../design/adr/0094-owner-cli-draft-media.md)に記録する。同じrevisionのCLI・APIを使い、実環境への反映状況と対象の検証結果は対応PRで確認する。
 
 公開Draft PRを読み、固定commitとContentIdを確認して同じブランチへ追pushする。人間の入力にAIが実質的な本文や図版を追加した場合はproducerを偽装しない。編集時の未完成原稿と正式Article Jobの入力を区別する。
 
-AIが画像を追加した場合は、MDX内のassetIdを保った引継ぎファイルを準備し、所有者認証済みCMSから非公開Draftへ登録する。本文のpushと本人限定Sitesへの表示だけでは、CMSで画像を復元できる状態にはならない。
+AIが画像を追加した場合は、MDX内のassetIdを保った引継ぎファイルを準備し、Draft専用CLIまたは所有者認証済みCMSから非公開Draftへ登録する。AIは実行端末にあるGitHub CLIの所有者認証を再利用する経路を優先する。本文のpushと本人限定Sitesへの表示だけでは、CMSで画像を復元できる状態にはならない。
 
 まず、下書きを正規の`content/` pathへ`draft:true`で保存し、派生目録を再生成して同じ作業ブランチ・Draft PRに含める。対象branchと保存済みcommitを取得し、そのcommitに対応する素材の一覧を`.local`へ作る。次は`architecture-editor`と`architecture-delivery`を参照する原稿の例であり、実際には本文・heroが参照する画像をすべて指定する。
 
@@ -86,7 +86,24 @@ npm run editor:media:handoff -- --source content/projects/example.mdx --branch c
 
 CLIは`origin/content/*`の取得済みrefを優先し、なければ同名のローカルbranchを照合する。未保存の作業ファイルから本文を採らず、指定commitの本文hashと参照画像を固定する。用途・寸法・容量・変換は共有媒体処理を使い、写真の非可逆変換には計画内の`allowLossy:true`を必要とする。技術図は可逆変換する。出力先は私有作業領域に限り、ファイルをGitや公開CI artifactへ追加しない。この準備結果の`uploaded:false`は、まだR2に保存していないことを表す。
 
-登録は次の順に行う。
+### CLIで登録する
+
+実行端末の既存GitHub CLI認証を使用する。認証済みならCMSをブラウザーで開く必要はなく、毎回のログインや新しいtokenの作成を要求しない。`gh auth status --hostname github.com`で状態を確認できる。CLIは認証profileやscopeを自動変更しない。
+
+```sh
+npm run editor:media:register -- --input .local/draft-media-handoff.json --receipt .local/draft-media-receipt.json
+npm run editor:media:register -- --input .local/draft-media-handoff.json --verify-only
+```
+
+一つ目は全画像を検査してから、固定CMS APIで原稿・画像参照を照合し、容量予約・revisionと旧画像hashの比較・upload・実bytesの再取得を行う。同じhashの登録済み画像は再確認して再利用する。二つ目は新しいprocessから読み取りだけで復元を確認する。登録済みというレポートだけを読まず、全参照画像の実bytesとhashを照合する。
+
+GitHub認証値はプロセス内と固定APIへの送信にだけ使い、引数・ログ・receipt・ファイルへ保存しない。APIも認証値を永続化しない。接続失敗時に別originへ転送せず、CookieやCloudflareの管理認証で代用しない。本人以外、別repository、古い原稿、想定と異なる画像・revisionは拒否する。認証が失効した場合だけ、利用する実行端末のGitHub認証を再接続する。
+
+`--verify-only`の成功は実Draftの保存・再取得を示す。CMSの端末cache更新、Astroレビューの表示、公開用媒体の保存や記事公開とは別の結果である。CMSでは同じGit下書きを開き直すか「別端末の画像を復元」を使い、対象commitのAstroレビューを確認する。
+
+### CMSから登録する
+
+CMSからファイルを渡す場合は次の順に行う。
 
 1. CMSの「下書きの続き」で、準備した原稿と同じブランチ・版を開く。
 2. 画像パネルの「AI原稿の画像をまとめて登録」を開き、「原稿の画像ファイル」で引継ぎJSONを選ぶ。
@@ -95,7 +112,7 @@ CLIは`origin/content/*`の取得済みrefを優先し、なければ同名の�
 5. 同じGit下書きを新しい端末内下書き、または別の認証済み端末から開き、参照画像をすべて復元できることを確認する。登録時の端末cacheだけで復元完了とはしない。
 6. 対象commitの「Astroレビューを取得」を実行し、参照画像がすべて解決され、正規レイアウト内に表示されることを確認してCMS引継ぎを完了する。
 
-AIが利用できる接続済みブラウザーに所有者のCMSセッションがあれば、AIが同じファイル選択・登録操作を行う。認証済みセッションがなければ準備までを完了し、必要なログインを区別する。Cookieを取り出す方法、長期token、R2へ直接書くCLIは追加しない。準備ファイルは新しい認可証ではなく、通常のowner認証・CSRF・媒体予約・アップロード・再取得を通る入力である。
+AIが利用できる接続済みブラウザーに所有者のCMSセッションがあれば、同じファイル選択・登録操作も使える。ブラウザーの認証がないことだけで準備完了に止めず、先に登録CLIの既存認証を確認する。ブラウザーCookieの抽出、新しい長期token、R2への直接書込みは行わない。準備ファイル自体は認可証ではない。CMSはowner session・CSRF、CLIは所有者のBearer認証をそれぞれ検査し、同じDraftの媒体予約・アップロード・再取得を通す。
 
 登録時にはrepository、ContentId、path、branch、commit、本文hashと全assetIdを再検査する。途中で本文、作業ブランチ、Gitの先頭が変わった場合は止め、読み込んだファイルで新しい原稿を置き換えない。同じassetId・hashが保存済みなら実bytesを再確認して再利用する。異なる画像へ差し替える場合だけ、計画に`expectedRemoteSha256`として取得済みの旧hashを指定する。既存画像とそのhashが違う場合や、端末に未同期の変更がある場合は上書きしない。
 

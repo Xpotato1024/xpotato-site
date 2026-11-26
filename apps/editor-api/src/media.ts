@@ -2,6 +2,7 @@ import { assertEditablePath, draftPath } from "@xpotato/editor-core/draft";
 import { assertWorkingBranch } from "@xpotato/editor-core/git";
 import { assertMediaBudget, mediaPolicy, type MediaKind } from "@xpotato/editor-core/policy";
 import { inspectImage } from "@xpotato/editor-core/image-inspection";
+import { parseMediaHandoffManifest } from "@xpotato/editor-core/media-handoff";
 import { retentionDecision, canCollectAsset } from "@xpotato/editor-core/retention";
 import {
   DraftStore,
@@ -13,12 +14,60 @@ import {
   type DraftRecord,
   type AssetRecord,
   type Reservation,
+  type DraftState,
+  type MediaHandoffBinding,
 } from "./state.js";
 import { APIError } from "./types.js";
 const iso = (value: number) => new Date(value).toISOString();
+
+function assertHandoffReservation(state: DraftState, reservation: Reservation): void {
+  const binding = reservation.handoff;
+  if (!binding) {
+    return;
+  }
+  const draft = requireDraft(state, reservation.draftId, reservation.expectedDraftRevision);
+  const { source } = binding.manifest;
+  if (
+    draft.contentId !== source.contentId ||
+    draft.branch !== source.branch ||
+    (draft.sourcePath ?? draftPath(draft.contentId)) !== source.path
+  ) {
+    throw new APIError("DRAFT_MEDIA_IDENTITY_MISMATCH", 409);
+  }
+  const item = binding.manifest.assets.find((asset) => asset.assetId === reservation.assetId);
+  if (
+    !item ||
+    binding.expectedActiveHash !== (item.expectedRemoteSha256 ?? null) ||
+    item.metadata.sha256 !== reservation.sha256 ||
+    item.metadata.bytes !== reservation.bytes ||
+    item.metadata.kind !== reservation.kind ||
+    item.metadata.mime !== reservation.mime ||
+    item.metadata.sourceSha256 !== reservation.sourceSha256 ||
+    item.metadata.sourceBytes !== reservation.sourceBytes ||
+    item.metadata.transform !== reservation.transform ||
+    item.metadata.sourceRetained !== reservation.sourceRetained
+  ) {
+    throw new APIError("CLI_MEDIA_BINDING_INVALID", 409);
+  }
+  const currentId = draft.assets[reservation.assetId];
+  const current = currentId ? state.assets[currentId] : undefined;
+  if (
+    currentId &&
+    (!current ||
+      current.draftId !== draft.id ||
+      current.assetId !== reservation.assetId ||
+      current.status !== "staged")
+  ) {
+    throw new APIError("MEDIA_HANDOFF_REMOTE_INVALID", 409);
+  }
+  if ((current?.sha256 ?? null) !== binding.expectedActiveHash) {
+    throw new APIError("MEDIA_HANDOFF_REMOTE_CONFLICT", 409);
+  }
+}
 export async function createDraftRecord(
   store: DraftStore,
   input: { id: string; contentId: string; branch: string; commit: string; sourcePath?: string },
+  options?: { rejectDeletedIdentity: true },
 ): Promise<DraftRecord> {
   safeUUID(input.id);
   safeUUID(input.contentId);
@@ -50,6 +99,15 @@ export async function createDraftRecord(
       throw new APIError("DRAFT_MEDIA_AMBIGUOUS", 409);
     }
     const candidate = candidates[0];
+    if (
+      options?.rejectDeletedIdentity &&
+      !candidate &&
+      Object.values(state.drafts).some(
+        (draft) => draft.contentId === input.contentId && draft.branch === input.branch,
+      )
+    ) {
+      throw new APIError("DRAFT_NOT_FOUND", 404);
+    }
     if (candidate) {
       if ((candidate.sourcePath ?? draftPath(candidate.contentId)) !== sourcePath) {
         throw new APIError("DRAFT_MEDIA_IDENTITY_MISMATCH", 409);
@@ -73,8 +131,16 @@ export async function createDraftRecord(
 }
 export async function reserveMedia(
   store: DraftStore,
-  input: Omit<Reservation, "id" | "expires" | "status">,
+  input: Omit<Reservation, "id" | "expires" | "status" | "handoff">,
+  binding?: MediaHandoffBinding,
 ): Promise<Reservation> {
+  if (
+    ["handoff", "handoffSource", "expectedActiveHash"].some((key) =>
+      Object.prototype.hasOwnProperty.call(input, key),
+    )
+  ) {
+    throw new APIError("MEDIA_RESERVATION_FIELDS_INVALID");
+  }
   safeUUID(input.draftId);
   safeAssetId(input.assetId);
   safeHash(input.sha256);
@@ -94,14 +160,36 @@ export async function reserveMedia(
     throw new APIError("MEDIA_SOURCE_INVALID");
   if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(input.mime))
     throw new APIError("HEIC_CONVERSION_REQUIRED");
+  if (binding && binding.expectedActiveHash !== null) {
+    safeHash(binding.expectedActiveHash);
+  }
   const reservation: Reservation = {
-    ...input,
     id: crypto.randomUUID(),
     expires: store.now() + mediaPolicy.leaseMs,
     status: "pending",
+    draftId: input.draftId,
+    assetId: input.assetId,
+    sha256: input.sha256,
+    bytes: input.bytes,
+    kind: input.kind,
+    mime: input.mime,
+    expectedDraftRevision: input.expectedDraftRevision,
+    sourceSha256: input.sourceSha256,
+    sourceBytes: input.sourceBytes,
+    transform: input.transform,
+    sourceRetained: input.sourceRetained,
+    ...(binding
+      ? {
+          handoff: {
+            manifest: parseMediaHandoffManifest(binding.manifest),
+            expectedActiveHash: binding.expectedActiveHash,
+          },
+        }
+      : {}),
   };
   return store.transact((state) => {
     requireDraft(state, input.draftId, input.expectedDraftRevision);
+    assertHandoffReservation(state, reservation);
     store.assertCapacity(state, input.bytes);
     if (Object.keys(state.reservations).length >= 32)
       throw new APIError("UPLOAD_CONCURRENCY_LIMIT", 429);
@@ -141,13 +229,18 @@ export async function uploadMedia(
   store: DraftStore,
   id: string,
   request: Request,
+  options?: { validateHandoff: (manifest: MediaHandoffBinding["manifest"]) => Promise<void> },
 ): Promise<AssetRecord> {
   safeUUID(id);
   const reservation = await store.transact((state) => {
     const value = state.reservations[id];
     if (!value || value.expires < store.now()) throw new APIError("UPLOAD_EXPIRED", 410);
+    if (Boolean(value.handoff) !== Boolean(options)) {
+      throw new APIError("CLI_UPLOAD_REQUIRED", 409);
+    }
     if (value.status === "uploading") throw new APIError("UPLOAD_BUSY", 409);
     requireDraft(state, value.draftId, value.expectedDraftRevision);
+    assertHandoffReservation(state, value);
     value.status = "uploading";
     return { ...value };
   });
@@ -163,7 +256,23 @@ export async function uploadMedia(
     if (hash !== reservation.sha256) throw new APIError("UPLOAD_HASH_MISMATCH");
     const inspected = inspectImage(bytes, reservation.kind);
     if (inspected.mime !== reservation.mime) throw new APIError("MEDIA_TYPE_MISMATCH");
+    if (reservation.handoff) {
+      const metadata = reservation.handoff.manifest.assets.find(
+        (asset) => asset.assetId === reservation.assetId,
+      )!.metadata;
+      if (
+        inspected.width !== metadata.width ||
+        inspected.height !== metadata.height ||
+        inspected.frames !== (metadata.animation?.frameCount ?? 1) ||
+        inspected.durationMs !== (metadata.animation?.durationMs ?? 0)
+      ) {
+        throw new APIError("MEDIA_HANDOFF_METADATA_MISMATCH");
+      }
+    }
     if (store.now() > reservation.expires) throw new APIError("UPLOAD_EXPIRED", 410);
+    if (reservation.handoff) {
+      await options!.validateHandoff(reservation.handoff.manifest);
+    }
     const key = assetKey(id, hash),
       stored = await store.bucket.put(key, bytes, {
         onlyIf: { etagDoesNotMatch: "*" },
@@ -179,10 +288,14 @@ export async function uploadMedia(
     written = true;
     const head = await store.bucket.head(key);
     if (!head || head.size !== bytes.length) throw new APIError("MEDIA_READBACK_FAILED", 503);
+    if (reservation.handoff) {
+      await options!.validateHandoff(reservation.handoff.manifest);
+    }
     return await store.transact((state) => {
       const active = state.reservations[id];
       if (!active || active.expires < store.now()) throw new APIError("UPLOAD_EXPIRED", 410);
       const draft = requireDraft(state, active.draftId, active.expectedDraftRevision);
+      assertHandoffReservation(state, active);
       const previous = state.assets[draft.assets[active.assetId] ?? ""];
       if (previous && previous.status === "staged") {
         previous.status = "rejected";
@@ -207,6 +320,14 @@ export async function uploadMedia(
         height: inspected.height,
         frames: inspected.frames,
         durationMs: inspected.durationMs,
+        ...(active.handoff
+          ? {
+              handoffSource: {
+                repository: active.handoff.manifest.repository,
+                source: active.handoff.manifest.source,
+              },
+            }
+          : {}),
       };
       state.assets[id] = asset;
       state.usedBytes += bytes.length;
