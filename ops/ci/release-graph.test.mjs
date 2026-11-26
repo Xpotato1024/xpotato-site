@@ -60,7 +60,7 @@ test("both preparation lanes finish before the parallel final consumers and pack
   const pack = producer.indexOf("run: npm run release:package");
   assert.ok(prepare >= 0 && prepare < validate && validate < gate && gate < pack);
   assert.deepEqual(producerPhases.prepare, ["release:build:hosted", "ci:browsers:prepare"]);
-  assert.deepEqual(producerPhases.validate, ["quality:home-webkit:hosted", "ci:final:public"]);
+  assert.deepEqual(producerPhases.validate, ["quality:webkit:hosted", "ci:final:public"]);
   assert.equal(
     scripts["ci:browsers:prepare"],
     "npm run toolchain:check && npx --no-install playwright install --with-deps webkit && node ops/ci/prepare-chrome-font-cache.mjs",
@@ -68,6 +68,10 @@ test("both preparation lanes finish before the parallel final consumers and pack
   assert.equal(
     scripts["quality:home-webkit:hosted"],
     'npm run quality:home-webkit -- --dist "$GITHUB_WORKSPACE/apps/site/dist" --out "$RUNNER_TEMP/release-validation"',
+  );
+  assert.equal(
+    scripts["quality:webkit:hosted"],
+    "npm run quality:home-webkit:hosted && npm run editor:selection -- --browser webkit",
   );
   const preparation = expanded("ci:producer:prepare"),
     validation = expanded("ci:producer:validate");

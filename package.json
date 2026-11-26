@@ -104,6 +104,7 @@
     "ci:producer:validate": "node ops/ci/producer-parallel.mjs validate",
     "ci:browsers:prepare": "npm run toolchain:check && npx --no-install playwright install --with-deps webkit && node ops/ci/prepare-chrome-font-cache.mjs",
     "quality:home-webkit:hosted": "npm run quality:home-webkit -- --dist \"$GITHUB_WORKSPACE/apps/site/dist\" --out \"$RUNNER_TEMP/release-validation\"",
+    "quality:webkit:hosted": "npm run quality:home-webkit:hosted && npm run editor:selection -- --browser webkit",
     "ci:article:fixture": "node --import tsx ops/ci/article-pr-fixture.ts"
   },
   "devDependencies": {

@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { readFile, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 import { editorStaticServer } from "./editor-static-server.mjs";
 import {
   ensureEditing,
@@ -15,6 +15,11 @@ import {
 } from "./editor-browser-helpers.mjs";
 
 const root = resolve(".");
+const browserArgs = process.argv.slice(2);
+if (browserArgs.length && (browserArgs.length !== 2 || browserArgs[0] !== "--browser" || !["chromium", "webkit"].includes(browserArgs[1]))) {
+  throw Error("Expected --browser chromium or --browser webkit");
+}
+const browserName = browserArgs[1] ?? "chromium";
 const [manifest, index, series] = await Promise.all([
   readFile(resolve(root, "content/registry/editor.json"), "utf8").then(JSON.parse),
   readFile(resolve(root, "content/registry/editor-content-index.json"), "utf8").then(JSON.parse),
@@ -216,10 +221,12 @@ try {
     "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
     chromium.executablePath(),
   ].find((candidate) => candidate && existsSync(candidate));
-  browser = await chromium.launch({
-    headless: true,
-    ...(executablePath ? { executablePath } : {}),
-  });
+  browser = browserName === "webkit"
+    ? await webkit.launch({ headless: true })
+    : await chromium.launch({
+      headless: true,
+      ...(executablePath ? { executablePath } : {}),
+    });
   const page = await browser.newPage({ viewport: { width: 390, height: 1600 }, locale: "ja-JP" });
   page.setDefaultTimeout(15000);
   const errors = [];
