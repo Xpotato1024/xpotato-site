@@ -34,7 +34,7 @@ export function EditorActions({
         </button>
         <span className="action-spacer" />
         <button type="button" disabled={!authenticated || busy || hasIssues} onClick={onSave}>
-          Gitへ保存
+          原稿と添削を保存
         </button>
         <button
           type="button"

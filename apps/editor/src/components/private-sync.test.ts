@@ -64,6 +64,7 @@ vi.mock("../data/storage.js", () => ({
 }));
 vi.mock("../media/optimize.js", () => ({ optimizeImage: vi.fn() }));
 vi.mock("../media/prepared.js", () => ({ importPreparedMedia: vi.fn() }));
+vi.mock("./MediaHandoffPanel.js", () => ({ MediaHandoffPanel: () => null }));
 
 const branchMessage = "同期するには、下書きの開始画面で作業ブランチを選んでください。";
 const flush = () => new Promise<void>((resolve) => setImmediate(resolve));
@@ -166,7 +167,7 @@ describe("private synchronization requires a bound working branch", () => {
     mocks.media.mockResolvedValue([media]);
     const props = mediaProps(draft, binding.authenticated);
     const { tree } = await mount(MediaPanel, props);
-    for (const label of ["別の端末で同期した画像を取得", "画像を同期"]) {
+    for (const label of ["同期済みの画像を取得・修復", "画像を同期"]) {
       expect(button(tree, label).disabled).toBe(true);
       await click(tree, label);
     }
@@ -199,7 +200,9 @@ describe("private synchronization requires a bound working branch", () => {
     const draft = { ...draftFixture(), workingBranch: "content/work" };
     const media = mediaFixture(draft);
     mocks.media.mockResolvedValue([media]);
-    mocks.request.mockResolvedValue({ draft: { revision: 7 } });
+    mocks.find.mockResolvedValue({
+      draft: { id: draft.remoteDraftId, revision: 7, assets: { [media.assetId]: media.remoteId } },
+    });
     const { tree } = await mount(MediaPanel, mediaProps(draft));
     await click(tree, "棄却");
     expect(mocks.request).toHaveBeenCalledWith("/draft-state", {
@@ -207,7 +210,28 @@ describe("private synchronization requires a bound working branch", () => {
       body: { id: draft.remoteDraftId, revision: 7, action: "reject", assetId: media.assetId },
     });
     expect(mocks.deleteMedia).toHaveBeenCalledExactlyOnceWith(media.id);
-    expect(mocks.find).toHaveBeenCalledExactlyOnceWith(draft);
+    expect(mocks.find).toHaveBeenCalledWith(draft);
+  });
+
+  it("does not reject a newer image through a stale card", async () => {
+    const draft = { ...draftFixture(), workingBranch: "content/work" };
+    const media = mediaFixture(draft);
+    mocks.media.mockResolvedValue([media]);
+    mocks.find.mockResolvedValue({
+      draft: {
+        id: draft.remoteDraftId,
+        revision: 8,
+        assets: { [media.assetId]: "new-private-image" },
+      },
+    });
+    const props = mediaProps(draft);
+    const { tree } = await mount(MediaPanel, props);
+    await click(tree, "棄却");
+    expect(mocks.request).not.toHaveBeenCalled();
+    expect(mocks.deleteMedia).not.toHaveBeenCalled();
+    expect(props.onError).toHaveBeenCalledWith(
+      "画像が別の端末で変更されています。画像を取得して確認してください。",
+    );
   });
 
   it("cannot restore a previously displayed remote rejection after the branch is detached", async () => {
@@ -250,8 +274,8 @@ describe("private synchronization requires a bound working branch", () => {
     mocks.restore.mockResolvedValue({ draft, missing: [] });
     const props = mediaProps(draft);
     const panel = await mount(MediaPanel, props);
-    expect(button(panel.tree, "別の端末で同期した画像を取得").disabled).toBe(false);
-    await click(panel.tree, "別の端末で同期した画像を取得");
+    expect(button(panel.tree, "同期済みの画像を取得・修復").disabled).toBe(false);
+    await click(panel.tree, "同期済みの画像を取得・修復");
     const detached = panel.render({ draft: { ...draft, workingBranch: "" } });
     mocks.find.mockClear();
     mocks.request.mockClear();
@@ -272,10 +296,9 @@ describe("private synchronization requires a bound working branch", () => {
     const draft = { ...draftFixture(), ...binding };
     const props = reviewProps(draft, binding.authenticated);
     const { tree } = await mount(ReviewPanel, props);
-    for (const label of ["添削を同期", "取得"]) {
-      expect(button(tree, label).disabled).toBe(true);
-      await click(tree, label);
-    }
+    expect(button(tree, "原稿と添削を保存").disabled).toBe(true);
+    expect(button(tree, "取得").disabled).toBe(true);
+    await click(tree, "取得");
     expect(mocks.request).not.toHaveBeenCalled();
     expect(mocks.find).not.toHaveBeenCalled();
     expect(props.onDraft).not.toHaveBeenCalled();

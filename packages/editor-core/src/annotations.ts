@@ -8,6 +8,8 @@ export interface SourceSelection {
   blockSource?: string;
 }
 export interface ReviewAnchor {
+  /** An article-wide target deliberately has no text range. Legacy anchors omit scope. */
+  scope?: "article";
   quote: string;
   prefix: string;
   suffix: string;
@@ -29,6 +31,11 @@ export interface ReviewComment {
   createdAt: string;
   status: "open" | "resolved" | "applied" | "rejected";
   proposal?: ReviewProposal | undefined;
+  targetHistory?: {
+    anchor: ReviewAnchor;
+    proposal?: ReviewProposal | undefined;
+    changedAt: string;
+  }[];
 }
 export interface LocatedAnchor {
   start: number;
@@ -69,7 +76,36 @@ export function anchorSelection(body: string, selection: SourceSelection): Revie
   };
 }
 
+export function articleReviewAnchor(): ReviewAnchor {
+  return { scope: "article", quote: "", prefix: "", suffix: "" };
+}
+
+export function reattachReviewComment(
+  body: string,
+  comment: ReviewComment,
+  selection: SourceSelection,
+): ReviewComment {
+  if (comment.anchor.scope === "article" || comment.status !== "open")
+    throw Error("対象を変更できません。");
+  if ((comment.targetHistory?.length ?? 0) >= 20)
+    throw Error("対象変更の履歴が上限に達しました。新しい指摘を追加してください。");
+  return {
+    ...comment,
+    anchor: anchorSelection(body, selection),
+    proposal: undefined,
+    targetHistory: [
+      ...(comment.targetHistory ?? []),
+      {
+        anchor: comment.anchor,
+        ...(comment.proposal ? { proposal: comment.proposal } : {}),
+        changedAt: new Date().toISOString(),
+      },
+    ],
+  };
+}
+
 export function locateAnchor(body: string, anchor: ReviewAnchor): LocatedAnchor | null {
+  if (anchor.scope === "article") return null;
   // A moved, otherwise unchanged block remains the strongest identity available in portable MDX.
   if (anchor.blockSource) {
     const blocks = occurrences(body, anchor.blockSource);
@@ -99,6 +135,8 @@ export function applyReviewProposal(
   body: string,
   comment: ReviewComment,
 ): { body: string; comment: ReviewComment } {
+  if (comment.anchor.scope === "article")
+    throw Error("記事全体の指摘は本文を編集して確認し、解決してください。");
   if (comment.status === "applied") return { body, comment };
   const proposal = comment.proposal;
   if (!proposal || proposal.expected !== comment.anchor.quote)
@@ -120,6 +158,38 @@ function text(value: unknown, max: number): value is string {
 function record(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
+function validAnchor(a: unknown): a is ReviewAnchor {
+  if (!record(a)) return false;
+  if (a.scope === "article")
+    return (
+      a.quote === "" &&
+      a.prefix === "" &&
+      a.suffix === "" &&
+      a.blockSource === undefined &&
+      a.offset === undefined
+    );
+  return (
+    a.scope === undefined &&
+    text(a.quote, 200000) &&
+    Boolean(a.quote) &&
+    text(a.prefix, 64) &&
+    text(a.suffix, 64) &&
+    (a.blockSource === undefined || text(a.blockSource, 200000)) &&
+    (a.offset === undefined || (Number.isSafeInteger(a.offset) && Number(a.offset) >= 0))
+  );
+}
+function validProposal(p: unknown, a: ReviewAnchor): boolean {
+  return (
+    a.scope !== "article" &&
+    record(p) &&
+    text(p.id, 100) &&
+    text(p.expected, 200000) &&
+    p.expected === a.quote &&
+    text(p.replacement, 200000) &&
+    text(p.reason, 20000) &&
+    text(p.receivedAt, 40)
+  );
+}
 export function validateReviewComments(value: unknown, contentId?: string): ReviewComment[] {
   if (!Array.isArray(value) || value.length > 500) throw Error("REVIEW_DATA_INVALID");
   const ids = new Set<string>();
@@ -140,24 +210,23 @@ export function validateReviewComments(value: unknown, contentId?: string): Revi
       throw Error("REVIEW_DATA_INVALID");
     const a = c.anchor;
     if (
-      !text(a.quote, 200000) ||
-      !a.quote ||
-      !text(a.prefix, 64) ||
-      !text(a.suffix, 64) ||
-      (a.blockSource !== undefined && !text(a.blockSource, 200000)) ||
-      (a.offset !== undefined && (!Number.isSafeInteger(a.offset) || Number(a.offset) < 0))
+      !validAnchor(a) ||
+      (a.scope === "article" && c.status === "applied") ||
+      (c.proposal !== undefined && !validProposal(c.proposal, a))
     )
       throw Error("REVIEW_DATA_INVALID");
-    if (c.proposal !== undefined) {
-      const p = c.proposal;
+    if (c.targetHistory !== undefined) {
       if (
-        !record(p) ||
-        !text(p.id, 100) ||
-        !text(p.expected, 200000) ||
-        p.expected !== a.quote ||
-        !text(p.replacement, 200000) ||
-        !text(p.reason, 20000) ||
-        !text(p.receivedAt, 40)
+        !Array.isArray(c.targetHistory) ||
+        c.targetHistory.length > 20 ||
+        c.targetHistory.some(
+          (h) =>
+            !record(h) ||
+            !validAnchor(h.anchor) ||
+            h.anchor.scope === "article" ||
+            !text(h.changedAt, 40) ||
+            (h.proposal !== undefined && !validProposal(h.proposal, h.anchor)),
+        )
       )
         throw Error("REVIEW_DATA_INVALID");
     }
@@ -192,7 +261,7 @@ export function importReviewProposals(
     )
       throw Error("修正案の形式が不正です。");
     const comment = next.find((c) => c.id === p.commentId);
-    if (!comment || p.expected !== comment.anchor.quote)
+    if (!comment || comment.anchor.scope === "article" || p.expected !== comment.anchor.quote)
       throw Error("修正案に対応する指摘が見つかりません。");
     if (comment.status !== "applied")
       comment.proposal = {

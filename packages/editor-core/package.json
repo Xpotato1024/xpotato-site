@@ -6,6 +6,7 @@
     ".": "./src/index.ts",
     "./draft": "./src/draft.ts",
     "./blocks": "./src/blocks.ts",
+    "./footnotes": "./src/footnotes.ts",
     "./policy": "./src/policy.ts",
     "./git": "./src/git.ts",
     "./retention": "./src/retention.ts",
@@ -13,7 +14,8 @@
     "./review": "./src/review.ts",
     "./registry": "./src/registry.ts",
     "./annotations": "./src/annotations.ts",
-    "./chart-csv": "./src/chart-csv.ts"
+    "./chart-csv": "./src/chart-csv.ts",
+    "./media-handoff": "./src/media-handoff.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"

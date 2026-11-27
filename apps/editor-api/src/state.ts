@@ -1,6 +1,12 @@
 import type { ReviewComment } from "@xpotato/editor-core/annotations";
 import { APIError, type ObjectBucket } from "./types.js";
 import { mediaPolicy, type MediaKind } from "@xpotato/editor-core/policy";
+import type { MediaHandoffManifest } from "@xpotato/editor-core/media-handoff";
+
+export interface MediaHandoffBinding {
+  manifest: MediaHandoffManifest;
+  expectedActiveHash: string | null;
+}
 export interface DraftRecord {
   id: string;
   contentId: string;
@@ -38,6 +44,7 @@ export interface AssetRecord {
   height: number;
   frames: number;
   durationMs: number;
+  handoffSource?: Pick<MediaHandoffManifest, "repository" | "source">;
 }
 export interface Reservation {
   id: string;
@@ -54,6 +61,7 @@ export interface Reservation {
   transform: string;
   sourceRetained: boolean;
   status: "pending" | "uploading";
+  handoff?: MediaHandoffBinding;
 }
 export interface DraftState {
   version: 1;

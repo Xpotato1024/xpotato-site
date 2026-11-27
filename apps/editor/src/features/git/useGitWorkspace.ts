@@ -1,6 +1,6 @@
 import { previewRegistryChanges, reconcileRegistryChanges } from "@xpotato/editor-core/registry";
 import { validateReviewComments } from "@xpotato/editor-core/annotations";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   collectionFromPath,
   parseDraft,
@@ -10,13 +10,25 @@ import {
 } from "@xpotato/editor-core/draft";
 import { assertWorkingBranch, type GitSnapshot } from "@xpotato/editor-core/git";
 import { EditorApiError, loginState, query, request, type LoginState } from "../../data/api.js";
-import { findMediaSnapshot, restoreMediaSnapshot } from "../../data/media-sync.js";
 import {
+  findMediaSnapshot,
+  missingDraftMedia,
+  restoreMediaSnapshot,
+} from "../../data/media-sync.js";
+import {
+  claimGitDraft,
   localMedia,
   saveLocalMedia,
   updateLocalDraft,
   type LocalDraft,
 } from "../../data/storage.js";
+import {
+  hasLocalSourceChanges,
+  hasPendingRegistryChanges,
+  localDraftIdentity,
+  matchingLocalDrafts,
+  mergeGitReopen,
+} from "../../data/draft-identity.js";
 import { errorLabel } from "../../shared/messages.js";
 import { acceptGitSaveResult } from "../drafts/model.js";
 import type { DraftWorkspace } from "../drafts/useDraftWorkspace.js";
@@ -53,7 +65,11 @@ export function useGitWorkspace(
     repository: "Xpotato1024/xpotato-site",
   });
   const [branches, setBranches] = useState<string[]>(["main"]);
-  const [sourceBranch, setSourceBranch] = useState("main");
+  const [sourceBranch, setSourceBranchState] = useState("main");
+  const selectedBranch = useRef("main");
+  const branchReadVersion = useRef(0);
+  const loadedSnapshot = useRef<GitSnapshot | null>(null);
+  const documentOpening = useRef(false);
   const [snapshot, setSnapshot] = useState<GitSnapshot | null>(null);
   const [documents, setDocuments] = useState<RepositoryDocument[]>([]);
   const [repositoryManifest, setRepositoryManifest] = useState<TaxonomySnapshot>(
@@ -119,11 +135,11 @@ export function useGitWorkspace(
   }, [hydrated]);
 
   useEffect(() => {
-    setSourceBranch(draft.sourceBranch);
+    setSourceBranch(draft.workingBranch || draft.sourceBranch);
     // 別原稿のPRや競合を、今開いている原稿の状態として表示しない。
     setPr(null);
     setConflict(null);
-  }, [draft.id, draft.sourceBranch]);
+  }, [draft.id, draft.sourceBranch, draft.workingBranch]);
 
   useEffect(() => {
     if (!auth.authenticated) {
@@ -151,8 +167,36 @@ export function useGitWorkspace(
     setAuth(await loginState());
   }
 
-  async function readBranch(branch = sourceBranch) {
+  function setSourceBranch(branch: string) {
+    if (branch === selectedBranch.current) {
+      return;
+    }
+    selectedBranch.current = branch;
+    branchReadVersion.current += 1;
+    loadedSnapshot.current = null;
+    setSourceBranchState(branch);
+    setSnapshot(null);
+    setDocuments([]);
+    setRepositoryManifest(schema as TaxonomySnapshot);
+  }
+
+  function assertCurrentSelection(selected: GitSnapshot) {
+    if (
+      selected.branch !== selectedBranch.current ||
+      selected.branch !== loadedSnapshot.current?.branch ||
+      selected.commit !== loadedSnapshot.current.commit
+    ) {
+      throw new Error("読み込み元または一覧の版が変わりました。原稿一覧を取得し直してください。");
+    }
+  }
+
+  async function readBranch(branch = selectedBranch.current) {
+    const version = ++branchReadVersion.current;
+    loadedSnapshot.current = null;
+    setSnapshot(null);
+    setDocuments([]);
     await workspace.persist();
+    await workspace.refreshSaved();
     const selected = await request<GitSnapshot>("/snapshot" + query({ branch }));
     const [manifest, files] = await Promise.all([
       request<TaxonomySnapshot>("/manifest" + query({ ...selected })),
@@ -162,6 +206,10 @@ export function useGitWorkspace(
     if ((manifest as { contractHash?: string }).contractHash !== schema.contractHash) {
       throw new Error("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
     }
+    if (version !== branchReadVersion.current || branch !== selectedBranch.current) {
+      throw new Error("読み込み元が変わりました。選択中のブランチで原稿一覧を取得してください。");
+    }
+    loadedSnapshot.current = selected;
     setSnapshot(selected);
     setRepositoryManifest(manifest);
     setDocuments(files);
@@ -206,6 +254,12 @@ export function useGitWorkspace(
     plan: BranchPlan,
   ): Promise<Partial<LocalDraft>> {
     if (
+      local.workingBranch &&
+      (plan.mode !== "existing" || plan.targetBranch !== local.workingBranch)
+    ) {
+      throw new Error("下書きは元の作業ブランチで続けてください。");
+    }
+    if (
       plan.mode === "local" ||
       (plan.mode === "existing" && plan.targetBranch === local.workingBranch)
     )
@@ -244,41 +298,80 @@ export function useGitWorkspace(
     };
   }
 
-  async function openDocument(
+  async function performOpenDocument(
     file: string,
     selected = snapshot,
     source = selected?.branch,
     intent?: "revise" | "drafts",
     localOnly = false,
+    original?: GitSnapshot,
+    selectedLocalId?: string,
   ) {
     if (!selected) {
       return;
     }
+    if (intent === "drafts") {
+      assertWorkingBranch(selected.branch);
+      if (source !== selected.branch || localOnly) {
+        throw new Error("下書きは読み込み元と同じ作業ブランチで続けてください。");
+      }
+    }
+    const previousDraftId = workspace.current.current.id;
+    const openingBranchVersion = branchReadVersion.current;
     await workspace.persist();
-    const [document, manifest] = await Promise.all([
+    const [document, manifest, originalDocument] = await Promise.all([
       request<{ source: string; path: string; blobSha: string }>(
         "/document" + query({ ...selected, path: file }),
       ),
       request<TaxonomySnapshot>("/manifest" + query({ ...selected })),
+      original
+        ? request<{ source: string }>("/document" + query({ ...original, path: file }))
+        : undefined,
     ]);
+    if (originalDocument && originalDocument.source !== document.source) {
+      throw new Error(
+        "選んだ原稿と作業ブランチの原稿が異なります。新しいブランチで改稿するか、作業ブランチの「下書きの続き」から開いてください。",
+      );
+    }
     const metadata = parseDraft(document.source).data;
     if (intent === "drafts" && !metadata.draft)
       throw new Error("公開済みの原稿です。「既存記事を改稿」から開いてください。");
     if (intent === "revise" && metadata.draft)
       throw new Error("下書きの原稿です。「下書きの続き」から開いてください。");
+    if ((manifest as { contractHash?: string }).contractHash !== schema.contractHash) {
+      throw new Error("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
+    }
+    const openedSource = updateDraft(document.source, { draft: true });
     let opened: LocalDraft = {
       id: crypto.randomUUID(),
-      source: updateDraft(document.source, { draft: true }),
+      source: openedSource,
       path: file,
       sourceBranch: source ?? selected.branch,
-      workingBranch: selected.branch.startsWith("content/") ? selected.branch : "",
+      workingBranch: !localOnly && selected.branch.startsWith("content/") ? selected.branch : "",
       baseCommit: selected.commit,
       baseSource: document.source,
+      ...(intent === "drafts" && openedSource === document.source
+        ? { syncedCommit: selected.commit, syncedSource: document.source }
+        : {}),
       registrySnapshot: manifest,
       savedAt: new Date().toISOString(),
       producer: "mixed",
     };
+    function assertOpeningCurrent() {
+      if (workspace.current.current.id !== previousDraftId) {
+        throw new Error("準備中に原稿が切り替わりました。開く原稿を選び直してください。");
+      }
+      if (openingBranchVersion !== branchReadVersion.current) {
+        throw new Error("読み込み元または一覧の版が変わりました。開く原稿を選び直してください。");
+      }
+    }
+    assertOpeningCurrent();
+    const incoming = opened;
+    const claimed = await claimGitDraft(incoming, selectedLocalId);
+    workspace.requireExistingDraft(claimed.draft.id);
+    opened = mergeGitReopen(claimed.draft, incoming);
     let detachPrivateState = localOnly;
+    let mediaWarning: string | undefined;
     try {
       let restoredFrom = opened;
       let remote = await findMediaSnapshot(restoredFrom);
@@ -290,13 +383,17 @@ export function useGitWorkspace(
         detachPrivateState = true;
       }
       if (remote) {
-        const restored = await restoreMediaSnapshot(restoredFrom, remote);
+        const restored = await restoreMediaSnapshot(restoredFrom, remote, opened);
         opened = {
           ...restored.draft,
           sourceBranch: opened.sourceBranch,
           workingBranch: opened.workingBranch,
         };
-        if (remote.draft.review)
+        if (
+          opened.annotations === undefined &&
+          opened.reviewRevision === undefined &&
+          remote.draft.review
+        )
           opened = {
             ...opened,
             annotations: validateReviewComments(
@@ -304,22 +401,33 @@ export function useGitWorkspace(
               parseDraft(opened.source).data.id,
             ),
             reviewRevision: remote.draft.review.revision,
+            syncedAnnotations: validateReviewComments(
+              remote.draft.review.comments,
+              parseDraft(opened.source).data.id,
+            ),
           };
         if (restored.missing.length) {
-          onError("本文は読み込みましたが、未取得の画像があります: " + restored.missing.join("、"));
+          mediaWarning =
+            "本文は読み込みましたが、未取得の画像があります: " + restored.missing.join("、");
+        }
+      } else {
+        const missing = await missingDraftMedia(opened);
+        if (missing.length) {
+          mediaWarning =
+            "本文は読み込みました。下書きに未登録の画像があります: " + missing.join("、");
         }
       }
     } catch (error) {
-      onError(
+      mediaWarning =
         "本文は読み込みました。画像は未同期です: " +
-          errorLabel(error instanceof Error ? error.message : "MEDIA_UNAVAILABLE"),
-      );
+        errorLabel(error instanceof Error ? error.message : "MEDIA_UNAVAILABLE");
     }
     if (detachPrivateState) {
       const {
         remoteDraftId: _remoteDraftId,
         remoteRevision: _remoteRevision,
         reviewRevision: _reviewRevision,
+        syncedAnnotations: _syncedAnnotations,
         syncedCommit: _syncedCommit,
         syncedSource: _syncedSource,
         ...local
@@ -332,8 +440,125 @@ export function useGitWorkspace(
       }
     }
     // 取得を待つ間に入力された内容も保存してから画面を切り替える。
-    await workspace.openLocal(opened);
+    assertOpeningCurrent();
+    await workspace.persist();
+    assertOpeningCurrent();
+    const restored = opened;
+    const merge = (latest: LocalDraft): LocalDraft => {
+      if (!matchingLocalDrafts([latest], localDraftIdentity(incoming)!).length) {
+        throw Error("準備中に下書きの保存先が変わりました。一覧から開き直してください。");
+      }
+      let next = mergeGitReopen(latest, incoming);
+      if (restored.remoteDraftId && !detachPrivateState) {
+        next = {
+          ...next,
+          remoteDraftId: restored.remoteDraftId,
+          remoteRevision: Math.max(
+            restored.remoteRevision ?? 0,
+            next.remoteDraftId === restored.remoteDraftId ? (next.remoteRevision ?? 0) : 0,
+          ),
+        };
+      }
+      if (
+        latest.annotations === undefined &&
+        latest.reviewRevision === undefined &&
+        restored.annotations
+      ) {
+        next = {
+          ...next,
+          annotations: restored.annotations,
+          ...(restored.syncedAnnotations ? { syncedAnnotations: restored.syncedAnnotations } : {}),
+          ...(restored.reviewRevision !== undefined
+            ? { reviewRevision: restored.reviewRevision }
+            : {}),
+        };
+      }
+      return next;
+    };
+    opened = await updateLocalDraft(opened.id, opened, merge, { requireExistingActive: true });
+    assertOpeningCurrent();
+    if (workspace.current.current.id === opened.id) {
+      workspace.setDraft(merge);
+    } else {
+      await workspace.openLocal(opened, { requireExistingActive: true });
+    }
+    if (workspace.current.current.id !== opened.id) {
+      throw new Error("準備中に原稿が切り替わりました。開く原稿を選び直してください。");
+    }
     setRepositoryManifest(manifest);
+    if (!claimed.created) {
+      onNotice(
+        hasLocalSourceChanges(workspace.current.current) ||
+          hasPendingRegistryChanges(workspace.current.current)
+          ? "この端末の下書きを再開しました。Git未保存の編集を保持しています。"
+          : "この端末の下書きを最新のGit原稿で再開しました。",
+      );
+    }
+    if (mediaWarning) {
+      onError(mediaWarning);
+    }
+  }
+
+  async function openDocument(...args: Parameters<typeof performOpenDocument>) {
+    if (documentOpening.current) throw Error("原稿を読み込み中です。完了までお待ちください。");
+    documentOpening.current = true;
+    try {
+      await performOpenDocument(...args);
+    } catch (error) {
+      await workspace.refreshSaved().catch(() => {});
+      throw error;
+    } finally {
+      documentOpening.current = false;
+    }
+  }
+
+  async function openSelectedDocument(
+    file: string,
+    plan: BranchPlan,
+    intent: "revise" | "drafts",
+    selected: GitSnapshot,
+    selectedLocalId?: string,
+  ) {
+    assertCurrentSelection(selected);
+    if (plan.sourceBranch !== selected.branch) {
+      throw new Error("読み込み元が変わりました。開く原稿を選び直してください。");
+    }
+    if (intent === "drafts") {
+      assertWorkingBranch(selected.branch);
+      if (plan.mode !== "existing" || plan.targetBranch !== selected.branch) {
+        throw new Error("下書きは読み込み元と同じ作業ブランチで続けてください。");
+      }
+      // 一覧で選んだ版を開く。別ブランチの同じ path や最新 head に差し替えない。
+      await openDocument(
+        file,
+        selected,
+        selected.branch,
+        intent,
+        false,
+        undefined,
+        selectedLocalId,
+      );
+      return;
+    }
+    const prepared =
+      plan.mode === "local"
+        ? { snapshot: selected, sourceBranch: selected.branch }
+        : await prepareWorkspace(plan, plan.mode === "new" ? selected : undefined);
+    assertCurrentSelection(selected);
+    if (!prepared.snapshot) return;
+    await openDocument(
+      file,
+      prepared.snapshot,
+      prepared.sourceBranch,
+      intent,
+      plan.mode === "local",
+      plan.mode === "existing" &&
+        (prepared.snapshot.branch !== selected.branch ||
+          prepared.snapshot.commit !== selected.commit)
+        ? selected
+        : undefined,
+      selectedLocalId,
+    );
   }
 
   async function saveGit() {
@@ -539,6 +764,7 @@ export function useGitWorkspace(
     prepareWorkspace,
     prepareLocalWorkspace,
     openDocument,
+    openSelectedDocument,
     saveGit,
     createPR,
   };

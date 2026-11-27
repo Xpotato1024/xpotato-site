@@ -24,10 +24,14 @@ export function usePreviewMedia(draftId: string) {
         })),
       );
     };
-    const changed = (event: Event) => {
-      if ((event as CustomEvent<{ draftId: string }>).detail?.draftId === draftId) void load();
+    const failed = () => {
+      if (active) setItems([]);
     };
-    void load().catch(() => setItems([]));
+    const changed = (event: Event) => {
+      if ((event as CustomEvent<{ draftId: string }>).detail?.draftId === draftId)
+        void load().catch(failed);
+    };
+    void load().catch(failed);
     window.addEventListener("editor-media-changed", changed);
     return () => {
       active = false;

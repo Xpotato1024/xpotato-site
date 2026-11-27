@@ -450,6 +450,12 @@ export class GitRepository {
       path: "/git/trees",
       body: { base_tree: commit.tree.sha, tree: entries },
     });
+    // Identical trees must not create empty commits or trigger CI.
+    if (tree.sha === commit.tree.sha) {
+      if ((await this.snapshot(current.branch)).commit !== current.commit)
+        throw new GitError("GIT_CONFLICT", 409);
+      return { commit: current.commit, entries };
+    }
     const created = await this.api<{ sha: string }>({
       method: "POST",
       path: "/git/commits",

@@ -66,6 +66,8 @@ export async function importDraftFile(
   const imported = parseDraft(value.draft.source);
   if (value.draft.annotations !== undefined)
     validateReviewComments(value.draft.annotations, imported.data.id);
+  if (value.draft.syncedAnnotations !== undefined)
+    validateReviewComments(value.draft.syncedAnnotations, imported.data.id);
   assertEditablePath(value.draft.path);
   if (!["human", "ai", "mixed"].includes(value.draft.producer))
     throw new Error("IMPORT_FORMAT_INVALID");

@@ -75,14 +75,23 @@ export function DocumentEditor({
     };
     resize();
     let width = input.clientWidth;
+    let resizeFrame = 0;
     const observer = new ResizeObserver(() => {
       if (width !== input.clientWidth) {
         width = input.clientWidth;
-        resize();
+        // Changing the observed height during delivery causes a ResizeObserver loop error.
+        if (!resizeFrame)
+          resizeFrame = window.requestAnimationFrame(() => {
+            resizeFrame = 0;
+            resize();
+          });
       }
     });
     observer.observe(input);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(resizeFrame);
+    };
   }, [parsed?.data.title, mode]);
   useEffect(() => {
     if (reviewActive) {

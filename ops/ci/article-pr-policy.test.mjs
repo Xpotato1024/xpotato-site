@@ -131,6 +131,7 @@ test("all CMS collections can be candidates while unknown paths and change types
     "content/articles/line\nbreak.mdx",
     "content/articles/back\\slash.mdx",
     "content/registry/provenance/index.ts",
+    "content/registry/editorial/provenance.json",
     "content/registry/taxonomy/terms.json",
     "package.json",
   ]) {

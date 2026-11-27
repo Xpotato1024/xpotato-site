@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -13,8 +14,15 @@ import { MemoryBucket } from "../../apps/editor-api/src/test-bucket.js";
 import { DraftStore } from "../../apps/editor-api/src/state.js";
 import { createHandler } from "../../apps/editor-api/src/worker.js";
 import { APIError, type Environment } from "../../apps/editor-api/src/types.js";
+import { createDraft, draftPath } from "@xpotato/editor-core/draft";
+import { prepareDraftMedia } from "@xpotato/media-ingest/draft";
+import { parseMediaHandoff } from "@xpotato/editor-core/media-handoff";
 const root = resolve("."),
   output = resolve(".local/cms-validation/editor-integration");
+const handoffOnly = process.argv.includes("--handoff-only");
+if (handoffOnly && process.env.XPOTATO_RELEASE_BROWSER_RUN) {
+  throw Error("Release validation must run the complete editor suite");
+}
 await mkdir(output, { recursive: true });
 const git = new EditorGitHubFixture(
     JSON.parse(await readFile(resolve(root, "content/registry/editor.json"), "utf8")),
@@ -156,9 +164,9 @@ try {
   await panel(
     page,
     "保存と確認を開く",
-    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+    page.getByRole("button", { name: "原稿と添削を保存", exact: true }),
   );
-  await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
+  await page.getByRole("button", { name: "原稿と添削を保存", exact: true }).click();
   await page.locator(".message").filter({ hasText: "Gitへ保存しました" }).waitFor();
   const branch = [...git.refs.keys()].find((name) => name.startsWith("content/"))!;
   assert(branch);
@@ -179,6 +187,27 @@ try {
   assert.equal(git.pulls.length, 1);
   assert.equal(git.pulls[0]!.draft, true);
   assert.equal(git.pulls[0]!.base.ref, "main");
+  // Article-level review is private and must not produce an empty Git commit.
+  await panel(page, "添削を開く", page.getByRole("region", { name: "本文の添削" }));
+  const articleTarget = page.getByRole("button", { name: "記事全体への指摘", exact: true });
+  if ((await articleTarget.getAttribute("aria-pressed")) !== "true") await articleTarget.click();
+  await page.getByText("対象：記事全体（構成・方針・品質など）", { exact: true }).waitFor();
+  await page.getByRole("textbox", { name: "指摘", exact: true }).fill("記事全体の構成を見直す");
+  await page
+    .getByRole("region", { name: "本文の添削" })
+    .getByRole("button", { name: "指摘を追加", exact: true })
+    .click();
+  await page.getByRole("button", { name: "原稿と添削を保存", exact: true }).click();
+  await page
+    .locator(".message")
+    .filter({ hasText: "本文の変更がないためGit更新は省略しました。添削を非公開で同期しました。" })
+    .waitFor();
+  assert.equal(git.refs.get(branch), first.commit, "review-only save must keep the Git head");
+  const reviewState = (await new DraftStore(bucket).read()).state;
+  const reviewRecord = Object.values(reviewState.drafts).find((d) => d.branch === branch);
+  assert.equal(reviewRecord?.review?.comments.length, 1);
+  assert.equal(reviewRecord?.review?.comments[0]?.anchor.scope, "article");
+  await closePanel(page);
   const png = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWOoCJj2HwAFAAJeoZPDtAAAAABJRU5ErkJggg==",
     "base64",
@@ -216,21 +245,18 @@ try {
   await panel(
     page,
     "保存と確認を開く",
-    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+    page.getByRole("button", { name: "原稿と添削を保存", exact: true }),
   );
   const savedResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/editor-api/save" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
+  await page.getByRole("button", { name: "原稿と添削を保存", exact: true }).click();
   const response = await savedResponse;
   assert(response.ok(), "The new Git save must succeed");
   const savedCommit = (await response.json()).commit as string;
-  await page
-    .locator(".message")
-    .filter({ hasText: "Gitへ保存しました。 " + savedCommit.slice(0, 8) })
-    .waitFor();
+  await page.locator(".message").filter({ hasText: "原稿をGitへ保存しました。" }).waitFor();
   const humanHead = await git.repository.snapshot(branch),
     human = await git.repository.read(humanHead, file);
   assert.equal(humanHead.commit, savedCommit);
@@ -250,9 +276,9 @@ try {
   await panel(
     page,
     "保存と確認を開く",
-    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+    page.getByRole("button", { name: "原稿と添削を保存", exact: true }),
   );
-  await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
+  await page.getByRole("button", { name: "原稿と添削を保存", exact: true }).click();
   await page.locator(".conflict-panel").waitFor();
   assert.match(await page.locator(".conflict-panel").innerText(), /AIが同じPR/u);
   assert.equal(git.refs.get(branch), ai.commit);
@@ -276,8 +302,12 @@ try {
     .locator(".repository-documents")
     .getByRole("button", { name: /^Git引継ぎと私有画像の統合テスト/u })
     .click();
-  await mobile.getByRole("radio", { name: "既存のブランチ", exact: true }).check();
-  await mobile.getByRole("combobox", { name: "作業ブランチ", exact: true }).selectOption(branch);
+  assert.equal(await mobile.locator(".branch-value").innerText(), branch);
+  assert.equal(await mobile.getByRole("radio", { name: "既存のブランチ", exact: true }).count(), 0);
+  assert.equal(
+    await mobile.getByRole("combobox", { name: "作業ブランチ", exact: true }).count(),
+    0,
+  );
   await mobile.getByRole("button", { name: "編集を始める", exact: true }).click();
   await mobile.waitForFunction(
     () =>
@@ -297,6 +327,110 @@ try {
   assert(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   await audit(mobile, "mobile editor restored private media");
   await mobile.screenshot({ path: resolve(output, "mobile-synthetic-draft.png"), fullPage: true });
+
+  const aiContentId = crypto.randomUUID();
+  const aiPath = draftPath(aiContentId);
+  const aiBranch = "content/ai-media-bundle";
+  const aiBase = await git.repository.createBranch(await git.repository.snapshot("main"), aiBranch);
+  const imageSource =
+    createDraft("AI画像の受け渡し検証", "software", aiContentId) +
+    '\n<Figure asset="architecture-editor" alt="編集の検証図" />\n\n<Figure asset="architecture-delivery" alt="配信の検証図" />\n';
+  const imageCommit = await git.repository.save({
+    branch: aiBranch,
+    expectedHead: aiBase.commit,
+    path: aiPath,
+    source: imageSource,
+    producer: "ai",
+  });
+  const image = await prepareDraftMedia(png, "technical");
+  const mediaBundle = parseMediaHandoff({
+    schemaVersion: 1,
+    protocol: "xpotato-private-draft-media-handoff-v1",
+    repository: "fixture/editor",
+    source: {
+      contentId: aiContentId,
+      branch: aiBranch,
+      commit: imageCommit.commit,
+      path: aiPath,
+      sha256: createHash("sha256").update(imageSource).digest("hex"),
+    },
+    assets: ["architecture-editor", "architecture-delivery"].map((assetId) => ({
+      assetId,
+      prepared: {
+        schemaVersion: 1,
+        protocol: "xpotato-private-editor-media-v1",
+        metadata: image.metadata,
+        originalName: assetId + ".webp",
+        masterBase64: image.master.toString("base64"),
+        previewBase64: image.preview.toString("base64"),
+      },
+    })),
+  });
+  async function openAiMediaDraft() {
+    const context = await browser!.newContext({
+      viewport: { width: 390, height: 844 },
+      locale: "ja-JP",
+    });
+    const page = await context.newPage();
+    page.on("pageerror", capturePageError);
+    await page.goto(server.origin + "/editor/");
+    await page.getByRole("button", { name: /^下書きの続き/u }).click();
+    await page.locator(".repository-panel").getByLabel("読み込み元").selectOption(aiBranch);
+    await page.getByRole("button", { name: "一覧を取得", exact: true }).click();
+    await page
+      .locator(".repository-documents")
+      .getByRole("button", { name: /^AI画像の受け渡し検証/u })
+      .click();
+    assert.equal(await page.locator(".branch-value").innerText(), aiBranch);
+    await page.getByLabel("添削から開く", { exact: true }).check();
+    await page.getByRole("button", { name: "編集を始める", exact: true }).click();
+    await page.locator(".start-workspace").waitFor({ state: "hidden" });
+    await panel(page, "画像を開く", page.getByRole("region", { name: "画像とGIF", exact: true }));
+    return { context, page };
+  }
+  const imported = await openAiMediaDraft();
+  assert.equal(await imported.page.locator(".media-card").count(), 0);
+  const handoffPanel = imported.page.locator(".media-handoff");
+  await handoffPanel.locator("summary").click();
+  await handoffPanel.getByLabel("原稿の画像ファイル", { exact: true }).setInputFiles({
+    name: "private-handoff.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(mediaBundle)),
+  });
+  await handoffPanel.getByRole("button", { name: "下書きに画像を登録", exact: true }).click();
+  await handoffPanel
+    .getByRole("status")
+    .filter({ hasText: "2点の画像を下書きに登録しました" })
+    .waitFor();
+  assert.equal(await imported.page.locator(".media-card").count(), 2);
+  await imported.page.setViewportSize({ width: 320, height: 844 });
+  assert(
+    await imported.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
+  );
+  await imported.page.screenshot({
+    path: resolve(output, "ai-media-handoff-mobile.png"),
+    fullPage: true,
+  });
+  await audit(imported.page, "AI image handoff verified in the draft branch");
+  await imported.context.close();
+  const recovered = await openAiMediaDraft();
+  await recovered.page.locator(".media-card").nth(1).waitFor();
+  for (const image of await recovered.page.locator(".media-card img").all()) {
+    await image.scrollIntoViewIfNeeded();
+    await image.evaluate((element: HTMLImageElement) => element.decode());
+  }
+  assert.equal(
+    await recovered.page.locator(".media-card").filter({ hasText: "非公開R2に同期済み" }).count(),
+    2,
+  );
+  await closePanel(recovered.page);
+  assert.match(await readBody(recovered.page), /asset="architecture-editor"/u);
+  assert.match(await readBody(recovered.page), /asset="architecture-delivery"/u);
+  assert.equal(
+    (await git.repository.read(await git.repository.snapshot(aiBranch), aiPath)).source,
+    imageSource,
+  );
+  await recovered.context.close();
   const browserUserAgent = await mobile.evaluate(() => navigator.userAgent);
   const cached = await mobile.evaluate(async () => {
     const keys = await caches.keys();
@@ -326,15 +460,17 @@ try {
   assert.deepEqual(failures, []);
   await second.close();
   await context.close();
-  for (const suite of [
-    "editor-browser-smoke.mjs",
-    "editor-workspace-smoke.mjs",
-    "editor-keyboard-smoke.mjs",
-    "editor-links-smoke.mjs",
-    "editor-comparison-smoke.mjs",
-    "editor-chart-preview-smoke.mjs",
-    "editor-preview-toolbar-smoke.mjs",
-  ]) {
+  for (const suite of handoffOnly
+    ? []
+    : [
+        "editor-browser-smoke.mjs",
+        "editor-workspace-smoke.mjs",
+        "editor-keyboard-smoke.mjs",
+        "editor-links-smoke.mjs",
+        "editor-comparison-smoke.mjs",
+        "editor-chart-preview-smoke.mjs",
+        "editor-preview-toolbar-smoke.mjs",
+      ]) {
     const smoke = promisify(execFile)(process.execPath, [resolve(root, "ops/qa", suite)], {
       cwd: root,
       env: process.env,
@@ -345,37 +481,40 @@ try {
     smoke.child.stderr?.pipe(process.stderr, { end: false });
     await smoke;
   }
-  const reviewOutput = resolve(".local/editor-review", "ci-" + Date.now() + "-" + process.pid);
-  const reviewBuild = await promisify(execFile)(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      resolve(root, "ops/authoring/editor-astro-review.ts"),
-      "--source",
-      "content/articles/77arj41r5z8amrn46pdx71mknr.mdx",
-      "--output",
-      reviewOutput,
-    ],
-    { cwd: root, env: process.env, timeout: 180000, maxBuffer: 2 * 1024 * 1024 },
-  );
-  const built = JSON.parse(reviewBuild.stdout.trim().split("\n").at(-1)!);
-  assert.equal(built.codeClean, true, "The review must use the current clean commit");
-  assert.equal(built.privateMediaDownloaded, false);
-  await promisify(execFile)(
-    process.execPath,
-    [
-      resolve(root, "ops/qa/editor-review-browser.mjs"),
-      "--review",
-      resolve(reviewOutput, "review.json"),
-    ],
-    { cwd: root, env: process.env, timeout: 45000, maxBuffer: 2 * 1024 * 1024 },
-  );
+  if (!handoffOnly) {
+    const reviewOutput = resolve(".local/editor-review", "ci-" + Date.now() + "-" + process.pid);
+    const reviewBuild = await promisify(execFile)(
+      process.execPath,
+      [
+        "--import",
+        "tsx",
+        resolve(root, "ops/authoring/editor-astro-review.ts"),
+        "--source",
+        "content/articles/77arj41r5z8amrn46pdx71mknr.mdx",
+        "--output",
+        reviewOutput,
+      ],
+      { cwd: root, env: process.env, timeout: 180000, maxBuffer: 2 * 1024 * 1024 },
+    );
+    const built = JSON.parse(reviewBuild.stdout.trim().split("\n").at(-1)!);
+    assert.equal(built.codeClean, true, "The review must use the current clean commit");
+    assert.equal(built.privateMediaDownloaded, false);
+    await promisify(execFile)(
+      process.execPath,
+      [
+        resolve(root, "ops/qa/editor-review-browser.mjs"),
+        "--review",
+        resolve(reviewOutput, "review.json"),
+      ],
+      { cwd: root, env: process.env, timeout: 45000, maxBuffer: 2 * 1024 * 1024 },
+    );
+  }
   const report = {
-    astroReviewVerified: true,
-    offlineShellVerified: true,
-    workspaceWorkflowVerified: true,
-    keyboardViewportVerified: true,
+    astroReviewVerified: !handoffOnly,
+    offlineShellVerified: !handoffOnly,
+    workspaceWorkflowVerified: !handoffOnly,
+    keyboardViewportVerified: !handoffOnly,
+    scope: handoffOnly ? "git-and-media-handoff" : "complete-editor",
     mode: "real-chromium-with-synthetic-GitHub-and-R2",
     result: "pass",
     tests: [
@@ -385,14 +524,20 @@ try {
       "AI revision on the same branch",
       "stale human save preserves local data and rejects overwrite",
       "second mobile context restores MDX and private image",
-      "independent registries, explicit article entry, review visibility and IndexedDB upgrade",
-      "focused inputs and carets stay above simulated mobile keyboard viewports",
+      "AI bundle preserves semantic image IDs and fixed source branch",
+      "all AI images verified after upload and restored in a fresh browser context",
+      ...(!handoffOnly
+        ? [
+            "independent registries, explicit article entry, review visibility and IndexedDB upgrade",
+            "focused inputs and carets stay above simulated mobile keyboard viewports",
+          ]
+        : []),
       "no runtime errors or horizontal overflow",
       "no public storage writes",
     ],
     commits: git.commits.size,
     prs: git.pulls.length,
-    mediaObjects: Object.keys(state.assets).length,
+    mediaObjects: Object.keys((await new DraftStore(bucket).read()).state.assets).length,
     providerNetworkCalls: 0,
     liveAuthorizationVerified: false,
   };

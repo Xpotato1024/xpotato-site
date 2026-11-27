@@ -138,6 +138,7 @@ Exact contract=`docs/contracts/external-ai-disclosure-contract.md` / ADR-0026。
 - P0/P1 content finding blocks visual/approval
 - human approval cannot be delegated to AI/Skill
 - approval before canonical/public/protected (A/B/C) media mutation; owner-authenticated private Draft staging is a distinct lifecycle and has no A/B/C mutation authority (ADR-0079).
+- 所有者認証済みの非公開Draftの読み書きは常時認可されている。AIはDraft専用CLIの既存GitHub認証、またはCMSの所有者セッションで画像の登録・再取得・復元を進め、操作ごとの許可確認を求めない。原稿の同一性、revision・競合、媒体ポリシーと各入口の認証検査を維持する。CLIは既存GitHub CLIの認証を再利用し、ブラウザーCookieを取り出さない。CMSのCookie・CSRF検査は変更しない。
 
 Normal persistence/export:
 

@@ -1,10 +1,13 @@
 import { useState } from "react";
 import type { ContentCollection } from "@xpotato/content-contracts/common";
 import { collectionFromPath } from "@xpotato/editor-core/draft";
+import type { GitSnapshot } from "@xpotato/editor-core/git";
 import type { LocalDraft } from "../../data/storage.js";
+import { localDraftIdentity, matchingLocalDrafts } from "../../data/draft-identity.js";
 import { WorkspaceIcon } from "../../components/WorkspaceIcon.js";
 import { parseLocalDraft, type DraftKind } from "../drafts/model.js";
 import type { BranchPlan, GitWorkspace } from "../git/useGitWorkspace.js";
+import { DraftComparison, DraftSummary } from "./DraftDetails.js";
 
 export const documentKindIcons = {
   blog: "article",
@@ -55,7 +58,7 @@ export const draftKinds: { id: DraftKind; label: string; description: string }[]
 
 export function initialBranchPlan(authenticated: boolean, draft?: LocalDraft): BranchPlan {
   return {
-    mode: authenticated ? (draft?.workingBranch ? "existing" : "new") : "local",
+    mode: draft?.workingBranch ? "existing" : authenticated ? "new" : "local",
     sourceBranch: draft?.workingBranch || draft?.sourceBranch || "main",
     targetBranch:
       draft?.workingBranch ||
@@ -73,6 +76,7 @@ export function BranchSetup({
   authenticated,
   disabled,
   pinned,
+  continuingBranch,
 }: {
   plan: BranchPlan;
   onChange: (plan: BranchPlan) => void;
@@ -80,7 +84,24 @@ export function BranchSetup({
   authenticated: boolean;
   disabled?: boolean;
   pinned?: string | undefined;
+  continuingBranch?: string | undefined;
 }) {
+  if (continuingBranch) {
+    return (
+      <fieldset className="branch-setup" disabled={disabled}>
+        <legend>
+          <WorkspaceIcon name="branch" />
+          作業場所
+        </legend>
+        <p className="small">作業ブランチ</p>
+        <p className="branch-value">{continuingBranch}</p>
+        <p className="small muted">本文・画像・添削を同じブランチで引き継ぎます。</p>
+        {!authenticated && (
+          <p className="small muted">接続が戻るまで、この端末に保存して作業できます。</p>
+        )}
+      </fieldset>
+    );
+  }
   return (
     <fieldset className="branch-setup" disabled={disabled}>
       <legend>
@@ -184,6 +205,8 @@ interface Props {
     plan: BranchPlan,
     intent: "revise" | "drafts",
     review: boolean,
+    selection: GitSnapshot,
+    selectedLocalId?: string,
   ) => Promise<void>;
   onImport: (file: File, collection?: ContentCollection) => Promise<LocalDraft>;
   run: (operation: () => Promise<void>) => void;
@@ -209,12 +232,13 @@ export function StartWorkspace({
   const [localPage, setLocalPage] = useState(1);
   const [remotePage, setRemotePage] = useState(1);
   const [selected, setSelected] = useState<
-    { local: LocalDraft } | { path: string; title: string } | null
+    { local: LocalDraft } | { path: string; title: string; snapshot: GitSnapshot } | null
   >(null);
   const [plan, setPlan] = useState(() => initialBranchPlan(git.auth.authenticated));
   const [importKind, setImportKind] = useState<ContentCollection | "">("");
   const [file, setFile] = useState<File>();
   const [review, setReview] = useState(false);
+  const readableBranch = intent !== "drafts" || git.sourceBranch.startsWith("content/");
   const normalized = query.normalize("NFKC").toLocaleLowerCase("ja");
   const matches = (value: string) =>
     value.normalize("NFKC").toLocaleLowerCase("ja").includes(normalized);
@@ -262,6 +286,20 @@ export function StartWorkspace({
     (visibleRemotePage - 1) * catalogPageSize,
     visibleRemotePage * catalogPageSize,
   );
+  const localGroups = new Map(
+    localPageItems.map((item) => {
+      const identity = localDraftIdentity(item);
+      const group = identity ? matchingLocalDrafts(saved, identity) : [item];
+      return [
+        item.id,
+        {
+          position: group.findIndex((other) => other.id === item.id) + 1,
+          count: group.length,
+          alternatives: group.filter((other) => other.id !== item.id),
+        },
+      ] as const;
+    }),
+  );
   function changePage(source: "local" | "remote", next: number) {
     if (source === "local") setLocalPage(next);
     else setRemotePage(next);
@@ -273,16 +311,73 @@ export function StartWorkspace({
     setReview(item.producer === "ai");
   }
   function selectionPanel(choice: NonNullable<typeof selected> | null) {
+    const contentId =
+      choice && "path" in choice ? indexByPath.get(choice.path)?.contentId : undefined;
+    const existing =
+      choice && "path" in choice && contentId
+        ? matchingLocalDrafts(saved, {
+            contentId,
+            path: choice.path,
+            workingBranch: plan.mode === "local" ? "" : plan.targetBranch,
+            sourceBranch: choice.snapshot.branch,
+          })
+        : [];
+    if (existing.length > 1) {
+      return (
+        <section className="start-selection start-selection-inline" aria-label="続ける下書きを選択">
+          <h2>同じ原稿の下書きが{existing.length}件あります</h2>
+          <p className="small">
+            違いを確認し、続ける下書きを選んでください。元の編集内容はそれぞれ保持しています。
+          </p>
+          {existing.map((item, index) => (
+            <div className="existing-draft-choice" key={item.id}>
+              <p>
+                <strong>下書き {index + 1}</strong>
+              </p>
+              <DraftSummary draft={item} />
+              <DraftComparison
+                draft={item}
+                alternatives={existing.filter((other) => other.id !== item.id)}
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  run(async () => {
+                    if (choice && "path" in choice && intent !== "new") {
+                      await onRemote(choice.path, plan, intent, review, choice.snapshot, item.id);
+                    }
+                  })
+                }
+              >
+                下書き {index + 1}を続ける
+              </button>
+            </div>
+          ))}
+        </section>
+      );
+    }
+    const continuingBranch =
+      choice && "local" in choice
+        ? choice.local.workingBranch
+        : intent === "drafts" && choice && "path" in choice
+          ? choice.snapshot.branch
+          : undefined;
     return (
       <section
         className={"start-selection" + (choice ? " start-selection-inline" : "")}
         aria-label="編集の準備"
       >
+        {existing.length === 1 && (
+          <p className="small">
+            この端末の下書きを再開します。未保存の編集・添削・画像を引き継ぎます。
+          </p>
+        )}
         <BranchSetup
           plan={plan}
           onChange={setPlan}
           branches={git.branches}
           authenticated={git.auth.authenticated}
+          continuingBranch={continuingBranch}
           pinned={
             choice && "local" in choice && choice.local.baseCommit
               ? "この下書きの保存元から分岐し、未保存の編集を引き継ぎます。"
@@ -310,7 +405,7 @@ export function StartWorkspace({
               if (intent === "new") await onNew(kind, plan);
               else if (choice && "local" in choice) await onLocal(choice.local, plan, review);
               else if (choice && "path" in choice)
-                await onRemote(choice.path, plan, intent, review);
+                await onRemote(choice.path, plan, intent, review, choice.snapshot);
             })
           }
         >
@@ -411,11 +506,13 @@ export function StartWorkspace({
                         <strong>
                           {parseLocalDraft(item.source)?.data.title ?? "構文を編集中"}
                         </strong>
-                        <span>
-                          {item.producer === "ai" ? "AI下書き · " : ""}
-                          {item.workingBranch || "この端末"} ·{" "}
-                          {new Date(item.savedAt).toLocaleDateString("ja-JP")}
-                        </span>
+                        <DraftSummary draft={item} />
+                        {localGroups.get(item.id)!.count > 1 && (
+                          <span>
+                            同じ原稿の下書き {localGroups.get(item.id)!.position} /{" "}
+                            {localGroups.get(item.id)!.count}
+                          </span>
+                        )}
                       </button>
                       <button
                         type="button"
@@ -454,6 +551,10 @@ export function StartWorkspace({
                       >
                         削除
                       </button>
+                      <DraftComparison
+                        draft={item}
+                        alternatives={localGroups.get(item.id)!.alternatives}
+                      />
                       {selected &&
                         "local" in selected &&
                         selected.local.id === item.id &&
@@ -478,27 +579,32 @@ export function StartWorkspace({
             )}
             <section className="repository-panel" aria-label="Gitの原稿">
               <h2>
-                Gitの原稿（{git.snapshot?.branch === git.sourceBranch ? remote.length : 0}件）
+                Gitの原稿（
+                {readableBranch && git.snapshot?.branch === git.sourceBranch ? remote.length : 0}
+                件）
               </h2>
               <div className="repository-source">
                 <label>
                   読み込み元
                   <select
-                    value={git.sourceBranch}
+                    value={readableBranch ? git.sourceBranch : ""}
                     onChange={(event) => {
                       git.setSourceBranch(event.target.value);
                       setRemotePage(1);
                       setSelected(null);
                     }}
                   >
-                    {[...new Set([git.sourceBranch, ...git.branches])].map((branch) => (
-                      <option key={branch}>{branch}</option>
-                    ))}
+                    {intent === "drafts" && <option value="">下書きのブランチを選択</option>}
+                    {[...new Set([git.sourceBranch, ...git.branches])]
+                      .filter((branch) => intent !== "drafts" || branch.startsWith("content/"))
+                      .map((branch) => (
+                        <option key={branch}>{branch}</option>
+                      ))}
                   </select>
                 </label>
                 <button
                   type="button"
-                  disabled={!git.auth.authenticated}
+                  disabled={!git.auth.authenticated || !readableBranch}
                   onClick={() =>
                     run(async () => {
                       await git.readBranch();
@@ -515,7 +621,7 @@ export function StartWorkspace({
                   GitHub未接続 · <a href="#/connection">接続を確認</a>
                 </p>
               )}
-              {git.snapshot?.branch === git.sourceBranch && (
+              {readableBranch && git.snapshot?.branch === git.sourceBranch && (
                 <div className="draft-list repository-documents">
                   {indexMissing && (
                     <p className="small muted" role="status">
@@ -530,14 +636,24 @@ export function StartWorkspace({
                           selected && "path" in selected && selected.path === item.path,
                         )}
                         onClick={() => {
+                          if (!git.snapshot) return;
                           setSelected({
                             path: item.path,
                             title: item.metadata?.title ?? item.path,
+                            snapshot: git.snapshot,
                           });
-                          setPlan({
-                            ...initialBranchPlan(git.auth.authenticated),
-                            sourceBranch: git.sourceBranch,
-                          });
+                          setPlan(
+                            intent === "drafts"
+                              ? {
+                                  mode: "existing",
+                                  sourceBranch: git.snapshot.branch,
+                                  targetBranch: git.snapshot.branch,
+                                }
+                              : {
+                                  ...initialBranchPlan(git.auth.authenticated),
+                                  sourceBranch: git.snapshot.branch,
+                                },
+                          );
                           setReview(false);
                         }}
                       >
@@ -567,7 +683,7 @@ export function StartWorkspace({
                   {!remote.length && <p className="small muted">該当する原稿はありません。</p>}
                 </div>
               )}
-              {git.snapshot?.branch === git.sourceBranch && (
+              {readableBranch && git.snapshot?.branch === git.sourceBranch && (
                 <CatalogPagination
                   label="Gitの原稿"
                   page={visibleRemotePage}

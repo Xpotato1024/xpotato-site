@@ -1,6 +1,20 @@
 import type { TaxonomySnapshot } from "@xpotato/editor-core/draft";
 import type { ReviewComment } from "@xpotato/editor-core/annotations";
 import type { EditorRegistryChanges } from "@xpotato/editor-core/registry";
+import { localDraftIdentity, matchingLocalDrafts } from "./draft-identity.js";
+import {
+  decodeStoredMedia,
+  encodeStoredMedia,
+  mergeRestoredMedia,
+  assertMediaRestoreDraft,
+  assertMediaCopySource,
+  isBlobStorageError,
+  MediaBlobWriteAborted,
+  mediaWithoutCompatibilityBlob,
+  withMediaBlobFallback,
+  type MediaVersion,
+  type StoredMedia,
+} from "./media-storage.js";
 
 export interface LocalDraft {
   id: string;
@@ -21,7 +35,13 @@ export interface LocalDraft {
   archived?: boolean;
   pendingRegistryChanges?: EditorRegistryChanges | undefined;
   reviewRevision?: number;
+  syncedAnnotations?: ReviewComment[];
 }
+export interface LocalDraftWriteOptions {
+  requireExistingActive?: boolean;
+}
+export const missingActiveDraftMessage =
+  "この端末の下書きは削除またはアーカイブされています。手元の入力は保持しています。必要な原稿を書き出してから画面を読み込み直してください。";
 export interface LocalMedia {
   id: string;
   draftId: string;
@@ -64,11 +84,11 @@ export type LocalDraftBranchBinding = Partial<
 >;
 
 /** A branch copy owns new local and private-media identities, but the same article ContentId. */
-export function createLocalDraftBranchCopy(
+export function createLocalDraftBranchCopy<T extends Omit<LocalMedia, "blob">>(
   original: LocalDraft,
   binding: LocalDraftBranchBinding,
-  media: readonly LocalMedia[],
-): { draft: LocalDraft; media: LocalMedia[] } {
+  media: readonly T[],
+): { draft: LocalDraft; media: Omit<T, "remoteId">[] } {
   if (!binding.workingBranch || !binding.sourceBranch || !binding.baseCommit) {
     throw Error("BRANCH_COPY_TARGET_REQUIRED");
   }
@@ -79,6 +99,7 @@ export function createLocalDraftBranchCopy(
     remoteDraftId: _remoteDraftId,
     remoteRevision: _remoteRevision,
     reviewRevision: _reviewRevision,
+    syncedAnnotations: _syncedAnnotations,
     syncedCommit: _syncedCommit,
     syncedSource: _syncedSource,
     baseSource: _baseSource,
@@ -177,7 +198,14 @@ function writeDraftRecord(
     }),
   );
 }
-export async function saveLocalDraft(draft: LocalDraft): Promise<IDBValidKey> {
+export async function saveLocalDraft(
+  draft: LocalDraft,
+  options: LocalDraftWriteOptions = {},
+): Promise<IDBValidKey> {
+  if (options.requireExistingActive) {
+    await updateLocalDraft(draft.id, draft, () => draft, options);
+    return draft.id;
+  }
   // Another tab may have archived or restored this draft since it was opened here.
   await writeDraftRecord(draft.id, (stored) =>
     stored?.archived === undefined ? draft : { ...draft, archived: stored.archived },
@@ -196,6 +224,53 @@ export async function updateLocalDraftArchive(
   if (!stored && !activeDraft) throw Error("端末に下書きが見つかりません。");
 }
 export const localDrafts = () => transact<LocalDraft[]>("drafts", "readonly", (s) => s.getAll());
+/** Select or create one Git workspace atomically, including requests from another tab. */
+export function claimGitDraft(
+  candidate: LocalDraft,
+  selectedId?: string,
+): Promise<{ draft: LocalDraft; created: boolean }> {
+  const identity = localDraftIdentity(candidate);
+  if (!identity) return Promise.reject(Error("DRAFT_IDENTITY_REQUIRED"));
+  return queueDraftWrite(async () => {
+    const db = await database();
+    return new Promise<{ draft: LocalDraft; created: boolean }>((resolve, reject) => {
+      const tx = db.transaction("drafts", "readwrite");
+      const store = tx.objectStore("drafts");
+      const read = store.getAll();
+      let result: { draft: LocalDraft; created: boolean };
+      let failure: unknown;
+      read.onsuccess = () => {
+        try {
+          const matches = matchingLocalDrafts(read.result as LocalDraft[], identity);
+          const selected = selectedId
+            ? matches.find((draft) => draft.id === selectedId)
+            : undefined;
+          if (selectedId && !selected)
+            throw Error("選択した下書きの保存先が変わりました。下書きを選び直してください。");
+          if (!selected && matches.length > 1) {
+            throw Error(
+              "同じ原稿の下書きが複数あります。下書きの違いを確認し、続けるものを選んでください。",
+            );
+          }
+          const existing = selected ?? matches[0];
+          result = { draft: existing ?? candidate, created: !existing };
+          if (!existing) store.add(candidate);
+        } catch (error) {
+          failure = error;
+          tx.abort();
+        }
+      };
+      tx.oncomplete = () => {
+        db.close();
+        resolve(result);
+      };
+      tx.onabort = tx.onerror = () => {
+        db.close();
+        reject(failure ?? tx.error ?? Error("LOCAL_SAVE_FAILED"));
+      };
+    });
+  });
+}
 export const readWorkspaceRecord = <T>(id: string) =>
   transact<T | undefined>("workspace", "readonly", (s) => s.get(id));
 export const writeWorkspaceRecord = <T extends { id: string }>(value: T) =>
@@ -234,10 +309,120 @@ export function deleteLocalDraft(id: string): Promise<void> {
     });
   });
 }
-export const saveLocalMedia = (media: LocalMedia) =>
-  transact("media", "readwrite", (s) => s.put(media));
-export const localMedia = (draftId: string) =>
-  transact<LocalMedia[]>("media", "readonly", (s) => s.index("draftId").getAll(draftId));
+export async function saveLocalMedia(media: LocalMedia) {
+  const stored = await encodeStoredMedia(media);
+  return withMediaBlobFallback(async (includeBlob) => {
+    const db = await database();
+    return new Promise<IDBValidKey>((resolve, reject) => {
+      let tx: IDBTransaction;
+      try {
+        tx = db.transaction("media", "readwrite");
+      } catch (error) {
+        db.close();
+        reject(error);
+        return;
+      }
+      let failure: unknown;
+      let result: IDBValidKey;
+      tx.oncomplete = () => {
+        db.close();
+        resolve(result);
+      };
+      // onerror can fire before the transaction outcome is known. Retry only after abort.
+      tx.onabort = () => {
+        db.close();
+        const cause = failure ?? tx.error ?? Error("LOCAL_SAVE_FAILED");
+        reject(includeBlob && isBlobStorageError(cause) ? new MediaBlobWriteAborted(cause) : cause);
+      };
+      try {
+        const request = tx
+          .objectStore("media")
+          .put(includeBlob ? stored : mediaWithoutCompatibilityBlob(stored));
+        request.onsuccess = () => {
+          result = request.result;
+        };
+        request.onerror = () => {
+          failure ??= request.error;
+        };
+      } catch (error) {
+        failure = error;
+        tx.abort();
+      }
+    });
+  });
+}
+export async function localMedia(draftId: string): Promise<LocalMedia[]> {
+  const records = await transact<(StoredMedia | LocalMedia)[]>("media", "readonly", (s) =>
+    s.index("draftId").getAll(draftId),
+  );
+  return Promise.all(records.map(decodeStoredMedia));
+}
+
+/** Preserve edits made during a download and let concurrent restores share one media record. */
+export async function saveRestoredMedia(
+  media: LocalMedia,
+  expected: MediaVersion | undefined,
+  expectedDraft: LocalDraft,
+) {
+  if (media.draftId !== expectedDraft.id) throw Error("DRAFT_MEDIA_IDENTITY_MISMATCH");
+  const encoded = await encodeStoredMedia(media);
+  await withMediaBlobFallback(async (includeBlob) => {
+    const incoming = includeBlob ? encoded : mediaWithoutCompatibilityBlob(encoded);
+    const db = await database();
+    await new Promise<void>((resolve, reject) => {
+      let tx: IDBTransaction;
+      try {
+        tx = db.transaction(["drafts", "media"], "readwrite");
+      } catch (error) {
+        db.close();
+        reject(error);
+        return;
+      }
+      const store = tx.objectStore("media");
+      const draft = tx.objectStore("drafts").get(media.draftId);
+      let failure: unknown;
+      let writeFailure: unknown;
+      draft.onsuccess = () => {
+        try {
+          assertMediaRestoreDraft(expectedDraft, draft.result as LocalDraft | undefined);
+          const request = store.index("draftId").getAll(media.draftId);
+          request.onsuccess = () => {
+            try {
+              const matches = (request.result as (StoredMedia | LocalMedia)[]).filter(
+                (item) => item.assetId === media.assetId,
+              );
+              if (matches.length > 1) throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
+              const write = store.put(mergeRestoredMedia(incoming, matches[0], expected));
+              write.onerror = () => {
+                writeFailure ??= write.error;
+              };
+            } catch (error) {
+              failure = error;
+              tx.abort();
+            }
+          };
+        } catch (error) {
+          failure = error;
+          tx.abort();
+        }
+      };
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      tx.onabort = () => {
+        db.close();
+        const cause = failure ?? writeFailure ?? tx.error ?? Error("LOCAL_SAVE_FAILED");
+        reject(includeBlob && isBlobStorageError(cause) ? new MediaBlobWriteAborted(cause) : cause);
+      };
+    });
+  });
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("editor-media-changed", { detail: { draftId: media.draftId } }),
+    );
+  }
+}
 export const deleteLocalMedia = (id: string) => transact("media", "readwrite", (s) => s.delete(id));
 export async function storageEstimate() {
   return navigator.storage?.estimate ? await navigator.storage.estimate() : {};
@@ -276,6 +461,7 @@ export function updateLocalDraft(
   id: string,
   fallback: LocalDraft,
   update: (latest: LocalDraft) => LocalDraft,
+  options: LocalDraftWriteOptions = {},
 ): Promise<LocalDraft> {
   const next = saveQueue
     .catch(() => {})
@@ -288,7 +474,11 @@ export function updateLocalDraft(
         let result: LocalDraft;
         read.onsuccess = () => {
           try {
-            result = update((read.result as LocalDraft | undefined) ?? fallback);
+            const stored = read.result as LocalDraft | undefined;
+            if (options.requireExistingActive && (!stored || stored.archived)) {
+              throw Error(missingActiveDraftMessage);
+            }
+            result = update(stored ?? fallback);
             if (result.id !== id) throw Error("DRAFT_ID_MISMATCH");
             store.put(result);
           } catch (error) {
@@ -320,43 +510,80 @@ export function cloneLocalDraftForBranch(
   const next = saveQueue
     .catch(() => {})
     .then(async () => {
-      const db = await database();
-      return new Promise<LocalDraft>((resolve, reject) => {
-        let tx: IDBTransaction;
-        try {
-          tx = db.transaction(["drafts", "media"], "readwrite");
-        } catch (error) {
-          db.close();
-          reject(error);
-          return;
-        }
-        let copied: LocalDraft;
-        let failure: unknown;
-        tx.oncomplete = () => {
-          db.close();
-          resolve(copied);
-        };
-        tx.onabort = () => {
-          db.close();
-          reject(failure ?? tx.error ?? Error("LOCAL_SAVE_FAILED"));
-        };
-        const images = tx.objectStore("media");
-        const read = images.index("draftId").getAll(original.id);
-        read.onsuccess = () => {
+      const media = await localMedia(original.id);
+      const prepared = await Promise.all(media.map(encodeStoredMedia));
+      const copied = createLocalDraftBranchCopy(original, target, prepared);
+      const sources = new Map(
+        prepared.map((image, index) => [image.id, { image, copy: copied.media[index]! }]),
+      );
+      return withMediaBlobFallback(async (includeBlob) => {
+        const db = await database();
+        return new Promise<LocalDraft>((resolve, reject) => {
+          let tx: IDBTransaction;
           try {
-            const result = createLocalDraftBranchCopy(
-              original,
-              target,
-              read.result as LocalMedia[],
-            );
-            copied = result.draft;
-            tx.objectStore("drafts").add(copied);
-            for (const item of result.media) images.add(item);
+            tx = db.transaction(["drafts", "media"], "readwrite");
           } catch (error) {
-            failure = error;
-            tx.abort();
+            db.close();
+            reject(error);
+            return;
           }
-        };
+          let failure: unknown;
+          let writeFailure: unknown;
+          tx.oncomplete = () => {
+            db.close();
+            resolve(copied.draft);
+          };
+          tx.onabort = () => {
+            db.close();
+            const cause = failure ?? writeFailure ?? tx.error ?? Error("LOCAL_SAVE_FAILED");
+            reject(
+              includeBlob && isBlobStorageError(cause) ? new MediaBlobWriteAborted(cause) : cause,
+            );
+          };
+          const images = tx.objectStore("media");
+          const parent = tx.objectStore("drafts").get(original.id);
+          parent.onsuccess = () => {
+            try {
+              assertMediaCopySource(original, parent.result as LocalDraft | undefined);
+              const read = images.index("draftId").getAll(original.id);
+              read.onsuccess = () => {
+                try {
+                  const current = read.result as (StoredMedia | LocalMedia)[];
+                  if (current.length !== sources.size) throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
+                  tx.objectStore("drafts").add(copied.draft);
+                  for (const item of current) {
+                    const source = sources.get(item.id);
+                    if (
+                      !source ||
+                      source.image.assetId !== item.assetId ||
+                      source.image.sourceSha256 !== item.sourceSha256
+                    )
+                      throw Error("DRAFT_MEDIA_LOCAL_CONFLICT");
+                    const merged = mergeRestoredMedia(source.image, item, source.image);
+                    const { remoteId: _remoteId, ...local } = merged;
+                    const image = {
+                      ...local,
+                      id: source.copy.id,
+                      draftId: copied.draft.id,
+                    };
+                    const write = images.add(
+                      includeBlob ? image : mediaWithoutCompatibilityBlob(image),
+                    );
+                    write.onerror = () => {
+                      writeFailure ??= write.error;
+                    };
+                  }
+                } catch (error) {
+                  failure = error;
+                  tx.abort();
+                }
+              };
+            } catch (error) {
+              failure = error;
+              tx.abort();
+            }
+          };
+        });
       });
     });
   saveQueue = next;

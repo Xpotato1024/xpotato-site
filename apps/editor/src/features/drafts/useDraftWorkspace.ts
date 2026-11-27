@@ -7,6 +7,7 @@ import {
   saveLocalDraft,
   saveRevision,
   updateLocalDraftArchive,
+  missingActiveDraftMessage,
   type DraftRevision,
   type LocalDraft,
 } from "../../data/storage.js";
@@ -27,6 +28,7 @@ export function useDraftWorkspace(onError: (message: string) => void) {
   const [hydrated, setHydrated] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
   const activeDraft = useRef(false);
+  const existingDraftIds = useRef(new Set<string>());
   const [draft, setDraftState] = useState<LocalDraft>(() => createLocalDraft());
   const [saved, setSaved] = useState<LocalDraft[]>([]);
   const [localStatus, setLocalStatus] = useState("保存準備中");
@@ -90,7 +92,12 @@ export function useDraftWorkspace(onError: (message: string) => void) {
       void (async () => {
         const latest = current.current;
         if (!activeDraft.current || latest.id !== draft.id) return;
-        await saveLocalDraft({ ...latest, savedAt: new Date().toISOString() });
+        await saveLocalDraft(
+          { ...latest, savedAt: new Date().toISOString() },
+          {
+            requireExistingActive: existingDraftIds.current.has(latest.id),
+          },
+        );
         if (Date.now() - revisionAt.current > 30000) {
           await saveRevision(latest, "自動保存");
           revisionAt.current = Date.now();
@@ -117,9 +124,12 @@ export function useDraftWorkspace(onError: (message: string) => void) {
     if (!hydrated || !hasDraft) return;
     const flush = () => {
       if (!activeDraft.current) return;
-      void saveLocalDraft({ ...current.current, savedAt: new Date().toISOString() }).catch(() =>
-        onError("端末への保存に失敗しました。"),
-      );
+      void saveLocalDraft(
+        { ...current.current, savedAt: new Date().toISOString() },
+        {
+          requireExistingActive: existingDraftIds.current.has(current.current.id),
+        },
+      ).catch(() => onError("端末への保存に失敗しました。"));
     };
     const hidden = () => {
       if (document.visibilityState === "hidden") flush();
@@ -135,17 +145,28 @@ export function useDraftWorkspace(onError: (message: string) => void) {
   async function persist(label = "編集を保存") {
     if (!activeDraft.current) return;
     const snapshot = { ...current.current, savedAt: new Date().toISOString() };
-    await saveLocalDraft(snapshot);
+    await saveLocalDraft(snapshot, {
+      requireExistingActive: existingDraftIds.current.has(snapshot.id),
+    });
     await saveRevision(snapshot, label);
   }
-  async function openLocal(next: LocalDraft) {
-    if (activeDraft.current && next.id === current.current.id) return;
+  function requireExistingDraft(id: string) {
+    existingDraftIds.current.add(id);
+  }
+  async function openLocal(next: LocalDraft, options: { requireExistingActive?: boolean } = {}) {
+    if (options.requireExistingActive) requireExistingDraft(next.id);
+    if (!options.requireExistingActive && activeDraft.current && next.id === current.current.id)
+      return;
     const leaving = current.current.id;
     while (current.current.id === leaving) {
       const before = current.current;
       await persist();
       const latest = (await localDrafts()).find((entry) => entry.id === next.id);
+      if (options.requireExistingActive && (!latest || latest.archived)) {
+        throw Error(missingActiveDraftMessage);
+      }
       if (current.current !== before) continue;
+      if (activeDraft.current && next.id === current.current.id) return;
       activeDraft.current = true;
       setHasDraft(true);
       setDraft(latest ?? next);
@@ -270,6 +291,7 @@ export function useDraftWorkspace(onError: (message: string) => void) {
     removeFromDevice,
     setArchived,
     openLocal,
+    requireExistingDraft,
     createNew,
     edit,
     setSource,

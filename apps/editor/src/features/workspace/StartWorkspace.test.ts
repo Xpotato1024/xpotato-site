@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { StartWorkspace } from "./StartWorkspace.js";
+import { BranchSetup, initialBranchPlan, StartWorkspace } from "./StartWorkspace.js";
 import type { GitWorkspace } from "../git/useGitWorkspace.js";
+import { createLocalDraft } from "../drafts/model.js";
+import type { LocalDraft } from "../../data/storage.js";
+import { updateDraft } from "@xpotato/editor-core/draft";
+import { draftSavedTime } from "./DraftDetails.js";
 
 const path = "content/articles/09wsw5yvd59gqrjaz5ee25y3mw.mdx";
-function html(withIndex: boolean) {
+function html(
+  withIndex: boolean,
+  saved: LocalDraft[] = [],
+  intent: "revise" | "drafts" = "revise",
+) {
   const git = {
     auth: { authenticated: true },
     branches: ["main"],
@@ -31,9 +39,9 @@ function html(withIndex: boolean) {
   } as unknown as GitWorkspace;
   return renderToStaticMarkup(
     createElement(StartWorkspace, {
-      intent: "revise",
+      intent,
       git,
-      saved: [],
+      saved,
       busy: false,
       onNew: async () => {},
       onLocal: async () => {},
@@ -48,6 +56,29 @@ function html(withIndex: boolean) {
   );
 }
 describe("Git document selection", () => {
+  it("distinguishes old same-article copies by save time, changes and an actual comparison entry", () => {
+    const initial = createLocalDraft();
+    const first = {
+      ...initial,
+      workingBranch: "content/article",
+      baseSource: initial.source,
+      savedAt: "2026-11-26T00:20:01.000Z",
+    };
+    const second = {
+      ...first,
+      id: crypto.randomUUID(),
+      source: updateDraft(initial.source, { title: "端末で変更" }),
+      savedAt: "2026-11-26T00:21:02.000Z",
+    };
+    const result = html(true, [second, first], "drafts");
+    expect(result).toContain(draftSavedTime(first.savedAt));
+    expect(result).toContain(draftSavedTime(second.savedAt));
+    expect(result).toContain("本文にGit未保存の変更");
+    expect(result).toContain("本文はGit取得時と同じ");
+    expect(result).toContain("同じ原稿の下書きとの違い（2件）");
+    expect(result).toContain("同じ原稿の下書き 1 / 2");
+    expect(result).toContain("同じ原稿の下書き 2 / 2");
+  });
   it("shows article title, type and publication state from the exact branch index", () => {
     const result = html(true);
     expect(result).toContain("MuJoCo 4.0の新機能を画像で見る");
@@ -63,5 +94,45 @@ describe("Git document selection", () => {
     expect(result).toContain("題名を取得できません");
     expect(result).toContain("公開状態未取得");
     expect(result).toContain("articles/09wsw5yvd59gqrjaz5ee25y3mw.mdx");
+  });
+
+  it("shows the resumed branch without offering a different branch or local-only copy", () => {
+    const branch = "content/xpotato-site-product-20261126";
+    const draft = { ...createLocalDraft(), workingBranch: branch };
+    for (const authenticated of [true, false]) {
+      const plan = initialBranchPlan(authenticated, draft);
+      expect(plan.mode).toBe("existing");
+      expect(plan.targetBranch).toBe(branch);
+      const result = renderToStaticMarkup(
+        createElement(BranchSetup, {
+          plan,
+          onChange: () => {},
+          branches: ["main", branch, "content/unrelated"],
+          authenticated,
+          continuingBranch: draft.workingBranch,
+        }),
+      );
+      expect(result).toContain(branch);
+      expect(result).toContain("同じブランチで引き継ぎます");
+      expect(result).not.toContain("content/unrelated");
+      expect(result).not.toContain("<select");
+      expect(result).not.toContain('type="radio"');
+    }
+  });
+
+  it("retains branch creation and local work for new drafts", () => {
+    const plan = initialBranchPlan(true);
+    const result = renderToStaticMarkup(
+      createElement(BranchSetup, {
+        plan,
+        onChange: () => {},
+        branches: ["main", "content/other"],
+        authenticated: true,
+      }),
+    );
+    expect(result).toContain("新しいブランチ");
+    expect(result).toContain("既存のブランチ");
+    expect(result).toContain("この端末");
+    expect(result).toContain("作業ブランチ名");
   });
 });

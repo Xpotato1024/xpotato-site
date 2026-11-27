@@ -3,6 +3,12 @@ import { anchorSelection } from "@xpotato/editor-core/annotations";
 import { parseDraft, updateDraft } from "@xpotato/editor-core/draft";
 import { createLocalDraft } from "../features/drafts/model.js";
 import {
+  decodeStoredMedia,
+  encodeStoredMedia,
+  mediaWithoutCompatibilityBlob,
+  type StoredMedia,
+} from "./media-storage.js";
+import {
   createLocalDraftBranchCopy,
   type LocalDraft,
   type LocalDraftBranchBinding,
@@ -129,5 +135,32 @@ describe("copying a local draft to another Git branch", () => {
     expect(() => createLocalDraftBranchCopy(draft, {}, [media])).toThrow(
       "BRANCH_COPY_TARGET_REQUIRED",
     );
+  });
+
+  it("copies durable image bytes independently while clearing the source branch's remote ID", async () => {
+    const { draft, media, binding } = fixture();
+    const stored = await encodeStoredMedia(media);
+    const copy = createLocalDraftBranchCopy(draft, binding, [stored]);
+    const image = copy.media[0]! as StoredMedia;
+    expect(image.blobBytes).toEqual(stored.blobBytes);
+    expect(image.blobBytes).not.toBe(stored.blobBytes);
+    expect(image.blobType).toBe(stored.blobType);
+    expect(image).not.toHaveProperty("remoteId");
+    expect(image.draftId).toBe(copy.draft.id);
+    expect((await decodeStoredMedia(image)).blob.type).toBe(media.blob.type);
+    new Uint8Array(image.blobBytes)[0] = 9;
+    expect(new Uint8Array(stored.blobBytes)[0]).toBe(1);
+  });
+
+  it("can copy an image stored without Blob support without adding a file-backed value", async () => {
+    const { draft, media, binding } = fixture();
+    const stored = mediaWithoutCompatibilityBlob(await encodeStoredMedia(media));
+    const copy = createLocalDraftBranchCopy(draft, binding, [stored]);
+    const image = copy.media[0]!;
+    expect(image).not.toHaveProperty("blob");
+    expect(image).not.toHaveProperty("remoteId");
+    expect(image.id).not.toBe(stored.id);
+    expect(image.draftId).toBe(copy.draft.id);
+    expect(await (await decodeStoredMedia(image)).blob.arrayBuffer()).toEqual(stored.blobBytes);
   });
 });

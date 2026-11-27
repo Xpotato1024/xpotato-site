@@ -1,6 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import type { ContentCollection } from "@xpotato/content-contracts/common";
 import { collectionFromPath, updateDraft } from "@xpotato/editor-core/draft";
+import type { GitSnapshot } from "@xpotato/editor-core/git";
 import { moduleSource, moduleInsertionOffset } from "@xpotato/editor-core/blocks";
 import {
   reconcileRegistryChanges,
@@ -24,22 +26,31 @@ import { exportDraftBundle, importDraftFile } from "./features/drafts/transfer.j
 import { usePreviewMedia } from "./features/editing/usePreviewMedia.js";
 import { useGitWorkspace, type BranchPlan } from "./features/git/useGitWorkspace.js";
 import { download } from "./shared/download.js";
+import { query, request } from "./data/api.js";
+import { hasPendingRegistryChanges, hasUnsyncedReview } from "./data/draft-identity.js";
 import { errorLabel } from "./shared/messages.js";
 import { useEditorEnvironment } from "./shared/useEditorEnvironment.js";
 import type { EditorSeriesPreview } from "./preview.js";
 import { useWorkspaceNavigation } from "./features/workspace/navigation.js";
 import { useRegistryWorkspace } from "./features/workspace/useRegistryWorkspace.js";
 import { WorkspaceHome, WorkspaceNavigation } from "./features/workspace/WorkspaceHome.js";
-import { StartWorkspace } from "./features/workspace/StartWorkspace.js";
-import { RegistryWorkspace } from "./features/workspace/RegistryWorkspace.js";
 import { reviewCommentSelection } from "./features/review/review-actions.js";
 import { useReviewComposerDrafts } from "./features/review/useReviewComposerDrafts.js";
 import {
   cloneLocalDraftForBranch,
   localDrafts,
   saveLocalMedia,
+  updateLocalDraft,
   type LocalDraft,
 } from "./data/storage.js";
+const StartWorkspace = lazy(() =>
+  import("./features/workspace/StartWorkspace.js").then((m) => ({ default: m.StartWorkspace })),
+);
+const RegistryWorkspace = lazy(() =>
+  import("./features/workspace/RegistryWorkspace.js").then((m) => ({
+    default: m.RegistryWorkspace,
+  })),
+);
 const DocumentEditor = lazy(() =>
   import("./features/editing/DocumentEditor.js").then((m) => ({ default: m.DocumentEditor })),
 );
@@ -120,6 +131,7 @@ export default function App() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const updateDialog = useRef<HTMLDialogElement>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
   const [reviewSelectionRequest, setReviewSelectionRequest] = useState(0);
@@ -238,15 +250,36 @@ export default function App() {
     setNotice("");
     try {
       if (environment.updateReady) {
-        const result = await environment.activateUpdate(workspace.persist);
-        if (result === "current") setNotice("更新はすでに適用されています。");
+        const dialog = updateDialog.current;
+        if (!dialog) throw Error("更新画面を開けませんでした。");
+        try {
+          // A modal makes every other control inert, including portals and Shadow DOM.
+          // Commit blur/composition handlers before capturing the durable draft.
+          flushSync(() => {
+            let active = document.activeElement;
+            while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+            if (active instanceof HTMLElement) active.blur();
+            dialog.showModal();
+          });
+          await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+          const result = await environment.activateUpdate(async () => {
+            await registry.persist();
+            await workspace.persist();
+          });
+          if (result === "current") {
+            dialog.close();
+            setNotice("更新はすでに適用されています。");
+          }
+          // Keep the modal open until navigation when activation succeeded.
+        } catch (failure) {
+          dialog.close();
+          throw failure;
+        }
         return;
       }
       const result = await environment.checkForUpdate();
       if (result === "ready")
         setNotice("新しい編集アプリがあります。「保存して更新」で適用できます。");
-      else if (result === "installing")
-        setNotice("アプリのキャッシュを準備中です。完了後に更新状態を確認してください。");
       else if (result === "current") setNotice("編集アプリは最新です。");
       else if (result === "recovered")
         setNotice("アプリの登録状態を確認し直しました。もう一度更新を確認してください。");
@@ -337,20 +370,10 @@ export default function App() {
     plan: BranchPlan,
     intent: "revise" | "drafts",
     review: boolean,
+    selection: GitSnapshot,
+    selectedLocalId?: string,
   ) {
-    if (!git.snapshot) throw new Error("先に原稿一覧を取得してください。");
-    const prepared =
-      plan.mode === "local"
-        ? { snapshot: git.snapshot, sourceBranch: git.snapshot.branch }
-        : await git.prepareWorkspace(plan, plan.mode === "new" ? git.snapshot : undefined);
-    if (!prepared.snapshot) return;
-    await git.openDocument(
-      path,
-      prepared.snapshot,
-      prepared.sourceBranch,
-      intent,
-      plan.mode === "local",
-    );
+    await git.openSelectedDocument(path, plan, intent, selection, selectedLocalId);
     await workspace.persist();
     openEditor(review);
   }
@@ -375,14 +398,77 @@ export default function App() {
     return imported;
   }
   async function saveArticle() {
-    const submittedId = workspace.current.current.id;
-    await git.saveGit();
+    const initial = structuredClone(workspace.current.current);
+    await workspace.persist("原稿と添削の保存前");
+    const bodyChanged =
+      !initial.syncedCommit ||
+      initial.source !== initial.syncedSource ||
+      hasPendingRegistryChanges(initial);
+    if (bodyChanged) await git.saveGit();
+    else {
+      const snapshot = await request<GitSnapshot>(
+        "/snapshot" + query({ branch: initial.workingBranch }),
+      );
+      if (snapshot.commit !== initial.baseCommit)
+        throw Error("Gitの原稿が更新されています。下書きを開き直してから保存してください。");
+    }
     const saved = workspace.current.current;
-    if (saved.id === submittedId && saved.workingBranch && saved.registrySnapshot)
+    if (saved.id !== initial.id)
+      throw Error("原稿が切り替わりました。元の下書きを開いて添削の保存状態を確認してください。");
+    if (saved.workingBranch && saved.registrySnapshot && bodyChanged)
       await registry.acceptExternalSave(
         { branch: saved.workingBranch, commit: saved.baseCommit },
         saved.registrySnapshot,
       );
+    if (saved.source !== saved.syncedSource || hasPendingRegistryChanges(saved)) {
+      setNotice(
+        "Gitへの保存後に追加の編集があります。端末に保持しています。再度保存してください。",
+      );
+      return;
+    }
+    const submitted = structuredClone(saved);
+    try {
+      const { syncDraftReview } = await import("./data/review-sync.js");
+      const result = await syncDraftReview(submitted);
+      if (result) {
+        const merge = (latest: LocalDraft): LocalDraft => {
+          if (
+            latest.id !== submitted.id ||
+            latest.workingBranch !== submitted.workingBranch ||
+            latest.path !== submitted.path
+          )
+            return latest;
+          return { ...latest, ...result };
+        };
+        const updated = await updateLocalDraft(
+          submitted.id,
+          submitted,
+          (stored) =>
+            merge(
+              workspace.current.current.id === submitted.id ? workspace.current.current : stored,
+            ),
+          { requireExistingActive: true },
+        );
+        if (workspace.current.current.id === submitted.id)
+          workspace.setDraft((current) => merge(current));
+        if (updated.id === workspace.current.current.id) await workspace.persist("添削の同期結果");
+      }
+      setNotice(
+        (bodyChanged
+          ? "原稿をGitへ保存しました。"
+          : "本文の変更がないためGit更新は省略しました。") +
+          (result
+            ? hasUnsyncedReview(workspace.current.current)
+              ? "保存中に追加した添削は未同期です。"
+              : "添削を非公開で同期しました。"
+            : "同期する添削はありません。"),
+      );
+    } catch (error) {
+      throw Error(
+        "本文はGitに保存済みですが、添削は未同期です。端末の内容を保持しています。 " +
+          (error instanceof Error ? error.message : "同期できませんでした。"),
+      );
+    }
   }
   function changeRegistry(changes: EditorRegistryChanges) {
     workspace.setDraft((current) => {
@@ -466,6 +552,7 @@ export default function App() {
   const isSynced = Boolean(
     draft.syncedCommit && draft.syncedSource === draft.source && !draft.pendingRegistryChanges,
   );
+  const reviewPending = hasUnsyncedReview(draft);
   const isPage = panel !== null && pagePanels.includes(panel);
   const PanelElement = isPage ? "main" : "aside";
   return (
@@ -473,7 +560,13 @@ export default function App() {
       {page === "edit" ? (
         <EditorHeader
           online={environment.online}
-          localStatus={workspace.localStatus}
+          localStatus={
+            workspace.localStatus === "保存済み"
+              ? !isSynced || reviewPending
+                ? "端末保存済み・未同期"
+                : "端末保存済み・同期済み"
+              : workspace.localStatus
+          }
           menuOpen={panel === "menu"}
           onToggleNavigation={() => navigation.navigate("home")}
           onWorkflow={() => setPanel("workflow")}
@@ -533,12 +626,7 @@ export default function App() {
               <button
                 type="button"
                 disabled={busy || checkingUpdate}
-                onClick={() =>
-                  void act(async () => {
-                    const result = await environment.activateUpdate(workspace.persist);
-                    if (result === "current") setNotice("更新はすでに適用されています。");
-                  })
-                }
+                onClick={() => void requestPwaUpdate()}
               >
                 保存して更新
               </button>
@@ -569,31 +657,39 @@ export default function App() {
               />
             )}
             {(page === "new" || page === "revise" || page === "drafts") && (
-              <StartWorkspace
-                key={page + git.auth.authenticated}
-                intent={page}
-                git={git}
-                saved={workspace.saved}
-                busy={busy}
-                onNew={newDocument}
-                onLocal={openLocalDocument}
-                onDeleteLocal={(draft) => workspace.removeFromDevice(draft.id)}
-                onArchiveLocal={archiveLocalDraft}
-                onRemote={openRemoteDocument}
-                onImport={importFile}
-                run={(operation) => void act(operation)}
-              />
+              <div>
+                <Suspense fallback={<p role="status">画面を開いています…</p>}>
+                  <StartWorkspace
+                    key={page + git.auth.authenticated}
+                    intent={page}
+                    git={git}
+                    saved={workspace.saved}
+                    busy={busy}
+                    onNew={newDocument}
+                    onLocal={openLocalDocument}
+                    onDeleteLocal={(draft) => workspace.removeFromDevice(draft.id)}
+                    onArchiveLocal={archiveLocalDraft}
+                    onRemote={openRemoteDocument}
+                    onImport={importFile}
+                    run={(operation) => void act(operation)}
+                  />
+                </Suspense>
+              </div>
             )}
             {(page === "taxonomy" || page === "series") && (
-              <RegistryWorkspace
-                key={page + git.auth.authenticated}
-                kind={page}
-                git={git}
-                registry={registry}
-                busy={busy}
-                run={(operation) => void act(operation)}
-                onError={setError}
-              />
+              <div>
+                <Suspense fallback={<p role="status">管理画面を開いています…</p>}>
+                  <RegistryWorkspace
+                    key={page + git.auth.authenticated}
+                    kind={page}
+                    git={git}
+                    registry={registry}
+                    busy={busy}
+                    run={(operation) => void act(operation)}
+                    onError={setError}
+                  />
+                </Suspense>
+              </div>
             )}
             {page === "connection" && (
               <section className="workspace-connection">
@@ -831,6 +927,8 @@ export default function App() {
                         selection={selection}
                         authenticated={git.auth.authenticated}
                         onChange={reviewChanged}
+                        onSave={() => void act(saveArticle)}
+                        saving={busy}
                         selectedCommentId={selectedCommentId}
                         selectionRequest={reviewSelectionRequest}
                         composerDraft={reviewComposerDraft}
@@ -878,6 +976,13 @@ export default function App() {
                           <li data-complete={isSynced}>
                             {isSynced ? "Gitに保存済み" : "Gitに未保存の変更"}
                           </li>
+                          <li data-complete={!reviewPending}>
+                            {reviewPending
+                              ? "添削に未同期の変更"
+                              : draft.annotations?.length
+                                ? "添削は同期済み"
+                                : "端末の指摘なし"}
+                          </li>
                           <li data-complete={Boolean(git.pr)}>
                             {git.pr ? "レビューを作成済み" : "レビュー待ち"}
                           </li>
@@ -923,7 +1028,7 @@ export default function App() {
                           authenticated={git.auth.authenticated}
                           busy={busy}
                           hasIssues={git.issues.length > 0}
-                          synced={isSynced}
+                          synced={isSynced && !reviewPending}
                           pr={git.pr}
                           onExport={() =>
                             download(
@@ -966,10 +1071,30 @@ export default function App() {
               {git.issues.length ? git.issues.length + "件を確認" : "チェック正常"}
             </button>
             <span className="status-spacer" />
-            <span>{busy ? "処理中…" : isSynced ? "Git保存済み" : "端末に保存"}</span>
+            <span>
+              {busy
+                ? "処理中…"
+                : !isSynced
+                  ? "本文はGit未保存"
+                  : reviewPending
+                    ? "添削は未同期"
+                    : "同期済み"}
+            </span>
           </footer>
         </div>
       )}
+      <dialog
+        ref={updateDialog}
+        className="editor-update-dialog"
+        aria-labelledby="editor-update-title"
+        aria-describedby="editor-update-description"
+        onCancel={(event) => event.preventDefault()}
+      >
+        <h2 id="editor-update-title">保存して更新しています</h2>
+        <p id="editor-update-description" role="status">
+          原稿を保存してから、新しいアプリを開きます。
+        </p>
+      </dialog>
     </div>
   );
 }

@@ -4,6 +4,7 @@ const paths: Record<string, string> = {
   list: "M9 5h12 M9 12h12 M9 19h12 M3 5h.01 M3 12h.01 M3 19h.01",
   orderedList: "M10 5h11 M10 12h11 M10 19h11 M3 3h1v4 M2 7h4 M2 11h4l-4 4h4 M2 18h4v4H2",
   quote: "M9 6H3v6h6V6Z M3 12v2a4 4 0 0 0 4 4 M21 6h-6v6h6V6Z M15 12v2a4 4 0 0 0 4 4",
+  footnote: "M3 8h10 M3 13h10 M3 18h15 M17 3h2v6 M16 9h6",
   divider: "M3 12h18",
   Figure: "M3 4h18v16H3Z M3 16l5-5 4 4 3-3 6 6 M15 8h.01",
   Gallery: "M3 3h7v7H3Z M14 3h7v7h-7Z M3 14h7v7H3Z M14 14h7v7h-7Z",

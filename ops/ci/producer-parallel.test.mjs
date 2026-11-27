@@ -105,7 +105,7 @@ test("both phases report measured starts and settlements, including a failed lan
     runProducerPhase(
       "validate",
       async (script) => {
-        if (script === "quality:home-webkit:hosted") {
+        if (script === "quality:webkit:hosted") {
           throw Error("layout mismatch");
         }
       },
@@ -124,7 +124,7 @@ test("producer CLI propagates an actual child exit and still waits for sibling c
   const npm = join(root, "fake-npm.mjs");
   await writeFile(
     npm,
-    "if (process.argv[2] !== 'run') process.exit(91); process.exit(process.argv[3] === 'quality:home-webkit:hosted' ? 7 : 0);\n",
+    "if (process.argv[2] !== 'run') process.exit(91); process.exit(process.argv[3] === 'quality:webkit:hosted' ? 7 : 0);\n",
   );
   const result = spawnSync(
     process.execPath,
@@ -133,8 +133,8 @@ test("producer CLI propagates an actual child exit and still waits for sibling c
   );
   assert.equal(result.status, 1);
   assert.match(result.stdout, /ci:final:public END status=PASS elapsedMs=\d+/u);
-  assert.match(result.stderr, /quality:home-webkit:hosted END status=FAIL elapsedMs=\d+/u);
-  assert.match(result.stderr, /quality:home-webkit:hosted failed \(exit 7\)/u);
+  assert.match(result.stderr, /quality:webkit:hosted END status=FAIL elapsedMs=\d+/u);
+  assert.match(result.stderr, /quality:webkit:hosted failed \(exit 7\)/u);
 });
 
 test(

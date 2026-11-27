@@ -65,8 +65,6 @@ BlogDetail/ContentLayout、本文module、共通font・見出し・図・aside�
 
 認可済みの本人限定レビューSiteは検証済みの候補を都度反映し、実URL・版・認証/noindex・内容を確認する。ローカルbuildと共有preview、本番配信は別の状態。
 
-CMSが対象となる制作・改稿では、本人確認の前に同じContentId・正規content pathの `draft:true` MDXを `content/*` 作業ブランチへ保存し、派生目録を更新してDraft PRを作成する。[CMS編集手順](../../../docs/operations/editor-workflow.md)に従い、私有Draft媒体の復元・同一commitのAstroレビュー・添削対象の一致を確認する。Sitesへの反映や `docs/` への候補保管だけでCMS引継ぎ完了としない。既存公開記事を改稿する際はmainを維持し、未承認候補の公開適格性検査が失敗してもCMSの正規content pathから退避して成功に見せない。認証等で実環境の引継ぎを検証できない場合は未確認範囲を明示する。
-
 ## 7. 正規保存・正式出力へ進める
 
 必要な本人確認と認可が成立した同じcandidateを、既存のmedia公開CIとexportへ渡す。実保存・readback・保護・Registryと来歴を照合する。未承認画像の公開R2先出し、直接canonical編集、receiptの自己申告をしない。

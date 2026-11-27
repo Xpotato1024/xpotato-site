@@ -119,14 +119,37 @@ export function SitePreview({
       const next = Math.max(400, Math.ceil(document.body.getBoundingClientRect().height));
       setHeight((previous) => (previous === next ? previous : next));
     };
+    const showImageError = (image: HTMLImageElement) => {
+      const notice = document.createElement("span");
+      notice.className = "preview-image-missing";
+      notice.setAttribute("role", "status");
+      const title = document.createElement("strong");
+      title.textContent = "画像を表示できません";
+      const detail = document.createElement("small");
+      detail.textContent = image.alt;
+      const action = document.createElement("small");
+      action.textContent = "画像パネルの「同期済みの画像を取得・修復」から復元できます。";
+      notice.append(title, detail, action);
+      image.replaceWith(notice);
+      update();
+    };
+    const imageError = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.tagName === "IMG") showImageError(target as HTMLImageElement);
+    };
     const observer = new ResizeObserver(update);
     observer.observe(document.body);
     document.addEventListener("load", update, true);
+    document.addEventListener("error", imageError, true);
+    for (const image of Array.from(document.images)) {
+      if (image.complete && image.naturalWidth === 0) showImageError(image);
+    }
     void document.fonts.ready.then(update);
     update();
     disconnect.current = () => {
       observer.disconnect();
       document.removeEventListener("load", update, true);
+      document.removeEventListener("error", imageError, true);
     };
   }
 

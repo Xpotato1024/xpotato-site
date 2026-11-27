@@ -60,7 +60,7 @@ test("both preparation lanes finish before the parallel final consumers and pack
   const pack = producer.indexOf("run: npm run release:package");
   assert.ok(prepare >= 0 && prepare < validate && validate < gate && gate < pack);
   assert.deepEqual(producerPhases.prepare, ["release:build:hosted", "ci:browsers:prepare"]);
-  assert.deepEqual(producerPhases.validate, ["quality:home-webkit:hosted", "ci:final:public"]);
+  assert.deepEqual(producerPhases.validate, ["quality:webkit:hosted", "ci:final:public"]);
   assert.equal(
     scripts["ci:browsers:prepare"],
     "npm run toolchain:check && npx --no-install playwright install --with-deps webkit && node ops/ci/prepare-chrome-font-cache.mjs",
@@ -68,6 +68,10 @@ test("both preparation lanes finish before the parallel final consumers and pack
   assert.equal(
     scripts["quality:home-webkit:hosted"],
     'npm run quality:home-webkit -- --dist "$GITHUB_WORKSPACE/apps/site/dist" --out "$RUNNER_TEMP/release-validation"',
+  );
+  assert.equal(
+    scripts["quality:webkit:hosted"],
+    "npm run quality:home-webkit:hosted && npm run editor:selection -- --browser webkit",
   );
   const preparation = expanded("ci:producer:prepare"),
     validation = expanded("ci:producer:validate");
@@ -80,7 +84,8 @@ test("both preparation lanes finish before the parallel final consumers and pack
     1,
   );
   assert.ok(!validation.some((c) => /astro build|npm run build/u.test(c)));
-  assert.deepEqual(validation.slice(1), expanded("ci:final:public"));
+  assert.equal(validation[1], "npm run editor:selection -- --browser webkit");
+  assert.deepEqual(validation.slice(2), expanded("ci:final:public"));
   assert.ok(
     ![...preparation, ...validation].some((c) => /ci-hosted-gate|release-package-cli/u.test(c)),
   );
@@ -272,7 +277,9 @@ test("verified drafts build once while public changes fall back to full validati
     article,
     /if: needs\.scope\.outputs\.core == 'true' && needs\.scope\.outputs\.article == 'true'/,
   );
-  assert.match(article, /run: npm run ci:article:fast/);
+  assert.match(article, /run: npm run ci:article:pr/);
+  assert.match(article, /PR_IS_DRAFT: \$\{\{ github\.event\.pull_request\.draft \}\}/);
+  assert.match(workflow, /ready_for_review, converted_to_draft/);
   assert.match(article, /XPOTATO_SITE_TEMP_ROOT: \$\{\{ runner\.temp \}\}\/article-validation/);
   assert.doesNotMatch(article, /GH_TOKEN:|CLOUDFLARE_|release:package|upload-artifact|deploy-site/);
   for (const name of fullJobs) {
