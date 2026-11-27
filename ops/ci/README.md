@@ -4,7 +4,7 @@
 
 - scope: 変更範囲の分類。未分類は検証を省かない。
 - offline-policy: 現在の配信・権限・復旧の失敗境界。秘密情報・provider操作なし。
-- article-fast: 候補の旧新原稿・CMS索引を意味判定し、未公開の編集だけ全体build/static/publication/performance/route/search検査へ進める。既存公開記事を同じContentIdで改稿するcontent/* Draft PRでは、headの原稿・索引・held状態・正式Astro描画を検証し、公開検査は別worktreeのexact baseで実施する。公開成果物を生成・昇格する経路ではない。不適格なら全体CI。
+- article-fast: 候補の旧新原稿・CMS索引を意味判定し、未公開の編集だけ全体build/static/publication/performance/route/search検査へ進める。既存公開記事を同じContentIdで改稿するcontent/* Draft PRでは、headの原稿・索引・held状態・正式Astro描画を検証し、公開検査は別worktreeのexact baseで実施する。公開成果物を昇格する経路ではない。改稿候補の本文hashを公開版の正規来歴へ先行して書き込まない。公開版の正規来歴はbaseの全文検証で照合し、headは変更範囲・CMS契約・分類・catalog・Astro描画で検査する。不適格なら全体CI。
 - article-regression: 全体CIで同じ短経路を合成CMS編集に対して実行し、公開出力への混入を検査する。
 - source-validation / publication-fixtures / common-tool: 独立した並列検証。
 - producer: siteとeditorを各1回buildする処理とWebKit導入・Chromeフォント準備を並行する。次stepで同じdistのWebKit検査と全public検査を並行し、両方成功後にgate・packageへ進む。

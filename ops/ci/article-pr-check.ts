@@ -6,7 +6,12 @@ import { join, resolve, isAbsolute } from "node:path";
 import { inspectArticlePrAdmission } from "./article-pr-admission.js";
 import { buildEditorAstroReview } from "../authoring/editor-astro-review.js";
 import { readSiteContent } from "../../packages/site-validators/src/site-content.js";
-import { parseDraft } from "@xpotato/editor-core/draft";
+import {
+  collectionFromPath,
+  parseDraft,
+  validateDraft,
+  type TaxonomySnapshot,
+} from "@xpotato/editor-core/draft";
 import { readFile } from "node:fs/promises";
 
 const root = resolve(".");
@@ -43,11 +48,21 @@ if (!admission.publishedBaseline) {
   let added = false;
   try {
     // Validate the actual draft checkout before inspecting the separate published baseline.
-    for (const task of ["editor:manifest:check", "validate:repository", "astro:check"])
-      run(root, ["run", task]);
+    // Canonical editorial provenance binds the published source, not a mutable candidate.
+    // The full repository validator runs against the exact public base below.
+    for (const task of ["editor:manifest:check", "astro:check"]) run(root, ["run", task]);
+    const taxonomy = JSON.parse(
+      await readFile(join(root, "content/registry/editor.json"), "utf8"),
+    ) as TaxonomySnapshot;
     const { catalog } = await readSiteContent(root);
     for (const [index, path] of paths.entries()) {
-      const parsed = parseDraft(await readFile(join(root, path), "utf8"));
+      const source = await readFile(join(root, path), "utf8");
+      assert.deepEqual(
+        validateDraft(source, collectionFromPath(path), taxonomy),
+        [],
+        "Draft metadata/portable source invalid: " + path,
+      );
+      const parsed = parseDraft(source);
       const entry = catalog.find((row) => row.routeRecord.contentId === parsed.data.id);
       assert.equal(
         entry?.disposition,
