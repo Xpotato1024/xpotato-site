@@ -728,6 +728,7 @@
         "apps/site/src/pages/articles/[...slug].astro",
         "apps/site/src/pages/articles/index.astro",
         "apps/site/src/pages/articles/tags/[...page].astro",
+        "apps/site/src/pages/games/index.astro",
         "apps/site/src/pages/index.astro",
         "apps/site/src/pages/notes/[...slug].astro",
         "apps/site/src/pages/notes/index.astro",

@@ -73,7 +73,7 @@ export async function verifyMobileMenuInteraction({
       const links = [...document.querySelectorAll('#site-menu a')];
       return links.map(a => { const r=a.getBoundingClientRect(); return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,height:r.height,width:r.width}; });
     })()`);
-    assert.equal(rows.length, 7);
+    assert.equal(rows.length, 8);
     assert.ok(
       rows.every(
         (row, index) =>

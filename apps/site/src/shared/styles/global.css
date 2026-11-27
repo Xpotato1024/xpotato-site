@@ -182,7 +182,7 @@ main {
   }
   & li + li::before {
     content: " ";
-    word-spacing: 0.5rem;
+    word-spacing: 0.35rem;
     background: linear-gradient(var(--border-divider), var(--border-divider)) center/1px 0.85em
       no-repeat;
   }
@@ -194,7 +194,7 @@ main {
     max-width: 100%;
     min-width: var(--control-icon-size);
     min-height: var(--control-icon-size);
-    padding-inline: 0.35rem;
+    padding-inline: 0.25rem;
     justify-content: center;
     font-size: 0.85rem;
     text-decoration: none;
