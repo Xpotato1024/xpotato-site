@@ -20,6 +20,8 @@ import {
 export interface ArticlePrAdmission {
   eligible: boolean;
   reason: string;
+  publishedBaseline?: true;
+  paths?: string[];
 }
 
 // Astro can turn Markdown images into imports after portable MDX validation.
@@ -52,6 +54,7 @@ export function inspectArticlePrAdmission({
     const before = parseEditorContentIndex(JSON.parse(read(base, articleIndexPath)));
     const after = parseEditorContentIndex(JSON.parse(read(head, articleIndexPath)));
     let expected = before;
+    let publishedBaseline = false;
     for (const { path, status } of candidate.sources) {
       const collection = articleSourceCollection(path) as ContentCollection;
       const source = read(head, path);
@@ -79,8 +82,18 @@ export function inspectArticlePrAdmission({
       if (status === "M") {
         const originalSource = read(base, path);
         const original = parseDraft(originalSource);
-        if (original.data.draft !== true || validateDraft(originalSource, collection).length) {
+        if (validateDraft(originalSource, collection).length) {
           return { eligible: false, reason: "base is not a valid portable draft" };
+        }
+        if (original.data.draft !== true) {
+          if (
+            original.data.draft !== false ||
+            env.PR_IS_DRAFT !== "true" ||
+            !/^content\/[a-z0-9][a-z0-9/_-]*$/u.test(env.PR_HEAD_REF ?? "")
+          ) {
+            return { eligible: false, reason: "published revision requires a content draft PR" };
+          }
+          publishedBaseline = true;
         }
         if (hasMarkdownImage(blockTree(original.body))) {
           return { eligible: false, reason: "Markdown image compilation requires full CI" };
@@ -107,6 +120,13 @@ export function inspectArticlePrAdmission({
     if (!isDeepStrictEqual(expected, after)) {
       return { eligible: false, reason: "head index is not the exact scoped CMS update" };
     }
+    if (publishedBaseline)
+      return {
+        eligible: true,
+        reason: "published revision; validate draft and exact public baseline separately",
+        publishedBaseline: true,
+        paths: candidate.sources.map((s) => s.path),
+      };
     return { eligible: true, reason: "portable drafts only; public state unchanged" };
   } catch {
     // Inability to prove the bounded draft change selects full CI, never a successful check.

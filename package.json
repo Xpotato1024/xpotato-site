@@ -66,6 +66,7 @@
     "ci:source:fixtures": "npm run authoring:isolation:prepare && npm run review:isolation:prepare && npm run visual:isolation:prepare && npm run publication:isolation:prepare",
     "ci:source:preflight": "npm run format:check && npm run browser-tools:install -- check && npm run toolchain:check && npm run editor:manifest:check",
     "ci:source:validate": "npm run ci:source:preflight && npm run test && npm run test:release && npm run ci:source:checks",
+    "ci:article:pr": "tsx ops/ci/article-pr-check.ts",
     "ci:article:fast": "npm run toolchain:check && npm run browser-tools:install -- check && npm run editor:manifest:check && npm run validate:repository && npm run astro:check && npm run build && npm run publication:check && npm run validate:static && npm run performance:check && npm run site:output:check",
     "ci:fixtures:lifecycle": "npm run toolchain:check && npm run publication:isolation:prepare",
     "ci:fixtures:isolation": "npm run authoring:isolation:prepare && npm run review:isolation:prepare && npm run visual:isolation:prepare && tsx ops/qa/article-publication-isolation.ts --prepare-isolation-only",
