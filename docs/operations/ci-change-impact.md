@@ -14,27 +14,27 @@ last_verified: 2026-11-21
 | --- | --- | --- |
 | 即時プレビュー | 編集中の本文 | CMSの既存AST描画。GitHubの完了待ちはない |
 | 正式Astroレビュー | 選択commitの原稿と正規layout | 既存の独立workflowを継続。全体CIを待たない |
-| 下書き用CI | 旧新とも未公開の原稿、または新規下書きと正規の索引 | 今回分離。内容を検証してから短い経路へ進む |
-| 全体CI | 公開済み記事、公開状態変更、媒体・来歴・分類・連載・コード変更、判定不能 | 既存の全gateとrelease/Windows検証を維持 |
+| 下書き用CI | 旧新とも未公開の原稿、新規下書き、同一ContentIdの公開記事の改稿Draft PRと正規の索引 | 今回分離。内容を検証してから短い経路へ進む |
+| 全体CI | 公開する変更、改稿Draft PR以外の公開状態変更、媒体・来歴・分類・連載・コード変更、判定不能 | 既存の全gateとrelease/Windows検証を維持 |
 | main CI | mainの原稿・コード等の変更 | 下書き変更を含め全体CI。既存prose-only例外は維持 |
 
 最初に日常のCMS保存を分離する。CMSは `draft:true` の原稿と `content/registry/editor-content-index.json` を同時に保存するため、原稿pathだけの許可では題名変更や新規作成を短縮できない。索引は対象原稿の派生行だけを許可する。
 
-公開済みの記事を下書きへ戻す変更は公開URLを取り下げるため、下書き用CIには入れない。通常の公開exportもmedia/rights/provenanceや生成indexの変更を伴うため全体CIへ送る。公開記事用CIをさらに分離する次段階では、旧新JSONをContentIdへ結び、実行可能なindexの正規projectionを検証し、内容に依存する現buildのbrowser/WebKit検査を残す。今回の実装にその省略は含めない。
+2026-11-27の[PR #257](https://github.com/Xpotato1024/xpotato-site/pull/257)では、公開中の原稿と改稿候補を別の正本として検証する。本人repositoryのmainをbaseとした `content/*` のDraft PRで、同一ContentId・正規path・draft:true・派生索引だけの変更が成立した場合、headの正規CMS契約・分類・held catalog・Astro check・個別Astro描画を検証する。公開出力は別のworktreeに固定したexact baseで従来の `ci:article:fast` を実行する。公開済みMDX・正規editorial provenance・内部リンクを旧公開版で検証し、候補のhashを公開版来歴に先行登録しない。候補版の公開適格性は未判定で、release artifactを作らない。公開export・共有入力変更・ready-for-review化・main pushでは全体検査へ戻る。
 
 ## 二段階の判定
 
 1. `scope` の `article-pr-policy.mjs` はNode標準APIだけで候補を選ぶ。同一repositoryのPR、exact head/base、baseがheadのancestor、A/Mだけの通常fileを要求する。原稿、対応するCMS索引、既存のprose例外以外は全体CI。ここでは未公開であることを証明したとは扱わない。
-2. 候補だけ `article-fast` で一度依存を導入し、`article-pr-admission.ts` が既存のCMS parser/schema/portable MDX validatorを使う。追加原稿は `draft:true`、変更原稿は旧新とも `draft:true`、同じpathのContentId不変を要求する。旧新の索引を正規parserで読み、原稿のmetadataと一致する行だけが変わり、その他の行は変わらないことを確認する。
+2. 候補だけ `article-fast` で一度依存を導入し、`article-pr-admission.ts` が既存のCMS parser/schema/portable MDX validatorを使う。追加原稿は `draft:true`、変更原稿はheadで `draft:true`、同じpathのContentId不変を要求する。baseが明示的なdraft:falseの場合は同repoのcontent/* Draft PRの条件も要求する。旧新の索引を正規parserで読み、原稿のmetadataと一致する行だけが変わり、その他の行は変わらないことを確認する。
 3. `eligible=true` の場合だけ同jobで下書き用検査を行う。公開内容・共有入力・不明・不正な原稿は `eligible=false` として全体jobへ戻す。インストールやjobの異常終了、下書き用検査の失敗をfallback成功に読み替えない。
 
 全体jobは、候補jobが対象外でも開始する条件と、意味判定が正常に全体CIを選んだ条件を明示する。候補jobのfailure/cancelledを無視しない。stable `result` は分岐に応じた必須job集合と成功を確認し、出力欠落・別分岐の実行・部分成功を拒否する。
 
-PRへ `ci:full` labelを付けると全体CIを強制できる。labelの追加・削除も再判定のtriggerとする。軽量化の解除にコード編集は不要。mainでは下書きを含む原稿・コード変更ごとに全体CIを実行するため、過去の成功や週次実行で公開前の検査を代用しない。
+PRへ `ci:full` labelを付けると全体CIを強制できる。labelの追加・削除とready_for_review/converted_to_draftも再判定のtriggerとする。軽量化の解除にコード編集は不要。mainでは下書きを含む原稿・コード変更ごとに全体CIを実行するため、過去の成功や週次実行で公開前の検査を代用しない。
 
 ## 下書き用CIで維持する検査
 
-`npm run ci:article:fast` は次を同じcheckoutで実行する。
+`npm run ci:article:fast` は次を同じcheckoutで実行する。既存公開記事の改稿Draftでは `ci:article:pr` が候補を先に検証し、この一式を別のexact base checkoutに対して実行する。
 
 - 固定Node/npm、配布済みTool bytes、生成済みeditor manifest/index。
 - 全repositoryのschema・ContentId・taxonomy・portable MDX・参照・provenance・公開hold整合性。
@@ -50,7 +50,7 @@ Markdownの画像記法と参照形式の画像は、Astroが後段でimportへ�
 
 Astroは下書きもcompileするため、build自体や出力予算を省かない。commit SHA/日時を含むfooterは正常に変わるので、base/headのdistが完全に同一bytesだとは主張しない。別revisionのHTML・成功report・release artifactを流用しない。
 
-この経路では全unit、publication lifecycle、固定Common Tool/CMS/browserの機能matrix、公開browser/WebKit、release packaging、Windows consumerを実行しない。公開内容を変えるPRとmainでは従来どおり実行する。下書きCI成功は記事公開承認・release資格・配備認可ではなく、release artifactも作らない。
+この経路では全unit、publication lifecycle、固定Common Tool/CMS/browserの機能matrix、公開browser/WebKit、release packaging、Windows consumerを実行しない。公開内容を変えるPRとmainでは従来どおり実行する。既存公開記事の改稿候補に対するCI成功を、候補の公開適格性や正規来歴の承認へ転用しない。下書きCI成功は記事公開承認・release資格・配備認可ではなく、release artifactも作らない。
 
 ## 実経路の回帰と測定
 

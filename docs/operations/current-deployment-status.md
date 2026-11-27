@@ -21,6 +21,14 @@ canonical_for:
 
 providerのexact counterpartと未成立条件は[Infrastructure Handoff](../architecture/infrastructure-handoff.md)、artifactのproducer/consumerは[Build Artifact Pipeline](build-artifact-pipeline.md)、権限の分担は[Deployment Boundary](deployment-boundary.md)を参照します。provider mutation、実記事公開、media永続化、旧44記事のhold解除、cutoverをこの文書やPRで認可しません。
 
+## 2026-11-27 CMSの添削対象・一括保存を本番へ反映
+
+[PR #256](https://github.com/Xpotato1024/xpotato-site/pull/256)をmain `fcabb61ba1a1ab00fac0aacdcb761dc9aaa032fe`へ統合した。[main CI 45992209470](https://github.com/Xpotato1024/xpotato-site/actions/runs/45992209470)は成功。所有者の明示認可に基づき、固定Server counterpart `f37b677309de13597b442bb3a06d4e38da06b48f`、固定Node/npm/Wrangler、既存Cloudflare認証で編集APIの `editor:connect check` → `connect` → `verify` を実施した。connect/verifyは終了コード0で、非公開Draft bucket・Worker・route・GitHub秘密設定・GC=false・Access保護を維持した。
+
+成功mainのProduction artifact `15194372631`（digest `sha256:1dc5c0bb3de7ecba608fae043af461ff7f0fa485b599fea0a0321858c77c0e23`、attempt 1）を[配信run 45993436174](https://github.com/Xpotato1024/xpotato-site/actions/runs/45993436174)へ渡した。配備1回、`DEPLOYED_READBACK_VERIFIED`。receiptとactive versionは `36e2f49a-c1cb-4227-8a40-6e95473b8e73`、active deploymentは `7008a729-09cb-4c0e-b889-2f9ed1d89472`。公開Siteのbindings 0・Site自身のroutes 0・workers.dev / preview URLs falseを確認した。初回観測では5件の本文hash不一致があり、2回目までの最終観測で713対象（292 exact / 420 Access保護 / 1 robots）、不一致0件となった。2026-11-27 20:51:48 JST。初回不一致の原因は断定しない。証跡artifact `15194908019`（digest `sha256:8e38dfccb360b015c069f0243b06ae36212a5a35fdc63bf955c02273d63830bd`）。Access保護応答は認証後のCMS表示とは区別する。
+
+記事全体の添削target、対象不明の指摘保持・付け直し履歴、Git/私有添削の一括保存、空commit省略を反映した。既存記事 #246 の下書きは新契約で検証し、openの4指摘の位置照合4/4、4画像の登録metadata一致を確認した。実iPhoneでの画面表示は未観測。記事公開・公開用媒体書込みは行っていない。
+
 ## 2026-11-26 CMSの画像復元と下書き再開を本番へ反映
 
 [PR #254](https://github.com/Xpotato1024/xpotato-site/pull/254)をmain `e922a77c338b9d3f415cef6e8bc5e245bd724e67`（tree `c9e3cede242f5e3dc4e3b7c3041f3bb295daf6ad`）へ統合した。ローカルCMS検証候補は`9843eb5dbab84137c40c49d282c9c60eb3909e67`（tree `5b19dd8b178cf7a42d357dfb51fe57df51165da4`）。最終PR head `893ab09cf42f3cc445ea648285c4aadb38bdf817`（tree `c9e3cede242f5e3dc4e3b7c3041f3bb295daf6ad`）の[PR CI 45758858432](https://github.com/Xpotato1024/xpotato-site/actions/runs/45758858432)は`success`、[main push CI 45759624320](https://github.com/Xpotato1024/xpotato-site/actions/runs/45759624320)（attempt 1、開始 `2026-11-26T05:08:33Z`）は`success`だった。所有者の明示認可に基づき、成功mainのProduction artifact `15089951349`（digest `sha256:bb05061484f11a86b3e4f5b94eaf3971ac995bc843d21515f05868532b2fad84`、producer attempt `1`）を[配信run 45760630124](https://github.com/Xpotato1024/xpotato-site/actions/runs/45760630124)へ渡した。
