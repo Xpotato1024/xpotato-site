@@ -2,7 +2,7 @@ name: vNext CI
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review, converted_to_draft]
   push:
     branches: [main]
 
@@ -101,6 +101,8 @@ jobs:
       - id: admission
         name: Verify old and new drafts and their derived CMS index
         env:
+          PR_IS_DRAFT: ${{ github.event.pull_request.draft }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
@@ -112,7 +114,15 @@ jobs:
         if: steps.admission.outputs.eligible == 'true'
         env:
           XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/article-validation
-        run: npm run ci:article:fast
+          DIFF_BASE: ${{ github.event.pull_request.base.sha }}
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_BASE_REPOSITORY: ${{ github.event.pull_request.base.repo.full_name }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_IS_DRAFT: ${{ github.event.pull_request.draft }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          CI_FORCE_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'ci:full') }}
+        run: npm run ci:article:pr
 
   article-regression:
     needs: [scope, article-fast]

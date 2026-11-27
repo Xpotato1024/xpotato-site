@@ -264,6 +264,28 @@ describe("CMS draft PR semantic admission", () => {
     },
   );
 
+  it("admits a published revision only as a bound content draft PR with separate public baseline validation", () => {
+    withRepository(
+      ({ original, save, commit, admit, path }) => {
+        save(updateDraft(original, { draft: true, title: "Revised" }, "New draft body.\n"));
+        commit();
+        const expected = {
+          eligible: true,
+          reason: "published revision; validate draft and exact public baseline separately",
+          publishedBaseline: true,
+          paths: [path],
+        };
+        expect(admit({ PR_IS_DRAFT: "true", PR_HEAD_REF: "content/revision" })).toEqual(expected);
+        for (const patch of [
+          { PR_IS_DRAFT: "false", PR_HEAD_REF: "content/revision" },
+          { PR_IS_DRAFT: "true", PR_HEAD_REF: "fix/revision" },
+          { PR_IS_DRAFT: "true", PR_HEAD_REF: "content/revision", CI_FORCE_FULL: "true" },
+        ])
+          expect(admit(patch).eligible).toBe(false);
+      },
+      { published: true, collection: "projects" },
+    );
+  });
   it("rejects a ContentId replacement even when the head index matches the replacement", () => {
     withRepository(({ original, path, write, index, setIndex, commit, admit }) => {
       write(path, original.replace(id, addedId));
