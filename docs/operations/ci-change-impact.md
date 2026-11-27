@@ -10,13 +10,13 @@ last_verified: 2026-11-21
 
 ## 計画と今回の範囲
 
-| 経路 | 対象 | 今回の扱い |
-| --- | --- | --- |
-| 即時プレビュー | 編集中の本文 | CMSの既存AST描画。GitHubの完了待ちはない |
-| 正式Astroレビュー | 選択commitの原稿と正規layout | 既存の独立workflowを継続。全体CIを待たない |
-| 下書き用CI | 旧新とも未公開の原稿、新規下書き、同一ContentIdの公開記事の改稿Draft PRと正規の索引 | 今回分離。内容を検証してから短い経路へ進む |
-| 全体CI | 公開する変更、改稿Draft PR以外の公開状態変更、媒体・来歴・分類・連載・コード変更、判定不能 | 既存の全gateとrelease/Windows検証を維持 |
-| main CI | mainの原稿・コード等の変更 | 下書き変更を含め全体CI。既存prose-only例外は維持 |
+| 経路              | 対象                                                                                       | 今回の扱い                                       |
+| ----------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| 即時プレビュー    | 編集中の本文                                                                               | CMSの既存AST描画。GitHubの完了待ちはない         |
+| 正式Astroレビュー | 選択commitの原稿と正規layout                                                               | 既存の独立workflowを継続。全体CIを待たない       |
+| 下書き用CI        | 旧新とも未公開の原稿、新規下書き、同一ContentIdの公開記事の改稿Draft PRと正規の索引        | 今回分離。内容を検証してから短い経路へ進む       |
+| 全体CI            | 公開する変更、改稿Draft PR以外の公開状態変更、媒体・来歴・分類・連載・コード変更、判定不能 | 既存の全gateとrelease/Windows検証を維持          |
+| main CI           | mainの原稿・コード等の変更                                                                 | 下書き変更を含め全体CI。既存prose-only例外は維持 |
 
 最初に日常のCMS保存を分離する。CMSは `draft:true` の原稿と `content/registry/editor-content-index.json` を同時に保存するため、原稿pathだけの許可では題名変更や新規作成を短縮できない。索引は対象原稿の派生行だけを許可する。
 
@@ -59,6 +59,12 @@ Astroは下書きもcompileするため、build自体や出力予算を省かな
 このjobは全体CIの必須結果および同run/attemptのpackage gateに含める。下書き用経路をコードPRで一度も実行しないまま、全体CI成功だけで有効と判断する状態を避ける。合成原稿の時間、workflow全体の時間、実際の記事PRの時間は区別して記録する。
 
 対象回帰は実Gitの新規・本文/題名更新・索引更新、安定ID、公開状態切替、不正AST、無関係な索引行、rename/delete、通常file/checkout identity、強制fullを含む。Linuxの実stable-result shellに失敗/取消/対象外/出力欠落を与え、誤ってmerge可能なPASSにならないことも確認する。
+
+## content下書きブランチのmain追従とスコープ
+
+同じrepositoryのmain宛てcontent/* Draft PRを、mainの祖先関係だけで全体CIに戻さない。固定main/headと一意な共通祖先を取得し、対象記事1件と許可済みの関連派生/registry変更をeditor-coreの統合計画で検証する。記事固有の制作READMEを除き、サイト/CMS/CI/skillなどの変更は別PRに分離する。独立したregistry管理のPRは従来の全体CI経路を維持する。
+
+mainが進んだ場合は別worktreeにmainと許可済みの差分を合成し、候補と現在の公開版を検査する。この一時commitは実ブランチへpushせず、配布artifactも作らない。競合またはスコープ違反は明示的に失敗させる。ci:full指定、Markdown画像の既存制限、公開時の全体検査は維持する。CI成功の対象はその実行時点の固定base/headであり、mainの後続更新を自動承認しない。
 
 ## Shadow観測の位置付け
 

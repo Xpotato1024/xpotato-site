@@ -50,6 +50,22 @@ export class EditorGitHubFixture {
     this.refs.set("main", commit.sha);
     this.repository = new GitRepository(this.request, "fixture/editor");
   }
+  /** Construct an external main/AI revision without exercising CMS save restrictions. */
+  advance(branch: string, changes: Record<string, string | null>): string {
+    const previous = this.refs.get(branch);
+    if (!previous) throw Error("FIXTURE_BRANCH");
+    const parent = this.commits.get(previous)!;
+    const files = Object.fromEntries(
+      this.trees.get(parent.tree.sha)!.tree.map((f) => [f.path, f.sha]),
+    );
+    for (const [path, source] of Object.entries(changes)) {
+      if (source === null) delete files[path];
+      else files[path] = this.blob(source);
+    }
+    const commit = this.commit(this.tree(files).sha, [previous], "external change");
+    this.refs.set(branch, commit.sha);
+    return commit.sha;
+  }
   private hash(value: unknown) {
     return createHash("sha1").update(JSON.stringify(value)).digest("hex");
   }
@@ -96,6 +112,42 @@ export class EditorGitHubFixture {
       if (this.refs.has(ref) || !this.commits.has(sha)) throw new GitError("GIT_CONFLICT", 422);
       this.refs.set(ref, sha);
       result = { object: { sha } };
+    } else if (pathname.startsWith("/compare/")) {
+      const [main, head] = pathname.slice("/compare/".length).split("...");
+      const ancestors = (start: string) => {
+        const result = new Set<string>();
+        const stack = [start];
+        while (stack.length) {
+          const id = stack.pop()!;
+          if (result.has(id)) continue;
+          result.add(id);
+          for (const p of this.commits.get(id)?.parents ?? []) stack.push(p.sha);
+        }
+        return result;
+      };
+      const a = ancestors(main!),
+        h = ancestors(head!);
+      const common = [...h].find((id) => a.has(id));
+      if (!common) throw Error("FIXTURE_NO_COMMON_ANCESTOR");
+      const behind = [...a].filter((id) => !h.has(id)).length,
+        ahead = [...h].filter((id) => !a.has(id)).length;
+      result = {
+        base_commit: { sha: main },
+        merge_base_commit: { sha: common },
+        behind_by: behind,
+        ahead_by: ahead,
+        status: behind ? (ahead ? "diverged" : "behind") : ahead ? "ahead" : "identical",
+      };
+    } else if (pathname.startsWith("/git/blobs/") && request.method === "GET") {
+      const sha = pathname.slice("/git/blobs/".length),
+        source = this.blobs.get(sha);
+      if (source === undefined) throw new GitError("GIT_NOT_FOUND", 404);
+      result = {
+        sha,
+        size: Buffer.byteLength(source),
+        encoding: "base64",
+        content: Buffer.from(source).toString("base64"),
+      };
     } else if (pathname.startsWith("/contents/")) {
       const file = pathname.slice("/contents/".length),
         ref = url.searchParams.get("ref") ?? "",

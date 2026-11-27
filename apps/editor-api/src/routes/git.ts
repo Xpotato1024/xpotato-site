@@ -40,6 +40,25 @@ export async function handleGitRoute({
     );
     return json(await repository.createBranch(input.source, input.target), 201);
   }
+  if (route === "/draft-main" && request.method === "POST") {
+    const input = await body<Parameters<GitRepository["followDraftMain"]>[0] & { apply: boolean }>(
+      request,
+    );
+    if (
+      !input ||
+      typeof input.apply !== "boolean" ||
+      typeof input.branch !== "string" ||
+      typeof input.expectedHead !== "string" ||
+      typeof input.path !== "string" ||
+      typeof input.contentId !== "string" ||
+      Object.keys(input).some(
+        (k) => !["apply", "branch", "expectedHead", "path", "contentId"].includes(k),
+      )
+    )
+      throw new APIError("DRAFT_MAIN_INPUT_INVALID");
+    const { apply, ...identity } = input;
+    return json(await repository.followDraftMain(identity, apply));
+  }
   if (route === "/save" && request.method === "POST") {
     return json(await repository.save(await body<Parameters<GitRepository["save"]>[0]>(request)));
   }

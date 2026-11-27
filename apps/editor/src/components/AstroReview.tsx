@@ -5,9 +5,13 @@ import { loadAstroReview, renderAstroReview } from "../data/astro-review.js";
 export function AstroReview({
   draft,
   authenticated,
+  onPrepare,
 }: {
   draft: LocalDraft;
   authenticated: boolean;
+  onPrepare?: () => Promise<
+    import("@xpotato/editor-core/draft-branch").DraftBranchSyncResult | null
+  >;
 }) {
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
@@ -51,6 +55,15 @@ export function AstroReview({
     setBusy(true);
     setMessage("");
     try {
+      const followed = await onPrepare?.();
+      if (followed?.status === "conflict")
+        throw Error("mainとの競合があります。先に競合を解消してください。");
+      if (followed?.status === "synced") {
+        setMessage(
+          "mainの変更を取り込みました。新しいcommitのAstroレビュー生成後に再取得してください。",
+        );
+        return;
+      }
       const result = await loadAstroReview(draft);
       const rendered = await renderAstroReview(result, await localMedia(draft.id));
       if (generation.current !== current) {

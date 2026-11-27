@@ -28,6 +28,7 @@ import { useGitWorkspace, type BranchPlan } from "./features/git/useGitWorkspace
 import { download } from "./shared/download.js";
 import { query, request } from "./data/api.js";
 import { hasPendingRegistryChanges, hasUnsyncedReview } from "./data/draft-identity.js";
+import { mainSyncLabel, conflictHandoff } from "./data/draft-main.js";
 import { errorLabel } from "./shared/messages.js";
 import { useEditorEnvironment } from "./shared/useEditorEnvironment.js";
 import type { EditorSeriesPreview } from "./preview.js";
@@ -363,6 +364,21 @@ export default function App() {
       setNotice("新しい作業ブランチ用の下書きを開きました。元の下書きと画像も保持しています。");
     } else await workspace.openLocal(current);
     await workspace.persist();
+    // A local copy may contain unsaved edits. Follow only the exact persisted Git head.
+    if (
+      git.auth.authenticated &&
+      workspace.current.current.workingBranch &&
+      workspace.current.current.baseCommit
+    ) {
+      try {
+        await git.followCurrentDraft();
+      } catch (error) {
+        setNotice(
+          "原稿を端末に保持しています。main追従は未完了: " +
+            (error instanceof Error ? error.message : "同期失敗"),
+        );
+      }
+    }
     openEditor(review);
   }
   async function openRemoteDocument(
@@ -651,7 +667,18 @@ export default function App() {
                     ? parsed?.data.title || "無題の原稿"
                     : undefined
                 }
-                onResume={() => openEditor()}
+                onResume={() =>
+                  void act(async () => {
+                    if (git.auth.authenticated && workspace.current.current.workingBranch) {
+                      try {
+                        await git.followCurrentDraft();
+                      } catch (error) {
+                        setError(error instanceof Error ? error.message : "MAIN_SYNC_FAILED");
+                      }
+                    }
+                    openEditor();
+                  })
+                }
                 onSample={() => void act(openSample)}
                 busy={busy}
               />
@@ -1040,7 +1067,62 @@ export default function App() {
                           onSave={() => void act(saveArticle)}
                           onCreatePR={() => void act(git.createPR)}
                         />
-                        <AstroReview draft={draft} authenticated={git.auth.authenticated} />
+                        <div className="editor-actions">
+                          <span>{mainSyncLabel(git.mainSync, draft)}</span>
+                          <button
+                            type="button"
+                            disabled={busy || !git.auth.authenticated || !draft.workingBranch}
+                            onClick={() =>
+                              void act(async () => {
+                                await git.followCurrentDraft();
+                              })
+                            }
+                          >
+                            mainとの同期を確認
+                          </button>
+                          {git.mainSync?.status === "conflict" &&
+                            git.mainSync.head === draft.baseCommit &&
+                            git.mainSync.branch === draft.workingBranch && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void act(async () =>
+                                    download(
+                                      "draft-main-conflict.json",
+                                      new Blob(
+                                        [
+                                          JSON.stringify(
+                                            conflictHandoff(draft, git.mainSync!),
+                                            null,
+                                            2,
+                                          ),
+                                        ],
+                                        { type: "application/json" },
+                                      ),
+                                    ),
+                                  )
+                                }
+                              >
+                                競合情報を書き出す
+                              </button>
+                            )}
+                        </div>
+                        {git.mainSync?.status === "conflict" &&
+                          git.mainSync.head === draft.baseCommit &&
+                          git.mainSync.branch === draft.workingBranch && (
+                            <div className="notice">
+                              {git.mainSync.conflicts.map((c) => (
+                                <p key={c.path}>
+                                  {c.path}：{c.reason}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                        <AstroReview
+                          draft={draft}
+                          authenticated={git.auth.authenticated}
+                          onPrepare={() => git.followCurrentDraft()}
+                        />
                         <details className="technical-details">
                           <summary>接続情報</summary>
                           <p className="document-branch">
