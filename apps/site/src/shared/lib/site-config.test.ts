@@ -9,6 +9,7 @@ describe("public section navigation", () => {
       { id: "education", label: "教育資料", href: "/education/" },
       { id: "projects", label: "制作物", href: "/projects/" },
       { id: "tools", label: "ツール", href: "/tools/" },
+      { id: "games", label: "ゲーム", href: "/games/" },
       { id: "about", label: "サイト紹介", href: "/about/" },
       { id: "contact", label: "問い合わせ", href: "/contact/" },
     ];
@@ -38,6 +39,7 @@ describe("public section navigation", () => {
         "education",
         "projects",
         "tools",
+        "games",
         "about",
         "contact",
         "future",

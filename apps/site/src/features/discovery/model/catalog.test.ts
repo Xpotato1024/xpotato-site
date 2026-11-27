@@ -149,8 +149,10 @@ describe("derived content catalog", () => {
     expect(() =>
       deriveContentCatalog([blog(), blog({}, "another-route")], taxonomyRegistry),
     ).toThrow(/Duplicate ContentId/u);
-    expect(() => deriveContentCatalog([{ ...page, slug: "search" }], taxonomyRegistry)).toThrow(
-      /reserved site route/u,
-    );
+    for (const slug of ["search", "games", "games/sudoku"]) {
+      expect(() => deriveContentCatalog([{ ...page, slug }], taxonomyRegistry)).toThrow(
+        /reserved site route/u,
+      );
+    }
   });
 });

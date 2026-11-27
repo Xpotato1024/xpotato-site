@@ -87,6 +87,7 @@ const reservedPageRoutes = new Set([
   "/tools/",
   "/search/",
   "/series/",
+  "/games/",
   "/rss/",
   "/robots/",
   "/404/",
@@ -110,7 +111,7 @@ export const deriveContentCatalog = (
         : `/${prefix ? `${prefix}/` : ""}${slug}/`;
     if (
       source.collection === "pages" &&
-      (reservedPageRoutes.has(route) || route.startsWith("/series/"))
+      (reservedPageRoutes.has(route) || route.startsWith("/series/") || route.startsWith("/games/"))
     ) {
       throw new Error(`Page content route collides with a reserved site route: ${route}`);
     }

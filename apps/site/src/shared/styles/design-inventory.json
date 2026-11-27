@@ -1171,6 +1171,19 @@
     "conditions": [],
     "script": []
   },
+  "apps/site/src/pages/games/index.astro": {
+    "elements": {
+      "BaseLayout": 1,
+      "div class=\"page-heading\"": 1,
+      "h1": 1,
+      "main class=\"archive\"": 1,
+      "p": 2,
+      "p class=\"eyebrow\"": 1
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
   "apps/site/src/pages/index.astro": {
     "elements": {
       "ArticleCard": 1,
