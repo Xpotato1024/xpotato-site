@@ -296,10 +296,9 @@ describe("private synchronization requires a bound working branch", () => {
     const draft = { ...draftFixture(), ...binding };
     const props = reviewProps(draft, binding.authenticated);
     const { tree } = await mount(ReviewPanel, props);
-    for (const label of ["添削を同期", "取得"]) {
-      expect(button(tree, label).disabled).toBe(true);
-      await click(tree, label);
-    }
+    expect(button(tree, "原稿と添削を保存").disabled).toBe(true);
+    expect(button(tree, "取得").disabled).toBe(true);
+    await click(tree, "取得");
     expect(mocks.request).not.toHaveBeenCalled();
     expect(mocks.find).not.toHaveBeenCalled();
     expect(props.onDraft).not.toHaveBeenCalled();

@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import {
   anchorSelection,
+  articleReviewAnchor,
+  reattachReviewComment,
   applyReviewProposal,
   importReviewProposals,
-  validateReviewComments,
   type ReviewComment,
   type SourceSelection,
   type LocatedAnchor,
 } from "@xpotato/editor-core/annotations";
 import { parseDraft } from "@xpotato/editor-core/draft";
 import type { LocalDraft } from "../../data/storage.js";
-import { request, query } from "../../data/api.js";
-import { findMediaSnapshot, type RemoteDraft } from "../../data/media-sync.js";
+import { findMediaSnapshot } from "../../data/media-sync.js";
+import { mergeRemoteReview } from "../../data/review-sync.js";
 import { download } from "../../shared/download.js";
 import { locateReviewComment, reviewMarkState, reviewStateLabel } from "./review-marks.js";
 import { ReviewStatusIcon } from "./ReviewIndicator.js";
@@ -34,6 +35,8 @@ interface Props {
   composerDraft: ReviewComposerDraft;
   onComposerChange: (commentId: string | null, value: string) => void;
   onSelect?: ((id: string) => void) | undefined;
+  onSave?: (() => void) | undefined;
+  saving?: boolean;
 }
 export function ReviewPanel({
   draft,
@@ -48,6 +51,8 @@ export function ReviewPanel({
   composerDraft,
   onComposerChange,
   onSelect,
+  onSave,
+  saving = false,
 }: Props) {
   const canSync = authenticated && Boolean(draft.workingBranch && draft.baseCommit);
   const syncUnavailableMessage = authenticated
@@ -63,12 +68,21 @@ export function ReviewPanel({
     [busy],
   );
   const [showClosed, setShowClosed] = useState(false);
+  const [articleTarget, setArticleTarget] = useState(false);
+  useEffect(() => setArticleTarget(false), [selectionRequest]);
   const [notice, setNotice] = useState("");
   const { data, body } = parseDraft(draft.source);
   const comments = draft.annotations ?? [];
   const selectedComment = comments.find((comment) => comment.id === selectedCommentId);
   const selectedLocation = selectedComment && reviewCommentSelection(body, selectedComment);
   const manualSelection = selectedCommentId ? null : selection;
+  const articleMode =
+    articleTarget ||
+    (!selectedCommentId && !manualSelection) ||
+    selectedComment?.anchor.scope === "article";
+  const detached = comments.filter(
+    (c) => c.status === "open" && c.anchor.scope !== "article" && !locateReviewComment(body, c),
+  );
   const cards = useRef(new Map<string, HTMLElement>());
   const composer = useRef<HTMLDivElement>(null);
   const focusedComment = useRef<string | null>(null);
@@ -103,11 +117,11 @@ export function ReviewPanel({
     }
   }
   function add() {
-    if (!manualSelection || !instruction.trim()) return;
+    if ((!articleMode && !manualSelection) || !instruction.trim()) return;
     const next: ReviewComment = {
       id: crypto.randomUUID(),
       contentId: data.id,
-      anchor: anchorSelection(body, manualSelection),
+      anchor: articleMode ? articleReviewAnchor() : anchorSelection(body, manualSelection!),
       instruction: instruction.trim(),
       createdAt: new Date().toISOString(),
       status: "open",
@@ -134,77 +148,12 @@ export function ReviewPanel({
         setNotice("同期済みの添削はありません。");
         return;
       }
-      const incoming = validateReviewComments(remote.draft.review.comments, data.id);
-      onDraft((current) => {
-        if (current.id !== draft.id) return current;
-        const merged = new Map((current.annotations ?? []).map((c) => [c.id, c]));
-        for (const c of incoming) {
-          const local = merged.get(c.id);
-          if (local && JSON.stringify(local) !== JSON.stringify(c))
-            throw Error(
-              "同じ指摘が別の端末で変更されています。手元の添削を書き出してから、差分を確認してください。",
-            );
-          merged.set(c.id, c);
-        }
-        return {
-          ...current,
-          annotations: [...merged.values()],
-          remoteDraftId: remote.draft.id,
-          reviewRevision: remote.draft.review!.revision,
-        };
-      });
+      onDraft((current) =>
+        current.id !== draft.id ? current : mergeRemoteReview(current, remote.draft),
+      );
       setNotice("添削を取得しました。");
     } catch (error) {
       onError(error instanceof Error ? error.message : "取得できませんでした。");
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function sync() {
-    if (!canSync) {
-      onError(syncUnavailableMessage);
-      return;
-    }
-    setBusy(true);
-    try {
-      const remote = await request<RemoteDraft>("/drafts", {
-        method: "POST",
-        body: {
-          id: draft.remoteDraftId ?? draft.id,
-          contentId: data.id,
-          branch: draft.workingBranch,
-          commit: draft.baseCommit,
-          sourcePath: draft.path,
-        },
-      });
-      if (draft.reviewRevision === undefined && (remote.review?.comments.length ?? 0) > 0)
-        throw Error("別の端末に添削があります。先に「取得」で読み込んでください。");
-      const result = await request<{ review: { revision: number }; revision: number }>(
-        "/draft-review",
-        {
-          method: "POST",
-          body: { id: remote.id, expectedRevision: draft.reviewRevision ?? 0, comments },
-        },
-      );
-      onDraft((current) =>
-        current.id !== draft.id
-          ? current
-          : {
-              ...current,
-              remoteDraftId: remote.id,
-              remoteRevision: result.revision,
-              reviewRevision: result.review.revision,
-            },
-      );
-      setNotice("添削を非公開で同期しました。");
-    } catch (error) {
-      onError(
-        error instanceof Error && error.message === "REVIEW_CONFLICT"
-          ? "別の端末で添削が更新されています。手元の内容は保持しています。"
-          : error instanceof Error
-            ? error.message
-            : "同期できませんでした。",
-      );
     } finally {
       setBusy(false);
     }
@@ -237,13 +186,30 @@ export function ReviewPanel({
         <h2>添削</h2>
         <span>{comments.filter((c) => c.status === "open").length}件</span>
       </div>
-      {!selectedLocation && (
+      <p className="small muted">
+        記事全体{" "}
+        {comments.filter((c) => c.anchor.scope === "article" && c.status === "open").length}件 ·
+        対象不明 {detached.length}件
+      </p>
+      <button
+        type="button"
+        aria-pressed={articleMode}
+        onClick={() => setArticleTarget(!articleTarget)}
+      >
+        記事全体への指摘
+      </button>
+      {(!selectedLocation || articleMode) && (
         <div ref={composer} tabIndex={-1} className="review-new-target">
           <ReviewComposer
-            contextual={Boolean(selectedCommentId)}
-            selection={manualSelection}
-            instruction={selectedCommentId ? (followUps[selectedCommentId] ?? "") : instruction}
-            onInstruction={(value) => onComposerChange(selectedCommentId ?? null, value)}
+            contextual={!articleMode && Boolean(selectedCommentId)}
+            article={articleMode}
+            selection={articleMode ? null : manualSelection}
+            instruction={
+              !articleMode && selectedCommentId ? (followUps[selectedCommentId] ?? "") : instruction
+            }
+            onInstruction={(value) =>
+              onComposerChange(articleMode ? null : (selectedCommentId ?? null), value)
+            }
             onSubmit={() => act(add)}
           />
         </div>
@@ -262,6 +228,7 @@ export function ReviewPanel({
           .map((c) => {
             const location = locateReviewComment(body, c);
             const state = reviewMarkState(c);
+            const article = c.anchor.scope === "article";
             const contextual = c.id === selectedCommentId && location;
             const composer = contextual && (
               <ReviewComposer
@@ -274,7 +241,26 @@ export function ReviewPanel({
             );
             const history = (
               <>
-                <blockquote>{c.anchor.quote}</blockquote>
+                {article ? (
+                  <p className="small muted">記事全体</p>
+                ) : (
+                  <blockquote>{c.anchor.quote}</blockquote>
+                )}
+                {!!c.targetHistory?.length && (
+                  <details className="review-history">
+                    <summary>以前の対象（{c.targetHistory.length}件）</summary>
+                    {c.targetHistory.map((item, index) => (
+                      <div key={index}>
+                        <blockquote>{item.anchor.quote}</blockquote>
+                        {item.proposal && (
+                          <p className="small">
+                            以前の修正案：{item.proposal.replacement || "（削除）"}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </details>
+                )}
                 <p>{c.instruction}</p>
                 {c.proposal && (
                   <div className="proposal-diff">
@@ -313,19 +299,23 @@ export function ReviewPanel({
                     <ReviewStatusIcon
                       complete={c.status === "resolved" || c.status === "applied"}
                     />
-                    {c.status === "open" && !location ? "対象を確認" : reviewStateLabel(state)}
+                    {c.status === "open" && !location && !article
+                      ? "対象不明・未対応"
+                      : reviewStateLabel(state)}
                   </span>
-                  <button
-                    type="button"
-                    disabled={!location}
-                    onClick={() => {
-                      if (!location) return;
-                      onSelect?.(c.id);
-                      onLocate(location);
-                    }}
-                  >
-                    対象へ
-                  </button>
+                  {!article && (
+                    <button
+                      type="button"
+                      disabled={!location}
+                      onClick={() => {
+                        if (!location) return;
+                        onSelect?.(c.id);
+                        onLocate(location);
+                      }}
+                    >
+                      対象へ
+                    </button>
+                  )}
                 </div>
                 {c.status !== "open" && composer}
                 {contextual && c.status !== "open" ? (
@@ -336,17 +326,17 @@ export function ReviewPanel({
                 ) : (
                   history
                 )}
-                {!location && c.status === "open" && (
+                {!article && !location && c.status === "open" && (
                   <p className="small muted">
-                    対象が変更または削除されています。本文を再選択すると指摘を付け直せます。
+                    対象を特定できません（変更・削除・曖昧な位置）。指摘と引用は保持しています。修正済みなら解決、別の範囲なら付け直してください。
                   </p>
                 )}
-                {!location && c.status !== "open" && c.id === selectedCommentId && (
+                {!article && !location && c.status !== "open" && c.id === selectedCommentId && (
                   <p className="small muted">
                     現在の本文で対象を特定できません。追加の指摘は本文を選び直して付けてください。
                   </p>
                 )}
-                {!location && manualSelection?.quote && c.status === "open" && (
+                {!article && !location && manualSelection?.quote && c.status === "open" && (
                   <button
                     type="button"
                     onClick={() =>
@@ -354,11 +344,7 @@ export function ReviewPanel({
                         onChange(
                           comments.map((item) =>
                             item.id === c.id
-                              ? {
-                                  ...item,
-                                  anchor: anchorSelection(body, manualSelection),
-                                  proposal: undefined,
-                                }
+                              ? reattachReviewComment(body, item, manualSelection)
                               : item,
                           ),
                         ),
@@ -461,6 +447,8 @@ export function ReviewPanel({
                         sourceCommit: draft.syncedCommit ?? null,
                         body,
                         comments: comments.filter((c) => c.status === "open"),
+                        articleScopePolicy:
+                          "scope=articleの指摘は本文全体の改稿で対応し、部分置換案として取り込まない。対象不明の指摘も元の引用と指示を確認し、解決を明示する。",
                         responseFormat: {
                           version: 1,
                           contentId: data.id,
@@ -499,10 +487,14 @@ export function ReviewPanel({
         </div>
       </details>
       <div className="panel-toolbar">
-        <button type="button" disabled={!canSync || busy} onClick={() => void sync()}>
-          添削を同期
+        <button
+          type="button"
+          disabled={!authenticated || busy || saving || !onSave}
+          onClick={onSave}
+        >
+          原稿と添削を保存
         </button>
-        <button type="button" disabled={!canSync || busy} onClick={() => void load()}>
+        <button type="button" disabled={!canSync || busy || saving} onClick={() => void load()}>
           取得
         </button>
       </div>

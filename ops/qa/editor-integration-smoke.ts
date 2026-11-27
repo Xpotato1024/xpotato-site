@@ -164,9 +164,9 @@ try {
   await panel(
     page,
     "保存と確認を開く",
-    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+    page.getByRole("button", { name: "原稿と添削を保存", exact: true }),
   );
-  await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
+  await page.getByRole("button", { name: "原稿と添削を保存", exact: true }).click();
   await page.locator(".message").filter({ hasText: "Gitへ保存しました" }).waitFor();
   const branch = [...git.refs.keys()].find((name) => name.startsWith("content/"))!;
   assert(branch);
@@ -187,6 +187,27 @@ try {
   assert.equal(git.pulls.length, 1);
   assert.equal(git.pulls[0]!.draft, true);
   assert.equal(git.pulls[0]!.base.ref, "main");
+  // Article-level review is private and must not produce an empty Git commit.
+  await panel(page, "添削を開く", page.getByRole("region", { name: "本文の添削" }));
+  const articleTarget = page.getByRole("button", { name: "記事全体への指摘", exact: true });
+  if ((await articleTarget.getAttribute("aria-pressed")) !== "true") await articleTarget.click();
+  await page.getByText("対象：記事全体（構成・方針・品質など）", { exact: true }).waitFor();
+  await page.getByRole("textbox", { name: "指摘", exact: true }).fill("記事全体の構成を見直す");
+  await page
+    .getByRole("region", { name: "本文の添削" })
+    .getByRole("button", { name: "指摘を追加", exact: true })
+    .click();
+  await page.getByRole("button", { name: "原稿と添削を保存", exact: true }).click();
+  await page
+    .locator(".message")
+    .filter({ hasText: "本文の変更がないためGit更新は省略しました。添削を非公開で同期しました。" })
+    .waitFor();
+  assert.equal(git.refs.get(branch), first.commit, "review-only save must keep the Git head");
+  const reviewState = (await new DraftStore(bucket).read()).state;
+  const reviewRecord = Object.values(reviewState.drafts).find((d) => d.branch === branch);
+  assert.equal(reviewRecord?.review?.comments.length, 1);
+  assert.equal(reviewRecord?.review?.comments[0]?.anchor.scope, "article");
+  await closePanel(page);
   const png = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWOoCJj2HwAFAAJeoZPDtAAAAABJRU5ErkJggg==",
     "base64",
@@ -224,21 +245,18 @@ try {
   await panel(
     page,
     "保存と確認を開く",
-    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+    page.getByRole("button", { name: "原稿と添削を保存", exact: true }),
   );
   const savedResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/editor-api/save" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
+  await page.getByRole("button", { name: "原稿と添削を保存", exact: true }).click();
   const response = await savedResponse;
   assert(response.ok(), "The new Git save must succeed");
   const savedCommit = (await response.json()).commit as string;
-  await page
-    .locator(".message")
-    .filter({ hasText: "Gitへ保存しました。 " + savedCommit.slice(0, 8) })
-    .waitFor();
+  await page.locator(".message").filter({ hasText: "原稿をGitへ保存しました。" }).waitFor();
   const humanHead = await git.repository.snapshot(branch),
     human = await git.repository.read(humanHead, file);
   assert.equal(humanHead.commit, savedCommit);
@@ -258,9 +276,9 @@ try {
   await panel(
     page,
     "保存と確認を開く",
-    page.getByRole("button", { name: "Gitへ保存", exact: true }),
+    page.getByRole("button", { name: "原稿と添削を保存", exact: true }),
   );
-  await page.getByRole("button", { name: "Gitへ保存", exact: true }).click();
+  await page.getByRole("button", { name: "原稿と添削を保存", exact: true }).click();
   await page.locator(".conflict-panel").waitFor();
   assert.match(await page.locator(".conflict-panel").innerText(), /AIが同じPR/u);
   assert.equal(git.refs.get(branch), ai.commit);

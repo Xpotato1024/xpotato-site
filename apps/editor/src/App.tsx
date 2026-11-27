@@ -26,6 +26,8 @@ import { exportDraftBundle, importDraftFile } from "./features/drafts/transfer.j
 import { usePreviewMedia } from "./features/editing/usePreviewMedia.js";
 import { useGitWorkspace, type BranchPlan } from "./features/git/useGitWorkspace.js";
 import { download } from "./shared/download.js";
+import { query, request } from "./data/api.js";
+import { hasPendingRegistryChanges, hasUnsyncedReview } from "./data/draft-identity.js";
 import { errorLabel } from "./shared/messages.js";
 import { useEditorEnvironment } from "./shared/useEditorEnvironment.js";
 import type { EditorSeriesPreview } from "./preview.js";
@@ -38,6 +40,7 @@ import {
   cloneLocalDraftForBranch,
   localDrafts,
   saveLocalMedia,
+  updateLocalDraft,
   type LocalDraft,
 } from "./data/storage.js";
 const StartWorkspace = lazy(() =>
@@ -395,14 +398,77 @@ export default function App() {
     return imported;
   }
   async function saveArticle() {
-    const submittedId = workspace.current.current.id;
-    await git.saveGit();
+    const initial = structuredClone(workspace.current.current);
+    await workspace.persist("原稿と添削の保存前");
+    const bodyChanged =
+      !initial.syncedCommit ||
+      initial.source !== initial.syncedSource ||
+      hasPendingRegistryChanges(initial);
+    if (bodyChanged) await git.saveGit();
+    else {
+      const snapshot = await request<GitSnapshot>(
+        "/snapshot" + query({ branch: initial.workingBranch }),
+      );
+      if (snapshot.commit !== initial.baseCommit)
+        throw Error("Gitの原稿が更新されています。下書きを開き直してから保存してください。");
+    }
     const saved = workspace.current.current;
-    if (saved.id === submittedId && saved.workingBranch && saved.registrySnapshot)
+    if (saved.id !== initial.id)
+      throw Error("原稿が切り替わりました。元の下書きを開いて添削の保存状態を確認してください。");
+    if (saved.workingBranch && saved.registrySnapshot && bodyChanged)
       await registry.acceptExternalSave(
         { branch: saved.workingBranch, commit: saved.baseCommit },
         saved.registrySnapshot,
       );
+    if (saved.source !== saved.syncedSource || hasPendingRegistryChanges(saved)) {
+      setNotice(
+        "Gitへの保存後に追加の編集があります。端末に保持しています。再度保存してください。",
+      );
+      return;
+    }
+    const submitted = structuredClone(saved);
+    try {
+      const { syncDraftReview } = await import("./data/review-sync.js");
+      const result = await syncDraftReview(submitted);
+      if (result) {
+        const merge = (latest: LocalDraft): LocalDraft => {
+          if (
+            latest.id !== submitted.id ||
+            latest.workingBranch !== submitted.workingBranch ||
+            latest.path !== submitted.path
+          )
+            return latest;
+          return { ...latest, ...result };
+        };
+        const updated = await updateLocalDraft(
+          submitted.id,
+          submitted,
+          (stored) =>
+            merge(
+              workspace.current.current.id === submitted.id ? workspace.current.current : stored,
+            ),
+          { requireExistingActive: true },
+        );
+        if (workspace.current.current.id === submitted.id)
+          workspace.setDraft((current) => merge(current));
+        if (updated.id === workspace.current.current.id) await workspace.persist("添削の同期結果");
+      }
+      setNotice(
+        (bodyChanged
+          ? "原稿をGitへ保存しました。"
+          : "本文の変更がないためGit更新は省略しました。") +
+          (result
+            ? hasUnsyncedReview(workspace.current.current)
+              ? "保存中に追加した添削は未同期です。"
+              : "添削を非公開で同期しました。"
+            : "同期する添削はありません。"),
+      );
+    } catch (error) {
+      throw Error(
+        "本文はGitに保存済みですが、添削は未同期です。端末の内容を保持しています。 " +
+          (error instanceof Error ? error.message : "同期できませんでした。"),
+      );
+    }
   }
   function changeRegistry(changes: EditorRegistryChanges) {
     workspace.setDraft((current) => {
@@ -486,6 +552,7 @@ export default function App() {
   const isSynced = Boolean(
     draft.syncedCommit && draft.syncedSource === draft.source && !draft.pendingRegistryChanges,
   );
+  const reviewPending = hasUnsyncedReview(draft);
   const isPage = panel !== null && pagePanels.includes(panel);
   const PanelElement = isPage ? "main" : "aside";
   return (
@@ -493,7 +560,13 @@ export default function App() {
       {page === "edit" ? (
         <EditorHeader
           online={environment.online}
-          localStatus={workspace.localStatus}
+          localStatus={
+            workspace.localStatus === "保存済み"
+              ? !isSynced || reviewPending
+                ? "端末保存済み・未同期"
+                : "端末保存済み・同期済み"
+              : workspace.localStatus
+          }
           menuOpen={panel === "menu"}
           onToggleNavigation={() => navigation.navigate("home")}
           onWorkflow={() => setPanel("workflow")}
@@ -854,6 +927,8 @@ export default function App() {
                         selection={selection}
                         authenticated={git.auth.authenticated}
                         onChange={reviewChanged}
+                        onSave={() => void act(saveArticle)}
+                        saving={busy}
                         selectedCommentId={selectedCommentId}
                         selectionRequest={reviewSelectionRequest}
                         composerDraft={reviewComposerDraft}
@@ -901,6 +976,13 @@ export default function App() {
                           <li data-complete={isSynced}>
                             {isSynced ? "Gitに保存済み" : "Gitに未保存の変更"}
                           </li>
+                          <li data-complete={!reviewPending}>
+                            {reviewPending
+                              ? "添削に未同期の変更"
+                              : draft.annotations?.length
+                                ? "添削は同期済み"
+                                : "端末の指摘なし"}
+                          </li>
                           <li data-complete={Boolean(git.pr)}>
                             {git.pr ? "レビューを作成済み" : "レビュー待ち"}
                           </li>
@@ -946,7 +1028,7 @@ export default function App() {
                           authenticated={git.auth.authenticated}
                           busy={busy}
                           hasIssues={git.issues.length > 0}
-                          synced={isSynced}
+                          synced={isSynced && !reviewPending}
                           pr={git.pr}
                           onExport={() =>
                             download(
@@ -989,7 +1071,15 @@ export default function App() {
               {git.issues.length ? git.issues.length + "件を確認" : "チェック正常"}
             </button>
             <span className="status-spacer" />
-            <span>{busy ? "処理中…" : isSynced ? "Git保存済み" : "端末に保存"}</span>
+            <span>
+              {busy
+                ? "処理中…"
+                : !isSynced
+                  ? "本文はGit未保存"
+                  : reviewPending
+                    ? "添削は未同期"
+                    : "同期済み"}
+            </span>
           </footer>
         </div>
       )}

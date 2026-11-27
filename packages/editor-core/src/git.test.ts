@@ -15,7 +15,7 @@ const id = "11111111-1111-4111-8111-111111111111",
 const encode = (value: string) => Buffer.from(value).toString("base64");
 function fixture() {
   const calls: GitRequest[] = [],
-    state = { head: a, race: false, prDraft: null as boolean | null };
+    state = { head: a, race: false, unchanged: false, prDraft: null as boolean | null };
   const source = createDraft("記事", "software", id);
   const api: GitTransport = async <T>(req: GitRequest) => {
     calls.push(req);
@@ -40,7 +40,7 @@ function fixture() {
     else if (req.path.startsWith("/git/commits/") && req.method === "GET")
       value = { sha: a, tree: { sha: b }, parents: [] };
     else if (req.path === "/git/blobs") value = { sha: b };
-    else if (req.path === "/git/trees") value = { sha: b };
+    else if (req.path === "/git/trees") value = { sha: state.unchanged ? b : c };
     else if (req.path === "/git/commits") value = { sha: c };
     else if (req.path.startsWith("/git/refs/heads/")) {
       if (state.race) throw new GitError("GIT_CONFLICT", 422);
@@ -106,6 +106,19 @@ describe("Git updates are snapshot-bound and do not publish", () => {
       expect.objectContaining({ parents: [a] }),
     );
     expect(f.calls.at(-1)!.body).toEqual({ sha: c, force: false });
+  });
+  it("returns the existing commit and does not move the ref for an unchanged tree", async () => {
+    const f = fixture();
+    f.state.unchanged = true;
+    const result = await f.repository.save({
+      branch: "content/article",
+      expectedHead: a,
+      path: draftPath(id),
+      source: f.source,
+      producer: "human",
+    });
+    expect(result.commit).toBe(a);
+    expect(f.calls.some((r) => r.path === "/git/commits" || r.method === "PATCH")).toBe(false);
   });
   it("does not write when the selected branch has advanced", async () => {
     const f = fixture();

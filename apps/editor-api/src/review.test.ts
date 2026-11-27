@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { anchorSelection, type ReviewComment } from "@xpotato/editor-core/annotations";
+import {
+  anchorSelection,
+  articleReviewAnchor,
+  type ReviewComment,
+} from "@xpotato/editor-core/annotations";
 import { GitRepository } from "@xpotato/editor-core/git";
 import { seal } from "./auth.js";
 import { createDraftRecord } from "./media.js";
@@ -101,6 +105,17 @@ describe("private review storage", () => {
     const state = (await f.store.read()).state;
     expect(state.audit.at(-1)).toMatchObject({ action: "review.save", id: draftId });
     expect(JSON.stringify(state.audit)).not.toContain(comments[0]!.instruction);
+  });
+  it("stores an article-wide review without a Git write and retains it after resolution", async () => {
+    const f = await fixture();
+    const c = comment({ anchor: articleReviewAnchor(), instruction: "全体の構成を見直す" });
+    const first = await f.post({ id: draftId, expectedRevision: 0, comments: [c] });
+    expect(first.status).toBe(200);
+    const closed = { ...c, status: "resolved" };
+    const second = await f.post({ id: draftId, expectedRevision: 1, comments: [closed] });
+    expect(second.status).toBe(200);
+    expect((await f.store.read()).state.drafts[draftId]!.review?.comments).toEqual([closed]);
+    expect(f.gitCalls).toEqual([]);
   });
   it("rejects an outdated review revision without overwriting a newer comment", async () => {
     const f = await fixture();

@@ -5,12 +5,14 @@ export function ReviewComposer({
   selection,
   instruction,
   contextual = false,
+  article = false,
   onInstruction,
   onSubmit,
 }: {
   selection: SourceSelection | null;
   instruction: string;
   contextual?: boolean;
+  article?: boolean;
   onInstruction: (instruction: string) => void;
   onSubmit: () => void;
 }) {
@@ -23,7 +25,9 @@ export function ReviewComposer({
         onSubmit();
       }}
     >
-      {selection?.quote ? (
+      {article ? (
+        <p className="small">対象：記事全体（構成・方針・品質など）</p>
+      ) : selection?.quote ? (
         <div className="review-target">
           <p className="muted small">
             {selection.quote === selection.blockSource ? "ブロック全体" : "選択した文章"}
@@ -46,7 +50,11 @@ export function ReviewComposer({
           placeholder="説明を具体的に、根拠を追加、など"
         />
       </div>
-      <button type="submit" className="primary" disabled={!selection?.quote || !instruction.trim()}>
+      <button
+        type="submit"
+        className="primary"
+        disabled={(!article && !selection?.quote) || !instruction.trim()}
+      >
         指摘を追加
       </button>
     </form>

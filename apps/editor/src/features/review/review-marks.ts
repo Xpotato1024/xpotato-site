@@ -27,6 +27,7 @@ export function reviewStateLabel(state: ReviewMarkState): string {
 
 /** Applied proposals retain their original anchor; only an unambiguous replacement is marked. */
 export function locateReviewComment(body: string, comment: ReviewComment): LocatedAnchor | null {
+  if (comment.anchor.scope === "article") return null;
   if (comment.status !== "applied") return locateAnchor(body, comment.anchor);
   if (!comment.proposal?.replacement) return null;
   return locateAnchor(body, {

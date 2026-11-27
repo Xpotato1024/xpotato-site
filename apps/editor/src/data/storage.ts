@@ -35,6 +35,7 @@ export interface LocalDraft {
   archived?: boolean;
   pendingRegistryChanges?: EditorRegistryChanges | undefined;
   reviewRevision?: number;
+  syncedAnnotations?: ReviewComment[];
 }
 export interface LocalDraftWriteOptions {
   requireExistingActive?: boolean;
@@ -98,6 +99,7 @@ export function createLocalDraftBranchCopy<T extends Omit<LocalMedia, "blob">>(
     remoteDraftId: _remoteDraftId,
     remoteRevision: _remoteRevision,
     reviewRevision: _reviewRevision,
+    syncedAnnotations: _syncedAnnotations,
     syncedCommit: _syncedCommit,
     syncedSource: _syncedSource,
     baseSource: _baseSource,

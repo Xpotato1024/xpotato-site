@@ -49,7 +49,11 @@ export function EditorHeader({
           <span className={"status-dot " + (online ? "online" : "offline")} />
           <span className="save-state-full">{status}</span>
           <span className="save-state-compact" aria-hidden="true">
-            {localStatus.includes("保存済み") ? "保存済み" : localStatus}
+            {localStatus === "端末保存済み・未同期"
+              ? "未同期"
+              : localStatus === "端末保存済み・同期済み"
+                ? "同期済み"
+                : localStatus}
           </span>
         </span>
       </button>
