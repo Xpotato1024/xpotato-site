@@ -1,11 +1,21 @@
 import assert from "node:assert/strict";
-const names = ["記事", "メモ", "教育資料", "制作物", "ツール", "サイト紹介", "問い合わせ"];
+const names = [
+  "記事",
+  "メモ",
+  "教育資料",
+  "制作物",
+  "ツール",
+  "ゲーム",
+  "サイト紹介",
+  "問い合わせ",
+];
 const paths = [
   "/articles/",
   "/notes/",
   "/education/",
   "/projects/",
   "/tools/",
+  "/games/",
   "/about/",
   "/contact/",
 ];

@@ -35,6 +35,10 @@ last_verified: 2026-11-19
 
 その追加候補に、理論式を正本として再編集する系列と、軸ごとの自動余白・表示範囲を加えています。理論式だけを先に描いて後から測定値を重ねられます。範囲を狭くしても元の値と近似対象は保持します。限定した数式文法・計算上限と描画の判断は[ADR-0089](../design/adr/0089-chart-formulas-and-axis-ranges.md)に記録し、汎用コード実行やパラメーターの自動推定は開放しません。
 
+## ゲーム追加候補
+
+2026-11-28の [ADR-0096](../design/adr/0096-games-platform-boundary.md) は提案。[ゲーム基盤](games-platform.md)を追加する。実装・CI・採用・移管・配信はそれぞれ別の状態。
+
 ## 実環境との区別
 
 2026-11-26の追加実装は[ADR-0094](../design/adr/0094-owner-cli-draft-media.md)のDraft画像登録CLIである。既存GitHub CLIの所有者認証を再利用し、媒体専用APIからCMSと同じDraft storeへ登録・再取得する。ブラウザーのApp認証・Cookie・CSRFと公開媒体の境界は維持する。コード・CI・本番API反映・実画像登録の状態は対応PRと[現行配信状態](../operations/current-deployment-status.md)で区別する。

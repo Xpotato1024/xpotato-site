@@ -54,7 +54,7 @@ export const collectSitemapExcludedUrls = async (
 ): Promise<ReadonlySet<string>> => {
   const contentRoot = fileURLToPath(input.contentRoot);
   const excluded = new Set<string>(
-    [input.searchPath, "/404/", "/404.html"].map(
+    [input.searchPath, "/404/", "/404.html", "/games/"].map(
       (path) => new URL(path, input.canonicalOrigin).href,
     ),
   );

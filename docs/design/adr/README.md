@@ -9,6 +9,8 @@ canonical_for:
 
 # Architecture Decision Records
 
+- [ADR-0096: ゲームを独立アプリケーション領域として追加する](0096-games-platform-boundary.md) — Proposed。共通core、固定release、予約route、Organization移管境界。
+
 - [ADR-0094: AIのDraft画像登録に既存GitHub認証を使うCLIを追加する](0094-owner-cli-draft-media.md) — Proposed。既存GitHub CLI認証、Draft媒体だけのAPI入口、source・旧hash・revision照合、実bytes再取得。
 
 - [ADR-0093: 下書きの再開先を固定し、AI原稿と私有画像を同じ制作単位で引き継ぐ](0093-draft-handoff-identity.md) — Proposed。読み込み元branchの継続、固定原稿とassetIdを持つ私有bundle、既存owner認証によるDraft登録と再実行。

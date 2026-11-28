@@ -45,6 +45,14 @@ export const siteConfig = siteConfigSchema.parse({
       status: "active",
     },
     {
+      id: "games",
+      label: "ゲーム",
+      href: "/games/",
+      order: 35,
+      location: ["header", "footer"],
+      status: "active",
+    },
+    {
       id: "about",
       label: "サイト紹介",
       href: "/about/",
