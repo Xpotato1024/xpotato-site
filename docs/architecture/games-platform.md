@@ -9,7 +9,7 @@ last_verified: 2026-11-28
 
 難しい問題を使いやすい道具で解く。ゲームをツール・記事と分離する。Site は /games/ の静的 route、一覧、共通 shell、design tokens、SEO と配信 artifact を所有する。/games/ 以下は Pages の slug から予約する。公開ゲームが存在するまで一覧を noindex・sitemap 除外とする。
 
-独立した xpotato-games workspace は game-core、ゲーム固有 engine、UI、release を所有する。Site は exact revision / artifact hash / license / runtime capability を検査した配布物のみ採用する。既存 browser-tool release contract の共通化は別設計。記事 route に game runtime を流さず、既存 CSP・公開承認を緩和しない。初期は静的配信、ブラウザ内完結、サーバー・アカウント・公式ランキングなし。
+ゲーム系列ごとに独立 repository を設け、共有基盤は `xpotato-site/xpotato-game-core` が所有する。通常・Killer と同じ数理モデルを用いる派生ナンプレは `xpotato-site/xpotato-sudoku` の内部 workspace で engine、UI、release を所有する。他系列のゲームは必要時に別 repository を作る。各ゲームは検証済み core release の version、commit、artifact hash を固定して採用する。core の更新とゲーム側の採用は別 PR とし、他ゲームへ自動波及させない。Site は exact revision / artifact hash / license / runtime capability を検査した配布物のみ採用する。既存 browser-tool release contract の共通化は別設計。記事 route に game runtime を流さず、既存 CSP・公開承認を緩和しない。初期は静的配信、ブラウザ内完結、サーバー・アカウント・公式ランキングなし。
 
 game-core は TypeScript の純粋処理、JSON、versioned seed、盤面識別、タイマー、event log/replay。DOM、network、storage、Sudoku rules を持たない。保存・描画・共有は adapter。計算は worker で分離し、実測で必要なら Rust/WASM。
 
@@ -27,7 +27,7 @@ Puzzle / Session / Result / Analysis を分離する。gameId + generatorVersion
 
 ## Organization・移管
 
-単一 Organization `xpotato-site`（表示名 Xpotato Site）に site、browser-prime-toolkit、xpotato-games と将来の公開ツールを集約する。`xpotato-site/xpotato-games` は非公開で初期 core と CI を登録済み、`xpotato-site/browser-prime-toolkit` は公開状態を保持して移管済み。site 本体 `Xpotato1024/xpotato-site` の移管は未実施。Server はサイト以外の責務・権限を確認して別判断。`xpotato-skills`（表示名 Xpotato Skills）は独立責務を維持する。[Xpotato Development](https://github.com/orgs/xpotato-site/projects/1) を作成済みで、repository 横断の Issue/PR、Status (Backlog/Ready/In Progress/Review/Done)、Area、Priority、Milestone、依存、担当で管理する。merge と deploy は別の状態とする。
+単一 Organization `xpotato-site`（表示名 Xpotato Site）に site、browser-prime-toolkit、xpotato-game-core、xpotato-sudoku と将来の公開ツールを集約する。`xpotato-site/xpotato-game-core` と `xpotato-site/xpotato-sudoku` は非公開。旧 `xpotato-games` はナンプレ系列へ改名し、Git 履歴・Issue・PR を維持する。独立 core は内部 release で採用し、公開ライセンス・site release admission・配信は別の承認対象とする。`xpotato-site/browser-prime-toolkit` は公開状態を保持して移管済み。site 本体 `Xpotato1024/xpotato-site` の移管は未実施。Server はサイト以外の責務・権限を確認して別判断。`xpotato-skills`（表示名 Xpotato Skills）は独立責務を維持する。[Xpotato Development](https://github.com/orgs/xpotato-site/projects/1) を作成済みで、repository 横断の Issue/PR、Status (Backlog/Ready/In Progress/Review/Done)、Area、Priority、Milestone、依存、担当で管理する。merge と deploy は別の状態とする。
 
 Xpotato系 Organization のログイン名は lowercase kebab-case の `xpotato-<domain>`、表示名は `Xpotato <Domain>`、リポジトリ名は lowercase kebab-case とする。現行参照には正式ログイン名を使い、固定 release・過去の監査/来歴に含まれる旧所有者名は保持する。
 
@@ -35,7 +35,7 @@ Xpotato系 Organization のログイン名は lowercase kebab-case の `xpotato-
 
 ## 受入順序
 
-1. Organization/Project、ゲーム repo、site 一覧と route reservation。
+1. Organization/Project、独立 core とゲーム系列 repo、site 一覧と route reservation。
 2. versioned core、session/replay、保存 adapter、schema/migration/limits、破損復旧。
 3. classic + killer exact solver、生成、一意性、fixture、difficulty prototype。
 4. UI、関係メモ、仮説、共有、誤答設定、終局後 review。
