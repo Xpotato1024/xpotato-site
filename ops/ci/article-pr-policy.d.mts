@@ -1,6 +1,7 @@
 import type { ContentCollection } from "@xpotato/content-contracts/common";
 
 export const articleIndexPath: string;
+export function boundContentDraftContext(env: NodeJS.ProcessEnv, actualHead: string): boolean;
 export function articleSourceCollection(path: string): ContentCollection | null;
 
 export interface ArticlePrCandidate {
@@ -24,4 +25,5 @@ export function articlePrDecision(input?: {
 export function inspectArticlePrDecision(input?: {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
+  allowBoundDraftLane?: boolean;
 }): ArticlePrCandidate;

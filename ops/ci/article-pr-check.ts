@@ -1,25 +1,17 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve, isAbsolute } from "node:path";
-import { inspectArticlePrAdmission } from "./article-pr-admission.js";
-import { buildEditorAstroReview } from "../authoring/editor-astro-review.js";
-import { readSiteContent } from "../../packages/site-validators/src/site-content.js";
-import {
-  collectionFromPath,
-  parseDraft,
-  validateDraft,
-  type TaxonomySnapshot,
-} from "@xpotato/editor-core/draft";
-import { readFile } from "node:fs/promises";
+import { dirname, join, resolve, isAbsolute } from "node:path";
+import { inspectWorkflowAdmission } from "./article-pr-admission.js";
+import { checkArticleCandidate } from "./article-candidate-check.js";
 
 const root = resolve(".");
 const env = process.env;
-const admission = inspectArticlePrAdmission({ cwd: root, env });
+const admission = await inspectWorkflowAdmission({ cwd: root, env });
 assert.equal(admission.eligible, true, admission.reason);
 const npm = env.npm_execpath;
-assert.ok(npm && isAbsolute(npm), "Run through the pinned npm script");
+assert.ok(npm && isAbsolute(npm), "Run through pinned npm");
 const run = (cwd: string, args: string[], extra: NodeJS.ProcessEnv = {}) =>
   execFileSync(process.execPath, [npm, ...args], {
     cwd,
@@ -27,72 +19,95 @@ const run = (cwd: string, args: string[], extra: NodeJS.ProcessEnv = {}) =>
     env: { ...env, ...extra },
     timeout: 480000,
   });
-const git = (args: string[]) =>
+const git = (cwd: string, args: string[]) =>
   execFileSync("git", args, {
-    cwd: root,
+    cwd,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "inherit"],
+    maxBuffer: 32 * 1024 * 1024,
   }).trim();
-if (!admission.publishedBaseline) {
-  run(root, ["run", "ci:article:fast"]);
-} else {
-  const base = env.DIFF_BASE!,
-    head = env.EXPECTED_HEAD!;
-  const paths = admission.paths!;
-  assert.ok(paths.length > 0 && paths.length <= 20, "Bound the review work");
-  assert.equal(git(["rev-parse", "HEAD"]), head);
-  const temporary = mkdtempSync(join(tmpdir(), "xpotato-draft-baseline-"));
-  mkdirSync(join(root, ".local"), { recursive: true });
-  const privateOutput = mkdtempSync(join(root, ".local", "published-draft-ci-"));
-  const baseline = join(temporary, "baseline");
-  let added = false;
-  try {
-    // Validate the actual draft checkout before inspecting the separate published baseline.
-    // Canonical editorial provenance binds the published source, not a mutable candidate.
-    // The full repository validator runs against the exact public base below.
-    for (const task of ["editor:manifest:check", "astro:check"]) run(root, ["run", task]);
-    const taxonomy = JSON.parse(
-      await readFile(join(root, "content/registry/editor.json"), "utf8"),
-    ) as TaxonomySnapshot;
-    const { catalog } = await readSiteContent(root);
-    for (const [index, path] of paths.entries()) {
-      const source = await readFile(join(root, path), "utf8");
-      assert.deepEqual(
-        validateDraft(source, collectionFromPath(path), taxonomy),
-        [],
-        "Draft metadata/portable source invalid: " + path,
-      );
-      const parsed = parseDraft(source);
-      const entry = catalog.find((row) => row.routeRecord.contentId === parsed.data.id);
-      assert.equal(
-        entry?.disposition,
-        "held_candidate",
-        "Draft must not be a public candidate: " + path,
-      );
-      const review = await buildEditorAstroReview({
-        repositoryRoot: root,
-        sourcePath: path,
-        output: join(privateOutput, "review-" + index),
-        expectedCommit: head,
+const head = env.EXPECTED_HEAD!,
+  base = env.DIFF_BASE!;
+assert.equal(git(root, ["rev-parse", "HEAD"]), head);
+assert.equal(git(root, ["status", "--porcelain", "--untracked-files=normal"]), "");
+const temporary = mkdtempSync(join(tmpdir(), "xpotato-draft-ci-"));
+const worktrees: string[] = [];
+const checkout = (name: string, commit: string) => {
+  const target = join(temporary, name);
+  git(root, ["worktree", "add", "--detach", target, commit]);
+  worktrees.push(target);
+  assert.equal(git(target, ["rev-parse", "HEAD"]), commit);
+  return target;
+};
+try {
+  let candidate = root,
+    candidateHead = head;
+  const bound = admission.boundDraft;
+  if (bound?.requiresProjection) {
+    // CI evaluates a private virtual merge. It has no write permission on GitHub,
+    // never moves an existing ref and never produces a release artifact.
+    candidate = checkout("candidate", base);
+    for (const file of bound.plan.copies) {
+      const target = join(candidate, file.path);
+      mkdirSync(dirname(target), { recursive: true });
+      const bytes = execFileSync("git", ["cat-file", "blob", file.sha], {
+        cwd: root,
+        maxBuffer: 2 * 1024 * 1024,
       });
-      assert.equal(review.codeClean, true);
-      assert.equal(review.privateMediaDownloaded, false);
-      assert.equal(review.context.commit, head);
-      console.log("Exact draft rendering PASS: " + path);
+      writeFileSync(target, bytes);
     }
-    assert.equal(
-      git(["status", "--porcelain", "--untracked-files=normal"]),
-      "",
-      "Draft source unchanged",
+    for (const file of bound.plan.writes) {
+      const target = join(candidate, file.path);
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, file.source, "utf8");
+    }
+    git(candidate, [
+      "add",
+      "--",
+      ...bound.plan.copies.map((f) => f.path),
+      ...bound.plan.writes.map((f) => f.path),
+    ]);
+    git(candidate, [
+      "-c",
+      "user.name=CI Draft Projection",
+      "-c",
+      "user.email=ci@example.invalid",
+      "commit",
+      "--allow-empty",
+      "-m",
+      "test: isolated draft projection",
+    ]);
+    candidateHead = git(candidate, ["rev-parse", "HEAD"]);
+    run(candidate, ["ci", "--prefer-offline", "--no-audit", "--no-fund"]);
+    console.log(
+      JSON.stringify({
+        mode: "virtual-draft-projection",
+        head,
+        base,
+        ancestor: bound.ancestor,
+        candidateHead,
+        productionEligible: false,
+      }),
     );
-    // The base is a different immutable checkout, never a candidate release artifact.
-    git(["worktree", "add", "--detach", baseline, base]);
-    added = true;
-    const baseHead = execFileSync("git", ["rev-parse", "HEAD"], {
-      cwd: baseline,
-      encoding: "utf8",
-    }).trim();
-    assert.equal(baseHead, base);
+  }
+  if (!admission.publishedBaseline) {
+    run(candidate, ["run", "ci:article:fast"], {
+      XPOTATO_SITE_TEMP_ROOT: join(temporary, "candidate-validation"),
+    });
+  } else {
+    const paths = admission.paths!;
+    if (candidate === root) await checkArticleCandidate(root, head, paths);
+    else
+      run(candidate, [
+        "exec",
+        "--offline",
+        "--",
+        "tsx",
+        "ops/ci/article-candidate-check.ts",
+        candidateHead,
+        ...paths,
+      ]);
+    const baseline = checkout("baseline", base);
     run(baseline, ["ci", "--prefer-offline", "--no-audit", "--no-fund"]);
     run(baseline, ["run", "ci:article:fast"], {
       XPOTATO_SITE_TEMP_ROOT: join(temporary, "public-validation"),
@@ -106,11 +121,10 @@ if (!admission.publishedBaseline) {
         productionEligible: false,
       }),
     );
-  } finally {
-    if (added) git(["worktree", "remove", "--force", baseline]);
-    rmSync(temporary, { recursive: true, force: true });
-    rmSync(privateOutput, { recursive: true, force: true });
   }
-  assert.equal(git(["rev-parse", "HEAD"]), head);
-  assert.equal(git(["status", "--porcelain", "--untracked-files=normal"]), "");
+} finally {
+  for (const tree of worktrees.reverse()) git(root, ["worktree", "remove", "--force", tree]);
+  rmSync(temporary, { recursive: true, force: true });
 }
+assert.equal(git(root, ["rev-parse", "HEAD"]), head);
+assert.equal(git(root, ["status", "--porcelain", "--untracked-files=normal"]), "");

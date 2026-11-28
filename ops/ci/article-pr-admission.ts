@@ -6,6 +6,7 @@ import { isDeepStrictEqual } from "node:util";
 import type { ContentCollection } from "@xpotato/content-contracts/common";
 import { parseDraft, validateDraft } from "@xpotato/editor-core/draft";
 import { blockTree, type BlockNode } from "@xpotato/editor-core/blocks";
+import { inspectBoundDraftPlan, type BoundDraftPlan } from "./draft-branch-pr.js";
 import {
   parseEditorContentIndex,
   updateEditorContentIndex,
@@ -22,6 +23,7 @@ export interface ArticlePrAdmission {
   reason: string;
   publishedBaseline?: true;
   paths?: string[];
+  boundDraft?: BoundDraftPlan;
 }
 
 // Astro can turn Markdown images into imports after portable MDX validation.
@@ -134,10 +136,42 @@ export function inspectArticlePrAdmission({
   }
 }
 
+export async function inspectWorkflowAdmission(
+  options: { cwd?: string; env?: NodeJS.ProcessEnv } = {},
+): Promise<ArticlePrAdmission> {
+  const bound = await inspectBoundDraftPlan(options);
+  if (bound === undefined) return inspectArticlePrAdmission(options);
+  if (bound === null)
+    return { eligible: false, reason: "registry-only content branch uses full CI" };
+  if ((options.env ?? process.env).CI_FORCE_FULL === "true")
+    return { eligible: false, reason: "full CI explicitly requested after scope validation" };
+  if (bound.markdownImages)
+    return { eligible: false, reason: "Markdown image compilation requires full CI" };
+  return {
+    eligible: true,
+    reason: "scoped draft and latest main projection validated",
+    paths: [bound.path],
+    ...(bound.publishedBaseline ? { publishedBaseline: true } : {}),
+    boundDraft: bound,
+  };
+}
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  const result = inspectArticlePrAdmission();
+  const result = await inspectWorkflowAdmission();
   if (process.env.GITHUB_OUTPUT) {
     appendFileSync(process.env.GITHUB_OUTPUT, "eligible=" + result.eligible + "\n");
   }
-  console.log(JSON.stringify(result));
+  const { boundDraft, ...summary } = result;
+  console.log(
+    JSON.stringify({
+      ...summary,
+      ...(boundDraft
+        ? {
+            head: boundDraft.head,
+            base: boundDraft.base,
+            ancestor: boundDraft.ancestor,
+            projection: boundDraft.requiresProjection,
+          }
+        : {}),
+    }),
+  );
 }

@@ -49,6 +49,8 @@ jobs:
           node-version-file: .node-version
       - id: scope
         env:
+          PR_IS_DRAFT: ${{ github.event.pull_request.draft }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           CI_FORCE_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'ci:full') }}
         run: node ops/ci/ci-scope.mjs
@@ -60,6 +62,8 @@ jobs:
       - id: article-policy
         name: Select draft candidates from exact Git revisions
         env:
+          PR_IS_DRAFT: ${{ github.event.pull_request.draft }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}

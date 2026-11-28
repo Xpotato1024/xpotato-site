@@ -11,6 +11,23 @@ const sourcePattern =
 export const articleIndexPath = "content/registry/editor-content-index.json";
 const repository = "Xpotato1024/xpotato-site";
 
+export function boundContentDraftContext(env, actualHead) {
+  return (
+    env?.GITHUB_EVENT_NAME === "pull_request" &&
+    env?.GITHUB_REPOSITORY === repository &&
+    env?.PR_HEAD_REPOSITORY === repository &&
+    env?.PR_BASE_REPOSITORY === repository &&
+    env?.PR_BASE_REF === "main" &&
+    env?.PR_IS_DRAFT === "true" &&
+    typeof env.PR_HEAD_REF === "string" &&
+    env.PR_HEAD_REF.startsWith("content/") &&
+    env.PR_HEAD_REF.length > 8 &&
+    prRefPattern.test(env.GITHUB_REF ?? "") &&
+    shaPattern.test(env.DIFF_BASE ?? "") &&
+    shaPattern.test(actualHead ?? "") &&
+    env.EXPECTED_HEAD === actualHead
+  );
+}
 export function articleSourceCollection(path) {
   const directory = sourcePattern.exec(path)?.[1];
   return directory === "articles" ? "blog" : (directory ?? null);
@@ -74,7 +91,11 @@ export function articlePrDecision({ impact, env, actualHead, sourceMode } = {}) 
   return { article: true, reason: "CMS source candidate; semantic admission required", sources };
 }
 
-export function inspectArticlePrDecision({ cwd = process.cwd(), env = process.env } = {}) {
+export function inspectArticlePrDecision({
+  cwd = process.cwd(),
+  env = process.env,
+  allowBoundDraftLane = false,
+} = {}) {
   const git = (args) =>
     execFileSync("git", args, {
       cwd,
@@ -87,6 +108,14 @@ export function inspectArticlePrDecision({ cwd = process.cwd(), env = process.en
     if (git(["status", "--porcelain", "-z", "--untracked-files=normal"])) {
       return { article: false, reason: "uncommitted source", sources: [] };
     }
+    // A bound content draft always enters semantic scope validation, even if main
+    // advanced or a forbidden shared path was changed. No skip is authorized here.
+    if (allowBoundDraftLane && boundContentDraftContext(env, actualHead))
+      return {
+        article: true,
+        reason: "bound content draft; exact three-way scope validation required",
+        sources: [],
+      };
     const impact = inspectImpact({ cwd, base: env.DIFF_BASE });
     const sourceMode = (path, revision) => {
       const match = /^([0-7]{6}) blob [a-f0-9]{40}\t([^\0]+)\0$/u.exec(
@@ -101,7 +130,7 @@ export function inspectArticlePrDecision({ cwd = process.cwd(), env = process.en
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const decision = inspectArticlePrDecision();
+  const decision = inspectArticlePrDecision({ allowBoundDraftLane: true });
   if (process.env.GITHUB_OUTPUT) {
     appendFileSync(process.env.GITHUB_OUTPUT, "article=" + decision.article + "\n");
   }

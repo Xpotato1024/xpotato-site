@@ -18,16 +18,14 @@ import { EditorBrand } from "./components/EditorBrand.js";
 import { EditorHeader } from "./components/EditorHeader.js";
 import { EditorUpdateButton } from "./components/EditorUpdateButton.js";
 import { WorkspaceIcon } from "./components/WorkspaceIcon.js";
-import { DocumentOutline } from "./components/DocumentOutline.js";
-import { EditorActions } from "./components/EditorActions.js";
 import { useDraftWorkspace } from "./features/drafts/useDraftWorkspace.js";
 import type { DraftKind } from "./features/drafts/model.js";
-import { exportDraftBundle, importDraftFile } from "./features/drafts/transfer.js";
 import { usePreviewMedia } from "./features/editing/usePreviewMedia.js";
 import { useGitWorkspace, type BranchPlan } from "./features/git/useGitWorkspace.js";
 import { download } from "./shared/download.js";
 import { query, request } from "./data/api.js";
 import { hasPendingRegistryChanges, hasUnsyncedReview } from "./data/draft-identity.js";
+import { mainSyncLabel, conflictHandoff } from "./data/draft-main.js";
 import { errorLabel } from "./shared/messages.js";
 import { useEditorEnvironment } from "./shared/useEditorEnvironment.js";
 import type { EditorSeriesPreview } from "./preview.js";
@@ -53,6 +51,12 @@ const RegistryWorkspace = lazy(() =>
 );
 const DocumentEditor = lazy(() =>
   import("./features/editing/DocumentEditor.js").then((m) => ({ default: m.DocumentEditor })),
+);
+const DocumentOutline = lazy(() =>
+  import("./components/DocumentOutline.js").then((m) => ({ default: m.DocumentOutline })),
+);
+const EditorActions = lazy(() =>
+  import("./components/EditorActions.js").then((m) => ({ default: m.EditorActions })),
 );
 const MetadataPanel = lazy(() =>
   import("./components/MetadataPanel.js").then((m) => ({ default: m.MetadataPanel })),
@@ -363,6 +367,21 @@ export default function App() {
       setNotice("新しい作業ブランチ用の下書きを開きました。元の下書きと画像も保持しています。");
     } else await workspace.openLocal(current);
     await workspace.persist();
+    // A local copy may contain unsaved edits. Follow only the exact persisted Git head.
+    if (
+      git.auth.authenticated &&
+      workspace.current.current.workingBranch &&
+      workspace.current.current.baseCommit
+    ) {
+      try {
+        await git.followCurrentDraft();
+      } catch (error) {
+        setNotice(
+          "原稿を端末に保持しています。main追従は未完了: " +
+            (error instanceof Error ? error.message : "同期失敗"),
+        );
+      }
+    }
     openEditor(review);
   }
   async function openRemoteDocument(
@@ -387,11 +406,13 @@ export default function App() {
     openEditor();
   }
   async function exportBundle() {
+    const { exportDraftBundle } = await import("./features/drafts/transfer.js");
     download("xpotato-draft-" + draft.id + ".json", await exportDraftBundle(draft));
     setNotice("原稿・画像・添削・連載設定を書き出しました。");
   }
   async function importFile(file: File, collection?: ContentCollection) {
     await workspace.persist();
+    const { importDraftFile } = await import("./features/drafts/transfer.js");
     const imported = await importDraftFile(file, collection ? { collection } : {});
     await workspace.refreshSaved();
     setNotice("新しいローカルコピーとして取り込みました。");
@@ -651,7 +672,18 @@ export default function App() {
                     ? parsed?.data.title || "無題の原稿"
                     : undefined
                 }
-                onResume={() => openEditor()}
+                onResume={() =>
+                  void act(async () => {
+                    if (git.auth.authenticated && workspace.current.current.workingBranch) {
+                      try {
+                        await git.followCurrentDraft();
+                      } catch (error) {
+                        setError(error instanceof Error ? error.message : "MAIN_SYNC_FAILED");
+                      }
+                    }
+                    openEditor();
+                  })
+                }
                 onSample={() => void act(openSample)}
                 busy={busy}
               />
@@ -1040,7 +1072,62 @@ export default function App() {
                           onSave={() => void act(saveArticle)}
                           onCreatePR={() => void act(git.createPR)}
                         />
-                        <AstroReview draft={draft} authenticated={git.auth.authenticated} />
+                        <div className="editor-actions">
+                          <span>{mainSyncLabel(git.mainSync, draft)}</span>
+                          <button
+                            type="button"
+                            disabled={busy || !git.auth.authenticated || !draft.workingBranch}
+                            onClick={() =>
+                              void act(async () => {
+                                await git.followCurrentDraft();
+                              })
+                            }
+                          >
+                            mainとの同期を確認
+                          </button>
+                          {git.mainSync?.status === "conflict" &&
+                            git.mainSync.head === draft.baseCommit &&
+                            git.mainSync.branch === draft.workingBranch && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void act(async () =>
+                                    download(
+                                      "draft-main-conflict.json",
+                                      new Blob(
+                                        [
+                                          JSON.stringify(
+                                            conflictHandoff(draft, git.mainSync!),
+                                            null,
+                                            2,
+                                          ),
+                                        ],
+                                        { type: "application/json" },
+                                      ),
+                                    ),
+                                  )
+                                }
+                              >
+                                競合情報を書き出す
+                              </button>
+                            )}
+                        </div>
+                        {git.mainSync?.status === "conflict" &&
+                          git.mainSync.head === draft.baseCommit &&
+                          git.mainSync.branch === draft.workingBranch && (
+                            <div className="notice">
+                              {git.mainSync.conflicts.map((c) => (
+                                <p key={c.path}>
+                                  {c.path}：{c.reason}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                        <AstroReview
+                          draft={draft}
+                          authenticated={git.auth.authenticated}
+                          onPrepare={() => git.followCurrentDraft()}
+                        />
                         <details className="technical-details">
                           <summary>接続情報</summary>
                           <p className="document-branch">

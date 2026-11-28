@@ -130,6 +130,7 @@ Exact contract=`docs/contracts/external-ai-disclosure-contract.md` / ADR-0026。
 
 - Published canonical content is changed only by the regular publication/export workflow.
 - ADR-0079 permits human/AI editing of portable `draft:true` MDX on the selected public `content/*` work branch. This is draft source management, not publication, audit PASS, merge, or production approval.
+- 記事下書きの変更前に [CMS制作手順](docs/operations/editor-workflow.md#作業ブランチをmainへ追従する) の editor:branch:sync を使用し、同じcontentブランチへmainを安全に取り込む。スコープは対象記事と許可された関連registry/派生行・制作READMEに限定する。意味上の競合は固定3版で解消し、コード等は別PR。
 - semantic AI=fixed request + Skill snapshot + response schema
 - deterministic executor owns import/state/artifacts/disclosure admission
 - source/evidence/claim separated

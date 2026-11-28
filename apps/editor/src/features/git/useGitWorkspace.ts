@@ -30,6 +30,8 @@ import {
   mergeGitReopen,
 } from "../../data/draft-identity.js";
 import { errorLabel } from "../../shared/messages.js";
+import type { DraftBranchSyncResult } from "@xpotato/editor-core/draft-branch";
+import { mainSyncIdentity, requestMainSync, acceptMainSync } from "../../data/draft-main.js";
 import { acceptGitSaveResult } from "../drafts/model.js";
 import type { DraftWorkspace } from "../drafts/useDraftWorkspace.js";
 import schema from "../../../../../content/registry/editor.json";
@@ -76,6 +78,8 @@ export function useGitWorkspace(
     schema as TaxonomySnapshot,
   );
   const [pr, setPr] = useState<PullRequest | null>(null);
+  const [mainSync, setMainSync] = useState<DraftBranchSyncResult | null>(null);
+  const mainSyncRunning = useRef(false);
   const [conflict, setConflict] = useState<{
     base: string;
     remote: string;
@@ -203,7 +207,11 @@ export function useGitWorkspace(
       request<RepositoryDocument[]>("/documents" + query({ ...selected })),
     ]);
     // ブランチ名だけでなく部品契約も一致させる。別版CMSで静かに丸め込まない。
-    if ((manifest as { contractHash?: string }).contractHash !== schema.contractHash) {
+    // Listing an older branch is safe; validate its contract after main synchronization.
+    if (
+      !branch.startsWith("content/") &&
+      (manifest as { contractHash?: string }).contractHash !== schema.contractHash
+    ) {
       throw new Error("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
     }
     if (version !== branchReadVersion.current || branch !== selectedBranch.current) {
@@ -319,7 +327,7 @@ export function useGitWorkspace(
     const previousDraftId = workspace.current.current.id;
     const openingBranchVersion = branchReadVersion.current;
     await workspace.persist();
-    const [document, manifest, originalDocument] = await Promise.all([
+    let [document, manifest, originalDocument] = await Promise.all([
       request<{ source: string; path: string; blobSha: string }>(
         "/document" + query({ ...selected, path: file }),
       ),
@@ -338,6 +346,26 @@ export function useGitWorkspace(
       throw new Error("公開済みの原稿です。「既存記事を改稿」から開いてください。");
     if (intent === "revise" && metadata.draft)
       throw new Error("下書きの原稿です。「下書きの続き」から開いてください。");
+    let followed: DraftBranchSyncResult | null = null;
+    const selectedBeforeFollow = selected.commit;
+    if (intent === "drafts" && selected.branch.startsWith("content/")) {
+      assertOpeningCurrent();
+      followed = await requestMainSync(
+        {
+          branch: selected.branch,
+          expectedHead: selected.commit,
+          path: file,
+          contentId: metadata.id,
+        },
+        true,
+      );
+      if (followed.status === "synced") {
+        if (!followed.manifest || followed.previousHead !== selected.commit)
+          throw Error("DRAFT_MAIN_RESPONSE_INVALID");
+        selected = { branch: selected.branch, commit: followed.head };
+        manifest = followed.manifest;
+      }
+    }
     if ((manifest as { contractHash?: string }).contractHash !== schema.contractHash) {
       throw new Error("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
     }
@@ -369,7 +397,26 @@ export function useGitWorkspace(
     const incoming = opened;
     const claimed = await claimGitDraft(incoming, selectedLocalId);
     workspace.requireExistingDraft(claimed.draft.id);
-    opened = mergeGitReopen(claimed.draft, incoming);
+    const mergeIncoming = (local: LocalDraft) => {
+      if (
+        followed?.status === "synced" &&
+        local.baseCommit === selectedBeforeFollow &&
+        local.baseSource === incoming.baseSource
+      ) {
+        return acceptMainSync(
+          local,
+          {
+            branch: incoming.workingBranch,
+            expectedHead: selectedBeforeFollow,
+            path: file,
+            contentId: metadata.id,
+          },
+          followed,
+        );
+      }
+      return mergeGitReopen(local, incoming);
+    };
+    opened = mergeIncoming(claimed.draft);
     let detachPrivateState = localOnly;
     let mediaWarning: string | undefined;
     try {
@@ -448,7 +495,7 @@ export function useGitWorkspace(
       if (!matchingLocalDrafts([latest], localDraftIdentity(incoming)!).length) {
         throw Error("準備中に下書きの保存先が変わりました。一覧から開き直してください。");
       }
-      let next = mergeGitReopen(latest, incoming);
+      let next = mergeIncoming(latest);
       if (restored.remoteDraftId && !detachPrivateState) {
         next = {
           ...next,
@@ -494,6 +541,11 @@ export function useGitWorkspace(
           : "この端末の下書きを最新のGit原稿で再開しました。",
       );
     }
+    setMainSync(followed);
+    if (followed?.status === "conflict")
+      onNotice(
+        "mainとの競合があります。下書きはそのまま開きました。「保存と確認」でAIへの引継ぎ情報を取得できます。",
+      );
     if (mediaWarning) {
       onError(mediaWarning);
     }
@@ -561,6 +613,48 @@ export function useGitWorkspace(
     );
   }
 
+  async function followCurrentDraft(apply = true): Promise<DraftBranchSyncResult | null> {
+    const initial = workspace.current.current;
+    if (!initial.workingBranch || !initial.baseCommit) return null;
+    if (mainSyncRunning.current) throw Error("mainとの同期処理中です。");
+    mainSyncRunning.current = true;
+    try {
+      const input = mainSyncIdentity(initial);
+      await workspace.persist("main追従前");
+      const result = await requestMainSync(input, apply);
+      if (workspace.current.current.id !== initial.id)
+        throw Error("下書きが切り替わりました。元の下書きを開き直してください。");
+      if (result.status === "synced") {
+        // If the local registry has an unresolved conflict, keep the original local
+        // bytes and report it rather than dropping pending operations.
+        const updated = await updateLocalDraft(
+          initial.id,
+          initial,
+          (stored) =>
+            acceptMainSync(
+              workspace.current.current.id === initial.id ? workspace.current.current : stored,
+              input,
+              result,
+            ),
+          { requireExistingActive: true },
+        );
+        if (workspace.current.current.id === initial.id)
+          workspace.setDraft((current) => acceptMainSync(current, input, result));
+        if (updated.id === workspace.current.current.id) await workspace.persist("main追従結果");
+        onNotice(
+          (result.manifest as { contractHash?: string } | undefined)?.contractHash !==
+            schema.contractHash
+            ? "mainの新しい部品契約を取り込みました。CMSを更新してください。"
+            : "mainの変更を取り込みました。",
+        );
+      }
+      setMainSync(result);
+      return result;
+    } finally {
+      mainSyncRunning.current = false;
+    }
+  }
+
   async function saveGit() {
     if (issues.length) {
       throw new Error("入力の確認が必要です: " + issues.join(" / "));
@@ -594,6 +688,26 @@ export function useGitWorkspace(
       );
     }
     try {
+      if (submitted.workingBranch && submitted.baseCommit) {
+        const currentBefore = workspace.current.current;
+        if (currentBefore.id !== submitted.id) throw Error("下書きが切り替わりました。");
+        const followed = await followCurrentDraft();
+        if (followed?.status === "conflict")
+          throw Error(
+            "mainとの競合があります。下書きは保全しました。「保存と確認」の競合情報を使って解消してください。",
+          );
+        if (followed?.status === "synced")
+          submitted = acceptMainSync(submitted, mainSyncIdentity(submitted), followed);
+        const latest = workspace.current.current;
+        if (latest.id !== submitted.id || latest.baseCommit !== submitted.baseCommit)
+          throw Error("下書きが更新されました。");
+      }
+      if (
+        submitted.registrySnapshot &&
+        (submitted.registrySnapshot as { contractHash?: string }).contractHash !==
+          schema.contractHash
+      )
+        throw Error("EDITOR_CONTRACT_VERSION_UNSUPPORTED");
       if (submitted.pendingRegistryChanges) {
         const manifest = await request<TaxonomySnapshot>(
           "/manifest" + query({ branch: submitted.workingBranch, commit: submitted.baseCommit }),
@@ -649,6 +763,13 @@ export function useGitWorkspace(
         });
         onNotice("Gitへの保存は完了しました。保存中に変更した連載設定を比較してください。");
       } else {
+        setMainSync((current) =>
+          current?.branch === submitted.workingBranch &&
+          current.head === submitted.baseCommit &&
+          current.status !== "conflict"
+            ? { ...current, head: result.commit }
+            : current,
+        );
         onNotice("Gitへ保存しました。 " + result.commit.slice(0, 8));
         setConflict(null);
       }
@@ -766,6 +887,8 @@ export function useGitWorkspace(
     openDocument,
     openSelectedDocument,
     saveGit,
+    mainSync,
+    followCurrentDraft,
     createPR,
   };
 }

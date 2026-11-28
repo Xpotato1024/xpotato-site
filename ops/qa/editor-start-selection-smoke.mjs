@@ -102,6 +102,26 @@ const api = async (req, res) => {
     res.end(imageBytes);
     return;
   }
+  if (pathname === "/editor-api/draft-main") {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const input = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    assert.equal(input.branch, draftBranch);
+    assert.equal(input.expectedHead, "a".repeat(40));
+    res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+    res.end(
+      JSON.stringify({
+        branch: input.branch,
+        head: input.expectedHead,
+        main: input.expectedHead,
+        ancestor: input.expectedHead,
+        behind: 0,
+        status: "current",
+        conflicts: [],
+      }),
+    );
+    return;
+  }
   if (pathname === "/editor-api/document") {
     const path = url.searchParams.get("path");
     const entry = index.documents.find((item) => item.path === path);
