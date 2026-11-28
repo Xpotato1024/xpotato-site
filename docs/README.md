@@ -10,6 +10,7 @@ last_verified: 2026-11-18
 | 目的 | 正本・入口 |
 |---|---|
 | 利用者の目的 | [Product context](product/product-context.md) |
+| ゲーム基盤（提案） | [Games platform](architecture/games-platform.md) |
 | 現在の採用・実環境状態 | [Design status](architecture/design-status.md) |
 | ディレクトリ・依存 | [Repository layout](architecture/repository-layout.md) / [ops](../ops/README.md) |
 | 通常の記事・メモ・固定ページ・ツール制作 | [Content workflows](operations/content-workflows.md) / [一貫制作](operations/content-production.md) |

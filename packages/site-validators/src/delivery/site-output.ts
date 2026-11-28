@@ -176,6 +176,7 @@ export async function checkSiteOutput() {
     "/notes/",
     "/projects/",
     "/tools/",
+    "/games/",
     "/pages/",
     "/search/",
     "/rss.xml",
@@ -186,6 +187,7 @@ export async function checkSiteOutput() {
   for (const route of canonicalRoutes)
     assert.ok(
       !reserved.includes(route) &&
+        !route.startsWith("/games/") &&
         !/^\/(?:articles|notes)\/(?:page|category|tag|subject|archive)\//u.test(route),
       "Reserved content route: " + route,
     );
