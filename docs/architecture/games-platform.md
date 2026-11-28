@@ -27,7 +27,9 @@ Puzzle / Session / Result / Analysis を分離する。gameId + generatorVersion
 
 ## Organization・移管
 
-単一 Organization `Xpotato-Site`（作成確認済み）に site、browser-prime-toolkit、xpotato-games と将来の公開ツールを集約する。`Xpotato-Site/xpotato-games` は非公開で初期 core と CI を登録済み、`Xpotato-Site/browser-prime-toolkit` は公開状態を保持して移管済み。site 本体の移管・Organization Project は未実施。Server はサイト以外の責務・権限を確認して別判断。skills org は独立責務を維持する。Organization Project は repository 横断の Issue/PR、Status (Backlog/Ready/In progress/Review/Done)、Area、Priority、Milestone、依存、担当で管理する。merge と deploy は別の状態とする。
+単一 Organization `xpotato-site`（表示名 Xpotato Site）に site、browser-prime-toolkit、xpotato-games と将来の公開ツールを集約する。`xpotato-site/xpotato-games` は非公開で初期 core と CI を登録済み、`xpotato-site/browser-prime-toolkit` は公開状態を保持して移管済み。site 本体 `Xpotato1024/xpotato-site` の移管は未実施。Server はサイト以外の責務・権限を確認して別判断。`xpotato-skills`（表示名 Xpotato Skills）は独立責務を維持する。[Xpotato Development](https://github.com/orgs/xpotato-site/projects/1) を作成済みで、repository 横断の Issue/PR、Status (Backlog/Ready/In Progress/Review/Done)、Area、Priority、Milestone、依存、担当で管理する。merge と deploy は別の状態とする。
+
+Xpotato系 Organization のログイン名は lowercase kebab-case の `xpotato-<domain>`、表示名は `Xpotato <Domain>`、リポジトリ名は lowercase kebab-case とする。現行参照には正式ログイン名を使い、固定 release・過去の監査/来歴に含まれる旧所有者名は保持する。
 
 移管は feature PR と分離する。現行 site の repo guard を消したり広げたりしない。移管前に GitHub App installation/permissions、Environment/variables/secrets/branch rules、CI/release source pins、Cloudflare OIDC/owner gates、Server exact handoff、source offer/license、リンク・CLI remote を inventory する。旧新所有者を exact に照合する移管変更、移管後 readback と rollback 判断を準備する。/tools/prime-factorizer/ と ContentId、固定 release bytes/hash は維持。過去の provenance/immutable vendor の URL を一括置換しない。実移管・production mutation は別の承認と受入れを必要とする。
 
