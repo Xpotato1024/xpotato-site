@@ -18,11 +18,8 @@ import { EditorBrand } from "./components/EditorBrand.js";
 import { EditorHeader } from "./components/EditorHeader.js";
 import { EditorUpdateButton } from "./components/EditorUpdateButton.js";
 import { WorkspaceIcon } from "./components/WorkspaceIcon.js";
-import { DocumentOutline } from "./components/DocumentOutline.js";
-import { EditorActions } from "./components/EditorActions.js";
 import { useDraftWorkspace } from "./features/drafts/useDraftWorkspace.js";
 import type { DraftKind } from "./features/drafts/model.js";
-import { exportDraftBundle, importDraftFile } from "./features/drafts/transfer.js";
 import { usePreviewMedia } from "./features/editing/usePreviewMedia.js";
 import { useGitWorkspace, type BranchPlan } from "./features/git/useGitWorkspace.js";
 import { download } from "./shared/download.js";
@@ -54,6 +51,12 @@ const RegistryWorkspace = lazy(() =>
 );
 const DocumentEditor = lazy(() =>
   import("./features/editing/DocumentEditor.js").then((m) => ({ default: m.DocumentEditor })),
+);
+const DocumentOutline = lazy(() =>
+  import("./components/DocumentOutline.js").then((m) => ({ default: m.DocumentOutline })),
+);
+const EditorActions = lazy(() =>
+  import("./components/EditorActions.js").then((m) => ({ default: m.EditorActions })),
 );
 const MetadataPanel = lazy(() =>
   import("./components/MetadataPanel.js").then((m) => ({ default: m.MetadataPanel })),
@@ -403,11 +406,13 @@ export default function App() {
     openEditor();
   }
   async function exportBundle() {
+    const { exportDraftBundle } = await import("./features/drafts/transfer.js");
     download("xpotato-draft-" + draft.id + ".json", await exportDraftBundle(draft));
     setNotice("原稿・画像・添削・連載設定を書き出しました。");
   }
   async function importFile(file: File, collection?: ContentCollection) {
     await workspace.persist();
+    const { importDraftFile } = await import("./features/drafts/transfer.js");
     const imported = await importDraftFile(file, collection ? { collection } : {});
     await workspace.refreshSaved();
     setNotice("新しいローカルコピーとして取り込みました。");
