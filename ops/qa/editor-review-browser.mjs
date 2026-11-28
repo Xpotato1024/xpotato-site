@@ -32,6 +32,7 @@ const source = (await import("node:child_process")).execFileSync(
 assert.equal(createHash("sha256").update(source).digest("hex"), bundle.context.sourceSha256);
 const zipped = zipSync({ "review.json": strToU8(JSON.stringify(bundle)) }, { level: 1 }),
   requests = [];
+let mainConflict = false;
 const server = await editorStaticServer(root, async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   requests.push(url.pathname);
@@ -52,7 +53,30 @@ const server = await editorStaticServer(root, async (req, res) => {
       repository: "Xpotato1024/xpotato-site",
     };
   else if (url.pathname === "/editor-api/branches") value = ["main"];
-  else if (url.pathname === "/editor-api/review") {
+  else if (url.pathname === "/editor-api/draft-main") {
+    assert.equal(req.method, "POST");
+    assert.equal(req.headers["x-csrf-token"], "fixture-csrf");
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    assert.deepEqual(JSON.parse(Buffer.concat(chunks).toString("utf8")), {
+      branch: "content/review-fixture",
+      expectedHead: bundle.context.commit,
+      path: bundle.context.sourcePath,
+      contentId: bundle.context.contentId,
+      apply: true,
+    });
+    value = {
+      branch: "content/review-fixture",
+      head: bundle.context.commit,
+      main: mainConflict ? "f".repeat(40) : bundle.context.commit,
+      ancestor: bundle.context.commit,
+      behind: mainConflict ? 1 : 0,
+      status: mainConflict ? "conflict" : "current",
+      conflicts: mainConflict
+        ? [{ path: bundle.context.sourcePath, reason: "SAME_ARTICLE_CHANGED" }]
+        : [],
+    };
+  } else if (url.pathname === "/editor-api/review") {
     assert.equal(url.searchParams.get("commit"), bundle.context.commit);
     assert.equal(url.searchParams.get("contentId"), bundle.context.contentId);
     value = { ready: true, status: "ready" };
@@ -164,9 +188,31 @@ try {
     "保存と確認を開く",
     page.getByRole("button", { name: "Astroレビューを取得", exact: true }),
   );
-  await page.getByRole("button", { name: "Astroレビューを取得", exact: true }).click();
+  const reviewButton = page.getByRole("button", { name: "Astroレビューを取得", exact: true });
+  mainConflict = true;
+  const beforeConflict = requests.length;
+  await reviewButton.click();
+  await page
+    .getByText("mainとの競合があります。先に競合を解消してください。", { exact: true })
+    .waitFor();
+  assert.ok(requests.slice(beforeConflict).includes("/editor-api/draft-main"));
+  assert.ok(!requests.slice(beforeConflict).includes("/editor-api/review"));
+  assert.ok(!requests.slice(beforeConflict).includes("/editor-api/review/archive"));
+  mainConflict = false;
+  const beforeReview = requests.length;
+  await reviewButton.click();
   const iframe = page.locator('iframe[title="Astro正規レイアウト（表示専用）"]');
   await iframe.waitFor();
+  assert.deepEqual(
+    requests
+      .slice(beforeReview)
+      .filter((path) =>
+        ["/editor-api/draft-main", "/editor-api/review", "/editor-api/review/archive"].includes(
+          path,
+        ),
+      ),
+    ["/editor-api/draft-main", "/editor-api/review", "/editor-api/review/archive"],
+  );
   assert.equal(await iframe.getAttribute("sandbox"), "allow-same-origin");
   const frame = await (await iframe.elementHandle()).contentFrame();
   assert.ok(frame);
@@ -245,6 +291,7 @@ try {
         sourceSha256: bundle.context.sourceSha256,
         artifactSha256: bundle.htmlSha256,
         checks: [
+          "main conflict blocks artifact retrieval; current head permits review",
           "actual Astro layout and figure rendering",
           "private image hash-bound browser-only blob",
           "no article scripts or navigation",
