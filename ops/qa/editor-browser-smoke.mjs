@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import assert from "node:assert/strict";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 import { editorStaticServer } from "./editor-static-server.mjs";
@@ -762,6 +762,52 @@ try {
   assert(cached.length > 5);
   assert(cached.every((url) => new URL(url).pathname.startsWith("/editor/")));
   assert(cached.every((url) => !url.includes("editor-api")));
+  beginPhase("offline backup round trip");
+  const original = await savedDraft(page);
+  const backupButton = page.getByRole("button", { name: "画像付きバックアップ", exact: true });
+  await panel(page, "保存と確認を開く", backupButton);
+  const downloadPromise = page.waitForEvent("download");
+  await backupButton.click();
+  const download = await downloadPromise;
+  const bytes = await readFile(await download.path());
+  const bundle = JSON.parse(bytes.toString("utf8"));
+  assert.equal(bundle.version, 1);
+  assert.equal(bundle.draft.id, original.id);
+  assert.equal(bundle.draft.source, persisted);
+  await closePanel(page);
+  await goHome(page);
+  await page
+    .locator(".entry-cards")
+    .getByRole("button", { name: /^下書きの続き/u })
+    .click();
+  const importForm = page.locator(".import-section");
+  await importForm.locator("summary").click();
+  await importForm.locator('input[type="file"]').setInputFiles({
+    name: "offline-backup.json",
+    mimeType: "application/json",
+    buffer: bytes,
+  });
+  await importForm.getByRole("button", { name: "取り込む", exact: true }).click();
+  await page.waitForFunction(async (draft) => {
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("xpotato-editor-v1");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    try {
+      const all = await new Promise((resolve, reject) => {
+        const request = db.transaction("drafts", "readonly").objectStore("drafts").getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      return (
+        all.some((item) => item.id === draft.id && item.source === draft.source) &&
+        all.some((item) => item.id !== draft.id && item.source === draft.source)
+      );
+    } finally {
+      db.close();
+    }
+  }, original);
   assert.deepEqual(errors, []);
   assert.deepEqual(violations, []);
   beginPhase("write browser report");
@@ -789,6 +835,7 @@ try {
           "mobile browse-first insertion and simulated software keyboard viewport",
           "IndexedDB reopen",
           "offline shell",
+          "offline backup export and import preserve the original draft",
           "no private API cached",
           "strict CSP",
         ],
