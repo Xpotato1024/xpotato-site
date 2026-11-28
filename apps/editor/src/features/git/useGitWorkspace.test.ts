@@ -140,6 +140,16 @@ function fixture() {
   }
   renderToStaticMarkup(createElement(Probe));
   mocks.request.mockImplementation(async (route: string) => {
+    if (route === "/draft-main")
+      return {
+        branch: "content/source",
+        head: "a".repeat(40),
+        main: "a".repeat(40),
+        ancestor: "a".repeat(40),
+        behind: 0,
+        status: "current",
+        conflicts: [],
+      };
     if (route.startsWith("/document?")) return { source, path: initial.path };
     if (route.startsWith("/manifest?"))
       return {
@@ -527,8 +537,22 @@ describe("opening Git drafts into an explicit workspace", () => {
       listed.snapshot,
     );
     const routes = mocks.request.mock.calls.map(([route]) => route as string);
-    expect(routes).toHaveLength(2);
-    expect(routes.every((route) => /branch=content%2Fsource&commit=a{40}/u.test(route))).toBe(true);
+    expect(routes).toHaveLength(3);
+    expect(
+      routes
+        .filter((route) => route !== "/draft-main")
+        .every((route) => /branch=content%2Fsource&commit=a{40}/u.test(route)),
+    ).toBe(true);
+    expect(mocks.request).toHaveBeenCalledWith("/draft-main", {
+      method: "POST",
+      body: {
+        branch: "content/source",
+        expectedHead: listed.snapshot.commit,
+        path: state.initial.path,
+        contentId: parseDraft(state.source).data.id,
+        apply: true,
+      },
+    });
     expect(
       routes.some((route) => route.startsWith("/snapshot") || route.startsWith("/branch?")),
     ).toBe(false);

@@ -1,3 +1,4 @@
+import { contentIdSchema } from "@xpotato/content-contracts/common";
 import { taxonomyRegistrySchema } from "@xpotato/content-contracts/content";
 import { seriesRegistrySchema } from "@xpotato/content-contracts/series";
 import { validateSeriesReferences } from "@xpotato/portable-content/series";
@@ -13,6 +14,13 @@ import {
   type EditorRegistryChanges,
 } from "./registry.js";
 import { reviewArtifactName } from "./review.js";
+import {
+  planDraftBranch,
+  DraftBranchConflictError,
+  type DraftBranchIdentity,
+  type DraftBranchSyncResult,
+  type DraftBranchRevision,
+} from "./draft-branch.js";
 import {
   assertEditablePath,
   collectionFromPath,
@@ -270,6 +278,138 @@ export class GitRepository {
     });
     return { branch: target, commit: result.object.sha };
   }
+  /** Synchronize one content branch without rewriting history or publishing it. */
+  async followDraftMain(input: DraftBranchIdentity, apply = false): Promise<DraftBranchSyncResult> {
+    assertWorkingBranch(input.branch);
+    assertSha(input.expectedHead);
+    assertEditablePath(input.path);
+    contentIdSchema.parse(input.contentId);
+    const [head, main] = await Promise.all([this.snapshot(input.branch), this.snapshot("main")]);
+    if (head.commit !== input.expectedHead) throw new GitError("GIT_CONFLICT", 409);
+    const comparison = await this.api<{
+      status: string;
+      behind_by: number;
+      merge_base_commit: { sha: string };
+      base_commit: { sha: string };
+    }>({ method: "GET", path: "/compare/" + main.commit + "..." + head.commit + "?per_page=1" });
+    const ancestor = comparison.merge_base_commit.sha;
+    assertSha(ancestor);
+    if (
+      comparison.base_commit.sha !== main.commit ||
+      !Number.isSafeInteger(comparison.behind_by) ||
+      comparison.behind_by < 0
+    )
+      throw new GitError("DRAFT_MAIN_COMPARISON_INVALID");
+    const state = {
+      branch: input.branch,
+      head: head.commit,
+      main: main.commit,
+      ancestor,
+      behind: comparison.behind_by,
+      conflicts: [],
+    };
+    if (ancestor === main.commit) {
+      if (comparison.behind_by !== 0 || !["ahead", "identical"].includes(comparison.status))
+        throw new GitError("DRAFT_MAIN_COMPARISON_INVALID");
+      return { ...state, status: "current" };
+    }
+    if (!comparison.behind_by || !["behind", "diverged"].includes(comparison.status))
+      throw new GitError("DRAFT_MAIN_COMPARISON_INVALID");
+    // Exact complete trees, rather than the paginated/truncated compare files list.
+    const blobs = new Map<string, Promise<string>>();
+    const load = async (commit: string): Promise<DraftBranchRevision & { treeSha: string }> => {
+      const obj = await this.api<GitCommit>({ method: "GET", path: "/git/commits/" + commit });
+      if (obj.sha !== commit) throw new GitError("DRAFT_MAIN_COMPARISON_INVALID");
+      const tree = await this.api<GitTree>({
+        method: "GET",
+        path: "/git/trees/" + obj.tree.sha + "?recursive=1",
+      });
+      if (tree.truncated !== false || tree.sha !== obj.tree.sha || tree.tree.length > 12000)
+        throw new GitError("CONTENT_TREE_TRUNCATED");
+      return {
+        treeSha: tree.sha,
+        tree: new Map(tree.tree.filter((f) => f.type !== "tree").map((f) => [f.path, f])),
+        read: async (path) => {
+          const file = tree.tree.find((f) => f.path === path);
+          if (!file || file.type !== "blob" || file.mode !== "100644")
+            throw new GitError("CONTENT_INVALID");
+          const existing = blobs.get(file.sha);
+          if (existing) return existing;
+          const read = (async () => {
+            const blob = await this.api<{
+              sha: string;
+              size: number;
+              encoding: string;
+              content: string;
+            }>({ method: "GET", path: "/git/blobs/" + file.sha });
+            if (blob.sha !== file.sha || blob.encoding !== "base64" || blob.size > 2 * 1024 * 1024)
+              throw new GitError("CONTENT_INVALID");
+            return fromBase64(blob.content);
+          })();
+          blobs.set(file.sha, read);
+          return read;
+        },
+      };
+    };
+    const [a, h, m] = await Promise.all([load(ancestor), load(head.commit), load(main.commit)]);
+    let plan;
+    try {
+      plan = await planDraftBranch(input, a, h, m);
+    } catch (error) {
+      if (error instanceof DraftBranchConflictError)
+        return { ...state, status: "conflict", conflicts: error.conflicts };
+      throw error;
+    }
+    if (!apply) return { ...state, status: "ready" };
+    const entries: { path: string; mode: string; type: string; sha: string }[] = plan.copies.map(
+      (f) => ({ ...f, mode: "100644", type: "blob" }),
+    );
+    for (const write of plan.writes) {
+      const blob = await this.api<{ sha: string }>({
+        method: "POST",
+        path: "/git/blobs",
+        body: { encoding: "base64", content: utf8Base64(write.source) },
+      });
+      entries.push({ path: write.path, mode: "100644", type: "blob", sha: blob.sha });
+    }
+    const tree = entries.length
+      ? await this.api<{ sha: string }>({
+          method: "POST",
+          path: "/git/trees",
+          body: { base_tree: m.treeSha, tree: entries },
+        })
+      : { sha: m.treeSha };
+    const commit = await this.api<{ sha: string }>({
+      method: "POST",
+      path: "/git/commits",
+      body: {
+        message: "Merge main into " + input.branch + "\n\nContent-Id: " + input.contentId,
+        tree: tree.sha,
+        parents: [head.commit, main.commit],
+      },
+    });
+    const [latest, latestMain] = await Promise.all([
+      this.snapshot(input.branch),
+      this.snapshot("main"),
+    ]);
+    if (latest.commit !== head.commit || latestMain.commit !== main.commit)
+      throw new GitError("GIT_CONFLICT", 409);
+    await this.api({
+      method: "PATCH",
+      path: "/git/refs/heads/" + input.branch.split("/").map(segment).join("/"),
+      body: { sha: commit.sha, force: false },
+    });
+    return {
+      ...state,
+      status: "synced",
+      previousHead: head.commit,
+      head: commit.sha,
+      ancestor: main.commit,
+      behind: 0,
+      manifest: plan.manifest,
+    };
+  }
+
   async save(input: {
     branch: string;
     expectedHead: string;

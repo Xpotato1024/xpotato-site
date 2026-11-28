@@ -9,6 +9,7 @@
     "./footnotes": "./src/footnotes.ts",
     "./policy": "./src/policy.ts",
     "./git": "./src/git.ts",
+    "./draft-branch": "./src/draft-branch.ts",
     "./retention": "./src/retention.ts",
     "./image-inspection": "./src/image-inspection.ts",
     "./review": "./src/review.ts",

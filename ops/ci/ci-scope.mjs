@@ -38,7 +38,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       /* Unknown => core. */
     }
   }
-  const result = classify(paths, { forceFull: process.env.CI_FORCE_FULL === "true" });
+  const scopedDraft =
+    process.env.PR_IS_DRAFT === "true" && (process.env.PR_HEAD_REF ?? "").startsWith("content/");
+  const result = classify(paths, {
+    forceFull: process.env.CI_FORCE_FULL === "true" || scopedDraft,
+  });
   execFileSync(
     "git",
     resolvedBase ? ["diff", "--check", base, "HEAD"] : ["show", "--format=", "--check", "HEAD"],
